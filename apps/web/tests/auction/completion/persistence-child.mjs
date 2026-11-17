@@ -10,6 +10,7 @@ const store = await import(new URL("lib/wow/auctionGearSearchStore.ts", modules)
 const jobs = await import(new URL("lib/wow/auctionGearJobs.ts", modules));
 const { createAuctionGearDiscovery } = await import(new URL("lib/wow/auctionGearDiscovery.ts", modules));
 const mode = process.argv[2], input = JSON.parse(process.argv[3] ?? "{}");
+const requestedEnhancementMode = input.enhancementMode;
 const owner = createHash("sha256").update("synthetic-restart-owner").digest("hex");
 const foreign = createHash("sha256").update("synthetic-foreign-owner").digest("hex");
 const clientRequestId = "synthetic-restart-request-identity";
@@ -22,7 +23,8 @@ function context() {
   const market = { id: "synthetic-market", region: "eu", connectedRealmId: 1,
     sourceUpdatedAt: new Date(Date.now()).toISOString(), fetchedAt: new Date(Date.now()).toISOString(), offers: [] };
   const season = { id: "synthetic-season", patch: "synthetic-patch", expansionId: 11, activityNames: [] };
-  const input = { ...scope, budgetCopper: 10000, selectedSlots: ["WRIST"], scenario: "single-target" };
+  const input = { ...scope, budgetCopper: 10000, selectedSlots: ["WRIST"], scenario: "single-target",
+    ...(requestedEnhancementMode !== undefined ? { enhancementMode: requestedEnhancementMode } : {}) };
   const character = { id: 1, name: "Synthetic", level: 81, region: "eu", playableClass: { id: 1 }, playableRace: { id: 1 },
     faction: { type: "ALLIANCE" }, realm: { id: 1, name: "Synthetic", slug: "synthetic" } };
   const discovery = createAuctionGearDiscovery(market, input.budgetCopper);
@@ -48,6 +50,7 @@ function context() {
 }
 function result(entry) {
   return { kind: "search", searchId: entry.id, selectedSlots: ["WRIST"], budgetCopper: 10000, baseline, items: [],
+    ...(entry.context.input.enhancementMode !== undefined ? { enhancementMode: entry.context.input.enhancementMode } : {}),
     searchComplete: false, discoveryComplete: false, dataComplete: false, pendingItems: 2, simulations: 7,
     engine: baseline.engine, searchLimited: true, optionsConsidered: 2, market: entry.context.publicMarket,
     profileFingerprint: entry.context.profileFingerprint, scenario: "single-target", coverage: entry.context.coverage };
@@ -70,7 +73,8 @@ async function seedEntry() {
   if (typeof store.saveAuctionGearSearch === "function") await store.saveAuctionGearSearch(entry);
   return entry;
 }
-function handles(entry, job) { return { owner, clientRequestId, requestFingerprint, scope, searchId: entry.id, jobId: job.id, now: Date.now(), workAction: input.workAction ?? "search" }; }
+function handles(entry, job) { return { owner, clientRequestId, requestFingerprint, scope, searchId: entry.id, jobId: job.id, now: Date.now(), workAction: input.workAction ?? "search",
+  ...(entry.context.input.enhancementMode !== undefined ? { enhancementMode: entry.context.input.enhancementMode } : {}) }; }
 let output;
 if (mode === "seed-completed" || mode === "seed-interrupted") {
   const entry = await seedEntry();
@@ -91,6 +95,8 @@ if (mode === "seed-completed" || mode === "seed-interrupted") {
 } else if (mode === "read-completed") {
   const entry = store.getAuctionGearSearch(owner, input.searchId);
   assert(entry, "A saved search must survive a process restart");
+  assert.equal(entry.context.input.enhancementMode, requestedEnhancementMode);
+  assert.equal(jobs.auctionGearFormIntent(entry.context.input, scope).enhancementMode, requestedEnhancementMode);
   assert.equal(typeof store.saveAuctionGearSearch, "function", "Search checkpoints must have an explicit durable save boundary");
   assert.equal(entry.busy, false);
   assert(entry.knownOptionIds instanceof Set); assert.deepEqual([...entry.knownOptionIds], ["synthetic-one", "synthetic-two"]);
@@ -106,6 +112,7 @@ if (mode === "seed-completed" || mode === "seed-interrupted") {
   assert.equal(entry.context.discoveryContext("WRIST").season.id, "synthetic-season");
   assert.equal(store.getAuctionGearSearch(foreign, input.searchId), null);
   const job = jobs.getAuctionGearJob(owner, input.jobId); assert.equal(job.status, "completed");
+  assert.equal(job.result.enhancementMode, requestedEnhancementMode);
   assert.equal(job.result.simulations, 7); assert.equal(job.result.searchId, entry.id);
   assert.equal(jobs.getAuctionGearJob(foreign, input.jobId), null);
   assert.equal(jobs.getAuctionGearJobByRequest(owner, clientRequestId, scope).id, input.jobId);
@@ -120,7 +127,11 @@ if (mode === "seed-completed" || mode === "seed-interrupted") {
   const parked = jobs.getAuctionGearJob(owner, input.jobId); assert.equal(parked.status, "queued"); assert.equal(parked.searchId, input.searchId);
   const work = jobs.getAuctionGearPendingWork(owner, input.jobId);
   assert.equal(work.action, input.workAction ?? "search");
-  if (work.action === "search") assert.equal(work.input.characterSlug, scope.characterSlug);
+  if (work.action === "search") {
+    assert.equal(work.input.characterSlug, scope.characterSlug);
+    assert.equal(work.input.enhancementMode, requestedEnhancementMode);
+    assert.equal(jobs.getOwnerActiveAuctionGearJob(owner).formIntent.enhancementMode, requestedEnhancementMode);
+  }
   else assert.equal(work.searchId, input.searchId);
   if (work.action === "assemble") assert.deepEqual(work.selection, { excludedOptionIds: ["synthetic-two"] });
   let calls = 0, releases = 0;

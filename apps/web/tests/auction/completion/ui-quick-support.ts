@@ -1,15 +1,15 @@
 import { test as base, expect, type Page, type Route, type TestInfo } from "playwright/test";
 import { goldToCopper } from "../../../lib/wow/auctionMarket";
-import { assemblyResult, characterSlug, scope, searchResult } from "../reliability/ui-fixtures";
+import { assemblyResult, enhancedAssemblyResult, characterSlug, scope, searchResult } from "../reliability/ui-fixtures";
 
 // The real component runs in the private StrictMode harness. Every account,
 // market, measurement and HTTP response in this file is an offline fixture.
 type Body = { action: "search" | "resume" | "assemble"; clientRequestId?: string; searchId?: string;
   budgetGold?: string; selectedSlots?: string[]; scenario?: string; fightLengthSeconds?: number; targets?: number;
   compareScenarios?: Array<{ scenario: string; fightLengthSeconds: number; targets: number }>;
-  objective?: "dps" | "value"; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number, string]> };
+  enhancementMode?: "equipment" | "enhanced"; objective?: "dps" | "value"; excludedOptionIds?: string[]; excludedVariantKeys?: string[]; excludedVariantIds?: Array<[number, string]> };
 type Search = ReturnType<typeof searchResult>;
-type Assembly = ReturnType<typeof assemblyResult>;
+type Assembly = ReturnType<typeof assemblyResult> | ReturnType<typeof enhancedAssemblyResult>;
 type Job = { id: string; status: "running" | "completed" | "cancelled"; mode: "search" | "assembly";
   result: Search | Assembly | null; progress: null; error: null; scope: ReturnType<typeof scope>; searchId: string };
 type Intent = { kind: "quick" | "full"; phase: "search" | "assembly" | "done"; startedAt: number;
@@ -24,12 +24,15 @@ export class QuickHarness {
   readonly nonces = new Map<string, string>();
   input: Body = { action: "search" };
   completeSearch = false;
+  completeSearchAt = Infinity;
   empty = false;
   negativeOnly = false;
   combinationsOnly = false;
   runningAction: Body["action"] | null = null;
   dropAssemblyOnce = false;
   completeAssemblyAt = Infinity;
+  completeEnhancementsAt = 1;
+  enhancementStatus: "ready" | "unavailable" | "no_affordable_configuration" = "ready";
   failContextRecovery = false;
   search: Search | null = null;
   assembly: Assembly | null = null;
@@ -41,6 +44,7 @@ export class QuickHarness {
   get result() { return this.panel.locator("[data-auction-assembly-result]"); }
   get key() { return `gildra:auction:v1:${encodeURIComponent(characterSlug)}:fury-warrior:${this.language}`; }
   makeSearch(): Search {
+    const complete = this.completeSearch || this.requests.filter(body => body.action === "search" || body.action === "resume").length >= this.completeSearchAt;
     const result = searchResult();
     return { ...result, budgetCopper: goldToCopper(this.input.budgetGold ?? "10000"),
       selectedSlots: this.input.selectedSlots ?? result.selectedSlots, scenario: this.input.scenario ?? result.scenario,
@@ -48,17 +52,20 @@ export class QuickHarness {
       items: this.empty ? [] : this.combinationsOnly ? result.items.map(item => ({ ...item,
         comparison: undefined, evaluation: "requires_combination" })) as unknown as Search["items"]
         : this.negativeOnly ? result.items.filter(item => item.evaluation === "not_upgrade") : result.items,
-      searchComplete: this.completeSearch, discoveryComplete: this.completeSearch, pendingItems: this.completeSearch ? 0 : 500,
-      searchLimited: !this.completeSearch, coverage: { ...result.coverage, discoveryComplete: this.completeSearch, variantsPending: this.completeSearch ? 0 : 500 },
+      searchComplete: complete, discoveryComplete: complete, pendingItems: complete ? 0 : 500,
+      searchLimited: !complete, coverage: { ...result.coverage, discoveryComplete: complete, variantsPending: complete ? 0 : 500 },
       ...this.encounter() };
   }
   private encounter() {
     return { fightLengthSeconds: this.input.fightLengthSeconds ?? 120, targets: this.input.targets ?? 1,
-      compareScenarios: this.input.compareScenarios ?? [], objective: this.input.objective ?? "dps" };
+      compareScenarios: this.input.compareScenarios ?? [], ...(this.input.enhancementMode ? { enhancementMode: this.input.enhancementMode } : {}), objective: this.input.objective ?? "dps" };
   }
   makeAssembly(): Assembly {
     const complete = this.requests.filter(body => body.action === "assemble").length >= this.completeAssemblyAt;
-    const result = assemblyResult({ complete });
+    const turns = this.requests.filter(body => body.action === "assemble").length;
+    const enhanced = this.input.enhancementMode === "enhanced" && complete
+      ? enhancedAssemblyResult(turns < this.completeEnhancementsAt ? "pending" : this.enhancementStatus) : null;
+    const result = enhanced ?? assemblyResult({ complete });
     const updated = this.makeSearch();
     return { ...result, budgetCopper: updated.budgetCopper, selectedSlots: updated.selectedSlots,
       updatedSearch: updated, discoveryComplete: updated.discoveryComplete, coverage: updated.coverage,

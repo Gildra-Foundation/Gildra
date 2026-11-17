@@ -15,7 +15,7 @@ import { getTalentSpecTheme } from "@/lib/talentSpecThemes";
 import { AuctionClientError, auctionClientCacheKey, auctionClientDelay, auctionClientJobUrl, auctionClientRequestUrl, clearAcknowledgedAuctionClientCache, fetchAuctionClientResult, fetchAuctionClientUpdate,
   forgetAuctionClientJob, forgetAuctionClientRequest, hasPendingAuctionClientJob, readAuctionClientCache, parseAuctionClientFormIntent, releasePriorAuctionClientJob, rememberAuctionClientJob, rememberAuctionClientRequest,
   removeAuctionClientJob, removeAuctionClientRequest, retireAuctionClient, waitForAuctionClientRetirement, writeAuctionClientCache,
-  parseAuctionClientActiveRecovery, type AuctionClientActiveRecovery, type AuctionClientCache } from "@/lib/wow/auctionGearClient";
+  parseAuctionClientActiveRecovery, type AuctionClientActiveRecovery, type AuctionClientCache, type AuctionClientBuildMode } from "@/lib/wow/auctionGearClient";
 import { auctionGearServiceMessage } from "@/lib/wow/auctionGearCopy";
 import { GearPlannerItem, gearPlannerItemStatDescription } from "./GearPlannerItem";
 import { AuctionGearSuggestions } from "./AuctionGearSuggestions";
@@ -34,13 +34,13 @@ import { upgradeSlotName } from "./characterUpgradesCopy";
 type Props = { characterSlug: string; snapshotKey: string; specializationSlug: string; localePrefix?: "" | "/ru";
   /** Confirmed single-item upgrades (best value per slot) for the slot overview; null when there is no search. */
   onRecommendations?: (groups: AuctionGearRecommendationGroup[] | null) => void };
-type Metadata = { fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] } & Pick<NonNullable<AuctionGearJob["result"]>, "market" | "profileFingerprint" | "scenario" | "coverage" | "objective">;
+type Metadata = { enhancementMode?: "equipment" | "enhanced"; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] } & Pick<NonNullable<AuctionGearJob["result"]>, "market" | "profileFingerprint" | "scenario" | "coverage" | "objective">;
 type SearchResult = AuctionGearSearchResult & Metadata;
 type AssemblyResult = AuctionGearAssemblyResult & Metadata;
 type PlannerJob = Omit<AuctionGearJob, "result"> & { result: SearchResult | AssemblyResult | null };
 type Mode = "search" | "assembly";
 type Transport = { mode: Mode; status: PlannerJob["status"] | "starting"; progress: AuctionPlanProgress | null; error: string | null };
-type SearchRequest = { fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[]; action: "search"; clientRequestId?: string; characterSlug: string; budgetGold: string; selectedSlots: AuctionGearSlot[]; scenario: string; objective: "value" | "dps"; locale: "ru" | "en" };
+type SearchRequest = { enhancementMode?: "equipment" | "enhanced"; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[]; action: "search"; clientRequestId?: string; characterSlug: string; budgetGold: string; selectedSlots: AuctionGearSlot[]; scenario: string; objective: "value" | "dps"; locale: "ru" | "en" };
 type RequestBody = SearchRequest | { action: "resume"; searchId: string; clientRequestId?: string } | { action: "assemble"; searchId: string; excludedOptionIds: string[]; excludedVariantKeys: string[]; clientRequestId?: string } | { action: "poll"; id: string; observedActive?: boolean };
 type ActiveRequest = { mode: Mode; controller: AbortController; id?: string; observedActive?: boolean; done: Promise<void>; finish: () => void };
 const jobIsActive = (job: Pick<PlannerJob, "status">) => job.status === "queued" || job.status === "running";
@@ -72,6 +72,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }, [locale]);
   let validBudget = true;
   try { normalizeAuctionBudgetGold(budget, locale); } catch { validBudget = false; }
+  const [buildMode, setBuildMode] = useState<AuctionClientBuildMode>("quick");
   const [objective, setObjective] = useState<"value" | "dps">("value");
   const [excludedVariantKeys, setExcludedVariantKeys] = useState<Set<string>>(new Set());
   const [excludedOpen, setExcludedOpen] = useState(false);
@@ -80,10 +81,12 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const [targets, setTargets] = useState(1);
   const [compareScenarios, setCompareScenarios] = useState<AuctionGearEncounter[]>([]);
   const [scenario, setScenario] = useState("single-target");
-  function restoreEncounter(value: { scenario: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] }) {
+  function restoreEncounter(value: { enhancementMode?: "equipment" | "enhanced"; scenario: string; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] }) {
     const encounter = parseAuctionGearEncounter(value);
     setScenario(encounter.scenario); setFightLengthSeconds(encounter.fightLengthSeconds); setTargets(encounter.targets);
     setCompareScenarios(parseAuctionGearCompareScenarios(value.compareScenarios));
+    setBuildMode(value.enhancementMode !== "equipment" ? "enhanced" : cache.current?.buildMode === "quick" || cache.current?.buildMode === "full"
+      ? cache.current.buildMode : cache.current?.orchestration?.kind === "full" ? "full" : "quick");
   }
 
   const [selectedSlots, setSelectedSlots] = useState<AuctionGearSlot[]>([...auctionGearSlots]);
@@ -396,16 +399,16 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     cache.current = { version: 1, profileKey: snapshotKey, mode: "search", excludedOptionIds: [], ...cache.current, ...update };
     writeAuctionClientCache(cacheKey, cache.current.searchId || cache.current.jobId || cache.current.clientRequestId ? cache.current : null);
   }
-  function invalidate(draft: Partial<{ budget: string; scenario: string; fightLengthSeconds: number; targets: number; compareScenarios: AuctionGearEncounter[]; objective: "value" | "dps"; selectedSlots: AuctionGearSlot[] }> = {}): Promise<boolean> | null {
+  function invalidate(draft: Partial<{ enhancementMode: "equipment" | "enhanced"; buildMode: AuctionClientBuildMode; budget: string; scenario: string; fightLengthSeconds: number; targets: number; compareScenarios: AuctionGearEncounter[]; objective: "value" | "dps"; selectedSlots: AuctionGearSlot[] }> = {}): Promise<boolean> | null {
     const needsRetirement = Boolean(retryJob || hasRecovery || cache.current?.jobId || cache.current?.clientRequestId || cache.current?.cancellationRequested);
     let retirement: Promise<boolean> | null = null;
     if (needsRetirement) {
       try {
-        const intent = parseAuctionClientFormIntent({ characterSlug, locale,
+        const intent = parseAuctionClientFormIntent({ characterSlug, locale, enhancementMode: draft.enhancementMode ?? (buildMode === "enhanced" ? "enhanced" : "equipment"),
           budgetGold: normalizeAuctionBudgetGold(draft.budget ?? budget, locale), scenario: draft.scenario ?? scenario,
           fightLengthSeconds: draft.fightLengthSeconds ?? fightLengthSeconds, targets: draft.targets ?? targets, compareScenarios: draft.compareScenarios ?? compareScenarios,
           objective: draft.objective ?? objective, selectedSlots: draft.selectedSlots ?? selectedSlots });
-        if (intent) remember({ formIntent: intent });
+        if (intent) remember({ formIntent: intent, buildMode: draft.buildMode ?? buildMode });
       } catch { /* Invalid drafts are not restored from storage. Keep the owned handles until acknowledgement. */ }
       retirement = cancel();
     }
@@ -419,7 +422,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   async function run(initial: RequestBody, mode: Mode) {
     if (!scopeAlive.current || active.current || cache.current?.cancellationRequested) return;
     const inheritedPolicy = Boolean(cache.current?.orchestration);
-    if (!inheritedPolicy) remember({ orchestration: createAuctionGearRunPolicy("quick", mode) });
+    if (!inheritedPolicy) remember({ orchestration: createAuctionGearRunPolicy(cache.current?.formIntent?.enhancementMode === "enhanced" ? "full" : "quick", mode) });
     const generation = mountGeneration.current;
     const ownsScope = () => scopeAlive.current && mountGeneration.current === generation;
     let finish!: () => void;
@@ -553,7 +556,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
             if (result.updatedSearch) {
               if (result.updatedSearch.searchId !== result.searchId) throw new Error("invalid_plan_result");
               setSearch({ ...result.updatedSearch, market: result.market,
-                profileFingerprint: result.profileFingerprint, scenario: result.scenario, fightLengthSeconds: result.fightLengthSeconds, targets: result.targets, compareScenarios: result.compareScenarios, objective: result.objective, coverage: result.coverage });
+                profileFingerprint: result.profileFingerprint, enhancementMode: result.enhancementMode, scenario: result.scenario, fightLengthSeconds: result.fightLengthSeconds, targets: result.targets, compareScenarios: result.compareScenarios, objective: result.objective, coverage: result.coverage });
               setMarketStale(pricesStale);
             }
           }
@@ -583,7 +586,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         applyResult(result, pricesStale);
         remember({ searchId: result.searchId, jobId: undefined, clientRequestId: undefined, mode,
           formIntent: result.kind === "search" ? parseAuctionClientFormIntent({ characterSlug, locale, budgetGold: String(result.budgetCopper / 10000),
-            scenario: result.scenario, fightLengthSeconds: result.fightLengthSeconds, targets: result.targets, compareScenarios: result.compareScenarios, objective: result.objective ?? "dps", selectedSlots: parseAuctionGearSlots(result.selectedSlots) }) ?? undefined : cache.current?.formIntent });
+            enhancementMode: result.enhancementMode, scenario: result.scenario, fightLengthSeconds: result.fightLengthSeconds, targets: result.targets, compareScenarios: result.compareScenarios, objective: result.objective ?? "dps", selectedSlots: parseAuctionGearSlots(result.selectedSlots) }) ?? undefined : cache.current?.formIntent });
         forgetAuctionClientJob(payload.id);
         request.id = undefined;
         const policy = cache.current?.orchestration ?? createAuctionGearRunPolicy("quick", mode);
@@ -689,7 +692,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       if (!current()) return;
       // Persist a polling handle only with its authoritative assembly selection.
       // A failed context lookup can be retried through owner discovery after reload.
-      remember({ jobId: job.id, clientRequestId: undefined, mode: job.mode, formIntent: intent, ...restoredContext });
+      remember({ jobId: job.id, clientRequestId: undefined, mode: job.mode, formIntent: intent,
+        buildMode: intent.enhancementMode !== "equipment" ? "enhanced" : "quick",
+        ...(intent.enhancementMode === "enhanced" ? { orchestration: createAuctionGearRunPolicy("full", job.mode) } : {}), ...restoredContext });
       rememberAuctionClientJob(job.scope, job.id);
       setDiscovered(null); setOwnerLookupFailed(false);
       await run({ action: "poll", id: job.id, observedActive: true }, job.mode);
@@ -710,7 +715,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   function revealSettingsField(field: HTMLElement | null) {
     for (let details = field?.closest("details"); details; details = details.parentElement?.closest("details") ?? null) details.open = true;
   }
-  async function startSearch(kind: AuctionGearRunPolicy["kind"] = "quick") {
+  async function startSearch(kind: AuctionGearRunPolicy["kind"] = buildMode === "quick" ? "quick" : "full") {
     if (!validBudget || initializing || active.current || discovered?.activeJob || ownerLookupFailed || cache.current?.cancellationRequested) return;
     try {
       const budgetGold = normalizeAuctionBudgetGold(budget, locale);
@@ -719,8 +724,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       const retirement = invalidate();
       if (retirement && !await retirement) return;
       if (!scopeAlive.current || mountGeneration.current !== generation) return;
-      remember({ orchestration: createAuctionGearRunPolicy(kind) });
-      void run({ action: "search", characterSlug, budgetGold, selectedSlots: slots, scenario, fightLengthSeconds, targets, compareScenarios, objective, locale }, "search");
+      const selectedMode = buildMode === "enhanced" ? "enhanced" : kind;
+      setBuildMode(selectedMode);
+      remember({ buildMode: selectedMode, orchestration: createAuctionGearRunPolicy(kind) });
+      void run({ action: "search", enhancementMode: selectedMode === "enhanced" ? "enhanced" : "equipment", characterSlug, budgetGold, selectedSlots: slots, scenario, fightLengthSeconds, targets, compareScenarios, objective, locale }, "search");
     } catch (reason) {
       if (reason instanceof Error && reason.message === "invalid_equipment_slots") {
         const field = panel.current?.querySelector<HTMLInputElement>('input[name="selectedSlots"]') ?? null;
@@ -742,7 +749,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     if (!scopeAlive.current || mountGeneration.current !== generation) return;
     if (hasRecovery) { setRecoveryAttempt(value => value + 1); return; }
     if (retryJob?.mode === "assembly") { void run({ action: "poll", id: retryJob.id, observedActive: retryJob.observedActive }, "assembly"); return; }
-    remember({ orchestration: createAuctionGearRunPolicy("quick", "assembly") });
+    remember({ buildMode, orchestration: createAuctionGearRunPolicy(buildMode === "quick" ? "quick" : "full", "assembly") });
     void run({ action: "assemble", searchId: search.searchId, excludedOptionIds: [...excluded], excludedVariantKeys: [...excludedVariantKeys] }, "assembly");
   }
   async function editParameters() {
@@ -837,19 +844,28 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     if (!excluded.size && sameSelection([...variants], [...excludedVariantKeys])) return;
     changeExclusions(new Set(), variants);
   }
+  function changeBuildMode(value: string) {
+    if (value !== "quick" && value !== "full" && value !== "enhanced" || value === buildMode || formLocked) return;
+    const changedGoal = (value === "enhanced") !== (buildMode === "enhanced");
+    setBuildMode(value);
+    if (changedGoal) invalidate({ buildMode: value, enhancementMode: value === "enhanced" ? "enhanced" : "equipment" });
+    else if (cache.current) remember({ buildMode: value });
+  }
   function continueSearch() {
     if (!validBudget || active.current || cache.current?.cancellationRequested) return;
+    const selectedMode = buildMode === "enhanced" ? "enhanced" : "full";
+    setBuildMode(selectedMode);
     if (hasRecovery) {
       // Recovery can fail before its owned search DTO reaches this browser.
       // Full continues that identity instead of invalidating/cancelling it.
-      remember({ orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("full")), kind: "full", phase: "search" } });
+      remember({ buildMode: selectedMode, orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("full")), kind: "full", phase: "search" } });
       setRecoveryAttempt(value => value + 1);
       return;
     }
     if (!search) { void startSearch("full"); return; }
     // Full search reuses all owned candidates, exclusions and assembly caches.
     // Resume discovery/comparisons first, even after a quick loadout was shown.
-    remember({ orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("full")), kind: "full", phase: "search" } });
+    remember({ buildMode: selectedMode, orchestration: { ...(cache.current?.orchestration ?? createAuctionGearRunPolicy("full")), kind: "full", phase: "search" } });
     void run({ action: "resume", searchId: search.searchId }, "search");
   }
   const progress = transport?.progress;
@@ -880,9 +896,21 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       {!cancellation ? <button type="button" className={tools.quiet} disabled={running} onClick={() => void cancelOwnedCalculation()}>{t("Отменить и изменить параметры", "Cancel and change parameters")}</button> : null}</div>
     </div> : null}
     {ownerLookupFailed && !discovered?.activeJob ? <button type="button" className={tools.quiet} disabled={running || Boolean(cancellation)} onClick={() => void findOwnedCalculation()}>{t("Найти активный расчёт", "Find active calculation")}</button> : null}
-    {!supported ? <p className={tools.status}>{messages.damage_specialization_required}</p> : <form className={styles.form} onSubmit={event => { event.preventDefault(); startSearch(); }} onInvalidCapture={event => {
+    {!supported ? <p className={tools.status}>{messages.damage_specialization_required}</p> : <form className={styles.form} onSubmit={event => { event.preventDefault(); void startSearch(); }} onInvalidCapture={event => {
       revealSettingsField(event.target as HTMLElement);
     }}>
+      <fieldset className={styles.slotFieldset} disabled={formLocked} data-auction-build-modes>
+        <legend id="auction-build-mode-label">{t("Режим подбора", "Selection mode")}</legend>
+        <AtlasSegmented className={styles.buildModeControl} aria-labelledby="auction-build-mode-label" aria-describedby="auction-build-mode-help" value={buildMode} disabled={formLocked} options={[
+          { value: "quick", label: <span data-auction-build-mode="quick">{t("Быстрый подбор вещей", "Quick gear selection")}</span> },
+          { value: "full", label: <span data-auction-build-mode="full">{t("Полный подбор вещей", "Full gear selection")}</span> },
+          { value: "enhanced", label: <span data-auction-build-mode="enhanced">{t("Полный подбор с камнями и чарами", "Full gear, gems and enchants")}</span> },
+        ]} onValueChange={changeBuildMode} />
+        <p id="auction-build-mode-help" className={styles.note}>{buildMode === "quick"
+          ? t("Проверим часть вариантов и предложим комплект вещей.", "Check a limited set of options and suggest a gear loadout.")
+          : buildMode === "full" ? t("Проверим все доступные варианты вещей в пределах бюджета.", "Check all available gear options within your budget.")
+          : t("Более долгий расчёт. Подберём камни и чары для покупаемых замен; остальная экипировка не меняется.", "A longer calculation. Gems and enchants are selected for purchased replacements; your other gear stays unchanged.")}</p>
+      </fieldset>
       <div className={tools.fields}>
         <label className={tools.field}>{t("Бюджет, золото", "Budget, gold")}<input ref={budgetInput} name="budgetGold" inputMode="decimal" value={budget} onChange={event => {
           const next = event.target.value; setBudgetInput(next);
@@ -899,7 +927,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <div className={tools.actions}>
           {running && !cancellation ? <button className={tools.quiet} type="button" onClick={() => void editParameters()}>{t("Изменить параметры", "Change parameters")}</button> : null}
           {!cancellation && running && (transport?.mode === "search" || !search) ? <button className={tools.quiet} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}
-          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running ? t("Подбираем улучшения…", "Finding upgrades…") : t("Подобрать улучшения", "Find upgrades")}</MaterialButton>
+          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running ? t("Подбираем улучшения…", "Finding upgrades…") : buildMode === "quick" ? t("Быстро подобрать вещи", "Find gear quickly") : buildMode === "full" ? t("Подобрать вещи полностью", "Run full gear selection") : t("Подобрать вещи, камни и чары", "Find gear, gems and enchants")}</MaterialButton>
         </div>
       </div>
       <details className={styles.disclosure} data-auction-advanced-settings><summary>{t("Дополнительные настройки", "Advanced settings")}</summary>
@@ -925,7 +953,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           : t("Наибольший подтверждённый DPS в пределах бюджета. Другая цель потребует нового поиска.", "Highest confirmed DPS within budget. Changing the objective requires a new search.")}</p>
       </fieldset>
       <fieldset className={styles.slotFieldset} disabled={formLocked}><legend>{t("Сравнить финалистов в других боях", "Compare finalists in other encounters")}</legend>
-        <p className={styles.note}>{t("Дополнительные бои сравниваются после «Искать дальше», когда перебор вариантов завершён.", "Additional encounters are compared after “Search further”, once traversal finishes.")}</p>
+        <p className={styles.note}>{t("Дополнительные бои сравниваются после подбора комплекта.", "Additional encounters are compared after the loadout is selected.")}</p>
         <div className={styles.slots}>{(["single-target", "aoe", "execute"] as const).map(value => <label key={value}><input type="checkbox" checked={compareScenarios.some(e => e.scenario === value)} onChange={event => {
           const next = event.target.checked ? [...compareScenarios, parseAuctionGearEncounter({ scenario: value })] : compareScenarios.filter(e => e.scenario !== value);
           setCompareScenarios(next);

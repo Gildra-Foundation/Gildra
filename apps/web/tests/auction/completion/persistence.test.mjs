@@ -78,6 +78,22 @@ test("completed results and private checkpoints survive a real process restart",
   assert(result.preserved.includes("Maps") && result.preserved.includes("nonce"));
 }));
 
+test("explicit equipment and enhanced goals survive completed and interrupted process recovery", async () => {
+  for (const enhancementMode of ["equipment", "enhanced"]) {
+    await isolated(async directory => {
+      const handles = await run(directory, "seed-completed", { enhancementMode });
+      assert.equal(handles.enhancementMode, enhancementMode);
+      assert.equal((await run(directory, "read-completed", handles)).status, "passed");
+    });
+    await isolated(async directory => {
+      const handles = await run(directory, "seed-interrupted", { enhancementMode });
+      const result = await run(directory, "resume-interrupted", handles);
+      assert.equal(result.calls, 1); assert.equal(result.releases, 1);
+      await run(directory, "read-resumed", handles);
+    });
+  }
+});
+
 test("interrupted initial work is parked until its owner attaches it, then resumes exactly once", async () => isolated(async directory => {
   const handles = await run(directory, "seed-interrupted");
   const result = await run(directory, "resume-interrupted", handles);

@@ -22,7 +22,7 @@ async function ready(app: QuickHarness) {
 
 test("ux flow: initial budget and encounter lead to one primary action", async ({ quick }, info) => {
   await quick.open();
-  await expect(quick.find).toHaveText(quick.language === "ru" ? "Подобрать улучшения" : "Find upgrades");
+  await expect(quick.find).toHaveText(quick.language === "ru" ? "Быстро подобрать вещи" : "Find gear quickly");
   await expect(quick.panel.locator('input[name="budgetGold"]')).toBeVisible();
   await expect(quick.panel.getByRole("combobox", { name: quick.language === "ru" ? "Бой" : "Encounter", exact: true })).toBeVisible();
   await expect(advanced(quick)).not.toHaveAttribute("open", "");

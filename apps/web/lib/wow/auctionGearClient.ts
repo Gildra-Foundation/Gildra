@@ -4,7 +4,9 @@ import { parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelect
 import { parseAuctionGearRunPolicy, type AuctionGearRunPolicy } from "./auctionGearRunPolicy";
 
 /** Browser transport, recovery handles and safe input intent. Prices/stats always come from the server. */
+export type AuctionClientBuildMode = "quick" | "full" | "enhanced";
 export type AuctionClientFormIntent = {
+  enhancementMode?: "equipment" | "enhanced";
   fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[];
   characterSlug: string; locale: "ru" | "en"; budgetGold: string;
   scenario: "single-target" | "aoe" | "execute"; objective: "value" | "dps"; selectedSlots: AuctionGearSlot[];
@@ -13,7 +15,8 @@ export type AuctionClientFormIntent = {
 export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormIntent | null {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const value = input as Record<string, unknown>;
-  if (typeof value.characterSlug !== "string" || !value.characterSlug || value.characterSlug.length > 180 ||
+  if (value.enhancementMode !== undefined && value.enhancementMode !== "equipment" && value.enhancementMode !== "enhanced" ||
+      typeof value.characterSlug !== "string" || !value.characterSlug || value.characterSlug.length > 180 ||
       value.locale !== "en" && value.locale !== "ru" || typeof value.budgetGold !== "string" || value.budgetGold.length > 30 ||
       !/^\d+(?:\.\d{1,4})?$/.test(value.budgetGold) ||
       !["single-target", "aoe", "execute"].includes(value.scenario as string) || value.objective !== "value" && value.objective !== "dps") return null;
@@ -21,6 +24,7 @@ export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormI
     const encounter = parseAuctionGearEncounter(value);
     const compareScenarios = parseAuctionGearCompareScenarios(value.compareScenarios);
     return {
+      ...(value.enhancementMode !== undefined ? { enhancementMode: value.enhancementMode as "equipment" | "enhanced" } : {}),
       ...(value.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}),
       ...(value.targets !== undefined ? { targets: encounter.targets } : {}),
       ...(value.compareScenarios !== undefined ? { compareScenarios } : {}), characterSlug: value.characterSlug, locale: value.locale,
@@ -50,7 +54,7 @@ export function parseAuctionClientActiveRecovery(input: unknown): AuctionClientA
     formIntent: parsed?.characterSlug === job.scope.characterSlug && parsed.locale === job.scope.locale ? parsed : null };
 }
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
-export type AuctionClientCache = { version: 1; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent; orchestration?: AuctionGearRunPolicy };
+export type AuctionClientCache = { version: 1; buildMode?: AuctionClientBuildMode; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent; orchestration?: AuctionGearRunPolicy };
 const activeKey = "gildra:auction-active:v1";
 let retiring: Promise<void> = Promise.resolve();
 
@@ -70,11 +74,11 @@ export function readAuctionClientCache(key: string): AuctionClientCache | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(key) ?? "null") as Partial<AuctionClientCache> | null;
     const formIntent = value?.formIntent === undefined ? undefined : parseAuctionClientFormIntent(value.formIntent);
-    return (value?.formIntent === undefined || formIntent !== null) && (value?.cancellationRequested === undefined || typeof value.cancellationRequested === "boolean") && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
+    return (value?.buildMode === undefined || ["quick", "full", "enhanced"].includes(value.buildMode)) && (value?.formIntent === undefined || formIntent !== null) && (value?.cancellationRequested === undefined || typeof value.cancellationRequested === "boolean") && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
       (value.mode === "search" || value.mode === "assembly") && Array.isArray(value.excludedOptionIds) &&
       value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity) &&
       (value.excludedVariantKeys === undefined || Array.isArray(value.excludedVariantKeys) && value.excludedVariantKeys.length <= 20000 && value.excludedVariantKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 240))
-      ? { version: 1, profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
+      ? { version: 1, ...(value.buildMode ? { buildMode: value.buildMode } : {}), profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
         jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}), ...(parseAuctionGearRunPolicy(value.orchestration) ? { orchestration: parseAuctionGearRunPolicy(value.orchestration) } : {}), ...(value.cancellationRequested ? { cancellationRequested: true } : {}) } : null;
   } catch { return null; }
 }

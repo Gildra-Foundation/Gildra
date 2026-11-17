@@ -13,6 +13,7 @@ import { readAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
 import { createAuctionGearDiscovery } from '../../../lib/wow/auctionGearDiscovery.ts';
 import { selectedAuctionGearAssemblyOptions } from '../../../lib/wow/auctionGearRunner.ts';
 import { auctionGearVariantSelectionKey } from '../../../lib/wow/auctionGearExclusions.ts';
+import { getOwnerActiveAuctionGearJob } from '../../../lib/wow/auctionGearJobs.ts';
 
 const routeFile = new URL('../../../app/api/wow/auction-gear-plans/route.ts', import.meta.url);
 const beforeSource = await readFile(new URL('./fixtures/assembly-admission-before-identical-selection.ts.txt', import.meta.url), 'utf8');
@@ -24,6 +25,7 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 let session = null, taskStarts = 0;
 globalThis.__auctionAdmissionTest = {
   auth: () => session,
+  start: async () => { throw Error('unexpected_start'); },
   select: selectedAuctionGearAssemblyOptions,
   assemble: async entry => { taskStarts++; return { kind: 'assembly', searchId: entry.id, purchases: [], exhaustiveComplete: false }; },
 };
@@ -31,7 +33,7 @@ const hook = registerHooks({ resolve(specifier, context, nextResolve) {
   const moduleURL = code => `data:text/javascript,${encodeURIComponent(code)}`;
   if (specifier === '@/auth') return { url: moduleURL('export async function auth(){return globalThis.__auctionAdmissionTest.auth()}'), shortCircuit: true };
   if (specifier === '@/lib/wow/auctionGearRunner') return { url: moduleURL(`
-    export const startAuctionGearSearch=async()=>{throw Error('unexpected_start')};
+    export const startAuctionGearSearch=(...args)=>globalThis.__auctionAdmissionTest.start(...args);
     export const continueAuctionGearSearch=async()=>{throw Error('unexpected_resume')};
     export const verifyAuctionGearSearch=async()=>{};
     export const selectedAuctionGearAssemblyOptions=(...args)=>globalThis.__auctionAdmissionTest.select(...args);
@@ -201,6 +203,48 @@ for (const afterRename of [false, true]) test(`failed admission ${afterRename ? 
       'A successful repair clears uncertainty, so subsequent exact repetitions need no admission snapshot');
   } finally { meter.restore(); }
 }));
+
+test('mode admission keeps immutable goal, selection durability, and replay identity', async () => fixture(async entry => {
+  entry.context.input.enhancementMode = 'equipment'; store.saveAuctionGearSearch(entry);
+  const clientRequestId = 'mode-admission-identity-0001';
+  const accepted = await post(entry, { enhancementMode: 'equipment', clientRequestId }); assert.equal(accepted.status, 202);
+  assert.equal(readAuctionState('search', entry.id).data.context.input.enhancementMode, 'equipment');
+  const before = taskStarts;
+  assert.equal((await post(entry, { enhancementMode: 'equipment', clientRequestId })).body.id, accepted.body.id);
+  assert.equal(taskStarts, before);
+  assert.equal((await post(entry, { enhancementMode: 'enhanced', clientRequestId })).status, 400);
+  assert.equal((await post(entry, { enhancementMode: 'enhanced', excludedOptionIds: ['lot-1'] })).status, 400);
+  assert.deepEqual(entry.excludedOptionIds, []);
+  assert.deepEqual(readAuctionState('search', entry.id).data.excludedOptionIds, []);
+  assert.equal((await post(entry)).status, 202, 'Legacy continuation omission inherits the equipment goal');
+  assert.equal(entry.context.input.enhancementMode, 'equipment');
+  for (const enhancementMode of [null, '', 'quick', 'full', {}, [], true]) assert.equal((await post(entry, { enhancementMode })).status, 400);
+}));
+
+test('initial API mode reaches durable work, owned recovery intent, and idempotency without changing legacy absence', async () => {
+  for (const mode of [undefined, 'equipment', 'enhanced']) await fixture(async entry => {
+    const original = globalThis.__auctionAdmissionTest.start;
+    let release;
+    const held = new Promise(resolve => { release = resolve; });
+    globalThis.__auctionAdmissionTest.start = async input => { await held; return { kind: 'search', searchId: entry.id, ...input }; };
+    const request = async enhancementMode => {
+      const response = await route.POST(new Request('https://gildra.example/api/wow/auction-gear-plans', { method: 'POST',
+        headers: { host: 'gildra.example', origin: 'https://gildra.example' }, body: JSON.stringify({ action: 'search',
+          characterSlug: 'synthetic', locale: 'en', budgetGold: '1000', selectedSlots: ['HEAD'],
+          clientRequestId: 'mode-initial-identity-0001', ...(enhancementMode !== undefined ? { enhancementMode } : {}) }) }));
+      return { status: response.status, body: await response.json() };
+    };
+    try {
+      const accepted = await request(mode); assert.equal(accepted.status, 202);
+      const active = getOwnerActiveAuctionGearJob(entry.owner);
+      assert.equal(active.formIntent.enhancementMode, mode);
+      assert.equal(Object.hasOwn(active.formIntent, 'enhancementMode'), mode !== undefined);
+      assert.equal(readAuctionState('job', accepted.body.id).data.work.input.enhancementMode, mode);
+      assert.equal((await request(mode)).body.id, accepted.body.id);
+      assert.equal((await request(mode === 'equipment' ? 'enhanced' : 'equipment')).status, 400);
+    } finally { release(); await tick(); await tick(); globalThis.__auctionAdmissionTest.start = original; }
+  });
+});
 
 test('real persisted admission benchmark: identical exclusions require no second full snapshot', {
   skip: process.env.AUCTION_ADMISSION_BENCHMARK !== '1',

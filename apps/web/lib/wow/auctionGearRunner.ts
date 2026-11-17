@@ -14,6 +14,8 @@ export function auctionGearRunDiagnostics(entry: AuctionGearSearchEntry) {
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type AuctionGearEncounter } from "./auctionGearScenarios";
 import { evaluateAuctionGearScenarios } from "./auctionGearScenarioExecution";
 import { evaluateAuctionEnhancementStage } from "./auctionGearEnhancementStage";
+import { auctionEnhancementCatalogInfo } from "./auctionEnhancementCatalog";
+import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 import { customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNetCharacters";
@@ -38,6 +40,7 @@ import type { GearLoadoutItem } from "./gearCompatibility";
 import type { AuctionSnapshot } from "./auctionMarket";
 import { createAuctionGearDiscovery, advanceAuctionGearDiscovery, refreshAuctionGearDiscovery, auctionGearDiscoveryCoverage, auctionGearDiscoveryOptions } from "./auctionGearDiscovery";
 export type AuctionGearRunInput = {
+  enhancementMode?: AuctionGearEnhancementMode;
   characterSlug: string;
   budgetCopper: number;
   scenario: GearSimulationScenario;
@@ -48,7 +51,7 @@ export type AuctionGearRunInput = {
   targets?: number;
   compareScenarios?: AuctionGearEncounter[];
 };
-export type AuctionGearRunMetadata = { fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[]; market: AuctionGearContext["publicMarket"]; profileFingerprint: string; scenario: GearSimulationScenario; objective: "value" | "dps"; coverage: AuctionGearContext["coverage"] };
+export type AuctionGearRunMetadata = { enhancementMode?: AuctionGearEnhancementMode; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[]; market: AuctionGearContext["publicMarket"]; profileFingerprint: string; scenario: GearSimulationScenario; objective: "value" | "dps"; coverage: AuctionGearContext["coverage"] };
 export type AuctionGearRunResult = (AuctionGearSearchResult | AuctionGearAssemblyResult) & AuctionGearRunMetadata;
 export async function runAuctionGearPlan(input: AuctionGearRunInput, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
   const check = () => signal.throwIfAborted();
@@ -68,6 +71,7 @@ export async function runAuctionGearPlan(input: AuctionGearRunInput, token: stri
 
 /** Internal runner for a trusted snapshot. HTTP entry points must resolve ownership first. */
 export async function createAuctionGearContextFromSnapshot(input: AuctionGearRunInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
+  parseAuctionGearEnhancementMode(input.enhancementMode);
   const check = () => signal.throwIfAborted();
   const diagnostics = metricsFor(armory);
   check();
@@ -166,6 +170,7 @@ function publicAuctionResult(context: AuctionGearContext, result: AuctionGearAss
 function publicAuctionResult(context: AuctionGearContext, result: AuctionGearSearchResult | AuctionGearAssemblyResult): AuctionGearRunResult {
   const metadata: AuctionGearRunMetadata = { market: context.publicMarket,
     profileFingerprint: context.profileFingerprint, scenario: context.input.scenario,
+    ...(context.input.enhancementMode !== undefined ? { enhancementMode: context.input.enhancementMode } : {}),
     ...(context.input.fightLengthSeconds !== undefined ? { fightLengthSeconds: context.input.fightLengthSeconds } : {}),
     ...(context.input.targets !== undefined ? { targets: context.input.targets } : {}),
     ...(context.input.compareScenarios ? { compareScenarios: context.input.compareScenarios } : {}), objective: context.input.objective ?? "dps", coverage: context.coverage };
@@ -577,7 +582,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       }
       // A bare item may lose DPS because replacement removes installed upgrades.
       // Keep two measured single-item proposals when no winning bare set exists.
-      if (!finalists.size) {
+      if (context.input.enhancementMode !== "equipment" && !finalists.size) {
         const measured = [...(entry.latestSearchResult?.items ?? [])].filter(item => item.comparison && item.evaluation !== "requires_combination"
           && byId.get(item.optionId)?.candidate.variants.find(v=>v.key===byId.get(item.optionId)?.variantKey)?.resolution?.enhancements?.status === "verified")
           .sort((a,b) => b.comparison!.candidateDps-a.comparison!.candidateDps || a.optionId.localeCompare(b.optionId));
@@ -589,7 +594,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       }
       // Enhanced configuration search is a bounded second stage; equipment lot
       // procurement and its exhaustive combination cursor remain unchanged.
-      if ([...finalists.values()].flat().some(option => option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.enhancements?.status === "verified")) {
+      if (context.input.enhancementMode !== "equipment" && [...finalists.values()].flat().some(option => option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.enhancements?.status === "verified")) {
         const enhanced = await diagnostics.measureStage("enhancements", () => evaluateAuctionEnhancementStage({
           finalists: [...finalists].map(([label, selected]) => ({label, options:selected})),
           equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId, level: context.character.level,
@@ -616,6 +621,14 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         }
         // Further scenario work must not mutate the snapshot already published.
         published = {...published};
+      } else if (context.input.enhancementMode === "enhanced") {
+        // Explicit enhancement requests must finish with an honest outcome even
+        // when the exact native metadata cannot authorize this second stage.
+        published = { ...published, enhancementOptimization: { complete: true, status: "unavailable",
+          searchLimited: true, reasons: ["variant_enhancements_unknown"], recommendations: [],
+          catalogRevision: auctionEnhancementCatalogInfo.revision } };
+        entry.latestAssemblyResult = published;
+        scheduleAuctionGearSearchSave(entry);
       }
       if (encounters.length && finalists.size) {
         let yielded = false;
@@ -716,6 +729,7 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
       !(data.discovery.queuedItems instanceof Set) || !data.discoverySeason || !data.encounter ||
       !data.character?.playableClass || !data.armory || !data.profileFingerprint) throw new Error("invalid_auction_checkpoint");
   const expectedEncounter = parseAuctionGearEncounter(data.input);
+  parseAuctionGearEnhancementMode(data.input.enhancementMode);
   parseAuctionGearCompareScenarios(data.input.compareScenarios);
   if (data.encounter.fightLengthSeconds !== expectedEncounter.fightLengthSeconds || data.encounter.targets !== expectedEncounter.targets)
     throw new Error("invalid_auction_checkpoint");

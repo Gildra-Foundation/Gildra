@@ -10,6 +10,7 @@ import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
 import { auctionGearSlots, parseAuctionGearSlots } from "@/lib/wow/auctionGearSelection";
 import { auctionGearSelectionBodyLimit, decodeAuctionGearSelectionTransport } from "@/lib/wow/auctionGearSelectionTransport";
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "@/lib/wow/auctionGearScenarios";
+import { parseAuctionGearEnhancementMode } from "@/lib/wow/auctionGearEnhancementMode";
 import type { GearSimulationScenario } from "@/lib/wow/gearSimulation";
 export const dynamic = "force-dynamic";
 // A rename can succeed before its directory fsync fails. If memory is rolled
@@ -171,6 +172,9 @@ async function postPlan(request: Request) {
   }
   const action = body.action ?? "search";
   if (action !== "search" && action !== "resume" && action !== "assemble") return reply({ error: "invalid_plan_request" }, 400);
+  let enhancementMode;
+  try { enhancementMode = parseAuctionGearEnhancementMode(body.enhancementMode); }
+  catch { return reply({ error: "invalid_plan_request" }, 400); }
   if (action === "assemble") {
     try { body = decodeAuctionGearSelectionTransport(body); }
     catch { return reply({ error: "invalid_auction_selection" }, 400); }
@@ -181,7 +185,7 @@ async function postPlan(request: Request) {
     clientRequestId = body.clientRequestId;
   }
   if (action !== "search") {
-    const keys = action === "resume" ? ["action", "searchId", "clientRequestId"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "excludedVariantKeys", "clientRequestId"];
+    const keys = action === "resume" ? ["action", "searchId", "clientRequestId", "enhancementMode"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "excludedVariantKeys", "clientRequestId", "enhancementMode"];
     if (Object.keys(body).some(key => !keys.includes(key)) || typeof body.searchId !== "string" || body.searchId.length > 100) return reply({ error: "invalid_plan_request" }, 400);
     const hasAllowed = Object.hasOwn(body, "allowedOptionIds"), hasExcluded = Object.hasOwn(body, "excludedOptionIds");
     const hasVariants = Object.hasOwn(body, "excludedVariantKeys"), variants = body.excludedVariantKeys;
@@ -191,6 +195,7 @@ async function postPlan(request: Request) {
     if (ids !== undefined && (!Array.isArray(ids) || (hasAllowed && !ids.length) ||
         ids.some(id => typeof id !== "string" || !id || id.length > 180) || new Set(ids).size !== ids.length)) return reply({ error: "invalid_auction_selection" }, 400);
     const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({ action, searchId: body.searchId,
+      ...(body.enhancementMode !== undefined ? { enhancementMode } : {}),
       ...(action === "assemble" ? { selection: { [hasAllowed ? "allowedOptionIds" : "excludedOptionIds"]: [...((ids as string[] | undefined) ?? [])].sort(), ...(hasVariants ? { excludedVariantKeys: [...variants as string[]].sort() } : {}) } } : {}),
     })).digest("hex") : undefined;
     if (clientRequestId) {
@@ -209,6 +214,11 @@ async function postPlan(request: Request) {
     const selection = hasAllowed ? body.allowedOptionIds : hasExcluded ? { excludedOptionIds: body.excludedOptionIds, ...(hasVariants ? { excludedVariantKeys: variants } : {}) } : undefined;
     const entry = getAuctionGearSearch(user.id, body.searchId);
     if (!entry) return reply({ error: "search_not_found" }, 404);
+    // The goal belongs to the saved search. A different goal starts a new
+    // search, keeping selection admission, checkpoints and recovery immutable.
+    if (body.enhancementMode !== undefined && enhancementMode !== parseAuctionGearEnhancementMode(entry.context.input.enhancementMode)) {
+      return reply({ error: "invalid_plan_request" }, 400);
+    }
     let release: (() => void) | undefined;
     try {
       const allowed = action === "assemble" ? selectedAuctionGearAssemblyOptions(entry, selection) : null;
@@ -248,7 +258,7 @@ async function postPlan(request: Request) {
       return queueFailure(user.id, code);
     }
   }
-  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "fightLengthSeconds", "targets", "compareScenarios", "objective", "locale", "clientRequestId"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
+  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "fightLengthSeconds", "targets", "compareScenarios", "objective", "locale", "clientRequestId", "enhancementMode"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
   const {
     characterSlug,
     scenario = "single-target",
@@ -274,10 +284,12 @@ async function postPlan(request: Request) {
   try { selectedSlots = parseAuctionGearSlots(body.selectedSlots ?? [...auctionGearSlots]); }
   catch { return reply({ error: "invalid_equipment_slots" }, 400); }
   const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({
+    ...(body.enhancementMode !== undefined ? { enhancementMode } : {}),
     characterSlug, locale, budgetCopper, selectedSlots, scenario, ...(body.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}), ...(body.targets !== undefined ? { targets: encounter.targets } : {}), ...(body.compareScenarios !== undefined ? { compareScenarios } : {}), ...(objective === "value" ? { objective } : {}),
   })).digest("hex") : undefined;
   try {
     const input = {
+      ...(body.enhancementMode !== undefined ? { enhancementMode } : {}),
       characterSlug,
       budgetCopper,
       selectedSlots,

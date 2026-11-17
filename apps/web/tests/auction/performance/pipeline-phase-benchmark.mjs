@@ -1,3 +1,4 @@
+import { parseAuctionGearEnhancementMode } from "../../../lib/wow/auctionGearEnhancementMode.ts";
 /** Controlled full client→Jobs→Runner→Planner flow. No account, HTTP service or native process.
  * Run from apps/web with the usual auction resolver and --experimental-transform-types.
  * `baseline` reads pinned local Git sources; it never fetches history.
@@ -93,11 +94,11 @@ async function benchmark(kind, repeat) {
   const exportsOf = source => [...source.matchAll(/^export (?:async )?(?:function|class) (\w+)/gm)].map(match=>match[1]);
   const jobsExports = exportsOf(sources.jobs);
   const selectedJobs = new vm.Script(stripTypeScriptTypes(sources.jobs,{mode:'transform'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'')+'\n;({'+jobsExports.join(',')+'})').runInNewContext({
-    ...persistence,randomUUID,createAuctionGearDiagnostics,logAuctionGearDiagnostics,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,auctionGearSlots,parseAuctionGearSlots,
+    ...persistence,randomUUID,parseAuctionGearEnhancementMode,createAuctionGearDiagnostics,logAuctionGearDiagnostics,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,auctionGearSlots,parseAuctionGearSlots,
     process,Map,Set,WeakMap,Date,Object,JSON,Number,AbortController,AbortSignal,DOMException,setTimeout,clearTimeout,setImmediate,clearImmediate,queueMicrotask,performance,
   });
   const clientExports = exportsOf(sources.client);
-  const clientRealm = vm.createContext({normalizeAuctionBudgetGold,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,parseAuctionGearSlots,...policy,
+  const clientRealm = vm.createContext({parseAuctionGearEnhancementMode,normalizeAuctionBudgetGold,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,parseAuctionGearSlots,...policy,
     sessionStorage:globalThis.sessionStorage,URLSearchParams,AbortController,AbortSignal,DOMException,setTimeout,clearTimeout,fetch:(...args)=>globalThis.fetch(...args)});
   const selectedClient = new vm.Script(stripTypeScriptTypes(sources.client,{mode:'transform'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'')+'\n;({'+clientExports.join(',')+'})').runInContext(clientRealm);
   const clientDelay = selectedClient.auctionClientDelay;
