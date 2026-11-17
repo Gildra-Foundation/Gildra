@@ -14,6 +14,7 @@ test("coherent selected result, alternatives, visible objective and responsive f
   await expect(primary.locator("[data-auction-primary-cost]")).toContainText(lang(info) === "ru" ? "120" : "120");
   await expect(primary.locator("[data-auction-primary-dps]")).toContainText("50");
   await expect(primary.locator("[data-auction-shopping-row]")).toHaveCount(2);
+  await page.locator("[data-auction-advanced-settings] > summary").click();
   const objective = page.locator("[data-auction-objective]");
   await expect(objective).toBeVisible();
   await objective.getByRole("radio").last().focus();
@@ -86,10 +87,12 @@ test("repriced purchases exceeding budget keep calculation and checked prices ex
 });
 test("objective persists as scoped draft, travels in request and clears old result", async ({ page }, info) => {
   await open(page, info);
+  await page.locator("[data-auction-advanced-settings] > summary").click();
   const objective = page.locator("[data-auction-objective]"), choices = objective.getByRole("radio");
   await choices.last().click();
   await expect(choices.last()).toBeChecked();
   await page.reload();
+  await page.locator("[data-auction-advanced-settings] > summary").click();
   await expect(choices.last()).toBeChecked();
   let requests = 0;
   await page.route("**/api/wow/auction-gear-plans**", async route => {
@@ -109,6 +112,7 @@ test("objective persists as scoped draft, travels in request and clears old resu
   await expect(choices.first()).toBeChecked();
   await choices.last().click();
   await page.getByRole("button", { name: "Private snapshot change" }).click();
+  await page.locator("[data-auction-advanced-settings] > summary").click();
   await expect(choices.first()).toBeChecked();
 });
 test("objective nonce recovery skips old checkpoint and polls new owned search", async ({ page }, info) => {
@@ -130,14 +134,20 @@ test("objective nonce recovery skips old checkpoint and polls new owned search",
   });
   await page.goto(`/?lang=${language}`);
   await expect(page.locator("[data-auction-search-result]")).toBeVisible();
+  await page.locator("[data-auction-advanced-settings] > summary").click();
   await expect(page.locator("[data-auction-objective]").getByRole("radio").last()).toBeChecked();
   expect(polled).toBeGreaterThan(0);
 });
-for (const mode of ["unknown", "insignificant", "stale"]) test(`${mode} result remains honest`, async ({ page }, info) => {
+for (const mode of ["unknown", "insignificant", "stale", "partial-negative", "incomplete-data"]) test(`${mode} result remains honest`, async ({ page }, info) => {
   await open(page, info, mode);
   const result = page.locator("[data-auction-assembly-result]");
   if (mode === "unknown") await expect(result.locator("[data-auction-primary-cost]")).toContainText(lang(info) === "ru" ? "Неизвестна" : "Unknown");
   if (mode === "insignificant") await expect(result).toContainText(lang(info) === "ru" ? "Покупка не рекомендована" : "Buying is not recommended");
-  if (mode === "stale") await expect(result).toContainText(lang(info) === "ru" ? "Цены не подтверждены" : "Prices are not verified");
+  if (mode === "stale") await expect(result).toContainText(lang(info) === "ru" ? "Цены устарели" : "Prices are out of date");
+  if (mode === "partial-negative") {
+    await expect(result).toContainText(lang(info) === "ru" ? "Проверена часть вариантов" : "Only some options have been checked");
+    await expect(result).toContainText(lang(info) === "ru" ? "Покупка не рекомендована" : "Buying is not recommended");
+  }
+  if (mode === "incomplete-data") await expect(result).toContainText(lang(info) === "ru" ? "Часть предметов не удалось оценить" : "Some items could not be evaluated");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

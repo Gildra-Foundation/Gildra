@@ -33,36 +33,46 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
   const complete = assembly.exhaustiveComplete && assembly.scenarioComparisonsComplete !== false && assembly.enhancementOptimization?.complete !== false;
   return <div className={styles.result} data-auction-assembly-result data-exhaustive={assembly.exhaustiveComplete} data-price-state={stale ? "stale" : "calculated"} data-selected-result={selected.key}>
     <h4 ref={summary} tabIndex={-1} className={tools.subtitle} data-auction-primary-title>{selected.significant
-      ? selected.key === recommended?.key ? complete ? t("Рекомендуемый комплект", "Recommended loadout") : t("Лучший из проверенных", "Best among checked") : t("Выбранный комплект", "Selected loadout")
+      ? selected.key === recommended?.key ? t("Рекомендуемый комплект", "Recommended loadout") : t("Выбранный комплект", "Selected loadout")
       : t("Подтверждённого улучшения нет", "No confirmed upgrade")}</h4>
-    <p className={styles.note}>{label(selected)} · {assembly.objective === "value" ? t("Подбор по цене за прирост DPS", "Selected by cost per DPS gain") : t("Подбор по максимуму DPS", "Selected for maximum DPS")}</p>
-    {stale ? <p role="status" className={styles.staleResult}>{t("Цены не подтверждены — пересоберите сет перед покупкой.", "Prices are not verified — rebuild the loadout before buying.")}</p> : null}
-    {!complete ? <p className={styles.note}>{t("Проверена часть вариантов. Полный поиск продолжит расчёт с сохранённого места.", "Only some options have been checked. Full search continues from the saved checkpoint.")}</p> : null}
-    {selected.kind === "items" ? <p className={styles.note}>{assembly.enhancementOptimization?.status === "pending"
-      ? t("Камни и чары для этого комплекта ещё не подобраны; полная стоимость и остаток бюджета неизвестны.", "Gems and enchants have not been selected for this loadout yet; full cost and remaining budget are unknown.")
-      : t("Камни и чары для этого комплекта не подобраны; полная стоимость и остаток бюджета неизвестны.", "Gems and enchants have not been selected for this loadout; full cost and remaining budget are unknown.")}</p>
-      : !selected.fullyEnhanced ? <p className={styles.note}>{t("Не все доступные камни и чары установлены в этом варианте.", "This option does not fill every available gem and enchant slot.")}</p> : null}
-    {selected.kind === "enhanced" && selected.totalCopper === null ? <p className={styles.staleResult}>{t("Полная цена или доступность расходников не подтверждена; остаток бюджета неизвестен.", "Full consumable prices or availability are unverified; remaining budget is unknown.")}</p> : null}
+    {stale ? <p role="status" className={styles.staleResult}>{t("Цены устарели. Обновите комплект перед покупкой.", "Prices are out of date. Refresh the loadout before buying.")}</p> : null}
+    <dl className={styles.decisionMetrics}>
+      <div data-auction-primary-cost><dt>{selected.totalCopper !== null ? t("Стоимость комплекта", "Loadout cost") : t("Стоимость вещей", "Equipment cost")}</dt>
+        <dd>{money(selected.totalCopper ?? selected.itemsCopper)}{selected.totalCopper === null ? <span className={styles.metricNote}>{t("Полная стоимость", "Total cost")}: {money(null)}</span> : null}</dd></div>
+      <div className={selected.significant ? styles.gain : undefined} data-auction-primary-dps><dt>{t("Прирост DPS", "DPS gain")}</dt>
+        <dd>{signed.format(selected.comparison.deltaPercent)}%<span className={styles.metricNote}>{signed.format(selected.comparison.deltaDps)} ± {numeric.format(selected.comparison.uncertainty.marginDps)} DPS</span></dd></div>
+    </dl>
     <p className={styles.note} data-auction-price-context>{t("Цены на момент расчёта", "Prices at calculation time")}</p>
-    <dl className={styles.totals} data-auction-primary-cost>
-      <div><dt>{t("Бюджет", "Budget")}</dt><dd>{money(assembly.budgetCopper)}</dd></div>
-      <div><dt>{t("Предметы", "Equipment")}</dt><dd>{money(selected.itemsCopper)}</dd></div>
-      <div><dt>{t("Камни", "Gems")}</dt><dd>{money(selected.gemsCopper)}</dd></div>
-      <div><dt>{t("Чары", "Enchants")}</dt><dd>{money(selected.enchantsCopper)}</dd></div>
-      <div><dt>{t("Полная стоимость", "Total cost")}</dt><dd>{money(selected.totalCopper)}</dd></div>
-      <div><dt>{t("Останется", "Remaining")}</dt><dd>{money(selected.remainingCopper)}</dd></div>
-      {selected.significant && selected.totalCopper !== null ? <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{formatGoldRate(selected.totalCopper / selected.comparison.deltaDps, locale)}</dd></div> : null}
-    </dl>
-    <dl className={styles.dpsMetrics} data-auction-primary-dps>
-      <div><dt>{t("Сейчас", "Current gear")}</dt><dd>{numeric.format(selected.comparison.baselineDps)} <span>DPS</span></dd></div>
-      <div><dt>{t("С этим комплектом", "With this loadout")}</dt><dd>{numeric.format(selected.comparison.candidateDps)} <span>DPS</span></dd></div>
-      <div className={selected.significant ? styles.gain : undefined}><dt>{t("Изменение", "Change")}</dt><dd>{signed.format(selected.comparison.deltaPercent)}% <span>{signed.format(selected.comparison.deltaDps)} ± {numeric.format(selected.comparison.uncertainty.marginDps)} DPS</span></dd></div>
-    </dl>
+    {!complete ? <p className={styles.note}>{selected.significant
+      ? t("Рекомендация по проверенным вариантам. Можно продолжить поиск.", "Recommended from the options checked. You can keep searching.")
+      : t("Проверена часть вариантов. Можно продолжить поиск.", "Only some options have been checked. You can keep searching.")}</p> : null}
+    {assembly.dataComplete === false ? <p className={styles.note}>{t("Часть предметов не удалось оценить.", "Some items could not be evaluated.")}</p> : null}
+    {selected.kind === "items" ? <p className={styles.note}>{t("Стоимость указана только за вещи. Камни и чары не подобраны.", "The price covers equipment only. Gems and enchants have not been selected.")}</p>
+      : !selected.fullyEnhanced ? <p className={styles.note}>{t("Не все доступные камни и чары установлены в этом варианте.", "This option does not fill every available gem and enchant slot.")}</p> : null}
+    {selected.kind === "enhanced" && selected.totalCopper === null ? <p className={styles.staleResult}>{t("Полная цена или наличие камней и чар не подтверждены. Проверьте наличие и цены перед покупкой.", "The full price or availability of gems and enchants is unverified. Check availability and prices before buying.")}</p> : null}
     {!selected.significant ? <p role="status" className={tools.status}>{selected.comparison.deltaDps <= 0
       ? t("Этот вариант не улучшает текущую экипировку. Покупка не рекомендована.", "This option does not improve your current gear. Buying is not recommended.")
       : t("Прирост в пределах погрешности. Покупка не рекомендована.", "The gain is within the margin of error. Buying is not recommended.")}</p> : null}
     {selected.purchases.length || selected.enhancement?.configuration.consumables.length ? <AuctionShoppingList key={`${assembly.searchId}:${selected.key}`} characterSlug={characterSlug} snapshotKey={snapshotKey} searchId={assembly.searchId} result={selected} locale={locale} stale={stale} selectionLocked={selectionLocked} onExcludeLot={onExcludeLot} /> : null}
     {selected.removedSlots.includes("OFF_HAND") ? <p className={tools.status}>{t("Левая рука снимается ради двуручного оружия.", "The off-hand is removed for the two-handed weapon.")}</p> : null}
+    <details className={styles.disclosure} data-auction-calculation-details><summary>{t("Стоимость и расчёт DPS", "Cost and DPS breakdown")}</summary>
+      <div className={styles.resultDetails}>
+        <p className={styles.note}>{label(selected)} · {assembly.objective === "value" ? t("Подбор по цене за прирост DPS", "Selected by cost per DPS gain") : t("Подбор по максимуму DPS", "Selected for maximum DPS")}</p>
+        <dl className={styles.totals}>
+          <div><dt>{t("Бюджет", "Budget")}</dt><dd>{money(assembly.budgetCopper)}</dd></div>
+          <div><dt>{t("Предметы", "Equipment")}</dt><dd>{money(selected.itemsCopper)}</dd></div>
+          <div><dt>{t("Камни", "Gems")}</dt><dd>{money(selected.gemsCopper)}</dd></div>
+          <div><dt>{t("Чары", "Enchants")}</dt><dd>{money(selected.enchantsCopper)}</dd></div>
+          <div><dt>{t("Полная стоимость", "Total cost")}</dt><dd>{money(selected.totalCopper)}</dd></div>
+          <div><dt>{t("Останется", "Remaining")}</dt><dd>{money(selected.remainingCopper)}</dd></div>
+          {selected.significant && selected.totalCopper !== null ? <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{formatGoldRate(selected.totalCopper / selected.comparison.deltaDps, locale)}</dd></div> : null}
+        </dl>
+        <dl className={styles.dpsMetrics}>
+          <div><dt>{t("Сейчас", "Current gear")}</dt><dd>{numeric.format(selected.comparison.baselineDps)} <span>DPS</span></dd></div>
+          <div><dt>{t("С этим комплектом", "With this loadout")}</dt><dd>{numeric.format(selected.comparison.candidateDps)} <span>DPS</span></dd></div>
+        </dl>
+      </div>
+    </details>
     {alternatives.length ? <details className={styles.disclosure} data-auction-result-alternatives><summary>{t("Другие рассчитанные комплекты", "Other computed loadouts")}</summary>
       <ul className={styles.alternatives}>{alternatives.map((candidate, index) => <li key={candidate.key}>
         <p className={styles.note}>{label(candidate)} · {candidate.purchases.map(item => item.name).join(" · ") || t("Текущая экипировка", "Current gear")}</p>

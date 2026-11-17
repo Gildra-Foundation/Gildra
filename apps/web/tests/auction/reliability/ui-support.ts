@@ -33,7 +33,7 @@ export class AuctionHarness {
   get panel() { return this.page.getByRole("region", { name: this.t("Улучшения с аукциона", "Auction House upgrades"), exact: true }); }
   get result() { return this.panel.locator("[data-auction-assembly-result]"); }
   get assembly() { return this.panel.locator("[data-auction-assembly]"); }
-  get build() { return this.assembly.getByRole("button", { name: /Собрать сет под бюджет|Продолжить сборку сета|Обновить и пересобрать сет|Build a loadout within budget|Continue loadout assembly|Refresh and rebuild loadout|Повторить|Retry/ }).first(); }
+  get build() { return this.assembly.getByRole("button", { name: /Собрать комплект|Build loadout|Собрать сет под бюджет|Продолжить сборку сета|Обновить и пересобрать сет|Build a loadout within budget|Continue loadout assembly|Refresh and rebuild loadout|Повторить|Retry/ }).first(); }
   t(ru: string, en: string) { return this.language === "ru" ? ru : en; }
   async install() {
     await this.page.route("**/api/wow/auction-gear-plans**", route => this.intercept(route));
@@ -148,10 +148,13 @@ export class AuctionHarness {
     await expect.poll(() => this.page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
   }
   async search() {
-    await this.panel.getByRole("button", { name: this.t("Найти улучшения", "Find upgrades"), exact: true }).click();
+    await this.panel.locator('button[type="submit"]').click();
     await expect(this.panel.locator("[data-auction-search-result]")).toBeVisible();
   }
-  async assemble() { await this.build.click(); await expect(this.result).toBeVisible(); }
+  async assemble() {
+    if (!await this.build.isVisible()) await this.assembly.getByText(/^(Настроить варианты для сета|Loadout options)$/).click();
+    await this.build.click(); await expect(this.result).toBeVisible();
+  }
   releasePost() { this.mode = "normal"; this.releaseLate?.(); }
   async release() { this.releaseHeld?.(); this.releaseLate?.(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
 }
