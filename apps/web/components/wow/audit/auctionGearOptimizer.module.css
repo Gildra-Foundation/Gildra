@@ -3,8 +3,9 @@
 .panel :is(input, select, button, summary, a):focus-visible, .assembly:focus-visible { outline: 2px solid var(--atlas-accent-strong); outline-offset: 3px; }
 .form, .recovery, .searchResult, .result, .manage { display: grid; gap: var(--atlas-space-3); min-width: 0; }
 .searchResult { gap: var(--atlas-space-4); padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); }
-.disclosure > summary { display: flex; align-items: center; min-height: var(--atlas-control-height); color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); cursor: pointer; }
+.disclosure > summary { display: list-item; align-content: center; list-style-position: inside; min-height: var(--atlas-control-height); color: var(--atlas-accent-strong); font-size: var(--atlas-text-small); cursor: pointer; }
 .disclosure[open] > summary { margin-bottom: var(--atlas-space-2); }
+.advancedSettingsContent, .resultDetails { display: grid; gap: var(--atlas-space-3); min-width: 0; }
 .slotFieldset { min-width: 0; margin: var(--atlas-space-2) 0 0; padding: 0; border: 0; }
 .slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--atlas-space-3); }
 .slots label, .include { display: flex; align-items: center; gap: var(--atlas-space-2); min-height: var(--atlas-control-height); min-width: 0; cursor: pointer; font-size: var(--atlas-text-small); }
@@ -38,7 +39,7 @@
 .alternatives > li + li { margin-top: var(--atlas-space-3); padding-top: var(--atlas-space-3); border-top: 1px solid var(--atlas-line-soft); }
 
 /* Loadout assembly. */
-.assembly { display: grid; gap: var(--atlas-space-3); min-width: 0; padding-top: var(--atlas-space-4); border-top: 1px solid var(--atlas-line-soft); scroll-margin-block-start: 160px; }
+.assembly { display: grid; gap: var(--atlas-space-3); min-width: 0; scroll-margin-block-start: 160px; }
 .manage { display: flex; flex-wrap: wrap; gap: 0 var(--atlas-space-5); }
 .excludedLots ul { display: grid; gap: var(--atlas-space-3); margin: 0; padding: 0; list-style: none; }
 .excludedLots li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--atlas-space-3); min-width: 0; }
@@ -52,6 +53,12 @@
 .totals dd, .dpsMetrics dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .dpsMetrics dd span { color: var(--atlas-text-muted); font: var(--atlas-text-small) / var(--atlas-leading-body) var(--atlas-font-ui); }
 .gain dd { color: var(--atlas-positive); }
+.decisionMetrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3) var(--atlas-space-5); margin: 0; }
+.decisionMetrics > div { min-width: 0; }
+.decisionMetrics dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-small); }
+.decisionMetrics dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.decisionMetrics .gain dd { color: var(--atlas-positive); }
+.metricNote { display: block; color: var(--atlas-text-muted); font: var(--atlas-text-small) / var(--atlas-leading-body) var(--atlas-font-ui); }
 .lots, .replacements { margin: 0; padding: 0; list-style: none; }
 .lot { display: grid; gap: var(--atlas-space-2); padding-block: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); }
 .lot > button { justify-self: start; }

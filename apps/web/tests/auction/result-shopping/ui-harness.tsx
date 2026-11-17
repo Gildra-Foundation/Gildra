@@ -7,10 +7,10 @@ import type { AuctionGearAssemblyResult } from "@/lib/wow/auctionGearTypes";
 /** Private fixture page; never mounted by the public application. */
 export function ResultShoppingPanels({ locale, initialRevision = 0, mode }: { locale: "en" | "ru"; initialRevision?: number; mode?: string; tooltip?: boolean; weapon?: boolean; controls?: boolean }) {
   const [revision, setRevision] = useState(initialRevision), [quote, setQuote] = useState(0);
-  const comparison = (gain: number) => ({ baselineDps: 1000, candidateDps: 1000 + gain, deltaDps: gain, deltaPercent: gain / 10, uncertainty: { significant: mode !== "insignificant", marginDps: 5 } });
+  const comparison = (gain: number) => { if (mode === "partial-negative") gain = -20; return ({ baselineDps: 1000, candidateDps: 1000 + gain, deltaDps: gain, deltaPercent: gain / 10, uncertainty: { significant: mode !== "insignificant" && mode !== "partial-negative", marginDps: 5 } }); };
   const purchase = { auctionId: 7001, itemId: 7001, name: "Synthetic Exact Helm", slotType: "HEAD", variantKey: "synthetic-exact-variant", itemLevel: 100, lotCostCopper: 1000000 + quote, quantity: 1 };
   const assembly = { kind: "assembly", searchId: "synthetic-result-search", budgetCopper: 10000000, spentCopper: purchase.lotCostCopper, remainingCopper: 9000000,
-    purchases: [purchase], removedSlots: [], comparison: comparison(20), bestConfirmed: null, exhaustiveComplete: true, objective: "value", selectedSlots: ["HEAD"],
+    purchases: [purchase], removedSlots: [], comparison: comparison(20), bestConfirmed: null, exhaustiveComplete: mode !== "partial-negative", dataComplete: mode !== "incomplete-data", objective: "value", selectedSlots: ["HEAD"],
     enhancementOptimization: { complete: true, status: "ready", recommendations: [{ label: "synthetic-enhanced", purchases: [purchase], comparison: comparison(50), consumableNames: { "7010": "Synthetic Exact Gem" },
       enhancementNames: { gems: { "5": "Synthetic Exact Gem" }, enchants: {} }, configuration: { key: "synthetic-enhanced-config", itemsCopper: purchase.lotCostCopper, totalCopper: mode === "unknown" ? null : 1200000 + quote,
         fullyEnhanced: true, status: mode === "unknown" ? "price_unknown" : "priced", sourceUpdatedAt: new Date().toISOString(),

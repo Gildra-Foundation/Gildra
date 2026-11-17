@@ -61,8 +61,11 @@ export class CompletionHarness {
   get assembly() { return this.panel.locator("[data-auction-assembly]"); }
   get result() { return this.panel.locator("[data-auction-assembly-result]"); }
   get find() { return this.panel.locator('button[type="submit"]'); }
-  get build() { return this.assembly.getByRole("button", { name: /Собрать сет под бюджет|Продолжить сборку сета|Обновить и пересобрать сет|Build a loadout within budget|Continue loadout assembly|Refresh and rebuild loadout/ }).first(); }
+  get build() { return this.assembly.getByRole("button", { name: /Собрать комплект|Build loadout|Собрать сет под бюджет|Продолжить сборку сета|Обновить и пересобрать сет|Build a loadout within budget|Continue loadout assembly|Refresh and rebuild loadout/ }).first(); }
   async install() { await this.page.route("**/api/wow/auction-gear-plans**", route => this.intercept(route)); }
+  async openBuildOptions() {
+    if (!await this.build.isVisible()) await this.assembly.getByText(/^(Настроить варианты для сета|Loadout options)$/).click();
+  }
   async open(controls = false) {
     await this.page.goto(`/?lang=${this.language}${controls ? "&controls=1" : ""}`, { waitUntil: "networkidle" });
     await this.page.evaluate(() => document.fonts.ready);

@@ -51,11 +51,12 @@ test("repeat-audit regression: changing parameters retires background discovery 
   await expect(budget).toBeEnabled(); await expect(budget).toBeFocused();
   await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
   await budget.fill("9000");
-  await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки и цель подбора|Equipment slots and objective/ }).click();
-  await auction.panel.getByRole("combobox", { name: /Цель подбора|Selection objective/ }).selectOption("dps");
+  await auction.panel.locator("[data-auction-advanced-settings] > summary").click();
+  await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
+  await auction.panel.getByRole("radio", { name: /Максимум DPS|Maximum DPS/ }).click();
   await auction.search();
   expect(auction.requests.filter(body => body.action === "search")).toHaveLength(2);
-  expect(auction.requests.at(-1)).toMatchObject({ action: "search", budgetGold: "9000", objective: "dps" });
+  expect(auction.requests.filter(body => body.action === "search").at(-1)).toMatchObject({ action: "search", budgetGold: "9000", objective: "dps" });
   await page.screenshot({ path: info.outputPath("changed-background-parameters.png"), fullPage: true });
 });
 
@@ -908,10 +909,21 @@ test("four-fix regression: cold-tab conflict offers explicit recovery with the o
   const requests: string[] = [], job = { id: "cold-tab-active", status: "queued", mode: "search", result: null, progress: null, error: null, scope: { characterSlug, locale: auction.language } };
   const formIntent = { ...job.scope, budgetCopper: 3333300, scenario: "aoe", objective: "dps", selectedSlots: ["WRIST"] };
   const result = { ...searchResult(), budgetCopper: formIntent.budgetCopper, scenario: formIntent.scenario, objective: formIntent.objective, selectedSlots: formIntent.selectedSlots };
+  const actions: Array<{ action: string; searchId?: string }> = [];
+  const loadout = { ...assemblyResult({ complete: true }), budgetCopper: result.budgetCopper, selectedSlots: result.selectedSlots, scenario: result.scenario, objective: "dps", updatedSearch: result };
   await page.route("**/api/wow/auction-gear-plans**", async route => {
     requests.push(route.request().method() + new URL(route.request().url()).search);
-    if (route.request().method() === "POST") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent } });
-    else await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "search" } });
+    if (route.request().method() === "POST") {
+      const body = route.request().postDataJSON() as { action: string; searchId?: string }; actions.push(body);
+      if (body.action === "search") await route.fulfill({ status: 409, json: { error: "plan_already_running", activeJob: job, formIntent } });
+      else {
+        expect(body).toMatchObject({ action: "assemble", searchId: result.searchId });
+        await route.fulfill({ status: 202, json: { ...completedJob(auction.language, loadout), id: "cold-tab-automatic-assembly", mode: "assembly" } });
+      }
+    }
+    else if (new URL(route.request().url()).searchParams.get("id") === "cold-tab-automatic-assembly") {
+      await route.fulfill({ json: { ...completedJob(auction.language, loadout), id: "cold-tab-automatic-assembly", mode: "assembly" } });
+    } else await route.fulfill({ json: { ...completedJob(auction.language, result), id: job.id, mode: "search" } });
   });
   await auction.open(); await auction.find.click();
   const open = auction.panel.getByRole("button", { name: /Открыть расчёт|Open calculation/, exact: true });
@@ -919,12 +931,16 @@ test("four-fix regression: cold-tab conflict offers explicit recovery with the o
   expect(requests).toHaveLength(1);
   await open.click(); await expect(auction.panel.locator("[data-auction-search-result]")).toBeVisible();
   await expect(auction.panel.locator('[name="budgetGold"]')).toHaveValue("333.33");
-  await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки и цель подбора|Equipment slots and objective/ }).click();
+  await auction.panel.locator("[data-auction-advanced-settings] > summary").click();
+  await auction.panel.locator("summary").filter({ hasText: /Слоты экипировки|Equipment slots/ }).click();
   await expect(auction.panel.locator('[name="objective"]')).toHaveValue("dps");
   await expect(auction.panel.getByRole("combobox", { name: /Бой|Encounter/ })).toHaveValue("aoe");
   await expect(auction.panel.locator('[name="selectedSlots"]:checked')).toHaveCount(1);
   await expect(auction.panel.locator('[name="selectedSlots"][value="WRIST"]')).toBeChecked();
-  expect(requests.filter(x => x.startsWith("POST"))).toHaveLength(1);
+  await expect(auction.result).toBeVisible(); await expect(auction.find).toBeEnabled();
+  expect(actions.filter(body => body.action === "search")).toHaveLength(1);
+  expect(actions.filter(body => body.action === "assemble")).toHaveLength(1);
+  expect(requests.some(request => request.startsWith("DELETE"))).toBe(false);
   await page.screenshot({ path: info.outputPath("cold-tab-original-intent-restored.png"), fullPage: true });
 });
 

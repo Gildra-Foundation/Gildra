@@ -707,6 +707,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     editFocusRequested.current = true;
     await cancel();
   }
+  function revealSettingsField(field: HTMLElement | null) {
+    for (let details = field?.closest("details"); details; details = details.parentElement?.closest("details") ?? null) details.open = true;
+  }
   async function startSearch(kind: AuctionGearRunPolicy["kind"] = "quick") {
     if (!validBudget || initializing || active.current || discovered?.activeJob || ownerLookupFailed || cache.current?.cancellationRequested) return;
     try {
@@ -719,6 +722,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       remember({ orchestration: createAuctionGearRunPolicy(kind) });
       void run({ action: "search", characterSlug, budgetGold, selectedSlots: slots, scenario, fightLengthSeconds, targets, compareScenarios, objective, locale }, "search");
     } catch (reason) {
+      if (reason instanceof Error && reason.message === "invalid_equipment_slots") {
+        const field = panel.current?.querySelector<HTMLInputElement>('input[name="selectedSlots"]') ?? null;
+        revealSettingsField(field); field?.focus();
+      }
       setTransport({ mode: "search", status: "failed", progress: null, error: reason instanceof Error ? reason.message : "invalid_plan_request" });
     }
   }
@@ -858,6 +865,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     {transport.status === "failed" && cancellation === "failed" ? <button type="button" className={tools.quiet} onClick={() => void cancel()}>{t("Повторить отмену", "Retry cancellation")}</button> : null}
     {transport.status === "failed" && !cancellation && retryJob ? <button type="button" className={tools.quiet} disabled={!validBudget} onClick={() => void run({ action: "poll", id: retryJob.id, observedActive: retryJob.observedActive }, retryJob.mode)}>{t("Повторить подключение", "Reconnect to calculation")}</button> : null}
     {transport.status === "failed" && !cancellation && !retryJob && hasRecovery ? <button type="button" className={tools.quiet} disabled={!validBudget} onClick={() => setRecoveryAttempt(value => value + 1)}>{t("Повторить восстановление", "Retry recovery")}</button> : null}
+    {transport.status === "failed" && !search && !cancellation && !retryJob && hasRecovery ? <button type="button" className={tools.quiet} disabled={formLocked || !validBudget} onClick={continueSearch}>{t("Искать дальше", "Search further")}</button> : null}
   </>;
   const incompleteData = Boolean(search && auctionGearCoverageReasons(search.coverage, search.dataComplete, locale).length);
   const discoveryIncomplete = Boolean(search && (search.discoveryComplete === false || search.discoveryComplete === undefined && search.searchLimited));
@@ -872,7 +880,9 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       {!cancellation ? <button type="button" className={tools.quiet} disabled={running} onClick={() => void cancelOwnedCalculation()}>{t("Отменить и изменить параметры", "Cancel and change parameters")}</button> : null}</div>
     </div> : null}
     {ownerLookupFailed && !discovered?.activeJob ? <button type="button" className={tools.quiet} disabled={running || Boolean(cancellation)} onClick={() => void findOwnedCalculation()}>{t("Найти активный расчёт", "Find active calculation")}</button> : null}
-    {!supported ? <p className={tools.status}>{messages.damage_specialization_required}</p> : <form className={styles.form} onSubmit={event => { event.preventDefault(); startSearch(); }}>
+    {!supported ? <p className={tools.status}>{messages.damage_specialization_required}</p> : <form className={styles.form} onSubmit={event => { event.preventDefault(); startSearch(); }} onInvalidCapture={event => {
+      revealSettingsField(event.target as HTMLElement);
+    }}>
       <div className={tools.fields}>
         <label className={tools.field}>{t("Бюджет, золото", "Budget, gold")}<input ref={budgetInput} name="budgetGold" inputMode="decimal" value={budget} onChange={event => {
           const next = event.target.value; setBudgetInput(next);
@@ -884,18 +894,20 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           invalidate({ budget: next });
         }} disabled={formLocked} required aria-invalid={!validBudget || undefined} aria-describedby={validBudget ? undefined : "auction-budget-error"} /></label>
         <label className={tools.field}>{t("Бой", "Encounter")}<select value={scenario} onChange={event => { setScenario(event.target.value); const preset = parseAuctionGearEncounter({ scenario: event.target.value }); setFightLengthSeconds(preset.fightLengthSeconds); setTargets(preset.targets); invalidate({ scenario: event.target.value, fightLengthSeconds: preset.fightLengthSeconds, targets: preset.targets }); }} disabled={formLocked}>
-          <option value="single-target">{t("Одна цель", "Single target")}</option><option value="aoe">{t("5 целей", "5 targets")}</option><option value="execute">{t("Короткий бой", "Short fight")}</option>
+          <option value="single-target">{t("Одна цель", "Single target")}</option><option value="aoe">{t("Несколько целей", "Multiple targets")}</option><option value="execute">{t("Короткий бой", "Short fight")}</option>
         </select></label>
-        <label className={tools.field}>{t("Длительность, с", "Duration, seconds")}<input type="number" min={30} max={300} step={1} value={fightLengthSeconds} disabled={formLocked} onChange={event => { setFightLengthSeconds(Number(event.target.value)); invalidate({ fightLengthSeconds: Number(event.target.value) }); }} required /></label>
-        <label className={tools.field}>{t("Цели", "Targets")}<input type="number" min={1} max={scenario === "aoe" ? 8 : 1} step={1} value={targets} disabled={formLocked || scenario !== "aoe"} onChange={event => { setTargets(Number(event.target.value)); invalidate({ targets: Number(event.target.value) }); }} required /></label>
         <div className={tools.actions}>
           {running && !cancellation ? <button className={tools.quiet} type="button" onClick={() => void editParameters()}>{t("Изменить параметры", "Change parameters")}</button> : null}
           {!cancellation && running && (transport?.mode === "search" || !search) ? <button className={tools.quiet} type="button" onClick={cancel}>{transport?.mode === "assembly" ? t("Отменить сборку", "Cancel assembly") : t("Отменить поиск", "Cancel search")}</button> : null}
-          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running && transport?.mode === "search" ? t("Ищем вещи…", "Searching…") : t("Быстрый подбор", "Quick selection")}</MaterialButton>
-          <button type="button" className={tools.quiet} disabled={formLocked || !validBudget} onClick={continueSearch}>{t("Полный поиск", "Full search")}</button>
+          <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running ? t("Подбираем улучшения…", "Finding upgrades…") : t("Подобрать улучшения", "Find upgrades")}</MaterialButton>
         </div>
       </div>
-      <p className={styles.note}>{t("Быстрый подбор проверит часть вариантов и соберёт один комплект. Полный поиск продолжит проверку с сохранённого места.", "Quick selection checks a limited set of options and builds one loadout. Full search continues from the saved checkpoint.")}</p>
+      <details className={styles.disclosure} data-auction-advanced-settings><summary>{t("Дополнительные настройки", "Advanced settings")}</summary>
+      <div className={styles.advancedSettingsContent}>
+        <div className={tools.fields}>
+        <label className={tools.field}>{t("Длительность, с", "Duration, seconds")}<input type="number" min={30} max={300} step={1} value={fightLengthSeconds} disabled={formLocked} onChange={event => { setFightLengthSeconds(Number(event.target.value)); invalidate({ fightLengthSeconds: Number(event.target.value) }); }} required /></label>
+        <label className={tools.field}>{t("Цели", "Targets")}<input type="number" min={1} max={scenario === "aoe" ? 8 : 1} step={1} value={targets} disabled={formLocked || scenario !== "aoe"} onChange={event => { setTargets(Number(event.target.value)); invalidate({ targets: Number(event.target.value) }); }} required /></label>
+        </div>
       <fieldset className={styles.slotFieldset} disabled={formLocked} data-auction-objective>
         <legend id="auction-objective-label">{t("Цель подбора", "Selection objective")}</legend>
         <AtlasSegmented aria-labelledby="auction-objective-label" aria-describedby="auction-objective-help" value={objective} disabled={formLocked} options={[
@@ -913,7 +925,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           : t("Наибольший подтверждённый DPS в пределах бюджета. Другая цель потребует нового поиска.", "Highest confirmed DPS within budget. Changing the objective requires a new search.")}</p>
       </fieldset>
       <fieldset className={styles.slotFieldset} disabled={formLocked}><legend>{t("Сравнить финалистов в других боях", "Compare finalists in other encounters")}</legend>
-        <p className={styles.note}>{t("Сравнение выбранных боёв выполняется при полном поиске после завершения перебора. Лучший вариант зависит от боя.", "Selected encounters are compared during full search after traversal finishes. The best option depends on the encounter.")}</p>
+        <p className={styles.note}>{t("Дополнительные бои сравниваются после «Искать дальше», когда перебор вариантов завершён.", "Additional encounters are compared after “Search further”, once traversal finishes.")}</p>
         <div className={styles.slots}>{(["single-target", "aoe", "execute"] as const).map(value => <label key={value}><input type="checkbox" checked={compareScenarios.some(e => e.scenario === value)} onChange={event => {
           const next = event.target.checked ? [...compareScenarios, parseAuctionGearEncounter({ scenario: value })] : compareScenarios.filter(e => e.scenario !== value);
           setCompareScenarios(next);
@@ -926,36 +938,27 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <div className={tools.actions}><button className={tools.quiet} type="button" onClick={() => { if (sameSelection(selectedSlots, auctionGearSlots)) return; setSelectedSlots([...auctionGearSlots]); invalidate({ selectedSlots: [...auctionGearSlots] }); }}>{t("Выбрать все", "Select all")}</button><button className={tools.quiet} type="button" onClick={() => { if (!selectedSlots.length) return; setSelectedSlots([]); invalidate({ selectedSlots: [] }); }}>{t("Снять выбор", "Clear selection")}</button></div>
         <div className={styles.slots}>{auctionGearSlots.map(slot => <label key={slot}><input type="checkbox" name="selectedSlots" value={slot} checked={selectedSlots.includes(slot)} onChange={event => { const next = event.target.checked ? auctionGearSlots.filter(value => value === slot || selectedSlots.includes(value)) : selectedSlots.filter(value => value !== slot); setSelectedSlots(next); invalidate({ selectedSlots: next }); }} /><span>{slotName(slot)}</span></label>)}</div>
       </fieldset></details>
+      </div></details>
       {!validBudget ? <p id="auction-budget-error" role="alert" className={tools.alert}><AlertTriangle aria-hidden="true" />{messages.invalid_budget}</p> : null}
     </form>}
     {feedback("search")}
     {!search ? feedback("assembly") : null}
     {search ? <div className={styles.searchResult} data-auction-search-result data-auction-market={search.market.realm}>
-      {marketStale ? <p className={tools.status}><AlertTriangle aria-hidden="true" />{t("Цены могли измениться — запустите новый поиск.", "Prices may have changed — run a new search.")}</p> : null}
-      {!search.searchComplete && !running && !cancellation ? <div className={tools.actions}><span className={tools.status}>{t("Осталось сравнить", "Left to compare")}: {number(search.pendingItems)}</span></div> : null}
-      <details className={styles.disclosure} open={assembly ? undefined : true} key={assembly ? "assembled-suggestions" : "search-suggestions"} data-auction-single-options><summary>{t("Отдельные улучшения по слотам", "Individual slot upgrades")}</summary>
-      {recommendationGroups.length
-        ? <AuctionGearSuggestions groups={recommendationGroups} locale={locale} excluded={excluded} excludedVariantKeys={excludedVariantKeys} running={selectionLocked} marketStale={marketStale} slotName={slotName} onAllowed={setAllowed} />
-        : <p role="status" className={styles.empty}>{excludedUpgrades ? t("Найденные улучшения исключены из подбора.", "The upgrades found are excluded.")
-          : !search.searchComplete || search.pendingItems > 0 || discoveryIncomplete
-            ? search.items.some(item => item.comparison)
-              ? t("Среди проверенных вещей улучшений пока нет.", "No upgrades among the items compared so far.")
-              : t("Пока недостаточно данных для сравнения. Продолжите полный поиск.", "Not enough comparison data yet. Continue with full search.")
-            : incompleteData ? t("В проверенных вариантах улучшений нет; часть вещей не удалось оценить.", "No upgrades among verified options; some items could not be evaluated.")
-              : t("Проверка завершена: отдельных улучшений не найдено.", "Search complete: no single-item upgrades found.")}</p>}
-      </details>
-        <section id="auction-assembly" tabIndex={-1} className={styles.assembly} aria-labelledby="auction-assembly-title" data-auction-assembly>
-          <div className={tools.head}>
-            <h4 className={tools.subtitle} id="auction-assembly-title">{t("Сет под бюджет", "Loadout within budget")}</h4>
+      {marketStale && !assembly ? <p className={tools.status}><AlertTriangle aria-hidden="true" />{t("Цены могли измениться — запустите новый поиск.", "Prices may have changed — run a new search.")}</p> : null}
+        <section id="auction-assembly" tabIndex={-1} className={styles.assembly} aria-label={t("Результат подбора", "Selection result")} data-auction-assembly>
+          {!assembly || running && transport?.mode === "assembly" && !cancellation || !running && (assemblyStale || marketStale) ? <div className={tools.head}>
+            {!assembly ? <h4 className={tools.subtitle} id="auction-assembly-title">{t("Комплект", "Loadout")}</h4> : null}
             <div className={tools.actions}>
               {!cancellation && running && transport?.mode === "assembly" ? <button className={tools.quiet} type="button" onClick={cancel}>{t("Отменить сборку", "Cancel assembly")}</button> : null}
-              <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="button" disabled={selectionLocked || !available.length} aria-describedby={!validBudget ? "auction-budget-error" : !available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{running && transport?.mode === "assembly" ? t("Собираем сет…", "Building loadout…") : assembly?.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : assembly ? t("Продолжить сборку сета", "Continue loadout assembly") : t("Собрать сет под бюджет", "Build a loadout within budget")}</MaterialButton>
+              {!running && (!assembly || assemblyStale || marketStale) ? <button className={tools.quiet} type="button" disabled={selectionLocked || !available.length} aria-describedby={!validBudget ? "auction-budget-error" : !available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{assembly ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : t("Собрать комплект", "Build loadout")}</button> : null}
             </div>
-          </div>
-          {!available.length ? <p id="auction-assembly-disabled-reason" data-assembly-disabled-reason className={tools.status}>{search.items.length ? t("Все варианты исключены.", "All options are excluded.") : t("Вариантов для сборки пока нет.", "No options to build from yet.")}</p> : null}
+          </div> : null}
+          {!available.length ? <p id="auction-assembly-disabled-reason" data-assembly-disabled-reason className={tools.status}>{search.items.length ? t("Все варианты исключены.", "All options are excluded.") : search.searchComplete && !running ? t("Вариантов для сборки не найдено. Измените бюджет или слоты экипировки.", "No options found for a loadout. Change your budget or equipment slots.") : t("Вариантов для сборки пока нет.", "No options to build from yet.")}</p> : null}
+          {feedback("assembly")}
+          {assembly ? <AuctionGearResult characterSlug={characterSlug} snapshotKey={snapshotKey} assembly={assembly} locale={locale} stale={assemblyStale} selectionLocked={selectionLocked} onExcludeLot={auctionId => setLotAllowed(auctionId, false)} /> : null}
           <div className={styles.manage}>
           {search.items.length ? <details className={styles.disclosure}><summary>{t("Настроить варианты для сета", "Loadout options")}</summary>
-            <div className={tools.actions}><button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(true)}>{t("Разрешить все варианты", "Allow all options")}</button><button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(false)}>{t("Исключить все варианты", "Exclude all options")}</button></div>
+            <div className={tools.actions}>{assembly && !running && !assemblyStale && !marketStale ? <button className={tools.quiet} type="button" disabled={selectionLocked || !available.length} onClick={startAssembly}>{assembly.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : t("Продолжить сборку сета", "Continue loadout assembly")}</button> : null}<button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(true)}>{t("Разрешить все варианты", "Allow all options")}</button><button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(false)}>{t("Исключить все варианты", "Exclude all options")}</button></div>
           </details> : null}
           {excludedGroups.length ? <details data-auction-exclusions className={`${styles.disclosure} ${styles.excludedLots}`} onToggle={event => setExcludedOpen(event.currentTarget.open)}><summary>{t("Исключения", "Exclusions")}: {number(excludedGroups.length)}</summary>
             {excludedOpen ? <><ul>{excludedGroups.slice(0, excludedLimit).map(([key, group], index) => {
@@ -965,9 +968,19 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
             })}</ul>{excludedGroups.length > excludedLimit ? <button type="button" className={tools.quiet} onClick={() => setExcludedLimit(limit => limit + 20)}>{t("Показать ещё 20", "Show 20 more")}</button> : null}</> : null}
           </details> : null}
           </div>
-          {feedback("assembly")}
-          {assembly ? <AuctionGearResult characterSlug={characterSlug} snapshotKey={snapshotKey} assembly={assembly} locale={locale} stale={assemblyStale} selectionLocked={selectionLocked} onExcludeLot={auctionId => setLotAllowed(auctionId, false)} /> : null}
         </section>
+      <div className={tools.actions}><button type="button" className={tools.quiet} disabled={formLocked || !validBudget} onClick={continueSearch}>{t("Искать дальше", "Search further")}</button>{!search.searchComplete && search.pendingItems > 0 && !running && !cancellation ? <span className={tools.status}>{t("Осталось сравнить", "Left to compare")}: {number(search.pendingItems)}</span> : null}</div>
+      <details className={styles.disclosure} data-auction-single-options><summary>{t("Отдельные улучшения по слотам", "Individual slot upgrades")}</summary>
+      {recommendationGroups.length
+        ? <AuctionGearSuggestions groups={recommendationGroups} locale={locale} excluded={excluded} excludedVariantKeys={excludedVariantKeys} running={selectionLocked} marketStale={marketStale} slotName={slotName} onAllowed={setAllowed} />
+        : <p role="status" className={styles.empty}>{excludedUpgrades ? t("Найденные улучшения исключены из подбора.", "The upgrades found are excluded.")
+          : !search.searchComplete || search.pendingItems > 0 || discoveryIncomplete
+            ? search.items.some(item => item.comparison)
+              ? t("Среди проверенных вещей улучшений пока нет.", "No upgrades among the items compared so far.")
+              : t("Пока недостаточно данных для сравнения. Нажмите «Искать дальше».", "Not enough comparison data yet. Select “Search further”.")
+            : incompleteData ? t("В проверенных вариантах улучшений нет; часть вещей не удалось оценить.", "No upgrades among verified options; some items could not be evaluated.")
+              : t("Проверка завершена: отдельных улучшений не найдено.", "Search complete: no single-item upgrades found.")}</p>}
+      </details>
     </div> : null}
   </section>;
 }

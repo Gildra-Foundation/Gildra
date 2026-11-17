@@ -6,11 +6,11 @@ import { test, expect, type CompletionHarness } from "./ui-support";
 const waitingForQuota = /Ждём очереди|Waiting in queue/;
 const cancelAssembly = /Отменить сборку|Cancel assembly/;
 const assemblyRequests = (auction: CompletionHarness) => auction.requests.filter(body => body.action === "assemble");
-const fullSearch = (auction: CompletionHarness) => auction.panel.getByRole("button", { name: /^(Полный поиск|Full search)$/ });
+const fullSearch = (auction: CompletionHarness) => auction.panel.getByRole("button", { name: /^(Искать дальше|Search further)$/ });
 async function initialQuick(auction: CompletionHarness) {
   await auction.open(); await auction.search();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
 }
 
 async function restoreAssemblyHandle(page: Page, auction: CompletionHarness, observedActive: boolean) {
@@ -60,7 +60,7 @@ test("one click finishes every assembly step with fresh nonces and the chosen va
   auction.assemblyCompleteness = [false, false, true];
   await fullSearch(auction).click();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
   const steps = assemblyRequests(auction).slice(firstNewRequest);
   expect(steps).toHaveLength(3);
   expect(new Set(steps.map(body => body.clientRequestId)).size).toBe(3);
@@ -108,7 +108,7 @@ test("a failed automatic next step keeps the previous confirmed result with stal
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
   await expect(auction.result).toContainText(/1[,.\s]?200/);
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
   await page.clock.install(); await page.clock.fastForward(180_000);
   expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
 });
@@ -130,7 +130,7 @@ test("a remotely cancelled automatic next step keeps the previous result with st
   await expect(auction.assembly.getByRole("status").filter({ hasText: /Расчёт остановлен|Calculation stopped/ })).toBeVisible();
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
   await page.clock.install(); await page.clock.fastForward(180_000);
   expect(steps).toBe(2);
 });
@@ -148,7 +148,7 @@ test("a quota rejection waits a minute and resumes automatically with a fresh re
   expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 2);
   await page.clock.runFor(1500);
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
   expect(assemblyRequests(auction)).toHaveLength(initialAssemblies + 3);
   expect(new Set(assemblyRequests(auction).map(body => body.clientRequestId)).size).toBe(initialAssemblies + 3);
 });
@@ -173,7 +173,7 @@ test("restoring an already completed incomplete checkpoint does not silently res
   await auction.open();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "false");
   await expect(auction.result).toHaveAttribute("data-price-state", "stale");
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
   await page.clock.install(); await page.clock.fastForward(180_000);
   expect(auction.requests).toHaveLength(0);
 });
@@ -184,7 +184,7 @@ test("reattaching an observed active assembly continues automatically with its r
   await auction.open();
   await expect(auction.result).toHaveAttribute("data-exhaustive", "true");
   await expect(auction.result).toHaveAttribute("data-price-state", "calculated");
-  await expect(auction.build).toBeEnabled();
+  await auction.openBuildOptions(); await expect(auction.build).toBeEnabled();
   const steps = assemblyRequests(auction);
   expect(steps).toHaveLength(2);
   for (const body of steps) expect(body).toMatchObject({ action: "assemble", searchId: searchResult().searchId, ...selection });

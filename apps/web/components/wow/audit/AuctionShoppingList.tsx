@@ -90,6 +90,7 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
 
   return <div className={styles.result} data-auction-shopping-list>
     <h4 className={tools.subtitle}>{result.significant && result.totalCopper !== null && !stale ? t("Что купить", "Items to buy") : t("Состав выбранного комплекта", "Selected loadout contents")}</h4>
+    {result.significant ? <button type="button" className={tools.quiet} aria-busy={checking || undefined} disabled={!loaded} onClick={() => void recheck()}>{checking ? t("Проверяем рынок…", "Checking market…") : t("Проверить наличие и цены", "Check availability and prices")}</button> : null}
     <ul className={styles.lots}>{rows.map(row => {
       const item = row.kind === "item" ? result.purchases.find(item => item.auctionId === row.auctionId) : null;
       const name = row.name || (row.kind === "gem" ? t("Камень", "Gem") : t("Чары", "Enchant"));
@@ -97,7 +98,7 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
       return <li className={styles.lot} key={row.key} data-auction-shopping-row data-purchased={purchased.has(row.key) || undefined}>
         <div className={styles.lotHeader}><div className={styles.purchase}>{item ? <GearPlannerItem item={item} locale={locale} /> : <strong>{name}</strong>}</div>
           <div className={styles.price}><strong>{money(checked && !purchased.has(row.key) ? checked.currentCopper : row.quotedCopper)}</strong>{row.quantity > 1 ? <span>× {auctionFormats[locale].numeric.format(row.quantity)}</span> : null}</div></div>
-        <div className={tools.actions}><label className={styles.include}><input type="checkbox" checked={purchased.has(row.key)} disabled={!loaded} onChange={event => toggle(row.key, event.target.checked)} /><span>{t("Куплено", "Purchased")}: {name}</span></label>
+        <div className={tools.actions}><label className={styles.include}><input type="checkbox" checked={purchased.has(row.key)} aria-label={`${t("Куплено", "Purchased")}: ${name}`} disabled={!loaded} onChange={event => toggle(row.key, event.target.checked)} /><span>{t("Куплено", "Purchased")}</span></label>
           {row.name ? <button type="button" className={tools.quiet} onClick={() => void copyName(row.name)} aria-label={`${t("Скопировать название", "Copy name")}: ${name}`}>{t("Скопировать название", "Copy name")}</button> : null}
           {item ? <button type="button" className={tools.quiet} disabled={selectionLocked} onClick={() => onExcludeLot(item.auctionId)} aria-label={`${t("Исключить лот из сборки", "Exclude lot from loadout")}: ${name}`}>{t("Исключить лот", "Exclude lot")}</button> : null}</div>
         {checked ? <p className={styles.note} data-shopping-status={checked.status}>{statusText(checked.status)}</p> : null}
@@ -113,7 +114,6 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
     <dl className={styles.totals}><div><dt>{check ? t("Осталось купить по проверенным ценам", "Remaining at checked prices") : t("Осталось купить по прежним ценам", "Remaining at previous prices")}</dt><dd>{money(check ? check.remainingCopper : quotedRemaining)}</dd></div></dl>
     {check ? <p className={styles.note}>{t("Проверено", "Checked")}: {new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(check.checkedAt))}</p> : null}
     {result.totalCopper === null ? <p className={styles.note}>{t("Сумма относится только к перечисленным покупкам. Полная стоимость комплекта неизвестна.", "This total covers only the listed purchases. Full loadout cost is unknown.")}</p> : null}
-    {result.significant ? <button type="button" className={tools.quiet} aria-busy={checking || undefined} disabled={!loaded} onClick={() => void recheck()}>{checking ? t("Проверяем рынок…", "Checking market…") : t("Проверить наличие и цены", "Check availability and prices")}</button> : null}
     {message ? <p role="status" className={styles.note}>{message}</p> : null}
   </div>;
 }
