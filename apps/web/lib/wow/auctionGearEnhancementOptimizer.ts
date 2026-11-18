@@ -371,9 +371,9 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
             signal.throwIfAborted();throw failure;
           }
           prefetchedThrough=nextPosition;
-          simulation=checkpoint.cache[config.key];
+          simulation=checkpoint.cache[config.key];measuredHere.delete(config.key);
         }
-      } else { simulation = measurement(simulation); if(!measuredHere.has(config.key))input.onCacheHit?.(); }
+      } else { simulation = measurement(simulation); if(!measuredHere.delete(config.key))input.onCacheHit?.(); }
       try { assertFreshMarket({sourceUpdatedAt:input.prices.sourceUpdatedAt ?? ""}, input.now); }
       catch { config.status = "market_unverified"; marketVerified=false;clearRetained();reasons.add("market_unverified"); if(!exact)advance();break; }
       if (!exact && !checkpoint.seedSelections) {

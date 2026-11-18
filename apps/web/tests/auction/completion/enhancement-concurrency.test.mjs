@@ -128,3 +128,18 @@ test('freshness expiry after a pair clears price-certified leaders and fresh ret
   for(const key of completedKeys)assert.equal(h.calls.filter(row=>row.key===key).length,1);
   assert(result.checkpoint.bestDpsConfirmed);assert(!result.reasons.includes('market_unverified'));
 });
+
+test('equivalent procurement variants share native work while later reuse retains serial cache-hit diagnostics',async()=>{
+  const sourceUpdatedAt=new Date().toISOString();
+  const compare=async simulationConcurrency=>{
+    let hits=0;const h=fixture({simulationConcurrency,onCacheHit:()=>{hits++;}});
+    const original=h.input.catalog.resolve;
+    h.input.catalog={...h.input.catalog,resolve:slot=>{const r=original(slot),first=r.gemChoices['0'][0];
+      return{...r,gemChoices:Object.fromEntries(Object.entries(r.gemChoices).map(([key,choices])=>[key,[...choices,{...first,key:'duplicate-procurement',consumableItemId:9000}]]))};}};
+    h.input.prices.sourceUpdatedAt=sourceUpdatedAt;h.input.prices.prices[9000]={ladder:[[6,100]]};
+    const result=await finish(h);return{calls:h.calls,hits,checkpoint:result.checkpoint};
+  };
+  const serial=await compare(1),parallel=await compare(2);
+  assert(serial.hits>0);assert.equal(parallel.hits,serial.hits);assert.deepEqual(parallel.calls.map(row=>row.key),serial.calls.map(row=>row.key));
+  assert.deepEqual(parallel.checkpoint,serial.checkpoint);
+});

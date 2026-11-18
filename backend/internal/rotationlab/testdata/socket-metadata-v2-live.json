@@ -1,0 +1,40 @@
+{
+  "version": "1210-01",
+  "git_revision": "18428cd",
+  "sim": {
+    "players": [
+      {
+        "name": "gildra_variant_0",
+        "gear": {
+          "neck": {
+            "name": "gildra_candidate",
+            "encoded_item": "gildra_candidate,id=240948,bonus_id=4785/12248/12249,source=local",
+            "ilevel": 165,
+            "gildra_metadata_version": 2,
+            "socket_colors": [
+              7,
+              0,
+              0
+            ],
+            "socket_bonus_id": 0,
+            "required_profession_id": 0,
+            "required_profession_rank": 0,
+            "id": 240948,
+            "required_level": 81,
+            "item_class": 4,
+            "item_subclass": 0,
+            "inventory_type": 2,
+            "quality": 3,
+            "unique_equipped": false,
+            "set_id": 0,
+            "unknown_bonus_count": 0,
+            "redirected_stats_known": true,
+            "content_tuning_known": true,
+            "stamina": 258,
+            "unknown": 37
+          }
+        }
+      }
+    ]
+  }
+}
