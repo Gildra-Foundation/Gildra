@@ -15,6 +15,13 @@ export function ResultShoppingPanels({ locale, initialRevision = 0, mode }: { lo
       enhancementNames: { gems: { "5": "Synthetic Exact Gem" }, enchants: {} }, configuration: { key: "synthetic-enhanced-config", itemsCopper: purchase.lotCostCopper, totalCopper: mode === "unknown" ? null : 1200000 + quote,
         fullyEnhanced: true, status: mode === "unknown" ? "price_unknown" : "priced", sourceUpdatedAt: new Date().toISOString(),
         slots: [{ slotType: "HEAD", variantKey: purchase.variantKey, gemIds: [5], enchantId: 0 }], consumables: [{ itemId: 7010, kind: "gem", quantity: 2, quotedCopper: mode === "unknown" ? null : 200000, missingQuantity: 0, levels: [] }] } }] } } as unknown as AuctionGearAssemblyResult;
+  if (mode === "exact-pending" || mode === "exact-complete") {
+    Object.assign(assembly, { enhancementMode: "enhanced" });
+    Object.assign(assembly.enhancementOptimization!, {
+      traversal: "exhaustive", equipmentChecked: 17, complete: mode === "exact-complete",
+      status: mode === "exact-complete" ? "ready" : "pending", searchLimited: true,
+    });
+  }
   if (mode === "tradeoff" || mode === "same-winner") {
     const stronger = { ...purchase, auctionId: 7002, itemId: 7002, variantKey: "synthetic-stronger", name: "Synthetic Stronger Helm", lotCostCopper: 5000000 };
     const confirmed = (item: typeof purchase, gain: number) => ({

@@ -177,3 +177,14 @@ test("one winning loadout has a single actionable shopping list", async ({ page 
   await expect(result.locator("[data-auction-loadout-comparison]")).toHaveCount(0);
   await expect(result.locator("[data-auction-shopping-row]")).toHaveCount(1);
 });
+
+test("enhanced traversal distinguishes provisional results from a finished search", async ({ page }, info) => {
+  for (const done of [false, true]) {
+    await open(page, info, done ? "exact-complete" : "exact-pending");
+    const result = page.locator("[data-private-result] [data-auction-assembly-result]");
+    await expect(result).toHaveAttribute("data-exhaustive", String(done));
+    const status = result.locator("[data-auction-enhancement-status]");
+    await expect(status).toContainText("17");
+    await expect(status).toContainText(done ? /завершён|finished/i : /промежуточный|provisional/i);
+  }
+});

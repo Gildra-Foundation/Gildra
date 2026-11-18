@@ -14,9 +14,11 @@ type Quotes = Awaited<ReturnType<typeof exactCommodityPrices>>;
 export type AuctionEnhancementStageState = { checkpoints: Record<string, EnhancementCheckpoint>; quotes?: Quotes; quotedItemIds?: number[] };
 export type AuctionEnhancedRecommendation = { label: string; configuration: PricedEnhancementConfiguration;
   simulation: GearPlanSimulation; comparison: ReturnType<typeof compareGearSimulationResults>; optionIds: string[];
+  removedSlots?: string[];
   purchases: AuctionGearPurchase[]; consumableNames: Record<string, string>;
   enhancementNames?: { gems: Record<string, string>; enchants: Record<string, string> } };
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
+  traversal?: 'exhaustive'; equipmentChecked?: number;
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };
 const obj = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const rows = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
@@ -50,12 +52,15 @@ export async function evaluateAuctionEnhancementStage(input: {
   onCacheHit?: () => void;
   quote?: typeof exactCommodityPrices;
   includeObjectiveAlternatives?: boolean;
+  exhaustive?: boolean;
   additionalSearchReasons?: readonly string[];
 }): Promise<AuctionEnhancementStageResult> {
+  if(input.exhaustive!==undefined && typeof input.exhaustive!=='boolean')throw new Error('invalid_enhancement_input');
   const info = auctionEnhancementCatalogInfo, reasons = new Set<string>(input.additionalSearchReasons);
   const result: AuctionEnhancementStageResult = { complete: true, status: 'unavailable', searchLimited: true,
-    reasons: [], recommendations: [], catalogRevision: info.revision };
-  const informationalReasons = new Set(['owned_equipment_preserved', 'configuration_limit', 'bare_configuration', 'over_budget', 'socket_candidate_subset', 'socket_candidate_limit']);
+    reasons: [], recommendations: [], catalogRevision: info.revision, ...(input.exhaustive?{traversal:'exhaustive'}:{}) };
+  if(input.exhaustive)reasons.add('enhancement_catalog_subset');
+  const informationalReasons = new Set(['owned_equipment_preserved', 'configuration_limit', 'bare_configuration', 'over_budget', 'socket_candidate_subset', 'socket_candidate_limit', 'enhancement_catalog_subset']);
   const finish = () => {
     result.recommendations = result.recommendations.filter(recommendation => {
       try { assertFreshMarket({sourceUpdatedAt:recommendation.configuration.sourceUpdatedAt ?? ''}); return true; }
@@ -122,7 +127,9 @@ export async function evaluateAuctionEnhancementStage(input: {
     if(input.shouldYield()){result.complete=false;break;}
     const ids=[...new Set([...resolutions.values()].flatMap(r=>r.verified ? [...r.enchantChoices,...Object.values(r.gemChoices).flat()].map(e=>e.consumableItemId).filter(id=>id>0) : []))].sort((a,b)=>a-b);
     const now=Date.now();
-    if(!input.state.quotes || ids.some(id=>!input.state.quotedItemIds?.includes(id)) || !Number.isFinite(Date.parse(input.state.quotes.fetchedAt)) || now-Date.parse(input.state.quotes.fetchedAt)>60_000) {
+    let sourceFresh=true;
+    if(input.exhaustive && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
+    if(!input.state.quotes || !sourceFresh || ids.some(id=>!input.state.quotedItemIds?.includes(id)) || !Number.isFinite(Date.parse(input.state.quotes.fetchedAt)) || now-Date.parse(input.state.quotes.fetchedAt)>60_000) {
       const requested=[...new Set([...(input.state.quotedItemIds??[]),...ids])].sort((a,b)=>a-b);
       if(requested.length>512){reasons.add('enhancement_catalog_limit');continue;}
       input.state.quotes=requested.length ? await (input.quote??exactCommodityPrices)(input.region,requested,{refresh:true,signal:input.signal})
@@ -137,6 +144,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       prices:{prices:input.state.quotes.prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
       budgetCopper:input.budgetCopper,simulationIdentity:identity,objective:input.objective,baselineDps:input.baseline.dps,baseline:input.baseline,
       signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache,onCacheHit:input.onCacheHit,
+      exhaustive:input.exhaustive,
       simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal)};
     let optimized;
     try { optimized=await optimizeAuctionGearEnhancements(args); }
@@ -149,12 +157,15 @@ export async function evaluateAuctionEnhancementStage(input: {
       const comparison = compareGearSimulationResults(input.baseline,candidate.simulation);
       return comparison.deltaDps > 0 && comparison.uncertainty.significant;
     });
-    const retained = input.includeObjectiveAlternatives
+    const retained = input.exhaustive
+      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
+      : input.includeObjectiveAlternatives
       ? [confirmed, optimized.checkpoint.bestValueConfirmed, optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : confirmed ? [confirmed] : [];
     const selected = [...new Map((retained.length ? retained : optimized.finalists.slice(0,1)).map(candidate => [candidate.configuration.key, candidate])).values()];
     for(const [index,candidate] of selected.entries()) result.recommendations.push({label:index ? `${finalist.label}:alternative-${index}` : finalist.label,...candidate,
       comparison:compareGearSimulationResults(input.baseline,candidate.simulation),optionIds:finalist.options.map(o=>o.id),
+      removedSlots:[...removed],
       purchases:finalist.options.map(auctionGearPurchase),
       enhancementNames: {
         gems:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='gem' && r.name && candidate.configuration.slots.some(s=>s.gemIds.includes(r.simulationId))).map(r=>[String(r.simulationId),r.name!])),

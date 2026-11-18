@@ -176,13 +176,14 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     invalid_budget: t("Введите сумму от 0 до 99 999 999 золота.", "Enter a budget from 0 to 99,999,999 gold."),
     invalid_equipment_slots: t("Выберите хотя бы один слот экипировки.", "Choose at least one equipment slot."),
     session_expired: t("Войдите в Battle.net повторно.", "Sign in to Battle.net again."),
-    market_stale: t("Снимок аукциона устарел. Запустите новый поиск после обновления рынка.", "The auction snapshot is too old. Start a new search after the market updates."),
+    market_stale: t("Цены аукциона устарели. Повторите расчёт после обновления цен.", "Auction prices are out of date. Retry after the prices update."),
     market_timestamp_unverified: t("Не удалось подтвердить время обновления аукциона.", "The auction update time could not be verified."),
     equipment_constraints_unverified: t("Не хватает данных о надетых вещах.", "Data about your equipped items is incomplete."),
     damage_specialization_required: t("Сравнение DPS доступно для специализаций, наносящих урон.", "DPS comparisons are available for damage specializations."),
     plan_already_running: t("Предыдущий расчёт ещё выполняется.", "Your previous calculation is still running."),
     plan_rate_limited: t("Слишком много запусков. Подождите минуту и продолжите расчёт.", "Too many searches. Wait a minute and continue."),
     plan_waiting_for_quota: t("Ждём очереди…", "Waiting in queue…"),
+    plan_timeout: t("Расчёт остановился по лимиту времени. Полный перебор не завершён.", "The calculation reached its time limit before the search finished."),
     plan_queue_full: t("Очередь расчётов заполнена. Повторите позже.", "The calculation queue is full. Try again later."),
     simulation_unavailable: t("Расчёт сейчас недоступен. Повторите позже.", "Calculation is unavailable. Try again later."),
     variant_metadata_worker_upgrade_required: t("Проверка характеристик вещей сейчас недоступна. Повторите позже.", "Item property verification is unavailable. Try again later."),
@@ -617,7 +618,14 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           if (!isCurrent()) return;
         }
         if (!isCurrent()) return;
-        if (payload.status === "failed") throw new Error(payload.error ?? "auction_plan_unavailable");
+        if (payload.status === "failed") {
+          if (payload.runMode === "full" && (payload.error === "plan_timeout" || payload.error === "market_stale") && payload.result) {
+            await verifyRecoverySpecialization();
+            applyResult(payload.result, true);
+            remember({ searchId: payload.result.searchId, mode });
+          }
+          throw new Error(payload.error ?? "auction_plan_unavailable");
+        }
         if (payload.status === "cancelled") {
           setAssemblyStale(true); setMarketStale(true);
           remember({ jobId: undefined, clientRequestId: undefined }); forgetAuctionClientJob(payload.id); request.id = undefined;
@@ -978,7 +986,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <p id="auction-build-mode-help" className={styles.note}>{buildMode === "quick"
           ? t("Проверим часть вариантов и предложим комплект вещей.", "Check a limited set of options and suggest a gear loadout.")
           : buildMode === "full" ? t("Проверим все доступные варианты вещей в пределах бюджета.", "Check all available gear options within your budget.")
-          : t("Более долгий расчёт. Подберём камни и чары для покупаемых замен; остальная экипировка не меняется.", "A longer calculation. Gems and enchants are selected for purchased replacements; your other gear stays unchanged.")}
+          : t("Более долгий расчёт. Для каждого допустимого комплекта проверим доступные камни и чары в пределах общего бюджета.", "A longer calculation. Each eligible loadout is checked with the available gems and enchants within your total budget.")}
           {buildMode !== "quick" ? <> {t("Вкладку можно закрыть. Результат доступен у персонажа 30 минут после завершения.", "You can close this tab. Return to your character within 30 minutes of completion to see the result.")}</> : null}</p>
         {restoredSnapshot ? <p className={styles.note} data-auction-restored-snapshot>{t("Восстановлен расчёт по сохранённой экипировке. После её изменения запустите новый подбор.", "Restored a calculation for the saved equipment. Start a new selection if your gear has changed.")}</p> : null}
       </fieldset>
