@@ -182,6 +182,35 @@ if (mode === "cancel-seed") {
   finally { fs.readSync = original; syncBuiltinESMExports(); }
   assert.equal(countSearches(), 41, "Failure to establish active ownership cannot delete an acknowledged checkpoint");
   output = { preserved: countSearches() };
+} else if (mode === "owned-domain-seed") {
+  const setup = context();
+  setup.input.enhancementMode = "enhanced";
+  const entry = store.createAuctionGearSearch(owner, setup);
+  const historical = {kind:"assembly", searchId:entry.id, enhancementMode:"enhanced", exhaustiveComplete:true,
+    enhancementOptimization:{traversal:"exhaustive",complete:true,status:"ready",recommendations:[]}};
+  entry.latestAssemblyResult = historical;
+  entry.searchCheckpoint = {nextOption:73};
+  store.saveAuctionGearSearch(entry);
+  const work = {action:"resume",searchId:entry.id};
+  const settled = jobs.enqueueAuctionGearJob(owner,async()=>historical,{scope,work});
+  await tick();
+  const active = jobs.enqueueAuctionGearJob(owner,async(_signal,_progress,hooks)=>{
+    hooks.searchCreated(entry.id);
+    hooks.publishResult(historical);
+    await new Promise(()=>{});
+  },{scope,work});
+  await tick();
+  assert.equal(jobs.getAuctionGearJob(owner,active.id).result.kind,"assembly");
+  output = {settled:settled.id, active:active.id, searchId:entry.id};
+} else if (mode === "owned-domain-resume") {
+  assert.equal(jobs.getAuctionGearJob(owner,input.settled).result.enhancementOptimization.complete,true);
+  assert.equal(jobs.getOwnerActiveAuctionGearJob(owner).activeJob.result,null);
+  const entry = store.getAuctionGearSearch(owner,input.searchId);
+  resumeOwnedAuctionGearWork(owner,input.active,token);
+  assert.equal(entry.latestAssemblyResult,undefined);
+  await tick(); await tick();
+  assert.equal(jobs.getAuctionGearJob(owner,input.active).result.preserved,73);
+  output = {passed:true};
 } else if (mode === "precision-search-seed") {
   const entry = store.createAuctionGearSearch(owner, context());
   const record = rawRecord("search", entry.id);

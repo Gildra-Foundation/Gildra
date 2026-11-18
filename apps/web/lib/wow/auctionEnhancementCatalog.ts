@@ -25,6 +25,7 @@ export type EnhancementTarget = {
 export type EnhancementCharacter = { level: number; professions: readonly { id: number; rank: number }[] };
 export type EnhancementResolution = { verified: false; reason: string } | {
   verified: true; enchantApplicable: boolean; enchantChoices: EnhancementRecord[]; gemChoices: Record<string, EnhancementRecord[]>;
+  coverageGaps?: ("no_supported_enchant" | "no_supported_gem")[];
 };
 
 const rows = snapshot.rows as Row[];
@@ -51,7 +52,7 @@ function record(sparse: Row, enchantRow: Row, kind: "gem" | "enchant", chain: Ro
     simulationId: kind === "gem" ? sparse.id : enchantRow.id,
     build: snapshot.build, revision: snapshot.revision, requiredLevel: num(s,"RequiredLevel"),
     qualityId: item.get(sparse.id) ? num(item.get(sparse.id)!.payload,"CraftingQualityID") : 0,
-    rank: kind === "enchant" ? snapshot.nativeRules.find(r=>r.enchantId===enchantRow.id)?.rank ?? null : null,
+    rank: null,
     minItemLevel: num(e,"ItemLevelMin"), maxItemLevel: num(e,"ItemLevelMax"),
     ...(skill > 0 ? {profession:{id:skill, rank:skillRank}} : {}),
     ...(c && categoryKnown ? {category:{id:categoryId,limit:num(c.payload,"Quantity")}} : {}),
@@ -99,11 +100,11 @@ function buildRecords(): EnhancementRecord[] {
       r.itemClassId=num(equipped[0].payload,"EquippedItemClass");
       r.inventoryMask=num(equipped[0].payload,"EquippedItemInvTypes");
       r.subclassMask=num(equipped[0].payload,"EquippedItemSubclass");
+      const native = snapshot.nativeRules.filter(n => n.enchantId === enchantId && n.itemClassId === r.itemClassId
+        && n.inventoryMask === r.inventoryMask && n.subclassMask === r.subclassMask);
+      if (!native.length || native.some(n => n.rank !== native[0].rank)) continue;
+      r.rank = native[0].rank;
       if (ranked) {
-        const native=snapshot.nativeRules.filter(n=>n.enchantId===enchantId && n.itemClassId===r.itemClassId
-          && n.inventoryMask===r.inventoryMask && n.subclassMask===r.subclassMask);
-        if (!native.length || native.some(n=>n.rank!==native[0].rank)) continue;
-        r.rank=native[0].rank;
         r.mappingBuild=snapshot.rankedMappingSourceBuild;
         r.sourceRowIds.push(`CraftingData:${num(applying[0].payload,"EffectMiscValue_0")}`,
           `CraftingDataEnchantQuality@${r.mappingBuild}:${mapping!.id}`);
@@ -163,14 +164,21 @@ export function resolveExactEnhancements(target: EnhancementTarget, character: E
   const nativeApplicable = snapshot.nativeRules.filter(r=>r.itemClassId===target.itemClassId
     && (r.inventoryMask===0||(r.inventoryMask&(2**target.inventoryType))!==0)
     && (r.subclassMask===0||(r.subclassMask&(2**target.itemSubclassId))!==0));
-  if (nativeApplicable.some(r=>!enchant.has(r.enchantId))) return {verified:false,reason:"enchant_applicability_unknown"};
-  const enchantApplicable = nativeApplicable.some(r=>{
-    const e=enchant.get(r.enchantId)!.payload;
-    return target.itemLevel>=num(e,"ItemLevelMin") && (num(e,"ItemLevelMax")===0||target.itemLevel<=num(e,"ItemLevelMax"));
-  });
-  if (enchantApplicable && !enchantChoices.length) return {verified:false,reason:"no_supported_enchant"};
+  // A negative answer needs the full native table and valid bounds for every matching rule.
+  if (snapshot.nativeRules.length !== snapshot.nativeRulesSource.rowCount) return {verified:false,reason:"enchant_applicability_unknown"};
+  let enchantApplicable = false;
+  for (const rule of nativeApplicable) {
+    const payload = enchant.get(rule.enchantId)?.payload;
+    const min = num(payload ?? {}, "ItemLevelMin"), max = num(payload ?? {}, "ItemLevelMax");
+    if (!Number.isSafeInteger(min) || min < 0 || !Number.isSafeInteger(max) || max < 0 || (max > 0 && max < min)) {
+      return {verified:false,reason:"enchant_applicability_unknown"};
+    }
+    if (target.itemLevel >= min && (max === 0 || target.itemLevel <= max)) enchantApplicable = true;
+  }
+  const coverageGaps: ("no_supported_enchant" | "no_supported_gem")[] = [];
+  if (enchantApplicable && !enchantChoices.length) coverageGaps.push("no_supported_enchant");
   const gemChoices: Record<string,EnhancementRecord[]> = {};
   target.socketColors.forEach((color,i)=>{if(color===14) gemChoices[String(i)]=allowed.filter(r=>r.kind==="gem"&&r.color===14);});
-  if (Object.values(gemChoices).some(v=>!v.length)) return {verified:false,reason:"no_supported_gem"};
-  return {verified:true,enchantApplicable,enchantChoices,gemChoices};
+  if (Object.values(gemChoices).some(v=>!v.length)) coverageGaps.push("no_supported_gem");
+  return {verified:true,enchantApplicable,enchantChoices,gemChoices,...(coverageGaps.length ? {coverageGaps} : {})};
 }

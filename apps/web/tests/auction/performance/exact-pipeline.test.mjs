@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { exactPipeline } from './exact-pipeline-fixture.mjs';
 
-const nativeKey=request=>JSON.stringify([request.scenario,request.targets,request.fightLengthSeconds,request.gearChanges??[]]);
+const nativeKey=request=>JSON.stringify([request.scenario,request.targets,request.fightLengthSeconds,request.gearChanges??[],request.precision??'ordinary']);
 
 test('full exact pipeline persists every slice once and keeps the completed result and all native precision facts',async()=>{
   const enhancedPerTurn=new Map();
@@ -12,18 +12,24 @@ test('full exact pipeline persists every slice once and keeps the completed resu
   assert.equal(run.final.status,'completed',run.summary.taskError);
   assert.equal(run.final.result.enhancementOptimization.complete,true);
   assert.equal(run.summary.equipmentChecked,2,'Both retained equipment and the purchasable replacement were exhaustively evaluated');
-  assert.equal(run.summary.counts.stage,381);
-  assert.equal(run.summary.counts.native,381,'All exact native requests remain; this optimization changes only redundant saves');
+  assert.equal(run.summary.counts.stage,431);
+  assert.equal(run.summary.counts.native,433,'The 431 ordinary requests and two high-precision rechecks each run once');
   assert.equal(new Set(run.requests.map(nativeKey)).size,run.requests.length);
-  assert.equal(run.summary.counts.searchWrites,481);
-  assert.equal(run.summary.counts.jobWrites,579);
+  assert.equal(run.summary.counts.searchWrites,547);
+  assert.equal(run.summary.counts.jobWrites,659);
   assert.equal(run.summary.counts.ownership,run.summary.counts.turns-1);
   assert.equal(run.summary.counts.armory,run.summary.counts.ownership);
   assert.equal(run.summary.counts.market,run.summary.counts.ownership+1);
   assert([...enhancedPerTurn.values()].every(count=>count<=8),'No ninth duplicate publication after eight durable slices');
   assert.deepEqual(structuredClone(run.diskEntry.data.latestAssemblyResult.enhancementOptimization),structuredClone(run.final.result.enhancementOptimization));
   assert.equal(run.diskEntry.data.exhaustiveEnhancementState.cursor.exhausted,true);
-  for(const row of run.final.result.enhancementOptimization.recommendations){assert.equal(row.simulation.iterations,750);assert.equal(row.simulation.confidence,95);}
+  const stage = run.final.result.enhancementOptimization;
+  assert.equal(run.requests.filter(request=>request.precision==='finalist').length,2);
+  assert.equal(stage.finalistRecheck.significant,false);
+  for(const row of stage.recommendations){
+    assert.equal(row.simulation.iterations,stage.finalistRecheck.keys.includes(row.configuration.key)?3000:750);
+    assert.equal(row.simulation.confidence,95);
+  }
 });
 
 test('failed exact checkpoint write never publishes that unsaved result and retains retryable state',async()=>{

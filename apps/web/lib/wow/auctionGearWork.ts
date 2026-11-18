@@ -22,6 +22,15 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
       if (!entry || entry.context.input.characterSlug !== job.scope?.characterSlug || entry.context.input.locale !== job.scope.locale) throw new Error("search_expired");
       const selection = work.action === "assemble" ? work.selection : undefined;
       clearResult = entry.metadataRebuildRequired === true;
+      // A parked full job may have finished the previous enhancement domain
+      // immediately before a restart. Drop only its superseded public result.
+      // The exact iterator validates its own rules/price identity on re-entry.
+      const stages = [entry.latestAssemblyResult?.enhancementOptimization,
+        job.result?.kind === "assembly" ? job.result.enhancementOptimization : undefined];
+      if (entry.context.input.enhancementMode === "enhanced" && stages.some(stage => stage?.traversal === "exhaustive" && !stage.includesOwnedEquipment)) {
+        entry.latestAssemblyResult = undefined;
+        clearResult = true;
+      }
       if (work.action === "assemble") selectedAuctionGearAssemblyOptions(entry, selection);
       release = reserveAuctionGearSearch(entry);
       task = async (signal, progress, hooks) => {

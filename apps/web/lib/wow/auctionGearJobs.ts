@@ -174,7 +174,11 @@ function hydrate(j: Job) {
   if (j.work?.runMode !== j.runMode) { removeAuctionState("job", j.id); jobs.delete(j.id); notifyJobWaiters(j); return false; }
   j.recoverable = Boolean(j.work);
   const legacyResult = data.resultMeasurementContract !== auctionMeasurementContract;
-  j.result = legacyResult ? null : data.result; j.progress = data.progress; j.lazy = false;
+  const priorStage = data.result?.kind === "assembly" ? data.result.enhancementOptimization : undefined;
+  const parkedOldDomain = j.status === "queued" && priorStage?.traversal === "exhaustive" && !priorStage.includesOwnedEquipment;
+  j.result = legacyResult || parkedOldDomain ? null : data.result;
+  j.progress = parkedOldDomain ? null : data.progress;
+  j.lazy = false;
   if (data.status === "completed" && legacyResult) { j.status = "failed"; j.error = "simulation_version_changed"; }
   return true;
 }

@@ -46,12 +46,49 @@ for (const inventoryType of [1,5,11]) {
 const wrist=resolveExactEnhancements({...target,inventoryType:9,socketColors:[0,0,0]},character);
 assert(wrist.verified && wrist.enchantChoices.some(r=>r.consumableItemId===172416&&r.simulationId===6222));
 assert(wrist.enchantChoices.every(r=>r.maxItemLevel===0||r.maxItemLevel>=300));
-assert.equal(resolveExactEnhancements(target,{...character,level:70}).reason,'no_supported_enchant');
+assert.deepEqual(resolveExactEnhancements(target,{...character,level:70}).coverageGaps,['no_supported_enchant']);
 assert.equal(resolveExactEnhancements({...target,itemLevel:119},character).enchantChoices?.some(r=>r.simulationId===8163)??false,false);
 const empty=resolveExactEnhancements({...target,inventoryType:12,itemSubclassId:0,socketColors:[0,0,0]},character);
 assert(empty.verified); assert.equal(empty.enchantApplicable,false); assert.deepEqual(empty.enchantChoices,[]);
 assert.deepEqual(empty.gemChoices,{});
-const retained=lookupInstalled('enchant',6108);
+// Auction candidates from the saved Eversong run, including both sides of native level limits.
+for (const [itemId,inventoryType,itemSubclassId,itemLevel,scrollId,spellId] of [
+  [7918,3,4,13,38375,3329], [20818,11,0,11,110617,5284], [20950,2,0,12,110624,5285],
+]) {
+  const resolved = resolveExactEnhancements({...target,itemId,inventoryType,itemSubclassId,itemLevel,socketColors:[0,0,0]},character);
+  assert(resolved.verified && resolved.enchantApplicable);
+  const scroll = resolved.enchantChoices.find(row => row.consumableItemId === scrollId);
+  assert.equal(scroll.simulationId,spellId);
+  assert(scroll.sourceRowIds.includes(`SpellItemEnchantment:${spellId}`));
+  assert(snapshot.nativeRules.some(rule => rule.enchantId === spellId && rule.inventoryMask === scroll.inventoryMask));
+}
+const socketedRing={...target,itemId:173131,inventoryType:11,itemSubclassId:0,itemLevel:35};
+const ring=resolveExactEnhancements(socketedRing,character);
+assert(ring.verified && ring.enchantApplicable);
+const doublet=ring.gemChoices['0'].find(row=>row.consumableItemId===173121);
+assert.equal(doublet.simulationId,173121);
+assert.deepEqual(doublet.sourceRowIds,['ItemSparse:173121','GemProperties:3821','SpellItemEnchantment:6236']);
+assert(!ring.gemChoices['0'].some(row=>row.consumableItemId===240967));
+const highNeck=resolveExactEnhancements({...target,itemId:258911,inventoryType:2,itemSubclassId:0,itemLevel:159},character);
+assert(highNeck.verified && !highNeck.enchantApplicable && highNeck.gemChoices['0'].length>0);
+const lowRing=resolveExactEnhancements({...socketedRing,itemId:20906,itemLevel:8,socketColors:[0,0,0]},character);
+assert(lowRing.verified && !lowRing.enchantApplicable);
+const belt=resolveExactEnhancements({...target,itemId:237919,inventoryType:6,itemLevel:210,socketColors:[0,0,0]},character);
+assert.deepEqual(belt,{verified:true,enchantApplicable:true,enchantChoices:[],gemChoices:{},coverageGaps:['no_supported_enchant']});
+const socketedLowRing=resolveExactEnhancements({...socketedRing,itemId:20906,itemLevel:8},character);
+assert.deepEqual(socketedLowRing,{verified:true,enchantApplicable:false,enchantChoices:[],gemChoices:{'0':[]},coverageGaps:['no_supported_gem']});
+// Missing native rules or level bounds must never turn an incomplete source into a verified empty slot.
+const removedRule=snapshot.nativeRules.pop();
+try {
+  assert.equal(resolveExactEnhancements({...target,inventoryType:12,itemSubclassId:0},character).reason,'enchant_applicability_unknown');
+} finally { snapshot.nativeRules.push(removedRule); }
+const neckLimits=snapshot.rows.find(row=>row.table==='SpellItemEnchantment' && row.id===5285).payload;
+const savedMax=neckLimits.ItemLevelMax;
+try {
+  delete neckLimits.ItemLevelMax;
+  assert.equal(resolveExactEnhancements({...target,inventoryType:2,itemSubclassId:0},character).reason,'enchant_applicability_unknown');
+} finally { neckLimits.ItemLevelMax=savedMax; }
+const retained=lookupInstalled('enchant',6614);
 assert(retained.verified); assert.equal(retained.enhancement.consumableItemId,0);
 assert.equal(lookupInstalled('gem',8556).verified,false, 'gem lookup takes item ID, not enchant ID');
 assert.equal(lookupInstalled('enchant',99999999).verified,false);

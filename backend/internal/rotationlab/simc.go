@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	defaultSimCIterations = 750
-	maxSimCOutputBytes    = 2 << 20
+	defaultSimCIterations       = 750
+	finalistIterationMultiplier = 4
+	maxSimCOutputBytes          = 2 << 20
 )
 
 var (
@@ -157,7 +158,11 @@ func (e *SimCEngine) storeBaseline(key string, dps int) {
 }
 
 func (e *SimCEngine) run(ctx context.Context, input SimulationInput) (simcReport, error) {
-	runCtx, cancel := context.WithTimeout(ctx, e.timeout)
+	timeout := e.timeout
+	if input.Precision == "finalist" {
+		timeout *= finalistIterationMultiplier
+	}
+	runCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	tempDir, err := os.MkdirTemp("", "gildra-simc-")
 	if err != nil {
@@ -613,9 +618,13 @@ func containsString(values []string, target string) bool {
 }
 
 func (e *SimCEngine) arguments(input SimulationInput, reportPath, profilePath string) []string {
+	iterations := e.iterations
+	if input.Precision == "finalist" {
+		iterations *= finalistIterationMultiplier
+	}
 	args := []string{
 		profilePath,
-		fmt.Sprintf("iterations=%d", e.iterations),
+		fmt.Sprintf("iterations=%d", iterations),
 		fmt.Sprintf("max_time=%d", input.FightLengthSeconds),
 		fmt.Sprintf("desired_targets=%d", input.Targets),
 		"vary_combat_length=0", "fixed_time=1", "threads=1", "deterministic=1",

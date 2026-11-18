@@ -84,3 +84,8 @@ test("legacy socket proof restarts discovery from the saved market and preserves
   const seed = await run(directory, "legacy-socket-seed");
   assert.equal((await run(directory, "legacy-socket-read", seed)).reset, true);
 }));
+
+test("parked pre-owned-enhancement work recomputes while the completed historical recommendation remains readable", () => isolated(async directory => {
+  const seed = await run(directory,"owned-domain-seed");
+  assert.equal((await run(directory,"owned-domain-resume",seed)).passed,true);
+}));

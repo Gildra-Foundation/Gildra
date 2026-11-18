@@ -7,7 +7,7 @@ import * as planner from '../../../lib/wow/auctionGearPlanner.ts';
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagnostics.ts';
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from '../../../lib/wow/auctionGearScenarios.ts';
 import { evaluateAuctionGearScenarios } from '../../../lib/wow/auctionGearScenarioExecution.ts';
-import { customizedAuctionGearOptions } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
+import { customizedAuctionGearOptions, ownedAuctionGearChanges, applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
 import { auctionGearVariantSelectionKey } from '../../../lib/wow/auctionGearExclusions.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
@@ -340,7 +340,7 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
   const nativeEngine=h.input.engine;
   const runner=new vm.Script(code+'\n;({assembleAuctionGearSearch,createAuctionSimulator})').runInNewContext({
     ...planner,createAuctionGearDiagnostics,logAuctionGearDiagnostics,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,
-    evaluateAuctionGearScenarios,customizedAuctionGearOptions,prepareGearLoadout,nativeGearSimulationMeasurement,
+    evaluateAuctionGearScenarios,customizedAuctionGearOptions,ownedAuctionGearChanges,applyOwnedAuctionGearChanges,prepareGearLoadout,nativeGearSimulationMeasurement,
     auctionSelectionEffectKey,auctionEnhancementScenarioFinalists,
     advanceAuctionGearExhaustiveEnhancements:async input=>{
       stageCapacities.push(input.simulationConcurrency);stagePeak=0;const before=requests.length;
@@ -373,7 +373,7 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
         const both=changes.some(c=>c.itemId===960010&&c.gemIds?.some(Boolean))&&changes.some(c=>c.itemId===960020&&c.gemIds?.some(Boolean));
         dps=(1000+changes.reduce((sum,c)=>sum+(bare[c.itemId]??0)+(c.gemIds?.some(Boolean)?10:0),0)+(both?600:0))*request.targets;
       }
-      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:750,engine:nativeEngine},
+      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:request.precision==='finalist'?3000:750,engine:nativeEngine},
         {headers:{'x-gildra-engine':'simulationcraft'}});
     },
   });
@@ -445,8 +445,16 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
   assert.equal(scenarioRequests[0].gearChanges,undefined);
   assert.deepEqual(scenarioRequests[1].gearChanges[0].gemIds,paid.gemIds);
   assert.equal(scenarioRequests[1].gearChanges[0].enchantId ?? 0,paid.enchantId);
-  const nativeKeys=requests.map(request=>JSON.stringify([request.scenario,request.fightLengthSeconds,request.targets,request.gearChanges??[]]));
-  assert.equal(new Set(nativeKeys).size,nativeKeys.length,'Continuation must not rerun existing native configurations');
+  const nativeKeys=requests.map(request=>JSON.stringify([request.scenario,request.fightLengthSeconds,request.targets,request.gearChanges??[],request.precision??"ordinary"]));
+  assert.equal(new Set(nativeKeys).size,nativeKeys.length,'Continuation must never duplicate a measurement at the same precision');
+  if (socketLoser && !synergy) {
+    const rechecked=requests.filter(request=>request.precision==='finalist');
+    assert.equal(rechecked.length,2,'Only the two close loadouts receive higher precision');
+    assert.equal(result.enhancementOptimization.finalistRecheck.significant,false);
+    for (const key of result.enhancementOptimization.finalistRecheck.keys) {
+      assert.equal(result.enhancementOptimization.recommendations.find(row=>row.configuration.key===key).simulation.iterations,3000);
+    }
+  }
   assert(publications.some(result=>result.enhancementOptimization?.status==='pending'));
 });
 
@@ -461,7 +469,7 @@ test('over-budget enhancement stage with preserved owned equipment reports no af
   assert.equal(h.calls.length,0);
 });
 
-test('actual head and ring stage quotes all 105 pinned consumables and resumes within the full equipment budget',async()=>{
+test('actual head and ring stage quotes all 115 pinned consumables and resumes within the full equipment budget',async()=>{
   const h=stageFixture({slotType:'HEAD',inventoryType:1,itemSubclassId:4});
   const ring=stageFixture({slotType:'FINGER_1',inventoryType:11,itemSubclassId:0});
   const ringOption=ring.input.finalists[0].options[0];
@@ -482,8 +490,8 @@ test('actual head and ring stage quotes all 105 pinned consumables and resumes w
   const first=await evaluateAuctionEnhancementStage(h.input);
   assert.equal(first.status,'pending');assert.equal(first.complete,false);
   assert.equal(h.quotes.length,1);
-  assert.equal(h.quotes[0].length,105,'75 gem IDs + 12 helm enchant items + 18 ring enchant items');
-  assert.equal(new Set(h.quotes[0]).size,105);
+  assert.equal(h.quotes[0].length,115,'85 gem IDs + 12 helm enchant items + 18 ring enchant items');
+  assert.equal(new Set(h.quotes[0]).size,115);
   assert(!first.reasons.includes('enhancement_catalog_limit'));
   const final=await finishStage(h);
   assert.equal(final.status,'ready');assert.equal(final.complete,true);
@@ -496,4 +504,46 @@ test('actual head and ring stage quotes all 105 pinned consumables and resumes w
   assert.equal(config.consumables.filter(row=>row.kind==='enchant').reduce((n,row)=>n+row.quantity,0),2);
   assert(config.consumables.every(row=>h.quotes[0].includes(row.itemId)));
   for(const slot of config.slots){assert(slot.enchantId>0);assert.equal(slot.gemIds.length,1);}
+});
+
+test('missing scroll and gem mappings retain bare, socketed and other-slot purchases in exact mode',async()=>{
+  const h=stageFixture({slotType:'WAIST',inventoryType:6,itemSubclassId:4});
+  const belt=h.input.finalists[0].options[0];
+  belt.candidate.variants[0].itemLevel=210;
+  const trinket=stageFixture();
+  const ring=stageFixture({slotType:'FINGER_1',inventoryType:11,itemSubclassId:0});
+  const tiny=trinket.input.finalists[0].options[0], finger=ring.input.finalists[0].options[0];
+  tiny.candidate.variants[0].itemLevel=8;
+  Object.assign(finger.candidate.variants[0].resolution.enhancements,{socketColors:[0,0,0],socketCount:0});
+  for(const [index,extra] of [trinket,ring].entries()){
+    const option=extra.input.finalists[0].options[0];
+    option.id=option.candidate.slotType;option.auctionId+=index+1;option.candidate.itemId+=index+1;
+    h.input.finalists[0].options.push(option);
+    h.input.loadout.push(...extra.input.loadout);
+    h.input.equipment.equipped_items.push(...extra.input.equipment.equipped_items);
+  }
+  h.input.exhaustive=true;
+  const gemId=173121;
+  const scroll=auctionEnhancementRecords.find(row=>row.kind==='enchant' && row.inventoryMask===2**11 && row.minItemLevel===120 && !row.restrictionReason);
+  const seen=new Set();
+  h.input.quote=async(_region,ids)=>{
+    assert(ids.includes(scroll.consumableItemId) && ids.includes(gemId));
+    return {prices:{[gemId]:{ladder:[[10,1]]},[scroll.consumableItemId]:{ladder:[[15,1]]}},sourceUpdatedAt:timestamp,fetchedAt:timestamp};
+  };
+  h.input.simulate=async options=>{
+    const [waist,small,ring]=options.map(option=>option.customization);
+    assert.equal(waist.enchantId,undefined);
+    assert.deepEqual(small,{});
+    assert.equal(ring.gemIds,undefined);
+    const gem=waist.gemIds?.[0]??0, enchant=ring.enchantId??0;
+    seen.add(JSON.stringify([gem,enchant]));
+    return {...measurement(1100+Number(Boolean(gem))*10+Number(Boolean(enchant))*20),engine:h.input.engine};
+  };
+  const result=await finishStage(h);
+  assert.deepEqual(seen,new Set([[0,0],[gemId,0],[0,scroll.simulationId],[gemId,scroll.simulationId]].map(ids=>JSON.stringify(ids))));
+  assert(result.reasons.includes('no_supported_enchant') && result.reasons.includes('no_supported_gem'));
+  const best=result.recommendations[0].configuration;
+  assert.equal(best.fullyEnhanced,false);
+  assert.deepEqual(best.slots.find(slot=>slot.slotType==='TRINKET_1').gemIds,[0]);
+  assert.equal(best.totalCopper,325);
 });

@@ -67,7 +67,7 @@ func run() error {
 		Handler:           mux,
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      70 * time.Second,
+		WriteTimeout:      200 * time.Second, // Includes admission, a 180s finalist recheck and the response.
 		IdleTimeout:       60 * time.Second,
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

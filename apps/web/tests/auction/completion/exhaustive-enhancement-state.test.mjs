@@ -7,6 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { createAuctionGearEnhancedLoadoutIterator } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { readAuctionState, writeAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
 
@@ -20,7 +21,7 @@ function fixture() {
   const h={price:10,stale:false,partial:false,stageCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:{'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,createAuctionGearEnhancedLoadoutIterator,assertFreshMarket,structuredClone,
+    createHash,createAuctionGearEnhancedLoadoutIterator,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
@@ -28,7 +29,7 @@ function fixture() {
       input.state.quotes=await quote();input.state.quotedItemIds=[1];
       input.state.checkpoints.current={nativeFacts:'preserved',key};
       if(h.abortAfterQuotes)throw new DOMException('Aborted','AbortError');
-      const spent=options.reduce((sum,o)=>sum+o.costCopper,0),dps=1000+(options[0]?.candidate.itemId??0);
+      const spent=options.reduce((sum,o)=>sum+o.costCopper,0),dps=h.scores?.[key]??1000+(options[0]?.candidate.itemId??0)*(h.scale??1);
       const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:simulation(dps),
         comparison:{deltaDps:dps-1000,candidateDps:dps,uncertainty:{significant:dps>1000}},
         configuration:{key,status:'priced',itemsCopper:spent,totalCopper:spent+h.price,fullyEnhanced:false,consumables:[],slots:[],sourceUpdatedAt:input.state.quotes.sourceUpdatedAt}};
@@ -96,4 +97,51 @@ test('a price mutation followed by abort cannot silently reuse the old global ra
 test('restored completion still validates the exact cursor proof',async()=>{
   const h=fixture();await finish(h);h.state.cursor.visited='0';
   await assert.rejects(h.run(),/invalid_search_checkpoint/);
+});
+
+test('only the two distinct close leaders are rechecked, with restart after the first measurement',async()=>{
+  const h=fixture(), calls=[];
+  h.input.options.push({...h.input.options[2],id:'same-effect-dearer',auctionId:4,costCopper:200});
+  h.input.recheck=async(options,configuration)=>{
+    calls.push(options[0].id); h.slice++;
+    return {...simulation(options[0].id==='option-3'?1008.03:1008),iterations:3000,dpsError:0.2};
+  };
+  let pending;
+  for(let i=0;i<12&&!calls.length;i++)pending=await h.run();
+  assert.deepEqual(calls,['option-3']);assert.equal(pending.result.complete,false);
+  assert.equal(pending.result.finalistRecheck,undefined);
+  h.state=JSON.parse(JSON.stringify(h.state));
+  const result=await finish(h);
+  assert.deepEqual(calls,['option-3','option-2']);
+  assert.deepEqual([...result.finalistRecheck.keys],calls);
+  assert.equal(result.finalistRecheck.significant,false);
+  for(const key of calls)assert.equal(result.recommendations.find(r=>r.configuration.key===key).simulation.iterations,3000);
+  await h.run();assert.equal(calls.length,2);
+});
+test('separated leaders skip precision work and an under-iterated response cannot complete it',async()=>{
+  const h=fixture();h.scale=20;
+  h.input.recheck=async()=>assert.fail('unnecessary high-precision simulation');
+  assert.equal((await finish(h)).finalistRecheck,undefined);
+  const invalid=fixture();invalid.input.recheck=async()=>simulation(1500);
+  await assert.rejects(finish(invalid),/invalid_simulation_result/);
+  assert.equal(invalid.state.precise,undefined);
+  invalid.input.recheck=async options=>({...simulation(options[0].id==='option-2'?1100:1050),iterations:3000});
+  const result=await finish(invalid);
+  assert.equal(result.finalistRecheck.significant,true);
+  assert.equal(result.recommendations.find(r=>r.configuration.key==='option-2').comparison.deltaDps,100);
+});
+
+test('the strongest unrefined loadout survives two revised leaders falling below it',async()=>{
+  const h=fixture(),calls=[];
+  h.scores={'option-1':1008,'option-2':1009,'option-3':1010};
+  h.input.recheck=async options=>{
+    calls.push(options[0].id);
+    return {...simulation(options[0].id==='option-3'?1004:1005),iterations:3000};
+  };
+  const result=await finish(h);
+  assert.deepEqual(calls,['option-3','option-2']);
+  assert.equal(result.finalistRecheck.significant,false);
+  assert.equal(result.finalistRecheck.competingKey,'option-1');
+  assert.equal(result.recommendations[0].configuration.key,'option-1');
+  assert.equal(result.recommendations[0].simulation.iterations,750);
 });

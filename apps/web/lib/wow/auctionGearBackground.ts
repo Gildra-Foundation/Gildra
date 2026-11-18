@@ -18,7 +18,7 @@ export function fullAuctionGearTask(turn: AuctionGearTask, owner: string, token:
     if (!entry) throw new Error("search_expired");
     const acceptedSelection = selection ?? { excludedOptionIds: [...(entry.excludedOptionIds ?? [])],
       excludedVariantKeys: [...(entry.excludedVariantKeys ?? [])] };
-    if (result.kind === "search" && result.searchComplete && !selectedAuctionGearAssemblyOptions(entry, acceptedSelection).length) return result;
+    if (result.kind === "search" && result.searchComplete && entry.context.input.enhancementMode !== "enhanced" && !selectedAuctionGearAssemblyOptions(entry, acceptedSelection).length) return result;
     const next: AuctionGearTask = async (nextSignal, nextProgress, nextHooks) => {
       // Keep the existing authoritative freshness checks, exact traversal,
       // native precision and persisted planner checkpoints for every turn.

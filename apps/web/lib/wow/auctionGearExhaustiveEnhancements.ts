@@ -5,7 +5,8 @@ import { evaluateAuctionEnhancementStage, type AuctionEnhancedRecommendation, ty
 import { auctionEnhancementCatalogInfo } from "./auctionEnhancementCatalog";
 import { exactCommodityPrices } from "./auctionBrowserData";
 import { assertFreshMarket } from "./auctionMarket";
-import type { AuctionGearOption } from "./auctionGearTypes";
+import { compareGearSimulationResults } from "./gearSimulation";
+import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { auctionGearSlots } from "./auctionGearSelection";
 
 type Leader = { recommendation: AuctionEnhancedRecommendation; options: AuctionGearOption[] };
@@ -15,11 +16,13 @@ export type AuctionGearExhaustiveEnhancementState = {
   /** Price basis of global ranking, independent of an in-flight stage refresh. */
   quoteSignatures?: Record<string, string>;
   equipmentChecked: number; reasons: string[]; unavailable: boolean;
-  measured?: Leader; value?: Leader; dps?: Leader;
+  measured?: Leader; value?: Leader; dps?: Leader; runnerUp?: Leader; nextMeasured?: Leader;
+  precise?: Record<string, GearPlanSimulation>;
 };
 type StageInput = Parameters<typeof evaluateAuctionEnhancementStage>[0];
 type Input = Omit<StageInput, "finalists" | "state"> & {
   options: AuctionGearOption[]; selectedSlots?: string[];
+  recheck?: (options: AuctionGearOption[], configuration: AuctionEnhancedRecommendation["configuration"], signal: AbortSignal) => Promise<GearPlanSimulation>;
   state?: AuctionGearExhaustiveEnhancementState;
   onState: (state: AuctionGearExhaustiveEnhancementState) => void;
   onUpdate?: (result: AuctionEnhancementStageResult) => Promise<void>;
@@ -32,10 +35,30 @@ const betterDps = (candidate: Leader, previous?: Leader) => !previous || candida
   (candidate.recommendation.configuration.totalCopper! < previous.recommendation.configuration.totalCopper! ||
     candidate.recommendation.configuration.totalCopper === previous.recommendation.configuration.totalCopper &&
     candidate.recommendation.configuration.key < previous.recommendation.configuration.key);
-function consider(state: AuctionGearExhaustiveEnhancementState, recommendation: AuctionEnhancedRecommendation, options: AuctionGearOption[]) {
+// Distinct lots can buy identical gear. Their price determines which receipt to
+// keep, but a second receipt cannot be an independent simulation finalist.
+function sameLoadout(a: Leader, b: Leader) {
+  const identity = (row: Leader) => JSON.stringify([row.options.map(option => [option.candidate.slotType, option.candidate.itemId, option.variantKey]).sort(),
+    row.recommendation.configuration.slots.map(slot => [slot.slotType, slot.variantKey, slot.enchantId, slot.gemIds]).sort()]);
+  return a.recommendation.configuration.key === b.recommendation.configuration.key || identity(a) === identity(b);
+}
+function validRecheck(result: GearPlanSimulation, original: GearPlanSimulation) {
+  return result && result.engine === original.engine && result.confidence === 95 &&
+    Number.isFinite(result.dpsError) && result.dpsError >= 0 && Number.isFinite(result.dps) && result.dps > 0 &&
+    Number.isSafeInteger(result.iterations) && result.iterations > original.iterations;
+}
+function consider(state: AuctionGearExhaustiveEnhancementState, recommendation: AuctionEnhancedRecommendation, options: AuctionGearOption[], retainPair: boolean) {
   if (recommendation.configuration.status !== "priced" || recommendation.configuration.totalCopper === null) return;
   const candidate = { recommendation: structuredClone(recommendation), options: structuredClone(options) };
-  if (betterDps(candidate, state.measured)) state.measured = candidate;
+  if (retainPair && (!state.nextMeasured || betterDps(candidate, state.nextMeasured))) {
+    const top = [state.measured, state.runnerUp, state.nextMeasured].filter((leader): leader is Leader => Boolean(leader));
+    const duplicate = top.findIndex(leader => sameLoadout(candidate, leader));
+    if (duplicate < 0 || betterDps(candidate, top[duplicate])) {
+      if (duplicate >= 0) top.splice(duplicate, 1);
+      top.push(candidate);
+      [state.measured, state.runnerUp, state.nextMeasured] = top.sort((a, b) => betterDps(a, b) ? -1 : betterDps(b, a) ? 1 : 0);
+    }
+  } else if (!retainPair && betterDps(candidate, state.measured)) state.measured = candidate;
   if (recommendation.comparison.deltaDps <= 0 || !recommendation.comparison.uncertainty.significant) return;
   if (betterDps(candidate, state.dps)) state.dps = candidate;
   const score = recommendation.configuration.totalCopper / recommendation.comparison.deltaDps;
@@ -49,7 +72,7 @@ function recommendations(state: AuctionGearExhaustiveEnhancementState, objective
 function restamp(state: AuctionGearExhaustiveEnhancementState) {
   const sourceUpdatedAt = state.stage.quotes?.sourceUpdatedAt;
   if (!sourceUpdatedAt) return;
-  for (const leader of [state.measured, state.value, state.dps]) if (leader) {
+  for (const leader of [state.measured, state.value, state.dps, state.runnerUp, state.nextMeasured]) if (leader) {
     leader.recommendation = { ...leader.recommendation, configuration: { ...leader.recommendation.configuration, sourceUpdatedAt } };
   }
 }
@@ -59,13 +82,13 @@ function staleQuotes(quotes: AuctionEnhancementStageState["quotes"]) {
   catch { return true; }
 }
 
-/** At most one current equipment set plus three leaders survive a turn. Exact
+/** At most one current equipment set plus five leaders survive a turn. Exact
  * enhancement checkpoints are discarded only after that set is exhausted. */
 export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Promise<{ state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult }> {
   input.signal.throwIfAborted();
   const iterator = createAuctionGearEnhancedLoadoutIterator({ options: input.options, selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
     loadout: input.loadout, equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper });
-  const inputKey = hash([iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision]);
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(input.recheck ? ["finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
     version: 1, inputKey, cursor: iterator.initialState(), stage, equipmentChecked: 0, reasons: [], unavailable: false,
   });
@@ -94,18 +117,66 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   // A quote fetch can mutate stage state before a later abort. Compare against
   // the persisted ranking basis, not just this invocation's local old value.
   acceptQuotes();
+  const closePair = () => {
+    if (!input.recheck || !state.cursor.exhausted || state.currentOptionIds !== undefined || !state.measured || !state.runnerUp) return;
+    const pair = [state.measured, state.runnerUp] as const;
+    if (!compareGearSimulationResults(pair[0].recommendation.simulation, pair[1].recommendation.simulation).uncertainty.significant) return pair;
+  };
   const finish = (): { state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult } => {
-    const complete = state.cursor.exhausted && state.currentOptionIds === undefined;
-    const all = recommendations(state, input.objective);
+    const pair = closePair();
+    const refined = pair?.map(row => state.precise?.[row.recommendation.configuration.key]);
+    if (pair && refined?.some((simulation, index) => simulation && !validRecheck(simulation, pair[index].recommendation.simulation))) {
+      throw new Error("invalid_enhancement_checkpoint");
+    }
+    const complete = state.cursor.exhausted && state.currentOptionIds === undefined && (!refined || refined.every(Boolean));
+    let all = recommendations(state, input.objective);
+    let finalistRecheck: AuctionEnhancementStageResult["finalistRecheck"];
+    if (pair && refined?.[0] && refined[1]) {
+      const keys: [string, string] = [pair[0].recommendation.configuration.key, pair[1].recommendation.configuration.key];
+      const comparison = compareGearSimulationResults(refined[0], refined[1]);
+      finalistRecheck = { keys, significant: comparison.uncertainty.significant, marginDps: comparison.uncertainty.marginDps };
+      const candidates = new Map(all.map(row => [row.configuration.key, row]));
+      const next = state.nextMeasured?.recommendation;
+      if (next) {
+        const leading = refined[0].dps >= refined[1].dps ? refined[0] : refined[1];
+        const versusNext = compareGearSimulationResults(leading, next.simulation);
+        if (next.simulation.dps >= leading.dps || !versusNext.uncertainty.significant) {
+          finalistRecheck.competingKey = next.configuration.key;
+          candidates.set(next.configuration.key, next);
+        }
+      }
+      const unchangedIndex = pair.findIndex(leader => !leader.options.length && !leader.recommendation.configuration.ownedChanges?.length);
+      const baseline = unchangedIndex < 0 ? input.baseline : refined[unchangedIndex]!;
+      if (unchangedIndex >= 0) for (const [key, candidate] of candidates) {
+        candidates.set(key, { ...candidate, comparison: compareGearSimulationResults(baseline, candidate.simulation) });
+      }
+      pair.forEach((leader, index) => {
+        const simulation = refined[index]!;
+        candidates.set(keys[index], { ...leader.recommendation, simulation, comparison: compareGearSimulationResults(baseline, simulation) });
+      });
+      // Keep the requested objective first after a refined measurement changes
+      // the order. Both members of a precision tie remain available to inspect.
+      const confirmed = (row: AuctionEnhancedRecommendation) => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant;
+      const ranked = [...candidates.values()].sort((a, b) => {
+        const confirmation = Number(confirmed(b)) - Number(confirmed(a));
+        if (confirmation) return confirmation;
+        if (input.objective === "value" && confirmed(a) && confirmed(b)) {
+          const difference = a.configuration.totalCopper! / a.comparison.deltaDps - b.configuration.totalCopper! / b.comparison.deltaDps;
+          if (difference) return difference;
+        }
+        return b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper!;
+      });
+      all = ranked;
+    }
     const fresh = all.filter(row => {
       try { assertFreshMarket({ sourceUpdatedAt: row.configuration.sourceUpdatedAt ?? "" }); return true; }
       catch { return false; }
     });
     if (fresh.length < all.length) throw new Error("market_stale");
     const reasons = [...state.reasons];
-    return { state, result: { traversal: "exhaustive", equipmentChecked: state.equipmentChecked, complete,
+    return { state, result: { traversal: "exhaustive", includesOwnedEquipment:true, equipmentChecked: state.equipmentChecked, complete,
       status: !complete ? "pending" : fresh.length ? "ready" : state.unavailable ? "unavailable" : "no_affordable_configuration",
-      searchLimited: true, reasons, recommendations: fresh, catalogRevision: auctionEnhancementCatalogInfo.revision } };
+      ...(finalistRecheck ? { finalistRecheck } : {}), searchLimited: true, reasons, recommendations: fresh, catalogRevision: auctionEnhancementCatalogInfo.revision } };
   };
   // An exhausted cursor may be reopened when authoritative prices change. A
   // timestamp refresh alone does not invalidate expensive native measurements.
@@ -132,11 +203,26 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       if (current) { state.currentOptionIds = current.options.map(option => option.id); state.stage.checkpoints = {}; }
       input.onState(state);
     }
-    if (state.currentOptionIds === undefined) break;
+    if (state.currentOptionIds === undefined) {
+      const next = closePair()?.find(row => !state.precise?.[row.recommendation.configuration.key]);
+      if (!next || !input.recheck || input.shouldYield()) break;
+      const row = next.recommendation;
+      const simulation = await input.recheck(next.options, row.configuration, input.signal);
+      input.signal.throwIfAborted();
+      if (simulation.engine !== row.simulation.engine) throw new Error("simulation_version_changed");
+      if (!validRecheck(simulation, row.simulation)) throw new Error("invalid_simulation_result");
+      (state.precise ??= {})[row.configuration.key] = simulation;
+      input.onState(state);
+      lastUpdate = finish();
+      await input.onUpdate?.(lastUpdate.result);
+      input.signal.throwIfAborted();
+      if (lastUpdate.result.complete || input.shouldYield()) return lastUpdate;
+      continue;
+    }
     const byId = new Map(input.options.map(option => [option.id, option]));
     const selected = state.currentOptionIds.map(id => byId.get(id));
     if (!selected.every((option): option is AuctionGearOption => Boolean(option))) throw new Error("invalid_enhancement_checkpoint");
-    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, includeObjectiveAlternatives: true,
+    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage });
     input.signal.throwIfAborted();
     if (result.reasons.includes("market_unverified") || staleQuotes(state.stage.quotes)) {
@@ -149,7 +235,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     // affordability or value anywhere in the domain, so no old ranking survives.
     if (acceptQuotes()) break;
     restamp(state);
-    for (const recommendation of result.recommendations) consider(state, recommendation, selected);
+    for (const recommendation of result.recommendations) consider(state, recommendation, selected, Boolean(input.recheck));
     state.reasons = [...new Set([...state.reasons, ...result.reasons])];
     if (result.complete) {
       state.equipmentChecked++;

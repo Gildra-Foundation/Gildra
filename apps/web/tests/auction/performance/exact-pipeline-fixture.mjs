@@ -12,12 +12,12 @@ import * as policy from '../../../lib/wow/auctionGearEnhancementMode.ts';
 import * as scenarios from '../../../lib/wow/auctionGearScenarios.ts';
 import * as slots from '../../../lib/wow/auctionGearSelection.ts';
 import * as diagnostics from '../../../lib/wow/auctionGearDiagnostics.ts';
-import { prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
+import { compareGearSimulationResults, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 import { auctionSelectionEffectKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { createAuctionGearEnhancedLoadoutIterator } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { auctionEnhancementCatalogInfo } from '../../../lib/wow/auctionEnhancementCatalog.ts';
-import { customizedAuctionGearOptions } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
+import { customizedAuctionGearOptions, ownedAuctionGearChanges, applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { harness, strip, record, offer, character } from '../completion/priority-feedback-harness.mjs';
 
@@ -60,12 +60,12 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, befo
     snapshotAuctionGearContext:context=>runner.snapshotAuctionGearContext(context),restoreAuctionGearContext:data=>runner.restoreAuctionGearContext(data)});
   const quote=async(_region,ids)=>({prices:Object.fromEntries(ids.map(id=>[String(id),{ladder:[[10,100]]}])),
     sourceUpdatedAt:fixture.state.market.sourceUpdatedAt,fetchedAt:fixture.state.market.fetchedAt});
-  const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,createAuctionGearEnhancedLoadoutIterator,
+  const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,createAuctionGearEnhancedLoadoutIterator,compareGearSimulationResults,
     evaluateAuctionEnhancementStage:input=>measure('stage',()=>evaluateAuctionEnhancementStage({...input,quote})),
     auctionEnhancementCatalogInfo,exactCommodityPrices:quote,assertFreshMarket,auctionGearSlots:slots.auctionGearSlots});
   const requests=[], publications=[];
   runner=evaluate(sources.auctionGearRunner,{...runnerBindings,...globals,...store,...discovery,...exact,prepareGearLoadout,
-    auctionSelectionEffectKey,auctionEnhancementScenarioFinalists,customizedAuctionGearOptions,
+    auctionSelectionEffectKey,auctionEnhancementScenarioFinalists,customizedAuctionGearOptions,ownedAuctionGearChanges,applyOwnedAuctionGearChanges,
     assembleAuctionGear:input=>measure('assembly',()=>runnerBindings.assembleAuctionGear(input)),
     searchAuctionGearOptions:input=>measure('searchPlanning',()=>runnerBindings.searchAuctionGearOptions(input)),
     getBattleNetCharacterBySlug:async()=>{counts.ownership++;return character;},
@@ -78,7 +78,7 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, befo
       assert.equal(request.actionListMode,'native');
       if(nativeMs)await new Promise(resolve=>setTimeout(resolve,nativeMs));options.signal?.throwIfAborted();
       const dps=1000+(request.gearChanges??[]).reduce((sum,row)=>sum+(row.itemId-89999)*10+(row.gemIds??[]).reduce((n,id)=>n+id%100,0),0);
-      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:750,engine:fixture.state.workerEngine},{headers:{'x-gildra-engine':'simulationcraft'}});
+      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:request.precision==='finalist'?3000:750,engine:fixture.state.workerEngine},{headers:{'x-gildra-engine':'simulationcraft'}});
     }});
   const background=evaluate(sources.auctionGearBackground,{...globals,...policy,...store,...runner,
     verifyAuctionGearSearch:async(...args)=>{await beforeTurn?.({entry:args[0],fixture,counts,jobs});return runner.verifyAuctionGearSearch(...args);}});

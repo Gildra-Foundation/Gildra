@@ -17,7 +17,8 @@ import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } 
 import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiveEnhancements";
 import { auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
-import { customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
+import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
+import { applyOwnedAuctionGearChanges, ownedAuctionGearChanges, customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
 import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNetCharacters";
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "./battleNetCharacterDetails";
@@ -470,7 +471,7 @@ function withFreshEnhancementQuotes<T extends AuctionGearAssemblyResult>(result:
     catch { return false; }
   });
   if (recommendations.length === enhanced.recommendations.length) return result;
-  return {...result, enhancementOptimization:{...enhanced, recommendations,
+  return {...result, enhancementOptimization:{...enhanced, recommendations, finalistRecheck: undefined,
     status:enhanced.complete ? recommendations.length ? 'ready' : 'unavailable' : 'pending',
     reasons:[...new Set([...enhanced.reasons,'market_unverified'])]}};
 }
@@ -589,6 +590,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // Publications are snapshots. Do not mutate the result already held by a job.
       published = { ...published, ...(encounters.length ? {scenarioComparisonsComplete: false} : {}) };
       const finalists = new Map<string, AuctionGearOption[]>();
+      const ownedByFinalist = new Map<string, readonly OwnedAuctionGearChange[]>();
       const byId = new Map(options.map(option => [option.id, option]));
       const selectedSets = new Set<string>();
       for (const [label, best] of [["confirmed", checkpoint.bestConfirmed], ["measured", checkpoint.best],
@@ -632,16 +634,18 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         signal.throwIfAborted();
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
           simulationConcurrency: enhancementConcurrency,
+          recheck: (selected, configuration, simSignal) => context.simulate(
+            customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
           specId: context.specId, level: context.character.level, region: context.character.region,
           engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
           encounter: { scenario: context.input.scenario, ...context.encounter }, budgetCopper: context.input.budgetCopper,
           objective: context.input.objective ?? "dps", baseline: checkpoint.baseline,
-          simulate: async (selected, simSignal) => {
+          simulate: async (selected, simSignal, ownedChanges) => {
             simSignal.throwIfAborted();
             // Zero bought enhancements reproduce the already measured bare
             // replacement. Keep its native precision/engine checks on reuse.
-            if (selected.every(option => !option.customization?.enchantId && !option.customization?.gemIds?.some(id => id !== 0))) {
+            if (!ownedChanges?.length && selected.every(option => !option.customization?.enchantId && !option.customization?.gemIds?.some(id => id !== 0))) {
               const bare = selected.map(option => { const copy = { ...option }; delete copy.customization; return copy; });
               const cached = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
               if (cached && cached.engine === checkpoint.baseline.engine && Number.isFinite(cached.dps) && cached.dps >= 0 &&
@@ -649,7 +653,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
                 metricsFor(context.armory ?? context).cacheHit(); return { ...cached };
               }
             }
-            return context.simulate(selected, simSignal);
+            return context.simulate(selected, simSignal, ownedChanges);
           },
           signal, shouldYield, state: entry.exhaustiveEnhancementState,
           onState: state => { entry.exhaustiveEnhancementState = state; scheduleAuctionGearSearchSave(entry); },
@@ -666,8 +670,11 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           finalists.clear();
           for (const recommendation of auctionEnhancementScenarioFinalists(enhanced.result.recommendations, context.input.objective ?? "dps")) {
             const selected = recommendation.optionIds.map(id => byId.get(id));
-            if (selected.every((option): option is AuctionGearOption => Boolean(option)))
-              finalists.set(`enhanced-${recommendation.label}-${recommendation.configuration.key}`, customizedAuctionGearOptions(selected, recommendation.configuration));
+            if (selected.every((option): option is AuctionGearOption => Boolean(option))) {
+              const key = `enhanced-${recommendation.label}-${recommendation.configuration.key}`;
+              finalists.set(key, customizedAuctionGearOptions(selected, recommendation.configuration));
+              ownedByFinalist.set(key, ownedAuctionGearChanges(recommendation.configuration));
+            }
           }
         }
         published = { ...published };
@@ -721,12 +728,13 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
               simulators.set(identity, simulate);
             }
             const selected = key === null ? [] : finalists.get(key)!;
+            const ownedChanges = key === null ? undefined : ownedByFinalist.get(key);
             const prepared = prepareGearLoadout({ selections: selected, equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId });
             const cacheKey = `scenario:${checkpoint.baseline.engine}:${auctionGearMechanicalKey(context.profileFingerprint,
-              { spec: context.specSlug, ...encounter, gearChanges: prepared.changes })}`;
+              { spec: context.specSlug, ...encounter, gearChanges: prepared.changes, ...(ownedChanges?.length ? {ownedChanges} : {}) })}`;
             const cache = entry.retainedSimulationCache ??= {};
             if (cache[cacheKey]) { metricsFor(context.armory ?? context).cacheHit(); return cache[cacheKey]; }
-            const measurement = await simulate(selected, comparisonSignal);
+            const measurement = await simulate(selected, comparisonSignal, ownedChanges);
             comparisonSignal.throwIfAborted();
             cache[cacheKey] = measurement;
             await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
@@ -840,7 +848,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   let verified = freshMetadata;
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal): Promise<GearPlanSimulation> => {
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], precision?: "finalist"): Promise<GearPlanSimulation> => {
       assertFreshMarket(market);
       const prepared = prepareGearLoadout({
         selections,
@@ -848,7 +856,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
         loadout,
         specId: specId
       });
-      const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes });
+      const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes,
+        ...(ownedChanges?.length ? {ownedChanges} : {}), ...(precision ? {precision} : {}) });
       simSignal.throwIfAborted();
       const cached = verified ? auctionGearMechanicalCache.get(cacheKey, engine()) : undefined;
       if (cached) { metrics.cacheHit(); return cached; }
@@ -861,7 +870,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
           Accept: "application/json"
         },
         cache: "no-store",
-        signal: AbortSignal.any([simSignal, AbortSignal.timeout(50_000)]),
+        signal: AbortSignal.any([simSignal, AbortSignal.timeout(precision ? 190_000 : 50_000)]),
         body: JSON.stringify({
           spec: specSlug,
           scenario: scenario,
@@ -871,8 +880,9 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
           armory: {
             profile: armory.profile,
             specializations: armory.specializations,
-            equipment: prepared.equipment
+            equipment: ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment
           },
+          ...(precision ? {precision} : {}),
           ...(prepared.changes.length ? {
             gearChanges: prepared.changes
           } : {})
