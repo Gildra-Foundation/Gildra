@@ -8,7 +8,7 @@ import { registerHooks, stripTypeScriptTypes } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import vm from 'node:vm';
 import * as jobs from '../../../lib/wow/auctionGearJobs.ts';
-import { readAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
+import { readAuctionState, writeAuctionState, auctionMeasurementContract } from '../../../lib/wow/auctionGearPersistence.ts';
 import { auctionGearAssemblyGoalComplete } from '../../../lib/wow/auctionGearEnhancementMode.ts';
 import { parseAuctionClientRecentRecovery } from '../../../lib/wow/auctionGearClient.ts';
 
@@ -124,6 +124,34 @@ test('changed profile fails without further simulation or claiming completion', 
   const result = await settled(state.owner, posted.body.id); assert.equal(result.status, 'failed'); assert.equal(result.error, state.verifyError); assert.equal(state.searches, 0); assert.equal(state.assemblies, 0);
 }));
 
+test('full enhanced waits for the existing enhancement and scenario goals, including explicit unavailable completion', async () => fixture(async state => {
+  state.searches = 3;
+  state.assembly = () => ({ kind: 'assembly', searchId: state.entry.id, exhaustiveComplete: true, enhancementMode: 'enhanced',
+    enhancementOptimization: { complete: state.assemblies >= 3, status: state.assemblies >= 3 ? 'unavailable' : 'pending' },
+    scenarioComparisonsComplete: state.assemblies >= 4 });
+  const posted = await request('POST', {}, { ...base, enhancementMode: 'enhanced' }); state.release();
+  const result = await settled(state.owner, posted.body.id);
+  assert.equal(result.status, 'completed'); assert.equal(state.assemblies, 4);
+  assert.equal(result.result.enhancementOptimization.status, 'unavailable');
+}));
+
+test('recent recovery validates scope and safe intent before exposing an owned full result', () => {
+  const scope = { characterSlug: base.characterSlug, locale: 'en' };
+  assert.equal(parseAuctionClientRecentRecovery({ job: null }, scope), null);
+  assert.throws(() => parseAuctionClientRecentRecovery({ job: { id: 'bad', status: 'completed', runMode: 'full', scope: {...scope,locale:'ru'} } }, scope), /invalid_plan_result/);
+  assert.throws(() => parseAuctionClientRecentRecovery({ job: { id: 'bad', status: 'completed', runMode: 'full', mode: 'assembly', scope }, formIntent: null }, scope), /invalid_plan_result/);
+});
+
+test('latest discovery is owner-scoped and expires completed work after thirty minutes', async () => fixture(async state => {
+  state.options = []; state.searches = 3;
+  const posted = await request('POST', {}, base); state.release(); await settled(state.owner, posted.body.id);
+  const scope = { characterSlug: base.characterSlug, locale: 'en' };
+  assert.equal(jobs.getLatestAuctionGearFullJob('another-owner', scope).job, null);
+  const now = Date.now, future = now() + 31 * 60_000;
+  try { Date.now = () => future; assert.equal(jobs.getLatestAuctionGearFullJob(state.owner, scope).job, null); }
+  finally { Date.now = now; }
+}));
+
 test('durable full intent and completed result survive a fresh process without tokens or duplicate work', async () => {
   assert.equal(process.env.GILDRA_AUCTION_STATE_DIR, undefined); const directory = await mkdtemp(join(tmpdir(), 'gildra-background-'));
   process.env.GILDRA_AUCTION_STATE_DIR = directory;
@@ -138,4 +166,41 @@ test('durable full intent and completed result survive a fresh process without t
     const output = execFileSync(process.execPath, ['--experimental-transform-types','--no-warnings','--import',new URL('../resolve.mjs',import.meta.url).href,'--input-type=module','-e',source], { env: {...process.env}, encoding:'utf8', timeout:15000 });
     assert.equal(output.trim(), 'restored');
   }); } finally { delete process.env.GILDRA_AUCTION_STATE_DIR; await rm(directory,{recursive:true,force:true}); }
+});
+
+test('interrupted full work stays parked until owner reattachment, then actual Work resumes exactly once', async () => {
+  assert.equal(process.env.GILDRA_AUCTION_STATE_DIR, undefined);
+  const directory = await mkdtemp(join(tmpdir(), 'gildra-background-resume-'));
+  process.env.GILDRA_AUCTION_STATE_DIR = directory;
+  try {
+    const id = randomUUID(), searchId = randomUUID(), owner = 'synthetic-restored-owner', now = Date.now();
+    const record = { id, owner, runMode:'full', mode:'search', status:'running', scope:{characterSlug:base.characterSlug,locale:'en'},
+      searchId, result:null, progress:null, error:null, createdAt:now, expires:now+60000, continuation:true, recency:1,
+      work:{ action:'resume', searchId, runMode:'full' }, resultMeasurementContract:auctionMeasurementContract };
+    const {work, result, progress, ...metadata}=record; void work; void result; void progress;
+    writeAuctionState('job',id,record.expires,record,{metadata:{...metadata,hasWork:true}});
+    const child = `import assert from 'node:assert/strict';import{registerHooks}from'node:module';
+      globalThis.fixture={calls:0,verifies:0,entry:{id:${JSON.stringify(searchId)},context:{input:{characterSlug:${JSON.stringify(base.characterSlug)},locale:'en'}},excludedOptionIds:['excluded'],excludedVariantKeys:[]}};
+      const hook=registerHooks({resolve(s,c,n){
+        const module=code=>({url:'data:text/javascript,'+encodeURIComponent(code),shortCircuit:true});
+        if(s==='./auctionGearRunner')return module(\`
+          export const startAuctionGearSearch=()=>{throw Error('unexpected_fresh_search')};
+          export const continueAuctionGearSearch=async()=>{fixture.calls++;return{kind:'search',searchId:fixture.entry.id,searchComplete:true}};
+          export const assembleAuctionGearSearch=async(_entry,selection)=>{fixture.calls++;if(selection.excludedOptionIds[0]!=='excluded')throw Error('lost_selection');return{kind:'assembly',searchId:fixture.entry.id,enhancementMode:'equipment',exhaustiveComplete:true}};
+          export const selectedAuctionGearAssemblyOptions=()=>[{}];export const verifyAuctionGearSearch=async()=>{fixture.verifies++};\`);
+        if(s==='./auctionGearSearchStore')return module('export const getAuctionGearSearch=()=>fixture.entry;export const reserveAuctionGearSearch=()=>()=>{};');
+        return n(s,c);
+      }});
+      const jobs=await import(${JSON.stringify(new URL('../../../lib/wow/auctionGearJobs.ts', import.meta.url).href)});
+      const {resumeOwnedAuctionGearWork}=await import(${JSON.stringify(new URL('../../../lib/wow/auctionGearWork.ts', import.meta.url).href)});
+      const owner=${JSON.stringify(owner)},id=${JSON.stringify(id)};
+      assert.equal(jobs.getAuctionGearJob(owner,id).status,'queued');assert.equal(fixture.calls,0);
+      resumeOwnedAuctionGearWork('wrong-owner',id,'synthetic-token');assert.equal(fixture.calls,0);
+      resumeOwnedAuctionGearWork(owner,id,'synthetic-token');resumeOwnedAuctionGearWork(owner,id,'synthetic-token');
+      for(let i=0;i<20;i++)await new Promise(r=>setImmediate(r));
+      assert.equal(jobs.getAuctionGearJob(owner,id).status,'completed');assert.equal(fixture.calls,2);assert.equal(fixture.verifies,2);
+      console.log('resumed');hook.deregister();`;
+    const output=execFileSync(process.execPath,['--experimental-transform-types','--no-warnings','--import',new URL('../resolve.mjs',import.meta.url).href,'--input-type=module','-e',child],{env:{...process.env},encoding:'utf8',timeout:15000});
+    assert.equal(output.trim(),'resumed');
+  } finally { delete process.env.GILDRA_AUCTION_STATE_DIR; await rm(directory,{recursive:true,force:true}); }
 });
