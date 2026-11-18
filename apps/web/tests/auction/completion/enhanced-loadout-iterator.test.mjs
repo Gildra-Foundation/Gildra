@@ -53,7 +53,7 @@ test('two-hand replacements remove only an unlocked off-hand and reject incompat
 test('JSON resumable batches cover every assignment once, including empty batches of rejected states',async()=>{
  const offers=[option(1,'HEAD',50),option(2,'HEAD',150),option(3,'CHEST',60),option(4,'CHEST',40)];const input=base(offers,['HEAD','CHEST'],[],100);
  const expected=await all(input);let iterator=create(input),state=iterator.initialState(),rows=[],empty=0;
- while(!state.exhausted){const previous=structuredClone(state),next=await iterator.nextBatch(state,{maxAssignments:1,maxResults:1,signal:signal()});assert.deepEqual(state,previous,'caller-owned persisted cursor is never mutated');assert.equal(BigInt(next.state.visited),BigInt(state.visited)+1n);rows.push(...next.loadouts);if(!next.loadouts.length)empty++;state=JSON.parse(JSON.stringify(next.state));iterator=create({...input,options:[...offers].reverse()});}
+ while(!state.exhausted){const previous=structuredClone(state),next=await iterator.nextBatch(state,{maxAssignments:1,maxResults:1,signal:signal()});assert.deepEqual(state,previous,'caller-owned persisted cursor is never mutated');assert(BigInt(next.state.visited)>BigInt(state.visited));rows.push(...next.loadouts);if(!next.loadouts.length)empty++;state=JSON.parse(JSON.stringify(next.state));iterator=create({...input,options:[...offers].reverse()});}
  assert(empty>0);assert.deepEqual(rows.map(key),expected.rows.map(key));assert.equal(state.visited,iterator.totalAssignments);const done=await iterator.nextBatch(state,{maxAssignments:1,maxResults:1,signal:signal()});assert(done.complete);assert.deepEqual(done.loadouts,[]);
 });
 test('yield/abort preserve the last acknowledged cursor and large invalid scans yield to cancellation',async()=>{
@@ -70,4 +70,27 @@ test('identity binds options/prices/quantity/metadata/equipment/budget and rejec
 });
 test('raw domain counts remain exact above Number safe integer across all selected slots',async()=>{
  const offers=auctionGearSlots.flatMap((slot,index)=>Array.from({length:10},(_,copy)=>option(index*10+copy+1,slot)));const iterator=create(base(offers,[...auctionGearSlots]));assert.equal(iterator.totalAssignments,(11n**16n).toString());assert(BigInt(iterator.totalAssignments)>BigInt(Number.MAX_SAFE_INTEGER));const first=await iterator.nextBatch(iterator.initialState(),{maxAssignments:1,maxResults:1,signal:signal()});assert.equal(first.state.visited,'1');assert(!first.complete);
+});
+
+test('an over-budget prefix skips its entire suffix while an affordable shared lot stays eligible',async()=>{
+ const slots=['HEAD','CHEST','FINGER_1','FINGER_2'];
+ const ring=option(100,'FINGER_1',30,{quantity:2});
+ const alias={...ring,id:'shared-ring-2',candidate:{...ring.candidate,slotType:'FINGER_2'}};
+ const offers=[option(1,'HEAD',70),option(2,'CHEST',70),ring,alias];
+ const iterator=create(base(offers,slots,[],100)), accepted=[];
+ let state=iterator.initialState(),largestJump=1n;
+ while(!state.exhausted){
+   const batch=await iterator.nextBatch(state,{maxAssignments:1,maxResults:1,signal:signal()});
+   const jump=BigInt(batch.state.visited)-BigInt(state.visited);
+   if(jump>largestJump)largestJump=jump;
+   accepted.push(...batch.loadouts);state=JSON.parse(JSON.stringify(batch.state));
+ }
+ // A checkpoint from the old walker may start in the middle of the rejected suffix.
+ const legacy={...iterator.initialState(),cursor:[1,1,0,1],visited:'13'};
+ const resumed=await iterator.nextBatch(legacy,{maxAssignments:1,maxResults:1,signal:signal()});
+ assert.equal(resumed.state.visited,'16');assert.equal(resumed.complete,true);assert.deepEqual(resumed.loadouts,[]);
+ assert.equal(largestJump,4n);
+ assert.equal(accepted.length,12);
+ assert(accepted.some(row=>row.options.length===3 && row.spentCopper===100));
+ assert(!accepted.some(row=>row.options.some(o=>o.auctionId===1)&&row.options.some(o=>o.auctionId===2)));
 });

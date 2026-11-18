@@ -58,10 +58,10 @@ async function token(): Promise<string> {
     return result.access_token;
   });
 }
-async function blizzard(region: AuctionRegion, path: string, namespace = "dynamic", params = new URLSearchParams(), timeout = 10000) {
+async function blizzard(region: AuctionRegion, path: string, namespace = "dynamic", params = new URLSearchParams(), timeout = 10000, modifiedSince?: string) {
   params.set("namespace", `${namespace}-${region}`);
   return fetch(`https://${region}.api.blizzard.com${path}?${params}`, {
-    headers: { Authorization: `Bearer ${await token()}` }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(timeout),
+    headers: { Authorization: `Bearer ${await token()}`, ...(modifiedSince ? { "If-Modified-Since": modifiedSince } : {}) }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(timeout),
   });
 }
 export async function auctionRealms(region: AuctionRegion, lang: "ru" | "en") {
@@ -106,7 +106,14 @@ async function snapshot(query: AuctionQuery, connectedId: number | null, refresh
     marketRequests++;
     try {
       const path = connectedId === null ? "/data/wow/auctions/commodities" : `/data/wow/connected-realm/${connectedId}/auctions`;
-      const response = await blizzard(query.region, path, "dynamic", new URLSearchParams(), 30000);
+      const previous = existing?.value as Snapshot | undefined;
+      const validator = previous?.sourceUpdatedAt ? new Date(previous.sourceUpdatedAt).toUTCString() : undefined;
+      const response = await blizzard(query.region, path, "dynamic", new URLSearchParams(), 30000, validator);
+      if (response.status === 304 && previous && validator) {
+        // The source prices retain their original age. Only the time at which
+        // Blizzard confirmed the snapshot advances.
+        return { ...previous, fetchedAt: new Date().toISOString() };
+      }
       const rawDate = response.headers.get("last-modified"), timestamp = Date.parse(rawDate ?? "");
       const sourceUpdatedAt = Number.isFinite(timestamp) && timestamp <= Date.now() + 5 * 60_000 ? new Date(timestamp).toISOString() : null;
       return { rows: parseAuctionListings(await readJSON(response, 64 * 1024 * 1024), query.market), sourceUpdatedAt, fetchedAt: new Date().toISOString() };
@@ -195,10 +202,10 @@ export async function auctionLotTooltip(query: AuctionQuery, auctionId: number) 
 
 /* ---------- Market view: one row per item ---------- */
 
-const summaries = new WeakMap<Snapshot, Map<number, AuctionItemSummary>>();
+const summaries = new WeakMap<AuctionListing[], Map<number, AuctionItemSummary>>();
 function summaryOf(market: Snapshot) {
-  let summary = summaries.get(market);
-  if (!summary) summaries.set(market, summary = summarizeAuctions(market.rows));
+  let summary = summaries.get(market.rows);
+  if (!summary) summaries.set(market.rows, summary = summarizeAuctions(market.rows));
   return summary;
 }
 /** Search pages of one item class, newest items first; a realm category keeps only the newest two pages. */

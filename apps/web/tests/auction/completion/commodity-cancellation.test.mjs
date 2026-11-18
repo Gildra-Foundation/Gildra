@@ -50,3 +50,28 @@ test('cancelled exact-price waiter consumes late shared transport failure and pr
   // node:test treats an unhandled late rejection as a failure even after this test ends.
   h.fail(new Error('synthetic late transport failure'));await tick();await tick();
 });
+
+test('server-confirmed identical prices reuse all quantity tiers; changed data replaces the ladder',async()=>{
+  const source=await readFile(new URL('../../../lib/wow/auctionBrowserData.ts',import.meta.url),'utf8');
+  const code=stripTypeScriptTypes(source,{mode:'strip'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
+  const date=new Date(Date.now()-3_600_000).toUTCString(), newer=new Date().toUTCString();
+  let calls=0, summaries=0;
+  const adapter=new vm.Script(code+'\n;({exactCommodityPrices})').runInNewContext({
+    parseAuctionListings,summarizeAuctions:rows=>{summaries++;return summarizeAuctions(rows);},
+    Map,Set,WeakMap,Date,Number,JSON,Buffer,URL,URLSearchParams,AbortSignal,
+    process:{env:{BATTLENET_CLIENT_ID:'synthetic',BATTLENET_CLIENT_SECRET:'synthetic'}},
+    fetch:async (url,options)=>{
+      if(url==='https://oauth.battle.net/token')return Response.json({access_token:'fixture',expires_in:3600});
+      calls++;
+      assert.equal(options.headers['If-Modified-Since'],calls===1?undefined:date);
+      if(calls===2)return new Response(null,{status:304});
+      return Response.json({auctions:[{id:1,item:{id:900001},quantity:3,unit_price:100},{id:2,item:{id:900001},quantity:4,unit_price:calls===1?150:180}]},
+        {headers:{'last-modified':calls===1?date:newer}});
+    },
+  });
+  const get=()=>adapter.exactCommodityPrices('eu',[900001],{refresh:true});
+  const a=await get(),b=await get(),c=await get();
+  assert.deepEqual(a.prices,b.prices);assert.equal(a.sourceUpdatedAt,b.sourceUpdatedAt);
+  assert.deepEqual(JSON.parse(JSON.stringify(c.prices[900001].ladder)),[[100,3],[180,4]]);
+  assert.notEqual(b.sourceUpdatedAt,c.sourceUpdatedAt);assert.equal(summaries,2);assert.equal(calls,3);
+});

@@ -606,6 +606,16 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       }
       if (context.input.enhancementMode === "enhanced") {
         progress({ phase: "enhancements", completed: entry.exhaustiveEnhancementState?.equipmentChecked ?? 0, total: 0 });
+        let lastPublishedEnhancement: AuctionGearAssemblyResult["enhancementOptimization"];
+        const publishEnhancement = async (result: NonNullable<typeof lastPublishedEnhancement>) => {
+          published = { ...published, enhancementOptimization: result };
+          entry.latestAssemblyResult = published;
+          scheduleAuctionGearSearchSave(entry);
+          await diagnostics.measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
+          signal.throwIfAborted();
+          publishResult?.(published);
+          lastPublishedEnhancement = result;
+        };
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
           specId: context.specId, level: context.character.level, region: context.character.region,
@@ -628,19 +638,14 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           },
           signal, shouldYield, state: entry.exhaustiveEnhancementState,
           onState: state => { entry.exhaustiveEnhancementState = state; scheduleAuctionGearSearchSave(entry); },
-          onUpdate: async result => {
-            published = { ...published, enhancementOptimization: result };
-            entry.latestAssemblyResult = published;
-            await metricsFor(context.armory ?? context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
-            signal.throwIfAborted(); publishResult?.(published);
-          },
+          onUpdate: publishEnhancement,
           onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
-        })).finally(() => scheduleAuctionGearSearchSave(entry));
+        }));
         signal.throwIfAborted();
-        published = { ...published, enhancementOptimization: enhanced.result };
-        entry.latestAssemblyResult = published;
-        await metricsFor(context.armory ?? context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
-        signal.throwIfAborted(); publishResult?.(published);
+        // The helper returns its last callback snapshot only if no later slice
+        // changed state. Other exits still require a durable publication. The
+        // enclosing catch marks mutations from failed/aborted stage calls.
+        if (enhanced.result !== lastPublishedEnhancement) await publishEnhancement(enhanced.result);
         if (!enhanced.result.complete) return published;
         if (enhanced.result.recommendations.length) {
           finalists.clear();
