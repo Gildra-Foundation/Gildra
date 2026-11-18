@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import { normalizeGearCandidate } from '../../../lib/wow/gearCandidates.ts';
 import { auctionVariantKey, resolvedAuctionVariant } from '../../../lib/wow/auctionItemVariant.ts';
 import { supportedAuctionModifiers } from '../../../lib/wow/gearItemModifiers.ts';
-import { AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference } from '../../../lib/wow/auctionItemReference.ts';
+import { AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference } from '../../../lib/wow/auctionItemReference.ts';
 
 // All facts/transports are synthetic. No market, credentials, disk checkpoints,
 // database, HTTP, or native processes are accessed by these measurements.
@@ -32,7 +32,7 @@ function fixture(source, items = 376, lotsPerItem = 2) {
   const counts = { native: 0, probes: [], abortNative: null };
   const api = new vm.Script(strip(source) + '\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})').runInNewContext({
     Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
-    supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
+    supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference,
     lookupGearRecords: async (ids, _locale, _class, _level, signal, _cache, opts = {}) => { signal.throwIfAborted(); return opts.cachedOnly ? [] : ids.map(record); },
     gearEntityDetails: async rows => rows,
     getAuctionItemReferences: async ids => new Map(ids.map(id => [id, { offer: offer(id, id, 2), requiredLevel: 1, itemLevel: 100, stats: [] }])),
