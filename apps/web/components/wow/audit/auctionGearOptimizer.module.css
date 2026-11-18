@@ -84,3 +84,7 @@
   .price { justify-items: start; }
   .alternatives, .replacements { padding-left: var(--atlas-space-3); }
 }
+
+.runProgress { display: grid; gap: var(--atlas-space-2); color: var(--atlas-text); }
+.runProgress progress { width: 100%; accent-color: var(--atlas-accent); }
+.runProgress small { color: var(--atlas-text-muted); }

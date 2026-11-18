@@ -595,6 +595,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // Enhanced configuration search is a bounded second stage; equipment lot
       // procurement and its exhaustive combination cursor remain unchanged.
       if (context.input.enhancementMode !== "equipment" && [...finalists.values()].flat().some(option => option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.enhancements?.status === "verified")) {
+        progress({ phase: "enhancements", completed: 0, total: 0 });
         const enhanced = await diagnostics.measureStage("enhancements", () => evaluateAuctionEnhancementStage({
           finalists: [...finalists].map(([label, selected]) => ({label, options:selected})),
           equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId, level: context.character.level,
@@ -631,6 +632,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         scheduleAuctionGearSearchSave(entry);
       }
       if (encounters.length && finalists.size) {
+        progress({ phase: "scenarios", completed: 0, total: encounters.length });
         let yielded = false;
         const simulators = new Map<string, ReturnType<typeof createAuctionSimulator>>();
         published.scenarioComparisons = await diagnostics.measureStage("scenarios", () => evaluateAuctionGearScenarios([...finalists.keys()], encounters, signal,
@@ -657,6 +659,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           }, { shouldYield,
             onYield: () => { yielded = true; },
             onProgress: async rows => {
+              progress({ phase: "scenarios", completed: rows.filter(row => row.candidates.length === finalists.size).length, total: encounters.length });
               // A separate immutable publication cannot acquire later rows by aliasing.
               const partial = withFreshEnhancementQuotes({ ...published, scenarioComparisons: rows, scenarioComparisonsComplete: false });
               entry.latestAssemblyResult = partial;

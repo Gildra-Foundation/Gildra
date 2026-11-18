@@ -40,6 +40,8 @@ test("ux flow: working state has cancellation and no premature recommendation", 
   await expect(quick.find).toBeDisabled();
   await expect(quick.panel.locator('input[name="budgetGold"]')).toBeDisabled();
   await expect(quick.panel.getByRole("status")).toBeVisible();
+  await expect(quick.panel.getByRole("progressbar")).toBeVisible();
+  await expect(quick.panel.getByRole("progressbar")).not.toHaveAttribute("value", /.+/);
   await expect(quick.result).toHaveCount(0);
   await capture(quick, info, "working");
   await cancel.click(); await expect(quick.find).toBeEnabled();
@@ -144,4 +146,24 @@ test("ux flow: reduced motion and folded slot validation remain usable", async (
     const timing = animation.effect?.getComputedTiming(); return timing?.iterations === Infinity && animation.playState === "running";
   }))).toBe(false);
   await capture(quick, info, "reduced-motion-slot-validation");
+});
+
+test("ux flow: catalog progress estimates the current stage and clears on enhancements", async ({ quick, page }) => {
+  let phase = "catalog", firstSampleAt = 0;
+  quick.runningAction = "search";
+  await page.route("**/api/wow/auction-gear-plans**", async route => {
+    if (!quick.activeId || !new URL(route.request().url()).searchParams.has("id")) return route.fallback();
+    firstSampleAt ||= Date.now();
+    const completed = Date.now() - firstSampleAt >= 3500 ? 5 : 2;
+    await route.fulfill({ json: { ...quick.jobs.get(quick.activeId), result: null,
+      progress: { phase, completed, total: phase === "catalog" ? 10 : 0 } } });
+  });
+  await quick.open(); await quick.find.click();
+  const bar = quick.panel.getByRole("progressbar");
+  await expect(bar).toHaveAttribute("value", "2");
+  await expect(bar).toHaveAttribute("value", "5", { timeout: 10000 });
+  await expect(quick.panel.getByText(/примерно|about/)).toBeVisible();
+  phase = "enhancements";
+  await expect(bar).not.toHaveAttribute("value", /.+/);
+  await expect(bar).toHaveAccessibleName(/камни и чары|gems and enchants/i);
 });
