@@ -124,6 +124,9 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   selectedSlots: string[];
   /** Best visited affordable upgrade whose gain is confirmed independently of the measured maximum. */
   bestConfirmed: AuctionGearConfirmed | null;
+  /** Independent confirmed leaders among visited affordable sets; absent only in legacy results. */
+  bestValueConfirmed?: AuctionGearConfirmed | null;
+  bestDpsConfirmed?: AuctionGearConfirmed | null;
   exhaustiveComplete: boolean;
   combinationsChecked: number;
   validCombinations: number;
@@ -170,6 +173,9 @@ export type AuctionGearAssemblyCheckpoint = {
   baseline: GearPlanSimulation;
   best: { optionIds: string[]; simulation: GearPlanSimulation };
   bestConfirmed: { optionIds: string[]; simulation: GearPlanSimulation } | null;
+  /** Legacy checkpoints without these fields replay cached traversal before claiming completion. */
+  bestValueConfirmed?: { optionIds: string[]; simulation: GearPlanSimulation } | null;
+  bestDpsConfirmed?: { optionIds: string[]; simulation: GearPlanSimulation } | null;
   simulationCache: AuctionGearSimulationCache;
   simulations: number;
   combinationsChecked: number;

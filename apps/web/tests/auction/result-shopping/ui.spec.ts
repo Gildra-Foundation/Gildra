@@ -2,7 +2,7 @@ import { test, expect, type Page, type TestInfo } from "playwright/test";
 import { searchResult, completedJob } from "../reliability/ui-fixtures";
 const lang = (info: TestInfo) => info.project.metadata.language as string;
 const open = async (page: Page, info: TestInfo, mode = "") => {
-  await page.route("**/api/wow/auction-gear-plans**", route => route.fulfill({ json: { activeJob: null } }));
+  await page.route("**/api/wow/auction-gear-plans**", route => route.fulfill({ json: { activeJob: null, job: null, formIntent: null } }));
   await page.goto(`/?lang=${lang(info)}&mode=${mode}`);
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator("[data-auction-shopping-list] input[type=checkbox]").first()).toBeEnabled();
@@ -96,7 +96,7 @@ test("objective persists as scoped draft, travels in request and clears old resu
   await expect(choices.last()).toBeChecked();
   let requests = 0;
   await page.route("**/api/wow/auction-gear-plans**", async route => {
-    if (route.request().method() !== "POST") return route.fulfill({ json: { activeJob: null } });
+    if (route.request().method() !== "POST") return route.fulfill({ json: { activeJob: null, job: null, formIntent: null } });
     const input = route.request().postDataJSON();
     expect(input.objective).toBe("dps"); requests++;
     const result = { ...searchResult(), searchId: "synthetic-objective-search", selectedSlots: input.selectedSlots, objective: input.objective,
@@ -131,7 +131,7 @@ test("objective nonce recovery skips old checkpoint and polls new owned search",
     if (url.searchParams.has("clientRequestId")) return route.fulfill({ json: { ...completedJob(language, next), id: "synthetic-next-job", mode: "search" } });
     if (url.searchParams.has("searchId")) return route.fulfill({ json: { kind: "recovery", search: previous, assembly: null, excludedOptionIds: [], activeJob: null, needsRefresh: true } });
     if (url.searchParams.has("id")) { polled++; return route.fulfill({ json: { ...completedJob(language, next), id: "synthetic-next-job", mode: "search" } }); }
-    return route.fulfill({ json: { activeJob: null } });
+    return route.fulfill({ json: { activeJob: null, job: null, formIntent: null } });
   });
   await page.goto(`/?lang=${language}`);
   await expect(page.locator("[data-auction-search-result]")).toBeVisible();
@@ -151,4 +151,29 @@ for (const mode of ["unknown", "insignificant", "stale", "partial-negative", "in
   }
   if (mode === "incomplete-data") await expect(result).toContainText(lang(info) === "ru" ? "Часть предметов не удалось оценить" : "Some items could not be evaluated");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("comparison switches the DPS, cost and shopping list together", async ({ page }, info) => {
+  await open(page, info, "tradeoff");
+  const result = page.locator("[data-private-result] [data-auction-assembly-result]");
+  const comparison = result.locator("[data-auction-loadout-comparison]");
+  await expect(comparison).toBeVisible();
+  for (const [option, name, dps, gold] of [
+    ["dps", "Synthetic Stronger Helm", "60", "500"],
+    ["value", "Synthetic Exact Helm", "20", "100"],
+  ]) {
+    await comparison.locator(`[data-auction-select-comparison="${option}"]`).click();
+    await expect(result.locator("[data-auction-primary-dps]")).toContainText(dps);
+    await expect(result.locator("[data-auction-primary-cost]")).toContainText(gold);
+    await expect(result.locator("[data-auction-shopping-row]")).toHaveCount(1);
+    await expect(result.locator("[data-auction-shopping-row]")).toContainText(name);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("one winning loadout has a single actionable shopping list", async ({ page }, info) => {
+  await open(page, info, "same-winner");
+  const result = page.locator("[data-private-result]");
+  await expect(result.locator("[data-auction-loadout-comparison]")).toHaveCount(0);
+  await expect(result.locator("[data-auction-shopping-row]")).toHaveCount(1);
 });

@@ -12,7 +12,8 @@ import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFinge
 import { auctionGearVariantSelectionKey } from '../../../lib/wow/auctionGearExclusions.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { optimizeAuctionGearEnhancements } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
-import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
+import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from '../../../lib/wow/auctionGearEnhancementStage.ts';
+import { additionalAuctionSocketFinalists } from '../../../lib/wow/auctionGearEnhancementCandidates.ts';
 import { auctionEnhancementCatalogInfo } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { prepareGearLoadout, nativeGearSimulationMeasurement } from '../../../lib/wow/gearSimulation.ts';
 import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
@@ -237,6 +238,34 @@ test('actual stage refreshes consumable quotes and invalidates affordability wit
     'Restored affordability may visit new effects but must never resimulate cached effects');
 });
 
+test('stage exposes both checked objectives and migrates legacy checkpoints by replaying existing measurements',async()=>{
+  const h=stageFixture();let cheapest;const evaluated=[];
+  h.input.objective='value';h.input.includeObjectiveAlternatives=true;
+  h.input.quote=async(_region,ids)=>{
+    cheapest=ids[0];
+    return {prices:{[ids[0]]:{ladder:[[10,10]]},[ids[1]]:{ladder:[[100,10]]}},sourceUpdatedAt:timestamp,fetchedAt:new Date().toISOString()};
+  };
+  h.input.simulate=async options=>{
+    const gem=options[0].customization.gemIds[0];evaluated.push(gem);
+    return {...h.input.baseline,dps:gem===cheapest?1100:1150};
+  };
+  const first=await finishStage(h);
+  assert.equal(first.status,'ready');assert.equal(evaluated.length,2);
+  assert.deepEqual(first.recommendations.map(row=>[row.comparison.candidateDps,row.configuration.totalCopper]),[[1100,110],[1150,200]]);
+  assert.equal(auctionEnhancementScenarioFinalists(first.recommendations,'value').length,2);
+  h.input.includeObjectiveAlternatives=false;
+  const legacyOutput=await evaluateAuctionEnhancementStage(h.input);
+  assert.equal(legacyOutput.recommendations.length,1);assert.equal(legacyOutput.recommendations[0].simulation.dps,1100);
+  h.input.includeObjectiveAlternatives=true;
+  for(const checkpoint of Object.values(h.input.state.checkpoints)) {
+    checkpoint.inputKey='legacy-objective-only-traversal';
+    delete checkpoint.bestValueConfirmed;delete checkpoint.bestDpsConfirmed;
+  }
+  const migrated=await finishStage(h);
+  assert.deepEqual(migrated.recommendations.map(row=>row.simulation.dps),[1100,1150]);
+  assert.equal(evaluated.length,2,'Legacy replay and both-objective retention reuse exact native measurements');
+});
+
 test('actual stage does not quote or certify legacy metadata without exact native socket verification',async()=>{
   const h=stageFixture({verified:false});
   const result=await evaluateAuctionEnhancementStage(h.input);
@@ -271,7 +300,8 @@ test('actual stage prices a supported leg enchant and gem together and sends the
   assert(h.calls.some(changes=>changes[0].slot==='legs'&&changes[0].enchantId===best.slots[0].enchantId&&changes[0].gemIds[0]===paidGem.itemId));
 });
 
-for (const bareLoserFallback of [false,true]) test(`actual Runner continues priced finalists and scenario comparisons (${bareLoserFallback?'two unverified bare leaders must not hide third verified loser':'winning bare set'})`,async()=>{
+for (const fixtureCase of ['winning bare set','two unverified bare leaders must not hide third verified loser','socket loser beats an existing bare winner only with a gem']) test(`actual Runner continues priced finalists and scenario comparisons (${fixtureCase})`,async()=>{
+  const bareLoserFallback=fixtureCase.startsWith('two unverified'), socketLoser=fixtureCase.startsWith('socket loser');
   const h=stageFixture({slotType:'LEGS',inventoryType:7,itemSubclassId:4});
   if(bareLoserFallback){
     const verified=h.input.finalists[0].options[0];
@@ -285,6 +315,13 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
     });
     h.input.finalists[0].options.unshift(...unverified);
   }
+  if(socketLoser) {
+    const bareWinner=structuredClone(h.input.finalists[0].options[0]);
+    bareWinner.id='synthetic-bare-winner';bareWinner.auctionId++;bareWinner.candidate.itemId++;
+    bareWinner.variantKey='synthetic-no-socket';bareWinner.candidate.variants[0].key=bareWinner.variantKey;
+    Object.assign(bareWinner.candidate.variants[0].resolution.enhancements,{socketColors:[0,0,0],socketCount:0});
+    h.input.finalists[0].options.unshift(bareWinner);
+  }
   const requests=[],publications=[],stageOutputs=[];let flushes=0;
   const runnerSource=await readFile(new URL('../../../lib/wow/auctionGearRunner.ts',import.meta.url),'utf8');
   const code=stripTypeScriptTypes(runnerSource,{mode:'strip'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
@@ -292,6 +329,7 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
   const runner=new vm.Script(code+'\n;({assembleAuctionGearSearch,createAuctionSimulator})').runInNewContext({
     ...planner,createAuctionGearDiagnostics,logAuctionGearDiagnostics,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,
     evaluateAuctionGearScenarios,customizedAuctionGearOptions,prepareGearLoadout,nativeGearSimulationMeasurement,
+    additionalAuctionSocketFinalists,auctionEnhancementScenarioFinalists,
     auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey,
     auctionGearMechanicalCache:createAuctionGearMechanicalCache(),assertFreshMarket,
     Map,Set,Object,Number,JSON,Date,AbortSignal,process,
@@ -305,7 +343,7 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
       const request=JSON.parse(options.body);requests.push(request);
       assert.equal(request.actionListMode,'native');
       const changes=request.gearChanges??[];
-      const dps=(1000+changes.reduce((sum,change)=>sum+(bareLoserFallback?(change.itemId===960010?-30:change.itemId===960011?-10:-20):100)+(change.gemIds?.length?300:0)+(change.enchantId?50:0),0))*request.targets;
+      const dps=(1000+changes.reduce((sum,change)=>sum+(bareLoserFallback?(change.itemId===960010?-30:change.itemId===960011?-10:-20):socketLoser&&change.itemId===960010?-10:100)+(change.gemIds?.length?300:0)+(change.enchantId?50:0),0))*request.targets;
       return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:750,engine:nativeEngine},
         {headers:{'x-gildra-engine':'simulationcraft'}});
     },
@@ -315,6 +353,7 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
   const encounter={fightLengthSeconds:120,targets:1};
   const options=h.input.finalists[0].options;
   const context={input:{scenario:'single-target',locale:'en',selectedSlots:['LEGS'],budgetCopper:500,objective:'dps',
+    ...(socketLoser?{enhancementMode:'enhanced'}:{}),
     compareScenarios:[{scenario:'aoe',fightLengthSeconds:90,targets:3}]},
     options,armory,loadout:h.input.loadout,specId:72,specSlug:'fury-warrior',market,encounter,
     character:{level:90,region:'eu'},currentBySlot:new Map(),coverage:{discoveryComplete:true,dataComplete:true},searchLimited:false,
@@ -323,6 +362,10 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
   const signal=new AbortController().signal;
   const seeded=await planner.searchAuctionGearOptions({searchId:'synthetic-enhancement-runner',budgetCopper:500,options,
     selectedSlots:['LEGS'],loadout:context.loadout,specId:72,market,signal,simulate:context.simulate,maxNewSimulations:8});
+  if(socketLoser) {
+    const losing=seeded.result.items.find(row=>row.optionId==='synthetic-trinket-option');
+    assert.equal(losing.comparison.candidateDps,990);assert(losing.comparison.deltaDps<0);
+  }
   const entry={id:'synthetic-enhancement-runner',owner:'synthetic-owner',context,knownOptionIds:new Set(options.map(option=>option.id)),
     searchCheckpoint:seeded.checkpoint,retainedBaseline:seeded.checkpoint.baseline,latestSearchResult:seeded.result};
   const run=()=>runner.assembleAuctionGearSearch(entry,undefined,signal,()=>{},undefined,result=>publications.push(result));
@@ -337,7 +380,17 @@ for (const bareLoserFallback of [false,true]) test(`actual Runner continues pric
   assert.equal(result.enhancementOptimization.status,'ready');assert.equal(result.enhancementOptimization.complete,true);
   assert.equal(result.scenarioComparisonsComplete,true);assert.equal(firstPending.enhancementOptimization.complete,false,'Previously published result is immutable');
   assert(stageOutputs.length>1);assert(flushes>stageOutputs.length);
-  const recommendation=result.enhancementOptimization.recommendations[0];
+  const recommendation=socketLoser ? result.enhancementOptimization.recommendations.find(row=>row.optionIds.includes('synthetic-trinket-option')) : result.enhancementOptimization.recommendations[0];
+  if(socketLoser) {
+    assert.deepEqual(Array.from(result.purchases,row=>row.itemId),[960011],'Bare assembly still selects the genuinely better unmodified item');
+    assert(recommendation,'Previously excluded socket item must be evaluated while the bare winner exists');
+    assert.equal(recommendation.comparison.candidateDps,1340);
+    assert.equal(recommendation.configuration.totalCopper,120);
+    assert(recommendation.comparison.uncertainty.significant);
+    assert.equal(result.enhancementOptimization.searchLimited,true);
+    assert(result.enhancementOptimization.reasons.includes('socket_candidate_subset'));
+    assert(result.enhancementOptimization.recommendations.every(row=>row.configuration.totalCopper<=500));
+  }
   const paid=recommendation.configuration.slots.find(slot=>slot.slotType==='LEGS');
   const scenario=result.scenarioComparisons[0];
   assert(scenario.candidates.every(candidate=>candidate.finalist.startsWith('enhanced-')));

@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { goldToCopper } from "@/lib/wow/auctionMarket";
 import { startAuctionGearSearch, continueAuctionGearSearch, assembleAuctionGearSearch, selectedAuctionGearAssemblyOptions, verifyAuctionGearSearch } from "@/lib/wow/auctionGearRunner";
-import { enqueueAuctionGearJob, getAuctionGearJob, waitForAuctionGearJob, validAuctionGearJobRevision, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest, getOwnerActiveAuctionGearJob, auctionGearFormIntent } from "@/lib/wow/auctionGearJobs";
+import { enqueueAuctionGearJob, getAuctionGearJob, waitForAuctionGearJob, validAuctionGearJobRevision, getAuctionGearJobByRequest, validAuctionGearClientRequestId, replayAuctionGearJob, cancelAuctionGearJob, cancelAuctionGearRequest, getOwnerActiveAuctionGearJob, getLatestAuctionGearFullJob, auctionGearFormIntent, type AuctionGearTask } from "@/lib/wow/auctionGearJobs";
+import { fullAuctionGearTask } from "@/lib/wow/auctionGearBackground";
 import { getAuctionGearSearch, reserveAuctionGearSearch, saveAuctionGearSearch, type AuctionGearSearchEntry } from "@/lib/wow/auctionGearSearchStore";
 import { resumeOwnedAuctionGearWork } from "@/lib/wow/auctionGearWork";
 import { recoverAuctionGearSearch } from "@/lib/wow/auctionGearRecovery";
@@ -65,6 +66,16 @@ async function readPlan(request: Request) {
     error: "session_expired"
   }, 401);
   const params = new URL(request.url).searchParams;
+  if (params.has("latest")) {
+    const characterSlug = params.get("characterSlug") ?? "", locale = params.get("locale");
+    if (params.get("latest") !== "1" || params.size !== 3 || !characterSlug || characterSlug.length > 180 ||
+        (locale !== "en" && locale !== "ru")) return reply({ error: "invalid_plan_request" }, 400);
+    const recovered = getLatestAuctionGearFullJob(user.id, { characterSlug, locale });
+    const entry = recovered.job?.searchId ? getAuctionGearSearch(user.id, recovered.job.searchId) : null;
+    if (recovered.job && !recovered.formIntent) recovered.formIntent = auctionGearFormIntent(entry?.context.input, recovered.job.scope);
+    return reply({ ...recovered, specializationSlug: entry?.context.specSlug ?? null,
+      excludedOptionIds: [...(entry?.excludedOptionIds ?? [])], excludedVariantKeys: [...(entry?.excludedVariantKeys ?? [])] });
+  }
   const after = params.get("after");
   if (params.has("after") && (params.getAll("after").length !== 1 || !validAuctionGearJobRevision(after) ||
       params.getAll("id").length !== 1 || !params.get("id") || params.has("active") ||
@@ -172,6 +183,8 @@ async function postPlan(request: Request) {
   }
   const action = body.action ?? "search";
   if (action !== "search" && action !== "resume" && action !== "assemble") return reply({ error: "invalid_plan_request" }, 400);
+  if (body.runMode !== undefined && body.runMode !== "full") return reply({ error: "invalid_plan_request" }, 400);
+  const execution = body.runMode === "full" ? { runMode: "full" as const } : {};
   let enhancementMode;
   try { enhancementMode = parseAuctionGearEnhancementMode(body.enhancementMode); }
   catch { return reply({ error: "invalid_plan_request" }, 400); }
@@ -185,7 +198,7 @@ async function postPlan(request: Request) {
     clientRequestId = body.clientRequestId;
   }
   if (action !== "search") {
-    const keys = action === "resume" ? ["action", "searchId", "clientRequestId", "enhancementMode"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "excludedVariantKeys", "clientRequestId", "enhancementMode"];
+    const keys = action === "resume" ? ["action", "searchId", "clientRequestId", "enhancementMode", "runMode"] : ["action", "searchId", "allowedOptionIds", "excludedOptionIds", "excludedVariantKeys", "clientRequestId", "enhancementMode", "runMode"];
     if (Object.keys(body).some(key => !keys.includes(key)) || typeof body.searchId !== "string" || body.searchId.length > 100) return reply({ error: "invalid_plan_request" }, 400);
     const hasAllowed = Object.hasOwn(body, "allowedOptionIds"), hasExcluded = Object.hasOwn(body, "excludedOptionIds");
     const hasVariants = Object.hasOwn(body, "excludedVariantKeys"), variants = body.excludedVariantKeys;
@@ -195,6 +208,7 @@ async function postPlan(request: Request) {
     if (ids !== undefined && (!Array.isArray(ids) || (hasAllowed && !ids.length) ||
         ids.some(id => typeof id !== "string" || !id || id.length > 180) || new Set(ids).size !== ids.length)) return reply({ error: "invalid_auction_selection" }, 400);
     const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({ action, searchId: body.searchId,
+      ...execution,
       ...(body.enhancementMode !== undefined ? { enhancementMode } : {}),
       ...(action === "assemble" ? { selection: { [hasAllowed ? "allowedOptionIds" : "excludedOptionIds"]: [...((ids as string[] | undefined) ?? [])].sort(), ...(hasVariants ? { excludedVariantKeys: [...variants as string[]].sort() } : {}) } } : {}),
     })).digest("hex") : undefined;
@@ -241,16 +255,18 @@ async function postPlan(request: Request) {
           entry.excludedOptionIds = previous; entry.excludedVariantKeys = previousVariants; throw error;
         }
       } : undefined;
-      const job = enqueueAuctionGearJob(user.id, async (signal, progress, hooks) => {
+      const task: AuctionGearTask = async (signal, progress, hooks) => {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, user.token, signal);
           return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token, hooks.publishResult)
             : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token, hooks.publishResult);
         } finally { entry.busy = false; }
-      }, { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale },
-        onSettled: release, beforeAcceptance, work: action === "assemble" ? { action, searchId: entry.id, selection: selection as { excludedOptionIds: string[]; excludedVariantKeys?: string[] } | string[] | undefined }
-          : { action, searchId: entry.id }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
+      };
+      const job = enqueueAuctionGearJob(user.id, execution.runMode ? fullAuctionGearTask(task, user.id, user.token, action === "assemble" ? selection as Parameters<typeof fullAuctionGearTask>[3] : undefined) : task,
+        { continuation: true, searchId: entry.id, scope: { characterSlug: entry.context.input.characterSlug, locale: entry.context.input.locale },
+        onSettled: release, beforeAcceptance, work: action === "assemble" ? { ...execution, action, searchId: entry.id, selection: selection as { excludedOptionIds: string[]; excludedVariantKeys?: string[] } | string[] | undefined }
+          : { ...execution, action, searchId: entry.id }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
       return reply(job, 202);
     } catch (error) {
       release?.();
@@ -258,7 +274,7 @@ async function postPlan(request: Request) {
       return queueFailure(user.id, code);
     }
   }
-  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "fightLengthSeconds", "targets", "compareScenarios", "objective", "locale", "clientRequestId", "enhancementMode"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
+  if (Object.keys(body).some(key => !["action", "characterSlug", "budgetGold", "selectedSlots", "scenario", "fightLengthSeconds", "targets", "compareScenarios", "objective", "locale", "clientRequestId", "enhancementMode", "runMode"].includes(key))) return reply({ error: "invalid_plan_request" }, 400);
   const {
     characterSlug,
     scenario = "single-target",
@@ -284,6 +300,7 @@ async function postPlan(request: Request) {
   try { selectedSlots = parseAuctionGearSlots(body.selectedSlots ?? [...auctionGearSlots]); }
   catch { return reply({ error: "invalid_equipment_slots" }, 400); }
   const requestFingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify({
+    ...execution,
     ...(body.enhancementMode !== undefined ? { enhancementMode } : {}),
     characterSlug, locale, budgetCopper, selectedSlots, scenario, ...(body.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}), ...(body.targets !== undefined ? { targets: encounter.targets } : {}), ...(body.compareScenarios !== undefined ? { compareScenarios } : {}), ...(objective === "value" ? { objective } : {}),
   })).digest("hex") : undefined;
@@ -302,9 +319,10 @@ async function postPlan(request: Request) {
     };
     request.signal.throwIfAborted();
     if (Date.now() > acceptBefore) throw new Error("plan_request_expired");
-    const job = enqueueAuctionGearJob(user.id, (signal, progress, hooks) => startAuctionGearSearch(input,
-      user.id, user.token, signal, progress, hooks.searchCreated, hooks.publishResult), { scope: { characterSlug, locale: locale as "ru" | "en" },
-      work: { action: "search", input }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
+    const task: AuctionGearTask = (signal, progress, hooks) => startAuctionGearSearch(input,
+      user.id, user.token, signal, progress, hooks.searchCreated, hooks.publishResult);
+    const job = enqueueAuctionGearJob(user.id, execution.runMode ? fullAuctionGearTask(task, user.id, user.token) : task, { scope: { characterSlug, locale: locale as "ru" | "en" },
+      work: { ...execution, action: "search", input }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
     resumeOwnedAuctionGearWork(user.id, job.id, user.token);
     return reply(job, 202);
   } catch (error) {

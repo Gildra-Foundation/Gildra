@@ -100,6 +100,10 @@ export class CompletionHarness {
   async dispose() { this.release(); await this.page.unrouteAll({ behavior: "ignoreErrors" }); }
   private async intercept(route: Route) {
     const request = route.request(), url = new URL(request.url());
+    if (url.searchParams.has("latest")) {
+      await route.fulfill({ json: { job: null, formIntent: null } });
+      return;
+    }
     if (request.method() === "DELETE") {
       this.cancellationRequests.push(request.url());
       const nonce = url.searchParams.get("clientRequestId");

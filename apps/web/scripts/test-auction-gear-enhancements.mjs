@@ -206,3 +206,27 @@ assert.equal(nativeCalls,1);assert.equal(cacheHits,1,'A reused validated configu
 await optimizeAuctionGearEnhancements({...cacheMetricInput,simulationCache:cacheMetricFirst.checkpoint.cache,shouldYield:()=>true});
 assert.equal(cacheHits,1,'Unvisited cache entries must not increment diagnostics');
 console.log('Cache-hit diagnostics callback contract passed.');
+
+// Objective retention must not depend on the three entries left in the visible shortlist.
+const dualCalls=[];
+const dualInput={...incumbentInput,objective:'value',baseline:{...preciseBaseline,dps:1000},
+ prices:{...base.prices,prices:Object.fromEntries(incumbentChoices.map((g,i)=>[g.consumableItemId,{ladder:[[i===4?900:i+1,100]]}]))},
+ simulate:async c=>{dualCalls.push(c.key);const i=c.slots[0].gemIds[0]-6000;return {...preciseBaseline,dps:1100+i*100};}};
+let dual=await optimizeAuctionGearEnhancements(dualInput);
+while(!dual.complete) dual=await optimizeAuctionGearEnhancements({...dualInput,checkpoint:JSON.parse(JSON.stringify(dual.checkpoint))});
+assert.equal(dualCalls.length,5);
+assert.equal(dual.checkpoint.bestValueConfirmed.simulation.dps,1400);
+assert.equal(dual.checkpoint.bestDpsConfirmed.simulation.dps,1500);
+assert(!dual.finalists.some(row=>row.simulation.dps===1500),'A low-value maximum can fall outside the visible three');
+assert.equal(dual.checkpoint.confirmed.simulation.dps,1400);
+const restoredDual=await optimizeAuctionGearEnhancements({...dualInput,checkpoint:JSON.parse(JSON.stringify(dual.checkpoint))});
+assert.equal(restoredDual.simulations,0);assert.equal(dualCalls.length,5);
+assert.equal(restoredDual.checkpoint.bestDpsConfirmed.simulation.dps,1500);
+const dualDps=await optimizeAuctionGearEnhancements({...dualInput,objective:'dps',simulationCache:dual.checkpoint.cache});
+assert.equal(dualDps.simulations,0);assert.equal(dualDps.checkpoint.confirmed.simulation.dps,1500);
+assert.equal(dualDps.checkpoint.bestValueConfirmed.simulation.dps,1400);
+const invalidDual=structuredClone(dual.checkpoint);invalidDual.bestDpsConfirmed.simulation.dps++;
+await assert.rejects(()=>optimizeAuctionGearEnhancements({...dualInput,checkpoint:invalidDual}),/invalid_enhancement_checkpoint/);
+const staleDual=await optimizeAuctionGearEnhancements({...dualInput,checkpoint:dual.checkpoint,now:now+3*3600000});
+assert.equal(staleDual.checkpoint.bestValueConfirmed,undefined);assert.equal(staleDual.checkpoint.bestDpsConfirmed,undefined);
+console.log('Independent confirmed value/DPS retention survives shortlist eviction, JSON resume, objective changes, and quote expiry.');

@@ -77,7 +77,7 @@ export function captureAuctionGearIncumbents(checkpoint: AuctionGearAssemblyChec
   options: AuctionGearOption[]): AuctionGearIncumbent[] {
   if (!checkpoint) return [];
   const byId = new Map(options.map(option => [option.id, option])), unique = new Map<string, AuctionGearIncumbent>();
-  for (const best of [checkpoint.best, checkpoint.bestConfirmed]) {
+  for (const best of [checkpoint.best, checkpoint.bestConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) {
     if (!best?.optionIds.length) continue;
     const selection = best.optionIds.map(id => byId.get(id));
     if (selection.some(option => !option)) continue;
@@ -275,6 +275,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const radices = groups.map(group => group.length + 1);
   const combinationCount = radices.reduce((product, radix) => product * BigInt(radix), 1n).toString();
   let checkpoint: AuctionGearAssemblyCheckpoint, calls = 0;
+  let replayLegacyCandidates = false;
   if (input.checkpoint) {
     requireCheckpoint(inputKey, input.checkpoint, 3);
     checkpoint = structuredClone(input.checkpoint);
@@ -291,13 +292,25 @@ export async function assembleAuctionGear(input: PlannerInput & {
         checkpoint.nextSeed > (checkpoint.seedSelections?.length ?? 0) || checkpoint.exhausted && checkpoint.seedSelections === null ||
         checkpoint.bestConfirmed === undefined) throw new Error("invalid_search_checkpoint");
     checkpoint.best.simulation = validSimulation(checkpoint.best.simulation, checkpoint.baseline.engine);
-    if (checkpoint.bestConfirmed) checkpoint.bestConfirmed.simulation = validSimulation(checkpoint.bestConfirmed.simulation, checkpoint.baseline.engine);
+    for (const best of [checkpoint.bestConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) {
+      if (best) best.simulation = validSimulation(best.simulation, checkpoint.baseline.engine);
+    }
+    replayLegacyCandidates = checkpoint.bestValueConfirmed === undefined || checkpoint.bestDpsConfirmed === undefined;
+    if (replayLegacyCandidates) {
+      // An old objective-specific incumbent cannot prove the other objective's
+      // historical leader. Replay the exact domain using retained native facts.
+      checkpoint.bestValueConfirmed = null; checkpoint.bestDpsConfirmed = null;
+      checkpoint.cursor.fill(0); checkpoint.exhausted = false;
+      checkpoint.nextPair = 0; checkpoint.nextSeed = 0;
+      checkpoint.combinationsChecked = 0; checkpoint.validCombinations = 0;
+    }
   } else {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
     checkpoint = { version: 3, inputKey, cursor: slots.map(() => 0), exhausted: false,
-      baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null, simulationCache: cache,
+      baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null,
+      bestValueConfirmed: null, bestDpsConfirmed: null, simulationCache: cache,
       simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,
       pairScores: flatGroups.map(group => cache[auctionSelectionEffectKey([group.options[0]])]?.dps ?? baseline.baseline.dps) };
   }
@@ -319,7 +332,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     return option;
   });
   const bestOptions = () => optionsFor(checkpoint.best);
-  for (const best of [checkpoint.best, checkpoint.bestConfirmed]) if (best) {
+  for (const best of [checkpoint.best, checkpoint.bestConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) if (best) {
     auctionPlanLoadout(input.loadout, optionsFor(best), input.specId, slots);
     if (auctionPlanCost(optionsFor(best)) > input.budgetCopper) throw new Error("invalid_search_checkpoint");
   }
@@ -327,7 +340,9 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const comparison = compareGearSimulationResults(checkpoint.baseline, simulation);
     return comparison.deltaDps > 0 && comparison.uncertainty.significant;
   };
-  if (checkpoint.bestConfirmed && !confirmed(checkpoint.bestConfirmed.simulation)) throw new Error("invalid_search_checkpoint");
+  for (const best of [checkpoint.bestConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) {
+    if (best && !confirmed(best.simulation)) throw new Error("invalid_search_checkpoint");
+  }
   const consider = (selection: AuctionGearOption[], simulation: GearPlanSimulation) => {
     const cost = auctionPlanCost(selection), key = selectionKey(selection);
     const preferred = (best: typeof checkpoint.best | null) => !best || simulation.dps > best.simulation.dps ||
@@ -336,18 +351,19 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const best = { optionIds: selection.map(option => option.id), simulation };
     if (preferred(checkpoint.best)) checkpoint.best = best;
     if (confirmed(simulation)) {
-      const previous = checkpoint.bestConfirmed;
-      // Native whole-set gain is essential: weak singles may form an efficient
-      // combination. The unchanged baseline is never a positive-value purchase.
+      const previous = checkpoint.bestValueConfirmed ?? null;
+      // Both scores use the same measured whole-set gain and exact lot cost.
       const value = cost / (simulation.dps - checkpoint.baseline.dps);
       const priorValue = previous ? auctionPlanCost(optionsFor(previous)) / (previous.simulation.dps - checkpoint.baseline.dps) : Infinity;
-      const better = input.objective === "value"
-        ? value < priorValue || value === priorValue && preferred(previous)
-        : preferred(previous);
-      if (better) checkpoint.bestConfirmed = best;
+      if (value < priorValue || value === priorValue && preferred(previous)) checkpoint.bestValueConfirmed = best;
+      if (preferred(checkpoint.bestDpsConfirmed ?? null)) checkpoint.bestDpsConfirmed = best;
+      checkpoint.bestConfirmed = input.objective === "value" ? checkpoint.bestValueConfirmed! : checkpoint.bestDpsConfirmed!;
     }
   };
-  if (!input.checkpoint) {
+  if (replayLegacyCandidates) {
+    for (const best of [checkpoint.best, checkpoint.bestConfirmed]) if (best) consider(optionsFor(best), best.simulation);
+  }
+  if (!input.checkpoint || replayLegacyCandidates) {
     // Recover confirmed singles even when the caller has already requested a yield.
     for (const option of options) {
       const simulation = checkpoint.simulationCache[auctionSelectionEffectKey([option])];
@@ -533,9 +549,15 @@ export async function assembleAuctionGear(input: PlannerInput & {
   save();
   const selection = bestOptions(), spentCopper = auctionPlanCost(selection);
   const final = auctionPlanLoadout(input.loadout, selection, input.specId, slots);
-  const confirmedOptions = checkpoint.bestConfirmed ? optionsFor(checkpoint.bestConfirmed) : null;
-  const confirmedFinal = confirmedOptions ? auctionPlanLoadout(input.loadout, confirmedOptions, input.specId, slots) : null;
-  const confirmedCost = confirmedOptions ? auctionPlanCost(confirmedOptions) : 0;
+  const presentConfirmed = (best: typeof checkpoint.best | null | undefined) => {
+    if (!best) return null;
+    const confirmedOptions = optionsFor(best);
+    const confirmedFinal = auctionPlanLoadout(input.loadout, confirmedOptions, input.specId, slots);
+    const confirmedCost = auctionPlanCost(confirmedOptions);
+    return { purchases: confirmedOptions.map(auctionGearPurchase), spentCopper: confirmedCost, remainingCopper: input.budgetCopper - confirmedCost,
+      removedSlots: input.loadout.filter(item => !confirmedFinal.some(final => final.slotType === item.slotType)).map(item => item.slotType),
+      comparison: compareGearSimulationResults(checkpoint.baseline, best.simulation) };
+  };
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
   return { checkpoint, result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
@@ -543,11 +565,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
     budgetCopper: input.budgetCopper, spentCopper, remainingCopper: input.budgetCopper - spentCopper,
     purchases: selection.map(auctionGearPurchase), removedSlots: input.loadout.filter(i => !final.some(f => f.slotType === i.slotType)).map(i => i.slotType),
     comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.best.simulation), engine: checkpoint.baseline.engine,
-    bestConfirmed: checkpoint.bestConfirmed && confirmedOptions && confirmedFinal ? {
-      purchases: confirmedOptions.map(auctionGearPurchase), spentCopper: confirmedCost, remainingCopper: input.budgetCopper - confirmedCost,
-      removedSlots: input.loadout.filter(item => !confirmedFinal.some(final => final.slotType === item.slotType)).map(item => item.slotType),
-      comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.bestConfirmed.simulation),
-    } : null,
+    bestConfirmed: presentConfirmed(checkpoint.bestConfirmed),
+    bestValueConfirmed: presentConfirmed(checkpoint.bestValueConfirmed), bestDpsConfirmed: presentConfirmed(checkpoint.bestDpsConfirmed),
     simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !checkpoint.exhausted,
     exhaustiveComplete: checkpoint.exhausted, combinationsChecked: checkpoint.combinationsChecked,
     validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };

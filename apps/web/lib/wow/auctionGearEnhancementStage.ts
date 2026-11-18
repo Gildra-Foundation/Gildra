@@ -24,6 +24,23 @@ const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(valu
 const normalized = (record: EnhancementRecord): Enhancement => ({ ...record,
   ...(record.category ? { category: { id: String(record.category.id), limit: record.category.limit } } : { category: undefined }) });
 
+/** Keep scenario work within its existing three-candidate bound while retaining
+ * both actually measured objectives. Extra equipment proposals are not extra
+ * encounter simulations for every variant. */
+export function auctionEnhancementScenarioFinalists(recommendations: AuctionEnhancedRecommendation[], objective: 'dps' | 'value') {
+  const confirmed = recommendations.filter(row => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant);
+  const rank = (mode: 'dps' | 'value') => (a: AuctionEnhancedRecommendation, b: AuctionEnhancedRecommendation) => {
+    if (mode === 'value' && a.comparison.deltaDps > 0 && b.comparison.deltaDps > 0) {
+      const difference = a.configuration.totalCopper! / a.comparison.deltaDps - b.configuration.totalCopper! / b.comparison.deltaDps;
+      if (difference) return difference;
+    }
+    return b.comparison.deltaDps - a.comparison.deltaDps || a.configuration.totalCopper! - b.configuration.totalCopper! || a.configuration.key.localeCompare(b.configuration.key);
+  };
+  const requested = [...recommendations].sort(rank(objective))[0];
+  const value = [...confirmed].sort(rank('value'))[0], dps = [...confirmed].sort(rank('dps'))[0];
+  return [...new Map([requested, value, dps].filter((row): row is AuctionEnhancedRecommendation => Boolean(row)).map(row => [row.configuration.key, row])).values()];
+}
+
 export async function evaluateAuctionEnhancementStage(input: {
   finalists: { label: string; options: AuctionGearOption[] }[]; equipment: Record<string, unknown>; loadout: GearLoadoutItem[];
   specId: number; level: number; region: 'eu' | 'us' | 'kr' | 'tw'; engine: string; profileFingerprint: string;
@@ -32,11 +49,13 @@ export async function evaluateAuctionEnhancementStage(input: {
   signal: AbortSignal; shouldYield: () => boolean; state: AuctionEnhancementStageState;
   onCacheHit?: () => void;
   quote?: typeof exactCommodityPrices;
+  includeObjectiveAlternatives?: boolean;
+  additionalSearchReasons?: readonly string[];
 }): Promise<AuctionEnhancementStageResult> {
-  const info = auctionEnhancementCatalogInfo, reasons = new Set<string>();
+  const info = auctionEnhancementCatalogInfo, reasons = new Set<string>(input.additionalSearchReasons);
   const result: AuctionEnhancementStageResult = { complete: true, status: 'unavailable', searchLimited: true,
     reasons: [], recommendations: [], catalogRevision: info.revision };
-  const informationalReasons = new Set(['owned_equipment_preserved', 'configuration_limit', 'bare_configuration', 'over_budget']);
+  const informationalReasons = new Set(['owned_equipment_preserved', 'configuration_limit', 'bare_configuration', 'over_budget', 'socket_candidate_subset', 'socket_candidate_limit']);
   const finish = () => {
     result.recommendations = result.recommendations.filter(recommendation => {
       try { assertFreshMarket({sourceUpdatedAt:recommendation.configuration.sourceUpdatedAt ?? ''}); return true; }
@@ -47,7 +66,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       ? 'unavailable' : 'no_affordable_configuration'; return result; };
   input.signal.throwIfAborted();
   if (!input.engine.includes(info.simcRevision.slice(0, 7))) { reasons.add('engine_build_mismatch'); return finish(); }
-  if (input.finalists.length > 2) throw new Error('invalid_scenario_limit');
+  // At most three retained equipment objectives and two socket proposals.
+  if (input.finalists.length > 5) throw new Error('invalid_enhancement_candidate_limit');
   const activeKeys = new Set<string>();
   const equipmentSets = new Set<string>();
   for (const finalist of input.finalists) {
@@ -129,7 +149,11 @@ export async function evaluateAuctionEnhancementStage(input: {
       const comparison = compareGearSimulationResults(input.baseline,candidate.simulation);
       return comparison.deltaDps > 0 && comparison.uncertainty.significant;
     });
-    for(const candidate of (confirmed ? [confirmed] : optimized.finalists.slice(0,1))) result.recommendations.push({label:finalist.label,...candidate,
+    const retained = input.includeObjectiveAlternatives
+      ? [confirmed, optimized.checkpoint.bestValueConfirmed, optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
+      : confirmed ? [confirmed] : [];
+    const selected = [...new Map((retained.length ? retained : optimized.finalists.slice(0,1)).map(candidate => [candidate.configuration.key, candidate])).values()];
+    for(const [index,candidate] of selected.entries()) result.recommendations.push({label:index ? `${finalist.label}:alternative-${index}` : finalist.label,...candidate,
       comparison:compareGearSimulationResults(input.baseline,candidate.simulation),optionIds:finalist.options.map(o=>o.id),
       purchases:finalist.options.map(auctionGearPurchase),
       enhancementNames: {
@@ -141,7 +165,7 @@ export async function evaluateAuctionEnhancementStage(input: {
         return record?.name ? [[String(c.itemId),record.name]] : [];
       }))});
   }
-  // At most two retained equipment finalists. Keep absent state only while a step yielded before it.
+  // Keep absent state only while a step yielded before reaching that finalist.
   if(result.complete) for(const key of Object.keys(input.state.checkpoints))if(!activeKeys.has(key))delete input.state.checkpoints[key];
   return finish();
 }

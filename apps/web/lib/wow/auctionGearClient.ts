@@ -2,6 +2,7 @@ import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type Aucti
 import { normalizeAuctionBudgetGold } from "./auctionGearBudget";
 import { parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { parseAuctionGearRunPolicy, type AuctionGearRunPolicy } from "./auctionGearRunPolicy";
+import type { AuctionGearJob } from "./auctionGearJobs";
 
 /** Browser transport, recovery handles and safe input intent. Prices/stats always come from the server. */
 export type AuctionClientBuildMode = "quick" | "full" | "enhanced";
@@ -35,6 +36,7 @@ export function parseAuctionClientFormIntent(input: unknown): AuctionClientFormI
 }
 export type AuctionClientActiveJob = {
   id: string; status: "queued" | "running"; mode: "search" | "assembly";
+  runMode?: "full";
   scope: { characterSlug: string; locale: "en" | "ru" }; searchId?: string;
 };
 export type AuctionClientActiveRecovery = { activeJob: AuctionClientActiveJob | null; formIntent: AuctionClientFormIntent | null };
@@ -45,16 +47,33 @@ export function parseAuctionClientActiveRecovery(input: unknown): AuctionClientA
   if (value.activeJob === null) return { activeJob: null, formIntent: null };
   const job = value.activeJob as Partial<AuctionClientActiveJob> | null;
   if (!job || typeof job !== "object" || !identity(job.id) || !["queued", "running"].includes(job.status ?? "") ||
-      job.mode !== "search" && job.mode !== "assembly" || !job.scope || !identity(job.scope.characterSlug) ||
+      job.mode !== "search" && job.mode !== "assembly" || job.runMode !== undefined && job.runMode !== "full" || !job.scope || !identity(job.scope.characterSlug) ||
       job.scope.locale !== "en" && job.scope.locale !== "ru" || job.searchId !== undefined && !identity(job.searchId)) throw new Error("invalid_plan_result");
   const intent = value.formIntent as Record<string, unknown> | null;
   const parsed = intent && Number.isSafeInteger(intent.budgetCopper) && (intent.budgetCopper as number) >= 0
     ? parseAuctionClientFormIntent({ ...intent, budgetGold: String((intent.budgetCopper as number) / 10000) }) : null;
-  return { activeJob: { id: job.id, status: job.status as "queued" | "running", mode: job.mode, scope: { characterSlug: job.scope.characterSlug, locale: job.scope.locale }, ...(job.searchId ? { searchId: job.searchId } : {}) },
+  return { activeJob: { id: job.id, status: job.status as "queued" | "running", mode: job.mode, ...(job.runMode ? { runMode: job.runMode } : {}), scope: { characterSlug: job.scope.characterSlug, locale: job.scope.locale }, ...(job.searchId ? { searchId: job.searchId } : {}) },
     formIntent: parsed?.characterSlug === job.scope.characterSlug && parsed.locale === job.scope.locale ? parsed : null };
 }
+/** A fresh tab may restore only the server's scoped, owned full job. */
+export function parseAuctionClientRecentRecovery(input: unknown, scope: AuctionClientScope) {
+  if (!input || typeof input !== "object" || !("job" in input)) throw new Error("invalid_plan_result");
+  const value = input as { job: AuctionGearJob | null; formIntent?: unknown; specializationSlug?: unknown; excludedOptionIds?: unknown; excludedVariantKeys?: unknown };
+  if (value.job === null) return null;
+  const job = value.job;
+  if (!job || job.runMode !== "full" || !["queued", "running", "completed", "failed", "cancelled"].includes(job.status) ||
+      job.scope?.characterSlug !== scope.characterSlug || job.scope.locale !== scope.locale) throw new Error("invalid_plan_result");
+  const parsed = parseAuctionClientActiveRecovery({ activeJob: { ...job, status: "queued" }, formIntent: value.formIntent });
+  if (!parsed.formIntent) throw new Error("invalid_plan_result");
+  const ids = value.excludedOptionIds ?? [], variants = value.excludedVariantKeys ?? [];
+  if (!Array.isArray(ids) || ids.length > 20000 || !ids.every(identity) || !Array.isArray(variants) || variants.length > 20000 ||
+      !variants.every(key => typeof key === "string" && key.length > 0 && key.length <= 240)) throw new Error("invalid_plan_result");
+  if (value.specializationSlug !== undefined && value.specializationSlug !== null && !identity(value.specializationSlug)) throw new Error("invalid_plan_result");
+  return { job, formIntent: parsed.formIntent, specializationSlug: typeof value.specializationSlug === "string" ? value.specializationSlug : null,
+    excludedOptionIds: [...new Set(ids)] as string[], excludedVariantKeys: [...new Set(variants)] as string[] };
+}
 export type AuctionClientScope = { characterSlug: string; locale: "ru" | "en" };
-export type AuctionClientCache = { version: 1; buildMode?: AuctionClientBuildMode; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent; orchestration?: AuctionGearRunPolicy };
+export type AuctionClientCache = { version: 1; runMode?: "full"; buildMode?: AuctionClientBuildMode; profileKey: string; searchId?: string; jobId?: string; clientRequestId?: string; mode: "search" | "assembly"; excludedOptionIds: string[]; excludedVariantKeys?: string[]; cancellationRequested?: boolean; formIntent?: AuctionClientFormIntent; orchestration?: AuctionGearRunPolicy };
 const activeKey = "gildra:auction-active:v1";
 let retiring: Promise<void> = Promise.resolve();
 
@@ -74,11 +93,11 @@ export function readAuctionClientCache(key: string): AuctionClientCache | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(key) ?? "null") as Partial<AuctionClientCache> | null;
     const formIntent = value?.formIntent === undefined ? undefined : parseAuctionClientFormIntent(value.formIntent);
-    return (value?.buildMode === undefined || ["quick", "full", "enhanced"].includes(value.buildMode)) && (value?.formIntent === undefined || formIntent !== null) && (value?.cancellationRequested === undefined || typeof value.cancellationRequested === "boolean") && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
+    return (value?.runMode === undefined || value.runMode === "full") && (value?.buildMode === undefined || ["quick", "full", "enhanced"].includes(value.buildMode)) && (value?.formIntent === undefined || formIntent !== null) && (value?.cancellationRequested === undefined || typeof value.cancellationRequested === "boolean") && value?.version === 1 && typeof value.profileKey === "string" && value.profileKey.length <= 300 && (identity(value.searchId) || identity(value.jobId) || requestIdentity(value.clientRequestId)) &&
       (value.mode === "search" || value.mode === "assembly") && Array.isArray(value.excludedOptionIds) &&
       value.excludedOptionIds.length <= 20000 && value.excludedOptionIds.every(identity) &&
       (value.excludedVariantKeys === undefined || Array.isArray(value.excludedVariantKeys) && value.excludedVariantKeys.length <= 20000 && value.excludedVariantKeys.every(key => typeof key === "string" && key.length > 0 && key.length <= 240))
-      ? { version: 1, ...(value.buildMode ? { buildMode: value.buildMode } : {}), profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
+      ? { version: 1, ...(value.runMode ? { runMode: value.runMode } : {}), ...(value.buildMode ? { buildMode: value.buildMode } : {}), profileKey: value.profileKey, searchId: identity(value.searchId) ? value.searchId : undefined,
         jobId: identity(value.jobId) ? value.jobId : undefined, clientRequestId: requestIdentity(value.clientRequestId) ? value.clientRequestId : undefined, mode: value.mode, excludedOptionIds: [...new Set(value.excludedOptionIds)], excludedVariantKeys: [...new Set(value.excludedVariantKeys ?? [])], ...(formIntent ? { formIntent } : {}), ...(parseAuctionGearRunPolicy(value.orchestration) ? { orchestration: parseAuctionGearRunPolicy(value.orchestration) } : {}), ...(value.cancellationRequested ? { cancellationRequested: true } : {}) } : null;
   } catch { return null; }
 }

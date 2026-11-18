@@ -15,6 +15,16 @@ export function ResultShoppingPanels({ locale, initialRevision = 0, mode }: { lo
       enhancementNames: { gems: { "5": "Synthetic Exact Gem" }, enchants: {} }, configuration: { key: "synthetic-enhanced-config", itemsCopper: purchase.lotCostCopper, totalCopper: mode === "unknown" ? null : 1200000 + quote,
         fullyEnhanced: true, status: mode === "unknown" ? "price_unknown" : "priced", sourceUpdatedAt: new Date().toISOString(),
         slots: [{ slotType: "HEAD", variantKey: purchase.variantKey, gemIds: [5], enchantId: 0 }], consumables: [{ itemId: 7010, kind: "gem", quantity: 2, quotedCopper: mode === "unknown" ? null : 200000, missingQuantity: 0, levels: [] }] } }] } } as unknown as AuctionGearAssemblyResult;
+  if (mode === "tradeoff" || mode === "same-winner") {
+    const stronger = { ...purchase, auctionId: 7002, itemId: 7002, variantKey: "synthetic-stronger", name: "Synthetic Stronger Helm", lotCostCopper: 5000000 };
+    const confirmed = (item: typeof purchase, gain: number) => ({
+      purchases: [item], removedSlots: [], spentCopper: item.lotCostCopper,
+      remainingCopper: assembly.budgetCopper - item.lotCostCopper, comparison: comparison(gain),
+    });
+    const value = confirmed(purchase, 20);
+    Object.assign(assembly, { enhancementMode: "equipment", enhancementOptimization: undefined, bestConfirmed: value,
+      bestValueConfirmed: value, bestDpsConfirmed: mode === "same-winner" ? value : confirmed(stronger, 60) });
+  }
   return <><aside><button onClick={() => setRevision(value => value + 1)}>Private snapshot change</button><button onClick={() => setQuote(value => value + 10000)}>Private quote change</button></aside>
     <div data-character-sections><AuctionGearOptimizer characterSlug="eu--synthetic-result--synthetic" snapshotKey={`synthetic:${revision}`} specializationSlug="fury-warrior" localePrefix={locale === "ru" ? "/ru" : ""} />
       <section data-private-result><AuctionGearResult key={revision} characterSlug="eu--synthetic-result--synthetic" snapshotKey={`synthetic:${revision}`} assembly={assembly} locale={locale} stale={mode === "stale"} selectionLocked={false} onExcludeLot={() => {}} /></section></div>

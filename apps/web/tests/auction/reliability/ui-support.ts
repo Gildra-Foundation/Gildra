@@ -50,6 +50,10 @@ export class AuctionHarness {
   private async intercept(route: Route) {
     const request = route.request();
     const url = new URL(request.url());
+    if (url.searchParams.has("latest")) {
+      await route.fulfill({ json: { job: null, formIntent: null } });
+      return;
+    }
     if (request.method() === "DELETE") {
       const id = url.searchParams.get("id") ?? this.requestJobs.get(url.searchParams.get("clientRequestId") ?? "") ?? "";
       this.deletes.push(id);
