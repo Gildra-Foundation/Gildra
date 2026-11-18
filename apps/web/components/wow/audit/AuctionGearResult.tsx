@@ -34,6 +34,15 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
 
   const equipmentOnly = assembly.enhancementMode === "equipment";
   const stage = assembly.enhancementOptimization;
+  const recheck = stage?.finalistRecheck;
+  const pricesFor = (keys: readonly string[]) => keys.flatMap(key => {
+    const amount = stage?.recommendations.find(row => row.configuration.key === key)?.configuration.totalCopper;
+    return typeof amount === "number" ? [amount] : [];
+  }).sort((a, b) => a - b);
+  const finalistPrices = pricesFor(recheck?.keys ?? []);
+  const tiedPrices = pricesFor(recheck?.indistinguishableKeys ?? (recheck && !recheck.significant ? recheck.keys : []));
+  const listPrices = (prices: number[]) => new Intl.ListFormat(ru ? "ru" : "en", { type: "conjunction" }).format(prices.map(money));
+  const leaderPrice = recheck?.leaderKey ? pricesFor([recheck.leaderKey])[0] : undefined;
   const complete = auctionGearAssemblyGoalComplete(assembly);
   const exhaustiveEnhancements = stage?.traversal === "exhaustive";
   const limitedEnhancements = !exhaustiveEnhancements && assembly.enhancementMode === "enhanced" && stage?.searchLimited;
@@ -49,6 +58,23 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
         <dd>{signed.format(selected.comparison.deltaPercent)}%<span className={styles.metricNote}>{signed.format(selected.comparison.deltaDps)} ± {numeric.format(selected.comparison.uncertainty.marginDps)} DPS</span></dd></div>
     </dl>
     <p className={styles.note} data-auction-price-context>{t("Цены на момент расчёта", "Prices at calculation time")}</p>
+    {finalistPrices.length >= 2 && recheck && (recheck.leaderKey || !recheck.significant) ? <p className={styles.note} data-auction-close-finalists>
+      {t("С повышенной точностью проверены комплекты за ", "The higher-precision simulation compared loadouts priced at ")}{listPrices(finalistPrices)}.
+      {tiedPrices.length > 1 ? <>
+        {tiedPrices.length === finalistPrices.length ? t(" Все эти варианты оказались в пределах погрешности лучшего измеренного DPS.", " All were within simulation uncertainty of the highest measured DPS.") :
+          <>{t(" У комплектов за ", " The loadouts priced at ")}{listPrices(tiedPrices)}
+            {t(" разница с лучшим измеренным DPS в пределах погрешности.", " were within simulation uncertainty of the highest measured DPS.")}</>}
+        {tiedPrices[0] < tiedPrices[tiedPrices.length - 1] ? leaderPrice !== undefined && leaderPrice > tiedPrices[0]
+          ? t(" Доплата за вариант с лучшим измеренным DPS не даёт подтверждённого прироста DPS по сравнению с самым дешёвым из этих комплектов.",
+            " Paying extra for the highest measured DPS gives no confirmed DPS gain over the cheapest of these loadouts.")
+          : t(" Доплата не даёт подтверждённого прироста DPS.", " Paying more gives no confirmed DPS gain.") : ""}
+      </> : leaderPrice !== undefined ? <>{t(" У комплекта за ", " The loadout priced at ")}{money(leaderPrice)}
+        {t(" подтверждено преимущество по DPS над остальными финалистами.", " had a confirmed DPS advantage over the other rechecked finalists.")}</> : null}
+    </p> : null}
+    {recheck?.competingKey ? <p className={styles.note}>{t(
+      "Ещё один комплект остаётся среди лидеров по исходной симуляции. Повышенная точность применялась только к двум первоначальным лидерам.",
+      "Another loadout remains in contention on its original measurement. Only the two original leaders were rechecked at higher precision."
+    )}</p> : null}
     {comparison ? <div className={styles.loadoutComparison} role="group" aria-label={t("Сравнение проверенных комплектов", "Compare checked loadouts")} data-auction-loadout-comparison>
       <p className={styles.note}>{t("Среди проверенных вариантов", "Among the options checked")}</p>
       {(["value", "dps"] as const).map(objective => {
@@ -75,7 +101,9 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
         : stage.status === "no_affordable_configuration" ? t("В пределах бюджета не найдено доступного комплекта с подтверждённой ценой.", "No available loadout with a verified price fits the budget.")
         : t("Перебор доступных комплектов с камнями и чарами завершён.", "Finished checking the available loadouts with gems and enchants.")}
       {stage.equipmentChecked !== undefined ? ` ${t("Обработано комплектов", "Loadouts checked")}: ${numeric.format(stage.equipmentChecked)}.` : ""}
-      {stage.searchLimited && stage.complete ? ` ${t("Сравнение охватывает варианты с проверенными свойствами и ценами.", "The comparison covers options with verified properties and prices.")}` : ""}
+      {stage.complete && stage.reasons?.includes("no_supported_enchant") ? " " + t("Некоторые вещи можно зачаровать, но для них не удалось подтвердить доступные персонажу чары.", "Some items can be enchanted, but no compatible enchant could be verified for this character.") : ""}
+      {stage.complete && stage.reasons?.includes("no_supported_gem") ? " " + t("Для части гнёзд в каталоге не нашлось подтверждённого совместимого камня.", "For some sockets the catalog has no verified compatible gem.") : ""}
+      {stage.searchLimited && stage.complete && !stage.reasons?.some(reason => reason === "no_supported_enchant" || reason === "no_supported_gem") ? ` ${t("Сравнение охватывает варианты с проверенными свойствами и ценами.", "The comparison covers options with verified properties and prices.")}` : ""}
     </p> : assembly.enhancementMode === "enhanced" ? <p className={styles.note} data-auction-enhancement-status={stage?.status ?? "pending"}>{stage?.status === "unavailable"
       ? t("Не хватает данных для подбора камней и чар. Показаны проверенные вещи.", "Data for gems and enchants is unavailable. Verified gear is shown.")
       : stage?.status === "no_affordable_configuration" ? t("Не найдено проверенного сочетания камней и чар в бюджете. Показан комплект вещей.", "No verified gem and enchant combination was found within budget. The gear loadout is shown.")

@@ -92,7 +92,8 @@ function load(id: string) {
         data.recency > record.metadata.recency || data.createdAt !== record.metadata.createdAt ||
         !(data.knownOptionIds instanceof Set)) throw new Error();
     const context = restoreAuctionGearContext(data.context);
-    const reset = data.context.discovery?.socketMetadataRevision !== 3 && context.discovery?.socketMetadataRevision === 3;
+    const reset = (data.context.discovery?.socketMetadataRevision !== 3 && context.discovery?.socketMetadataRevision === 3) ||
+      (data.context.discovery?.equippedReferenceRevision !== 1 && context.discovery?.equippedReferenceRevision === 1);
     // Preserve the user's selection, including formerly available lots. Rebuild
     // all results and cursors together when the underlying variant proof changed.
     const restored = reset ? {

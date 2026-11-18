@@ -161,6 +161,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   }, [recommendationGroups]);
   const excludedUpgrades = search && getAuctionGearRecommendations(search.items).some(item => excluded.has(item.optionId) || excludedVariantKeys.has(auctionGearVariantSelectionKey(item)));
   const available = search?.items.filter(item => !excluded.has(item.optionId) && !excludedVariantKeys.has(auctionGearVariantSelectionKey(item))) ?? [];
+  const canBuildLoadout = available.length > 0 || search?.searchComplete && search.enhancementMode === "enhanced";
   const selectionLocked = !validBudget || Boolean(cancellation || running && transport?.mode !== "search");
   const excludedGroups = useMemo(() => {
     const groups = new Map<string, { item: NonNullable<SearchResult>["items"][number]; lots: Set<number> }>();
@@ -352,7 +353,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           if (saved.jobId) forgetAuctionClientJob(saved.jobId);
           if (saved.orchestration && saved.orchestration.phase !== "done" && !selectionChanged) {
             const policy = saved.orchestration;
-            const canAssemble = result.search.items.some(item =>
+            const canAssemble = result.search.enhancementMode === "enhanced" || result.search.items.some(item =>
               !restoredExclusions.has(item.optionId) && !(saved.excludedVariantKeys ?? []).includes(auctionGearVariantSelectionKey(item)));
             const phase = policy.phase === "search" ? auctionGearSearchRunPhase(policy, result.search.searchComplete, canAssemble) : "assembly";
             remember({ orchestration: { ...policy, phase }, ...(phase === "done" ? {} : { mode: phase }) });
@@ -653,8 +654,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           setTransport({ mode, status: "completed", progress: null, error: null });
           return;
         }
-        const measuredOptions = result.kind === "search" && result.items.some(item =>
-          !assemblySelection.excludedOptionIds.includes(item.optionId) && !assemblySelection.excludedVariantKeys.includes(auctionGearVariantSelectionKey(item)));
+        const measuredOptions = result.kind === "search" && (result.enhancementMode === "enhanced" || result.items.some(item =>
+          !assemblySelection.excludedOptionIds.includes(item.optionId) && !assemblySelection.excludedVariantKeys.includes(auctionGearVariantSelectionKey(item))));
         // A legacy completed-job read restores facts only. Explicit ongoing
         // intent may advance; re-reading a job must not reset its turn budget.
         const transition = advanceAuctionGearRunPolicy(recoveredCompleted && !inheritedPolicy ? { ...policy, phase: "done" } : policy,
@@ -808,7 +809,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     }
   }
   async function startAssembly() {
-    if (!validBudget || !search || !available.length || cache.current?.cancellationRequested) return;
+    if (!validBudget || !search || !canBuildLoadout || cache.current?.cancellationRequested) return;
     const generation = mountGeneration.current;
     if (active.current) {
       if (active.current.mode !== "search") return;
@@ -986,7 +987,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
         <p id="auction-build-mode-help" className={styles.note}>{buildMode === "quick"
           ? t("Проверим часть вариантов и предложим комплект вещей.", "Check a limited set of options and suggest a gear loadout.")
           : buildMode === "full" ? t("Проверим все доступные варианты вещей в пределах бюджета.", "Check all available gear options within your budget.")
-          : t("Более долгий расчёт. Для каждого допустимого комплекта проверим доступные камни и чары в пределах общего бюджета.", "A longer calculation. Each eligible loadout is checked with the available gems and enchants within your total budget.")}
+          : t("Сравним покупки и улучшения надетых вещей в выбранных слотах. Камни и чары входят в общий бюджет.", "Compare gear purchases and upgrades to equipped items in the selected slots. Gems and enchants count toward your budget.")}
           {buildMode !== "quick" ? <> {t("Вкладку можно закрыть. Результат доступен у персонажа 30 минут после завершения.", "You can close this tab. Return to your character within 30 minutes of completion to see the result.")}</> : null}</p>
         {restoredSnapshot ? <p className={styles.note} data-auction-restored-snapshot>{t("Восстановлен расчёт по сохранённой экипировке. После её изменения запустите новый подбор.", "Restored a calculation for the saved equipment. Start a new selection if your gear has changed.")}</p> : null}
       </fieldset>
@@ -1059,15 +1060,15 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
             {!assembly ? <h4 className={tools.subtitle} id="auction-assembly-title">{t("Комплект", "Loadout")}</h4> : null}
             <div className={tools.actions}>
               {!cancellation && running && transport?.mode === "assembly" ? <button className={tools.quiet} type="button" onClick={cancel}>{t("Отменить сборку", "Cancel assembly")}</button> : null}
-              {!running && (!assembly || assemblyStale || marketStale) ? <button className={tools.quiet} type="button" disabled={selectionLocked || !available.length} aria-describedby={!validBudget ? "auction-budget-error" : !available.length ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{assembly ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : t("Собрать комплект", "Build loadout")}</button> : null}
+              {!running && (!assembly || assemblyStale || marketStale) ? <button className={tools.quiet} type="button" disabled={selectionLocked || !canBuildLoadout} aria-describedby={!validBudget ? "auction-budget-error" : !canBuildLoadout ? "auction-assembly-disabled-reason" : undefined} onClick={startAssembly}>{assembly ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : t("Собрать комплект", "Build loadout")}</button> : null}
             </div>
           </div> : null}
-          {!available.length ? <p id="auction-assembly-disabled-reason" data-assembly-disabled-reason className={tools.status}>{search.items.length ? t("Все варианты исключены.", "All options are excluded.") : search.searchComplete && !running ? t("Вариантов для сборки не найдено. Измените бюджет или слоты экипировки.", "No options found for a loadout. Change your budget or equipment slots.") : t("Вариантов для сборки пока нет.", "No options to build from yet.")}</p> : null}
+          {!canBuildLoadout ? <p id="auction-assembly-disabled-reason" data-assembly-disabled-reason className={tools.status}>{search.items.length ? t("Все варианты исключены.", "All options are excluded.") : search.searchComplete && !running ? t("Вариантов для сборки не найдено. Измените бюджет или слоты экипировки.", "No options found for a loadout. Change your budget or equipment slots.") : t("Вариантов для сборки пока нет.", "No options to build from yet.")}</p> : null}
           {feedback("assembly")}
           {assembly ? <AuctionGearResult characterSlug={characterSlug} snapshotKey={snapshotKey} assembly={assembly} locale={locale} stale={assemblyStale} selectionLocked={selectionLocked} onExcludeLot={auctionId => setLotAllowed(auctionId, false)} /> : null}
           <div className={styles.manage}>
           {search.items.length ? <details className={styles.disclosure}><summary>{t("Настроить варианты для сета", "Loadout options")}</summary>
-            <div className={tools.actions}>{assembly && !running && !assemblyStale && !marketStale ? <button className={tools.quiet} type="button" disabled={selectionLocked || !available.length} onClick={startAssembly}>{assembly.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : t("Продолжить сборку сета", "Continue loadout assembly")}</button> : null}<button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(true)}>{t("Разрешить все варианты", "Allow all options")}</button><button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(false)}>{t("Исключить все варианты", "Exclude all options")}</button></div>
+            <div className={tools.actions}>{assembly && !running && !assemblyStale && !marketStale ? <button className={tools.quiet} type="button" disabled={selectionLocked || !canBuildLoadout} onClick={startAssembly}>{assembly.exhaustiveComplete ? t("Обновить и пересобрать сет", "Refresh and rebuild loadout") : t("Продолжить сборку сета", "Continue loadout assembly")}</button> : null}<button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(true)}>{t("Разрешить все варианты", "Allow all options")}</button><button className={tools.quiet} type="button" disabled={selectionLocked} onClick={() => setAllAllowed(false)}>{t("Исключить все варианты", "Exclude all options")}</button></div>
           </details> : null}
           {excludedGroups.length ? <details data-auction-exclusions className={`${styles.disclosure} ${styles.excludedLots}`} onToggle={event => setExcludedOpen(event.currentTarget.open)}><summary>{t("Исключения", "Exclusions")}: {number(excludedGroups.length)}</summary>
             {excludedOpen ? <><ul>{excludedGroups.slice(0, excludedLimit).map(([key, group], index) => {

@@ -205,3 +205,20 @@ test('stage rejects ambiguous legacy nonzero sockets and retains valid v2 all-ze
   const ready=await evaluateAuctionEnhancementStage(zero.input);
   assert.equal(ready.status,'ready');assert.equal(zero.calls.length,1);assert.equal(ready.recommendations[0].configuration.consumables.length,0);
 });
+
+test('value mode retains the two highest measured configurations even when value leaders use different gems', async () => {
+  const choices = gems(5);
+  const h = fixture({choices, objective:'value',
+    prices:{sourceUpdatedAt:new Date().toISOString(), prices:Object.fromEntries(choices.map((gem,i)=>[gem.consumableItemId,{ladder:[[i<2?500:1,10]]}]))},
+    simulate:async configuration=>{
+      const gem = configuration.slots[0].gemIds[0];
+      return measurement(gem===8000?1200:gem===8001?1199:gem?1190:1000);
+    }});
+  const result=await complete(h);
+  assert.equal(result.checkpoint.bestMeasuredDps.configuration.slots[0].gemIds[0],8000);
+  assert.equal(result.checkpoint.secondMeasuredDps.configuration.slots[0].gemIds[0],8001);
+  assert.equal(result.checkpoint.thirdMeasuredDps.simulation.dps,1190,'Strongest untouched contender survives in the same equipment set');
+  assert(result.checkpoint.cache[result.checkpoint.thirdMeasuredDps.configuration.key]);
+  assert(result.checkpoint.bestValueConfirmed.configuration.slots[0].gemIds[0]>=8002);
+  assert(result.checkpoint.cache[result.checkpoint.secondMeasuredDps.configuration.key]);
+});

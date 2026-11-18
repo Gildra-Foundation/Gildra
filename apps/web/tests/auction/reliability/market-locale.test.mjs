@@ -37,3 +37,27 @@ test('market: locale uses the established US English fallback for a Russian UI',
     assert.deepEqual(requests, ['en_US']);
   } finally { globalThis.fetch = original; }
 });
+
+test('classifies a missing summary only for a matching non-equippable Blizzard item, also on cache hits', async () => {
+  const original = globalThis.fetch;
+  const cases = new Map([
+    [8383, { id:8383, is_equippable:false, inventory_type:{ type:'NON_EQUIP' }, item_class:{ id:15 } }],
+    [123865, null],
+    [900001, { id:8383, is_equippable:false, inventory_type:{ type:'NON_EQUIP' }, item_class:{ id:15 } }],
+    [900002, { id:900002, is_equippable:true, inventory_type:{ type:'NECK' }, item_class:{ id:4 } }],
+  ]);
+  let calls = 0;
+  try {
+    globalThis.fetch = async url => {
+      calls++;
+      const raw = cases.get(Number(new URL(url).pathname.split('/').at(-1)));
+      return Response.json(raw, { status:raw ? 200 : 404 });
+    };
+    for (let run = 0; run < 2; run++) {
+      const nonEquipment = new Map();
+      await getAuctionItemReferences([...cases.keys()], 'eu', 'fixture', new AbortController().signal, 'en_GB', nonEquipment);
+      assert.deepEqual([...nonEquipment], [[8383,15]]);
+    }
+    assert.equal(calls, cases.size);
+  } finally { globalThis.fetch = original; }
+});

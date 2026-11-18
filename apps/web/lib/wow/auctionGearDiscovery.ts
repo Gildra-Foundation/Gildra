@@ -2,7 +2,7 @@ import "server-only";
 import { auctionSummarySlotMatch } from "./gearCompatibility";
 import type { CatalogRecord } from "@/lib/api/client";
 import { auctionVariantKey, resolvedAuctionVariant } from "./auctionItemVariant";
-import { AUCTION_ITEM_REFERENCE_TTL_MS, getAuctionItemReferences, nativeMatchesItemReference, type AuctionItemReference } from "./auctionItemReference";
+import { AUCTION_ITEM_REFERENCE_TTL_MS, getAuctionItemReferences, equippedAuctionReferences, nativeMatchesItemReference, type AuctionItemReference } from "./auctionItemReference";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
 import { supportedAuctionModifiers } from "./gearItemModifiers";
 import { gearEntityDetails, lookupGearRecords } from "./gearCandidateRepository";
@@ -20,6 +20,7 @@ type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
 export type AuctionGearDiscovery = {
   /** Older persisted coverage may already have excluded gear with prismatic sockets. */
   socketMetadataRevision?: 3;
+  equippedReferenceRevision?: 1;
   marketId: string;
   discoveredSnapshotId?: string;
   budgetCopper: number;
@@ -39,12 +40,14 @@ export type AuctionGearDiscovery = {
   candidates: Map<string, GearCandidate[]>;
   rejectedVariants: Set<string>;
   references: Map<number, AuctionItemReference | null>;
+  equippedVerifiedVariants?: Set<string>;
   verifiedReferences: Set<number>;
   rejectedReferences: Set<number>;
   referenceRetryAt: Map<number, number>;
   referenceRejectedVariants: Map<number, Set<string>>;
   catalogMissing: Set<number>;
   catalogUnmatched: Set<number>;
+  pendingClassification?: Set<number>;
   eligibilityUnverifiedItems: Set<number>;
   catalogRetryAt: Map<number, number>;
   scannedItems: Set<number>;
@@ -69,7 +72,7 @@ const optionCache = new WeakMap<AuctionGearDiscovery, {
 }>();
 
 export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper: number): AuctionGearDiscovery {
-  const state: AuctionGearDiscovery = { socketMetadataRevision: 3, marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
+  const state: AuctionGearDiscovery = { socketMetadataRevision: 3, equippedReferenceRevision: 1, marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
     queuedItems: new Set(), records: [], catalogHints: new Map(), entities: new Map(), variantKeys: [], variantCursor: 0, queuedVariants: new Set(),
     candidates: new Map(), rejectedVariants: new Set(), references: new Map(),
     verifiedReferences: new Set(), rejectedReferences: new Set(), referenceRetryAt: new Map(), referenceRejectedVariants: new Map(),
@@ -168,7 +171,7 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
 }
 
 export function auctionGearDiscoveryComplete(state: AuctionGearDiscovery) {
-  return state.itemCursor === state.itemIds.length && !state.records.length && state.variantCursor === state.variantKeys.length;
+  return state.itemCursor === state.itemIds.length && !state.records.length && state.variantCursor === state.variantKeys.length && !state.pendingClassification?.size;
 }
 
 const summarySlots: Record<string, readonly string[]> = {
@@ -279,9 +282,13 @@ function acceptCatalogSummaries(state: AuctionGearDiscovery, ids: number[], reco
   const found = new Set(records.map(record => record.externalId));
   for (const id of ids) {
     if (!found.has(id)) {
+      const knownClass = state.catalogItemClasses?.get(id);
+      if (knownClass !== undefined && knownClass !== 2 && knownClass !== 4) continue;
       state.catalogUnmatched.add(id);
+      (state.pendingClassification ??= new Set()).add(id);
       state.catalogRetryAt.set(id, Date.now() + catalogRetryMs);
     } else {
+      state.pendingClassification?.delete(id);
       state.catalogUnmatched.delete(id);
       state.catalogRetryAt.delete(id);
     }
@@ -300,6 +307,7 @@ function acceptCatalogSummaries(state: AuctionGearDiscovery, ids: number[], reco
 
 type DiscoveryInput = {
   locale: "en_US" | "ru_RU"; region: string; token: string; spec: string; characterLevel: number;
+  equipment?: Record<string, unknown>;
   selectedSlots: readonly string[]; context: (slot: string) => GearCandidateContext;
   signal: AbortSignal; shouldYield?: () => boolean; maxSteps?: number; onProgress?: (progress: AuctionPlanProgress) => void;
   onCheckpoint?: () => void;
@@ -397,9 +405,13 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
           state.referenceRetryAt.set(id, Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS);
         }
       }
+      const equipped = input.equipment && ids.some(id => state.rejectedReferences.has(id))
+        ? new Map(equippedAuctionReferences(input.equipment).map(reference => [auctionVariantKey(reference.offer), reference])) : undefined;
       for (const probe of probes) {
         const key = auctionVariantKey(probe.offer), metadata = resolution?.variants.get(key);
-        if (!metadata || metadata.error || !state.verifiedReferences.has(probe.offer.itemId) || metadata.itemLevel > 1000 ||
+        const instance = equipped?.get(key);
+        const instanceVerified = instance && nativeMatchesItemReference(instance, metadata, true);
+        if (!metadata || metadata.error || (!state.verifiedReferences.has(probe.offer.itemId) && !instanceVerified) || metadata.itemLevel > 1000 ||
             metadata.requiredLevel === 0 && (state.references.get(probe.offer.itemId)?.requiredLevel ?? 0) > 0) {
           state.rejectedVariants.add(key);
           if (!state.verifiedReferences.has(probe.offer.itemId)) {
@@ -411,7 +423,11 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         }
         if (metadata.requiredLevel > input.characterLevel) continue;
         const variant = resolvedAuctionVariant(probe.offer, metadata, state.engine);
-        const reference = state.references.get(probe.offer.itemId);
+        if (instanceVerified) {
+          (state.equippedVerifiedVariants ??= new Set()).add(key);
+          state.rejectedVariants.delete(key);
+        }
+        const reference = instanceVerified ? instance : state.references.get(probe.offer.itemId);
         if (variant.resolution) {
           variant.resolution.effects = [];
           variant.resolution.effectsVerified = false;
@@ -478,6 +494,28 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       updateUnsupportedCoverage(state);
       state.records.splice(0, records.length);
       prioritized = false;
+    } else if (state.pendingClassification?.size) {
+      // Repair holes in published summaries after processing available gear.
+      // A 404 or transient failure leaves the original coverage gap and retry.
+      const ids: number[] = [];
+      for (const id of state.pendingClassification) {
+        ids.push(id);
+        if (ids.length === detailBatch) break;
+      }
+      const nonEquipment = new Map<number, number>();
+      try {
+        await measure("references", () => getAuctionItemReferences(ids, input.region, input.token, input.signal, input.locale, nonEquipment));
+      } catch {
+        input.signal.throwIfAborted();
+      }
+      input.signal.throwIfAborted();
+      for (const [id, itemClass] of nonEquipment) {
+        (state.catalogItemClasses ??= new Map()).set(id, itemClass);
+        state.catalogUnmatched.delete(id);
+        state.catalogRetryAt.delete(id);
+      }
+      for (const id of ids) state.pendingClassification.delete(id);
+      updateUnsupportedCoverage(state);
     } else break;
     input.onCheckpoint?.();
     if (input.stopAfterNewCandidates && state.candidates.size > initialCandidates) break;
@@ -510,7 +548,8 @@ export function auctionGearDiscoveryCoverage(state: AuctionGearDiscovery) {
   const keys = new Set(state.offers.keys());
   const currentIds = new Set([...state.offers.values()].map(offers => offers[0].itemId));
   const rejected = [...state.rejectedVariants].filter(key => keys.has(key)).length;
-  const referenceRejected = [...state.rejectedReferences].filter(id => currentIds.has(id)).length;
+  const referenceRejected = [...state.rejectedReferences].filter(id => currentIds.has(id) &&
+    (state.itemVariants.get(id) ?? []).some(key => !state.equippedVerifiedVariants?.has(key))).length;
   const catalogMissing = [...state.catalogMissing].filter(id => currentIds.has(id)).length;
   const catalogUnmatched = [...state.catalogUnmatched].filter(id => currentIds.has(id)).length;
   const eligibilityUnverifiedItems = [...state.eligibilityUnverifiedItems].filter(id => currentIds.has(id)).length;

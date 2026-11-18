@@ -7,6 +7,17 @@ const open = async (page: Page, info: TestInfo, mode = "") => {
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator("[data-auction-shopping-list] input[type=checkbox]").first()).toBeEnabled();
 };
+test("owned enhancement checkout shows the equipped slot and only the needed consumable", async ({ page }, info) => {
+  await open(page,info,"owned-upgrade");
+  const list = page.locator("[data-auction-shopping-list]");
+  await expect(list.locator("[data-auction-shopping-row]")).toHaveCount(1);
+  await expect(list.locator("[data-auction-shopping-row]")).toContainText("Synthetic Exact Gem");
+  const changes = list.locator("[data-auction-owned-upgrades]");
+  await expect(changes).toContainText(lang(info) === "ru" ? "Гнездо 2" : "Socket 2");
+  await expect(changes).toContainText("Synthetic Exact Gem");
+  await expect(list.getByRole("button",{name:/Exclude lot|Исключить лот/})).toHaveCount(0);
+  await page.screenshot({path:info.outputPath("owned-upgrade.png"), fullPage:true});
+});
 test("coherent selected result, alternatives, visible objective and responsive focus", async ({ page }, info) => {
   await open(page, info);
   const primary = page.locator("[data-auction-assembly-result]");
@@ -187,4 +198,40 @@ test("enhanced traversal distinguishes provisional results from a finished searc
     await expect(status).toContainText("17");
     await expect(status).toContainText(done ? /завершён|finished/i : /промежуточный|provisional/i);
   }
+});
+
+test("unresolved finalist recheck shows both prices and selects the lower-cost confirmed upgrade", async ({ page }, info) => {
+  await open(page, info, "close-finalists");
+  const result = page.locator("[data-auction-assembly-result]");
+  await expect(result).toHaveAttribute("data-selected-result", /^items:/);
+  await expect(result.locator("[data-auction-primary-dps]")).toContainText("49");
+  const explanation = result.locator("[data-auction-close-finalists]");
+  await expect(explanation).toContainText("100");
+  await expect(explanation).toContainText("120");
+  await expect(explanation).toContainText(lang(info) === "ru" ? "не даёт подтверждённого прироста DPS" : "gives no confirmed DPS gain");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath("close-finalists.png"), fullPage: true });
+});
+
+test("unresolved finalist prices remain visible when neither loadout confirms an upgrade", async ({ page }, info) => {
+  await open(page, info, "close-no-upgrade");
+  const result = page.locator("[data-auction-assembly-result]");
+  await expect(result.locator("[data-auction-primary-title]")).toHaveText(lang(info) === "ru" ? "Подтверждённого улучшения нет" : "No confirmed upgrade");
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120/);
+});
+
+test("unresolved finalist comparison shows all three prices and chooses the affordable tied option", async ({ page }, info) => {
+  await open(page, info, "close-with-contender");
+  const result = page.locator("[data-auction-assembly-result]");
+  await expect(result).toHaveAttribute("data-selected-result", /^items:/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120.*130/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(lang(info) === "ru" ? "не даёт подтверждённого прироста DPS" : "gives no confirmed DPS gain");
+});
+
+test("higher-precision third finalist with a distinct gain remains the selected loadout", async ({ page }, info) => {
+  await open(page, info, "third-wins");
+  const result = page.locator("[data-auction-assembly-result]");
+  await expect(result).toHaveAttribute("data-selected-result", "enhanced:synthetic-third");
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120.*130/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(lang(info) === "ru" ? "подтверждено преимущество по DPS" : "confirmed DPS advantage");
 });

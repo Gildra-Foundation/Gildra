@@ -63,14 +63,30 @@ def main():
     native_text = native_bytes.decode()
     if 'wow build ' + BUILD not in native_text: raise ValueError('native build mismatch')
     native_rules = [dict(zip(['enchantId','rank','itemClassId','inventoryMask','subclassMask'], [int(v,0) for v in match])) for match in re.findall(r'\{\s*(\d+),\s*(\d+),\s*(\d+),\s*(0x[0-9a-f]+),\s*(0x[0-9a-f]+),',native_text)]
-    candidates = set()
-    # Bounded reverse ID traversal for uncapped wrist rules absent from current profession recipes.
-    wrist_ids=[r['enchantId'] for r in native_rules if r['itemClassId']==4 and r['inventoryMask'] & (1 << 9)]
-    wrist_enchants=rows('SpellItemEnchantment','r.row_id IN ('+ids(wrist_ids)+") AND r.payload->>'ItemLevelMax'='0'")
-    wrist_spells=rows('SpellEffect',"r.payload->>'Effect'='53' AND (r.payload->>'EffectMiscValue_0')::bigint IN ("+ids(r['id'] for r in wrist_enchants)+')')
-    wrist_effects=rows('ItemEffect',"(r.payload->>'SpellID')::bigint IN ("+ids(r['payload']['SpellID'] for r in wrist_spells)+')')
-    wrist_links=rows('ItemXItemEffect',"(r.payload->>'ItemEffectID')::bigint IN ("+ids(r['id'] for r in wrist_effects)+')')
-    candidates.update(int(r['payload']['ItemID']) for r in wrist_links)
+    declared_count = re.search(r'std::array<permanent_enchant_entry_t,\s*(\d+)>\s+__permanent_enchant_data', native_text)
+    if not declared_count or int(declared_count[1]) != len(native_rules) or not native_rules:
+        raise ValueError('incomplete native permanent enchant table')
+
+    # Walk from native enchant IDs to actual consumables. The profession lists omit
+    # earlier expansions, including the shoulders, necklaces and rings on Eversong.
+    jewelry_shoulders = {r['enchantId'] for r in native_rules if r['itemClassId'] == 4
+                        and r['inventoryMask'] & ((1 << 2) | (1 << 3) | (1 << 11))}
+    wrist_ids = [r['enchantId'] for r in native_rules if r['itemClassId'] == 4 and r['inventoryMask'] & (1 << 9)]
+    uncapped_wrist = rows('SpellItemEnchantment', "r.row_id IN (" + ids(wrist_ids) + ") AND r.payload->>'ItemLevelMax'='0'")
+    direct_ids = jewelry_shoulders | {r['id'] for r in uncapped_wrist}
+    direct_spells = rows('SpellEffect', "r.payload->>'Effect'='53' AND (r.payload->>'EffectMiscValue_0')::bigint IN (" + ids(direct_ids) + ')')
+    direct_effects = rows('ItemEffect', "(r.payload->>'SpellID')::bigint IN (" + ids(r['payload']['SpellID'] for r in direct_spells) + ')')
+    direct_links = rows('ItemXItemEffect', "(r.payload->>'ItemEffectID')::bigint IN (" + ids(r['id'] for r in direct_effects) + ')')
+    direct_item_ids = ids(r['payload']['ItemID'] for r in direct_links)
+    enhancement_items = rows('Item', "r.row_id IN (" + direct_item_ids + ") AND r.payload->>'ClassID'='8'")
+    tradeable = rows('ItemSparse', "r.row_id IN (" + ids(r['id'] for r in enhancement_items) + ") AND r.payload->>'Bonding'='0'")
+    candidates = {r['id'] for r in tradeable}
+    # The captured Shadowlands rings and necklaces have low-level prismatic sockets.
+    # Include that expansion's tradeable gems only through their actual GemProperties rows.
+    prismatic = rows('GemProperties', "r.payload->>'Type'='14'")
+    older_gems = rows('ItemSparse', "r.payload->>'ExpansionID'='8' AND r.payload->>'Bonding'='0' AND (r.payload->>'Gem_properties')::bigint IN (" + ids(r['id'] for r in prismatic) + ')')
+    gem_items = rows('Item', "r.payload->>'ClassID'='3' AND r.row_id IN (" + ids(r['id'] for r in older_gems) + ')')
+    candidates.update(r['id'] for r in gem_items)
     for profession in ['jewelcrafting', 'enchanting', 'leatherworking', 'tailoring', 'blacksmithing', 'engineering']:
         doc = json.loads((ROOT / f'apps/web/data/wow/professions/{profession}.json').read_text())
         for recipe in doc['recipes']:
@@ -157,7 +173,7 @@ def main():
             'semanticRowsets': [{'table': name, 'rowIds': sorted(r['id'] for r in engine_chain if r['table'] == name)} for name in current_relations],
             'rows':[parity[k] for k in keys]})
     # Raw rows retain artifact IDs; no connection strings or auth material enter this file.
-    payload = {'schemaVersion': 2, 'build': BUILD, 'simcRevision': REVISION, 'nativeRulesSource': {'url':native_url,'sha256':hashlib.sha256(native_bytes).hexdigest()}, 'nativeRules':native_rules, 'candidateItemIds': sorted(candidates), 'rows': data,
+    payload = {'schemaVersion': 2, 'build': BUILD, 'simcRevision': REVISION, 'nativeRulesSource': {'url':native_url,'sha256':hashlib.sha256(native_bytes).hexdigest(),'rowCount':int(declared_count[1])}, 'nativeRules':native_rules, 'candidateItemIds': sorted(candidates), 'rows': data,
         'rankedMappingSourceBuild':MAPPING_BUILD,'rankedMappings':ranked,'rankedCompatibilityProofs':proofs,'rankedRejected':rejected}
     canonical = json.dumps(payload, sort_keys=True, separators=(',', ':'))
     payload['revision'] = hashlib.sha256(canonical.encode()).hexdigest()

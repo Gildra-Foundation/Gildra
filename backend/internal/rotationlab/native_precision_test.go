@@ -3,6 +3,7 @@ package rotationlab
 import (
 	"encoding/json"
 	"os"
+	"slices"
 	"testing"
 )
 
@@ -57,5 +58,30 @@ func TestNativeGearPrecisionPreservesMeanAndStandardError(t *testing.T) {
 		if err = os.WriteFile(output, raw, 0600); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestFinalistPrecisionUsesFourNativeIterationBatches(t *testing.T) {
+	engine := &SimCEngine{iterations: 750}
+	input := nativeGearInput(t)
+	if !slices.Contains(engine.arguments(input, "report", "profile"), "iterations=750") {
+		t.Fatal("ordinary precision changed")
+	}
+	input.Precision = "finalist"
+	if err := ValidateInput(input); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(engine.arguments(input, "report", "profile"), "iterations=3000") {
+		t.Fatal("missing high-precision native iterations")
+	}
+	input.Precision = "arbitrary"
+	if ValidateInput(input) == nil {
+		t.Fatal("arbitrary precision accepted")
+	}
+	input.Precision = "finalist"
+	input.ActionListMode = ActionListModeCustom
+	input.Rules = []string{"rampage"}
+	if ValidateInput(input) == nil {
+		t.Fatal("editor accepted gear precision")
 	}
 }

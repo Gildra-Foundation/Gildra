@@ -7,6 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { createAuctionGearEnhancedLoadoutIterator } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { readAuctionState, writeAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
 
@@ -20,7 +21,7 @@ function fixture() {
   const h={price:10,stale:false,partial:false,stageCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:{'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,createAuctionGearEnhancedLoadoutIterator,assertFreshMarket,structuredClone,
+    createHash,createAuctionGearEnhancedLoadoutIterator,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
@@ -28,8 +29,8 @@ function fixture() {
       input.state.quotes=await quote();input.state.quotedItemIds=[1];
       input.state.checkpoints.current={nativeFacts:'preserved',key};
       if(h.abortAfterQuotes)throw new DOMException('Aborted','AbortError');
-      const spent=options.reduce((sum,o)=>sum+o.costCopper,0),dps=1000+(options[0]?.candidate.itemId??0);
-      const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:simulation(dps),
+      const spent=options.reduce((sum,o)=>sum+o.costCopper,0),dps=h.scores?.[key]??1000+(options[0]?.candidate.itemId??0)*(h.scale??1);
+      const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:{...simulation(dps),dpsError:h.errors?.[key]??1},
         comparison:{deltaDps:dps-1000,candidateDps:dps,uncertainty:{significant:dps>1000}},
         configuration:{key,status:'priced',itemsCopper:spent,totalCopper:spent+h.price,fullyEnhanced:false,consumables:[],slots:[],sourceUpdatedAt:input.state.quotes.sourceUpdatedAt}};
       return{complete:!h.partial,status:h.stale?'unavailable':'ready',searchLimited:true,recommendations:h.stale?[]:[recommendation],reasons:h.stale?['market_unverified']:[],traversal:'exhaustive'};
@@ -96,4 +97,90 @@ test('a price mutation followed by abort cannot silently reuse the old global ra
 test('restored completion still validates the exact cursor proof',async()=>{
   const h=fixture();await finish(h);h.state.cursor.visited='0';
   await assert.rejects(h.run(),/invalid_search_checkpoint/);
+});
+
+test('only the two distinct close leaders are rechecked, with restart after the first measurement',async()=>{
+  const h=fixture(), calls=[];
+  h.input.options.push({...h.input.options[2],id:'same-effect-dearer',auctionId:4,costCopper:200});
+  h.input.recheck=async(options)=>{
+    calls.push(options[0].id); h.slice++;
+    return {...simulation(options[0].id==='option-3'?1008.03:1008),iterations:3000,dpsError:0.2};
+  };
+  let pending;
+  for(let i=0;i<12&&!calls.length;i++)pending=await h.run();
+  assert.deepEqual(calls,['option-3']);assert.equal(pending.result.complete,false);
+  assert.equal(pending.result.finalistRecheck,undefined);
+  h.state=JSON.parse(JSON.stringify(h.state));
+  const result=await finish(h);
+  assert.deepEqual(calls,['option-3','option-2']);
+  assert.deepEqual([...result.finalistRecheck.keys],calls);
+  assert.equal(result.finalistRecheck.significant,false);
+  for(const key of calls)assert.equal(result.recommendations.find(r=>r.configuration.key===key).simulation.iterations,3000);
+  await h.run();assert.equal(calls.length,2);
+});
+test('separated leaders skip precision work and an under-iterated response cannot complete it',async()=>{
+  const h=fixture();h.scale=20;
+  h.input.recheck=async()=>assert.fail('unnecessary high-precision simulation');
+  assert.equal((await finish(h)).finalistRecheck,undefined);
+  const invalid=fixture();invalid.input.recheck=async()=>simulation(1500);
+  await assert.rejects(finish(invalid),/invalid_simulation_result/);
+  assert.equal(invalid.state.precise,undefined);
+  invalid.input.recheck=async options=>({...simulation(options[0].id==='option-2'?1100:1050),iterations:3000});
+  const result=await finish(invalid);
+  assert.equal(result.finalistRecheck.significant,true);
+  assert.equal(result.recommendations.find(r=>r.configuration.key==='option-2').comparison.deltaDps,100);
+});
+
+test('a competitive third is rechecked and retained when it confirms a larger DPS gain',async()=>{
+  const h=fixture(),calls=[];
+  h.scores={'option-1':1008,'option-2':1009,'option-3':1010};
+  h.input.recheck=async options=>{
+    calls.push(options[0].id);
+    return {...simulation(options[0].id==='option-3'?1004:options[0].id==='option-2'?1005:1009),iterations:3000};
+  };
+  const result=await finish(h);
+  assert.deepEqual(calls,['option-3','option-2','option-1']);
+  assert.equal(result.finalistRecheck.significant,true);
+  assert.equal(result.finalistRecheck.leaderKey,'option-1');
+  assert.equal(result.finalistRecheck.preferredKey,'option-1');
+  assert.equal(result.recommendations[0].configuration.key,'option-1');
+  assert.equal(result.recommendations[0].simulation.iterations,3000);
+});
+
+test('100 gold: a competing 87.15 gold third requires precision before selecting among three directly checked prices',async()=>{
+  const h=fixture(),calls=[];
+  h.price=0;h.input.budgetCopper=1_000_000;
+  h.input.baseline={...simulation(180267.23038),dpsError:236};
+  const costs=[871500,27600,99600];
+  h.input.options.forEach((row,i)=>{row.costCopper=costs[i];});
+  h.scores={baseline:h.input.baseline.dps,'option-1':181169.566,'option-2':181175,'option-3':181180};
+  h.errors={'option-1':237.354,'option-2':237,'option-3':237};
+  const precise={'option-1':180850,'option-2':180820.456,'option-3':180834.903};
+  h.input.recheck=async options=>{
+    calls.push(options[0].id);h.slice++;
+    return {...simulation(precise[options[0].id]),dpsError:118.925,iterations:3000};
+  };
+  let step;
+  while(calls.length<2)step=await h.run();
+  assert.equal(step.result.complete,false);
+  h.state=JSON.parse(JSON.stringify(h.state));
+  const result=await finish(h);
+  assert.deepEqual(calls,['option-3','option-2','option-1']);
+  assert.deepEqual([...result.finalistRecheck.keys],calls);
+  assert.equal(result.finalistRecheck.leaderKey,'option-1');
+  assert.equal(result.finalistRecheck.indistinguishableKeys.length,3);
+  assert.equal(result.finalistRecheck.preferredKey,'option-2');
+  assert.equal(result.recommendations[0].configuration.totalCopper,27600);
+  assert.equal(result.recommendations[0].simulation.iterations,3000);
+  await h.run();assert.equal(calls.length,3);
+});
+
+test('ties cannot chain through an intermediate finalist to the highest refined mean',async()=>{
+  const h=fixture();
+  h.input.options[0].costCopper=1; h.input.options[1].costCopper=9;
+  h.scores={'option-1':1050,'option-2':1051,'option-3':1052};
+  h.input.recheck=async options=>({...simulation({'option-1':1047,'option-2':1049,'option-3':1051}[options[0].id]),iterations:3000});
+  const result=await finish(h);
+  assert.deepEqual([...result.finalistRecheck.indistinguishableKeys],['option-3','option-2']);
+  assert.equal(result.finalistRecheck.preferredKey,'option-2');
 });

@@ -31,7 +31,11 @@ const results = [];
 for (const [name, args] of suites) {
   const startedAt = new Date().toISOString();
   const run = await new Promise(resolve => {
-    const child = spawn(process.execPath, [...flags, ...args], { cwd: web, timeout: 120_000, stdio: ["ignore", "pipe", "pipe"] });
+    // Restart suites boot isolated application processes for each case. Keep
+    // the per-case watchdog when the full sequence needs more wall time.
+    const restartSuite = name === "completion-durable-recovery" || name === "completion-persistence";
+    const suiteFlags = restartSuite ? [...flags, "--test", "--test-timeout=120000"] : flags;
+    const child = spawn(process.execPath, [...suiteFlags, ...args], { cwd: web, timeout: restartSuite ? 300_000 : 120_000, stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "", stderr = "", error;
     child.stdout.on("data", chunk => { stdout += chunk; });child.stderr.on("data", chunk => { stderr += chunk; });
     child.on("error", failure => { error = String(failure); });

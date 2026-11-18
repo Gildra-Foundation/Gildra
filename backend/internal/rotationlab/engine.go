@@ -35,6 +35,9 @@ func ValidateInput(input SimulationInput) error {
 	if input.ActionListMode != "" && input.ActionListMode != ActionListModeCustom && input.ActionListMode != ActionListModeNative {
 		return errors.New("invalid action list mode")
 	}
+	if input.Precision != "" && (input.Precision != "finalist" || input.ActionListMode != ActionListModeNative) {
+		return errors.New("invalid native simulation precision")
+	}
 	if input.ActionListMode == ActionListModeNative {
 		if input.Armory == nil || len(input.Rules) != 0 || len(input.APLRules) != 0 {
 			return errors.New("native action list requires an armory snapshot and no custom priority")

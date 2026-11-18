@@ -24,7 +24,7 @@ function simulator(response){
  const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
   ...gear,auctionGearMechanicalKey,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
   fetch:async(_url,request)=>{calls++;const selection=JSON.parse(request.body).gearChanges?.length?1:0;
-   return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection)};}
+   return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection,JSON.parse(request.body))};}
  });
  const run=create({armory:{equipment:{equipped_items:[]},profile:{id:1},specializations:{},activeTalentLoadout:"explicit-talents"},loadout:[],specId:72,specSlug:"fury-warrior",scenario:"single-target",encounter:{fightLengthSeconds:120,targets:1},market:{sourceUpdatedAt:new Date().toISOString()},engine:()=>wires[0].engine});
  return {run,calls:()=>calls};
@@ -80,4 +80,14 @@ test("measurement cache fence changes independently of the maintained APL contra
  const oldFingerprint=createHash("sha256").update(JSON.stringify({...native,simulationContract:"native-apl-v1"})).digest("hex");
  assert.equal(gear.nativeGearSimulationContract,"native-apl-v1");
  assert.notEqual(gear.gearComparisonFingerprint(native),oldFingerprint,"native single-item caches must fence old rounded measurements");
+});
+
+test("finalist precision travels to the worker and never shares a cache entry with an ordinary simulation",async()=>{
+ const {run,calls}=simulator((i,request)=>({...wires[i],iterations:request.precision==="finalist"?3000:750}));
+ const signal=new AbortController().signal;
+ assert.equal((await run([option],signal)).iterations,750);
+ assert.equal((await run([option],signal,[],"finalist")).iterations,3000);
+ assert.equal((await run([option],signal,[],"finalist")).iterations,3000);
+ assert.equal((await run([option],signal)).iterations,750);
+ assert.equal(calls(),2);
 });

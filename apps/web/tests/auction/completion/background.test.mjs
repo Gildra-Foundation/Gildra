@@ -126,6 +126,8 @@ test('changed profile fails without further simulation or claiming completion', 
 
 test('full enhanced waits for the existing enhancement and scenario goals, including explicit unavailable completion', async () => fixture(async state => {
   state.searches = 3;
+  state.options = [];
+  state.entry.context.input.enhancementMode = 'enhanced';
   state.assembly = () => ({ kind: 'assembly', searchId: state.entry.id, exhaustiveComplete: true, enhancementMode: 'enhanced',
     enhancementOptimization: { complete: state.assemblies >= 3, status: state.assemblies >= 3 ? 'unavailable' : 'pending' },
     scenarioComparisonsComplete: state.assemblies >= 4 });

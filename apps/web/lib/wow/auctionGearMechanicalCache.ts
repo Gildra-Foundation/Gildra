@@ -13,7 +13,7 @@ function canonical(value: unknown): unknown {
 
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
-  spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[];
+  spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; ownedChanges?: readonly unknown[]; precision?: "finalist";
 }) {
   const changes = (request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, gearChanges: changes,

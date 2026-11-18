@@ -17,7 +17,7 @@ import { auctionVariantKey, resolvedAuctionVariant, validAuctionWeapon } from ".
 import { supportedAuctionModifiers } from "../lib/wow/gearItemModifiers.ts";
 import { assertFreshMarket } from "../lib/wow/auctionMarket.ts";
 import { auctionGearProfileFingerprint } from "../lib/wow/auctionGearFingerprint.ts";
-import { nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS } from "../lib/wow/auctionItemReference.ts";
+import { equippedAuctionReferences, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS } from "../lib/wow/auctionItemReference.ts";
 import { nativeGearSimulationMeasurement } from "../lib/wow/gearSimulation.ts";
 
 // All item data and measurements below are synthetic offline guard cases.
@@ -70,7 +70,7 @@ const resolveAuctionVariants = async ({ offers }) => {
 const discoverySource = await readFile(new URL("../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
 const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
   .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
-    supportedAuctionModifiers, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
+    supportedAuctionModifiers, equippedAuctionReferences, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
 const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions,snapshotAuctionGearContext,restoreAuctionGearContext})")
   .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...searchStore, ...discovery, auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, auctionGearMechanicalCache, auctionGearMechanicalKey, resolveAuctionVariants, auctionGearVariantSelectionKey,

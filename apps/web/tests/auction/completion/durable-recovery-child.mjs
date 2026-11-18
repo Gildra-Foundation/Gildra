@@ -103,12 +103,17 @@ if (mode === "cancel-seed") {
   assert.equal(recovered.status, 200); assert.equal(recovered.body.id, input.id); assert.equal(recovered.body.status, "cancelled");
   assert.equal(tasks, 0, "A previously acknowledged cancellation must not execute after restart");
   output = { status: recovered.body.status, tasks };
-} else if (mode === "legacy-socket-seed") {
+} else if (mode === "legacy-socket-seed" || mode === "legacy-equipped-reference-seed") {
   const saved = context();
   const offer = { itemId: 501, auctionId: 9999, buyoutCopper: 1, quantity: 1, contextId: 0, bonusIds: [], modifiers: [] };
   saved.market.offers.push(offer);
   saved.discovery = createAuctionGearDiscovery(saved.market, saved.input.budgetCopper);
-  delete saved.discovery.socketMetadataRevision;
+  if (mode === "legacy-socket-seed") delete saved.discovery.socketMetadataRevision;
+  else {
+    delete saved.discovery.equippedReferenceRevision;
+    saved.armory.equipment = {equipped_items:[{item:{id:501},context:0,bonus_list:[],level:{value:30},
+      requirements:{level:{value:1}},stats:[{type:{type:"STAMINA"},value:10}]}]};
+  }
   saved.market.offers = []; // Production retains normalized lots only inside discovery.offers.
   saved.discovery.rejectedReferences.add(offer.itemId);
   saved.discovery.itemCursor = saved.discovery.itemIds.length;
@@ -182,6 +187,35 @@ if (mode === "cancel-seed") {
   finally { fs.readSync = original; syncBuiltinESMExports(); }
   assert.equal(countSearches(), 41, "Failure to establish active ownership cannot delete an acknowledged checkpoint");
   output = { preserved: countSearches() };
+} else if (mode === "owned-domain-seed") {
+  const setup = context();
+  setup.input.enhancementMode = "enhanced";
+  const entry = store.createAuctionGearSearch(owner, setup);
+  const historical = {kind:"assembly", searchId:entry.id, enhancementMode:"enhanced", exhaustiveComplete:true,
+    enhancementOptimization:{traversal:"exhaustive",complete:true,status:"ready",recommendations:[]}};
+  entry.latestAssemblyResult = historical;
+  entry.searchCheckpoint = {nextOption:73};
+  store.saveAuctionGearSearch(entry);
+  const work = {action:"resume",searchId:entry.id};
+  const settled = jobs.enqueueAuctionGearJob(owner,async()=>historical,{scope,work});
+  await tick();
+  const active = jobs.enqueueAuctionGearJob(owner,async(_signal,_progress,hooks)=>{
+    hooks.searchCreated(entry.id);
+    hooks.publishResult(historical);
+    await new Promise(()=>{});
+  },{scope,work});
+  await tick();
+  assert.equal(jobs.getAuctionGearJob(owner,active.id).result.kind,"assembly");
+  output = {settled:settled.id, active:active.id, searchId:entry.id};
+} else if (mode === "owned-domain-resume") {
+  assert.equal(jobs.getAuctionGearJob(owner,input.settled).result.enhancementOptimization.complete,true);
+  assert.equal(jobs.getOwnerActiveAuctionGearJob(owner).activeJob.result,null);
+  const entry = store.getAuctionGearSearch(owner,input.searchId);
+  resumeOwnedAuctionGearWork(owner,input.active,token);
+  assert.equal(entry.latestAssemblyResult,undefined);
+  await tick(); await tick();
+  assert.equal(jobs.getAuctionGearJob(owner,input.active).result.preserved,73);
+  output = {passed:true};
 } else if (mode === "precision-search-seed") {
   const entry = store.createAuctionGearSearch(owner, context());
   const record = rawRecord("search", entry.id);

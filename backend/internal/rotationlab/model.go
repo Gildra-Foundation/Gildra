@@ -41,6 +41,7 @@ type SimulationInput struct {
 	Scenario           string          `json:"scenario"`
 	FightLengthSeconds int             `json:"fightLengthSeconds"`
 	Targets            int             `json:"targets"`
+	Precision          string          `json:"precision,omitempty"`
 	ActionListMode     ActionListMode  `json:"actionListMode,omitempty"`
 	Rules              []string        `json:"rules"`
 	APLRules           []APLRule       `json:"aplRules,omitempty"`

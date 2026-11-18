@@ -7,7 +7,7 @@ import { auctionSummarySlotMatch } from "../../../lib/wow/gearCompatibility.ts";
 import { normalizeGearCandidate } from "../../../lib/wow/gearCandidates.ts";
 import { auctionVariantKey, resolvedAuctionVariant } from "../../../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../../../lib/wow/gearItemModifiers.ts";
-import { AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
+import { AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
 import { planAuctionGear } from "../../../lib/wow/auctionGearPlanner.ts";
 
 // Actual discovery, eligibility, native-reference validation and exhaustive planner;
@@ -21,9 +21,9 @@ async function setup(rows, locale = "en_US", characterLevel = 81) {
   const makeOffer = id => ({ ...offer(1, id), itemId: id });
   const state = { events: [], scanned: new Set(), hold: null, fail: false, checkpoints: 0 };
   const source = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
-  const d = new vm.Script(strip(source) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions})")
+  const d = new vm.Script(strip(source) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
     .runInNewContext({ Date, Map, Set, Object, Number, JSON, auctionSummarySlotMatch, normalizeGearCandidate, auctionVariantKey,
-      resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
+      resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference,
       lookupGearRecords: async (ids, _locale, itemClass, maxRequiredLevel, signal) => {
         assert.equal(maxRequiredLevel, undefined, "Base required level must never filter scaled variants");
         assert(ids.length <= 800, "Summary work remains bounded; repository pages stay at 100");
@@ -40,13 +40,13 @@ async function setup(rows, locale = "en_US", characterLevel = 81) {
         return records;
       },
       getAuctionItemReferences: async ids => new Map(ids.map(id => [id, {
-        offer: makeOffer(id), itemLevel: facts.get(id).native ?? 100, requiredLevel: 1, stats: [],
+        offer: makeOffer(id), itemLevel: facts.get(id).referenceLevel ?? facts.get(id).native ?? 100, requiredLevel: 1, stats: [],
       }])),
       resolveAuctionVariants: async ({ offers }) => {
         state.events.push({ type: "native", ids: [...new Set(offers.map(({ offer }) => offer.itemId))], scanned: state.scanned.size });
         return { engine: "SimulationCraft synthetic-priority", variants: new Map(offers.map(({ offer: o }) => [auctionVariantKey(o), {
           key: auctionVariantKey(o), itemId: o.itemId, itemLevel: facts.get(o.itemId).native ?? 100, requiredLevel: 1,
-          inventoryType: 9, itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {},
+          inventoryType: 9, itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: facts.get(o.itemId).stats ?? {},
         }])) };
       },
     });
@@ -171,4 +171,17 @@ test("published inventory codes skip unrelated combat slots and keep ambiguous r
   const conflict = { inventoryType: "SHOULDER", highlights: [{ key: "inventory_type", value: "Wrist" }] };
   assert.equal(matches(conflict, ["SHOULDER"]), true);
   assert.equal(matches(conflict, ["WRIST"]), true);
+});
+
+test("a corroborated equipped tuple restores only its own physical variants when the static control mismatches", async () => {
+  const h = await setup([{id:12034, level:59, native:59, referenceLevel:1, stats:{stamina:10}}]);
+  const first = h.makeOffer(12034);
+  const other = {...first, auctionId:first.auctionId + 1, bonusIds:[2]};
+  h.d.refreshAuctionGearDiscovery(h.discovery,market([first,other]));
+  h.input.equipment = {equipped_items:[{item:{id:12034}, context:first.contextId, bonus_list:first.bonusIds,
+    level:{value:59}, requirements:{level:{value:1}}, stats:[{type:{type:"STAMINA"},value:10}]}]};
+  const options = await h.finish();
+  assert.deepEqual(Array.from(options, o => o.auctionId), [first.auctionId]);
+  assert.equal(h.discovery.verifiedReferences.has(12034), false);
+  assert.equal(h.d.auctionGearDiscoveryCoverage(h.discovery).variantsRejected, 1);
 });

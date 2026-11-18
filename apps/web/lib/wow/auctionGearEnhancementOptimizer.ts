@@ -11,12 +11,15 @@ export type EnhancementSlot = { slotType: string; variantKey: string; metadataKe
   sockets: readonly { key: string; type: string }[];
   installed?: { enchant?: Enhancement; gems: readonly (Enhancement | null)[] };
   /** Owned equipment is preserved unless this explicit opt-in is set. */
-  allowOwnedChanges?: boolean };
+  allowOwnedChanges?: boolean; ownedItemId?: number };
 export type EnhancementResolution = { verified: false; reason: string } | { verified: true;
-  enchantApplicable: boolean; enchantChoices: readonly Enhancement[]; gemChoices: Record<string, readonly Enhancement[]> };
+  enchantApplicable: boolean; enchantChoices: readonly Enhancement[]; gemChoices: Record<string, readonly Enhancement[]>; coverageGaps?: readonly string[] };
 export type EnhancementCatalog = { version: string; complete: boolean;
   resolve: (slot: EnhancementSlot, character: EnhancementCharacter) => EnhancementResolution };
+/** Only changed positions are written to the owned armory instance. */
+export type OwnedAuctionGearChange = { slotType: string; itemId: number; enchantId?: number; gems: { index: number; itemId: number }[] };
 export type PricedEnhancementConfiguration = { key: string; slots: { slotType: string; variantKey: string; enchantId: number; gemIds: number[] }[];
+  ownedChanges?: OwnedAuctionGearChange[];
   consumables: { itemId: number; kind: "gem" | "enchant"; quantity: number; quotedCopper: number | null; levels: { unitCopper: number; quantity: number }[]; missingQuantity: number }[];
   itemsCopper: number; totalCopper: number | null; fullyEnhanced: boolean;
   status: "priced" | "price_unknown" | "market_unverified" | "over_budget";
@@ -29,6 +32,8 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   bestValueConfirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   bestDpsConfirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   bestMeasuredDps?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
+  secondMeasuredDps?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
+  thirdMeasuredDps?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   finalists?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation }[] };
 export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; catalog: EnhancementCatalog; character: EnhancementCharacter;
   prices: { prices: ExactCommodityPrices; sourceUpdatedAt: string | null }; itemsCopper: number; budgetCopper: number;
@@ -114,6 +119,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
         (slot.installed && slot.installed.gems.length !== slot.sockets.length) || (!slot.owned && slot.installed)) throw new Error("invalid_enhancement_slot");
     const resolved = catalog.resolve(slot, character); resolutions.push(resolved);
     if (!resolved.verified) { reasons.add(resolved.reason); continue; }
+    for (const gap of resolved.coverageGaps ?? []) reasons.add(gap);
     if (!resolved.enchantApplicable && slot.installed?.enchant) throw new Error("invalid_installed_enchant");
     const addAxis = (socket: number | null, options: readonly Enhancement[], installed: Enhancement | null) => {
       const kind = socket === null ? "enchant" : "gem";
@@ -159,7 +165,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (![checkpoint.totalSimulations,checkpoint.traversalSteps,checkpoint.nextSeed].every(value=>Number.isSafeInteger(value)&&value!>=0)) throw new Error("invalid_enhancement_checkpoint");
   checkpoint.cache = {...input.simulationCache,...checkpoint.cache};
   const confirmedEntries=[checkpoint.confirmed,checkpoint.bestValueConfirmed,checkpoint.bestDpsConfirmed];
-  for (const retained of [...confirmedEntries, ...(exact?[checkpoint.bestMeasuredDps,...checkpoint.finalists??[]]:[])]) {
+  for (const retained of [...confirmedEntries, ...(exact?[checkpoint.bestMeasuredDps,checkpoint.secondMeasuredDps,checkpoint.thirdMeasuredDps,...checkpoint.finalists??[]]:[])]) {
     if (!retained) continue;
     const simulation = measurement(retained.simulation), config = retained.configuration;
     if (!config || config.status !== "priced" || (!exact && !config.fullyEnhanced) || config.itemsCopper !== input.itemsCopper ||
@@ -173,7 +179,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const finalists = [...(checkpoint.finalists ?? [])];
   let confirmed = checkpoint.confirmed;
   let bestValueConfirmed = checkpoint.bestValueConfirmed, bestDpsConfirmed = checkpoint.bestDpsConfirmed;
-  let bestMeasuredDps = checkpoint.bestMeasuredDps;
+  let bestMeasuredDps = checkpoint.bestMeasuredDps, secondMeasuredDps = checkpoint.secondMeasuredDps, thirdMeasuredDps = checkpoint.thirdMeasuredDps;
   const score = (f: typeof finalists[number], objective: "dps" | "value") => {
     if (objective !== "value") return f.simulation.dps;
     const gain = f.simulation.dps - baselineDps!;
@@ -187,17 +193,19 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   let simulations = 0, visited = 0;
   let marketVerified = true;
   try { assertFreshMarket({ sourceUpdatedAt:input.prices.sourceUpdatedAt ?? "" }, input.now); } catch { marketVerified = false; reasons.add("market_unverified"); }
-  const clearRetained = () => { finalists.length = 0; confirmed = bestValueConfirmed = bestDpsConfirmed = bestMeasuredDps = undefined;
-    checkpoint.finalists=[];checkpoint.confirmed=checkpoint.bestValueConfirmed=checkpoint.bestDpsConfirmed=checkpoint.bestMeasuredDps=undefined;
+  const clearRetained = () => { finalists.length = 0; confirmed = bestValueConfirmed = bestDpsConfirmed = bestMeasuredDps = secondMeasuredDps = thirdMeasuredDps = undefined;
+    checkpoint.finalists=[];checkpoint.confirmed=checkpoint.bestValueConfirmed=checkpoint.bestDpsConfirmed=checkpoint.bestMeasuredDps=checkpoint.secondMeasuredDps=checkpoint.thirdMeasuredDps=undefined;
     // Fresh quotes may reuse native measurements, but must rebuild all price-certified leaders.
     if(exact) checkpoint.exactNextConfiguration="0";
   };
   if (!marketVerified) clearRetained();
-  else if (exact) for (const retained of [...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps]) {
+  else if (exact) for (const retained of [...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps,secondMeasuredDps,thirdMeasuredDps]) {
     if(retained) retained.configuration.sourceUpdatedAt=input.prices.sourceUpdatedAt;
   }
   if (exact && !marketVerified) return {checkpoint,complete:true,searchLimited:true,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
   if (resolutions.some(r=>!r.verified) || reasons.has("socket_compatibility_unverified")) return {checkpoint,complete:true,searchLimited:true,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
+  const completeRules = resolutions.every(r => r.verified && !r.coverageGaps?.length);
+  if (!exact && !completeRules) return {checkpoint,complete:true,searchLimited:true,catalogComplete:false,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
   const strides: bigint[] = [];
   const total = axes.reduce((n,a)=>{strides.push(n);return n*BigInt(a.length);},1n);
   const position = () => BigInt(exact ? checkpoint.exactNextConfiguration! : checkpoint.nextConfiguration);
@@ -247,17 +255,25 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     const configurationSlots = slots.map(slot=>({slotType:slot.slotType,variantKey:slot.variantKey,enchantId:0,gemIds:slot.sockets.map(()=>0)}));
     const quantities = new Map<number,number>();
     const kinds = new Map<number, Enhancement["kind"]>();
+    const ownedChanges = new Map<string, OwnedAuctionGearChange>();
     for (const choice of selected) {
       const e = choice.enhancement;
       if (choice.socket === null) configurationSlots[choice.slot].enchantId = e?.simulationId ?? 0;
       else configurationSlots[choice.slot].gemIds[choice.socket] = e?.simulationId ?? 0;
       if (e && !choice.retained) {
+        const slot = slots[choice.slot];
+        if (slot.owned && slot.ownedItemId) {
+          const change = ownedChanges.get(slot.slotType) ?? {slotType:slot.slotType,itemId:slot.ownedItemId,gems:[]};
+          if (choice.socket === null) change.enchantId = e.simulationId;
+          else change.gems.push({index:choice.socket,itemId:e.simulationId});
+          ownedChanges.set(slot.slotType,change);
+        }
         if (kinds.has(e.consumableItemId) && kinds.get(e.consumableItemId) !== e.kind) throw new Error("invalid_enhancement_catalog");
         kinds.set(e.consumableItemId,e.kind);
         quantities.set(e.consumableItemId,(quantities.get(e.consumableItemId) ?? 0)+1);
       }
     }
-    const fullyEnhanced = selected.every(c=>c.enhancement !== null || (slots[c.slot].owned && !slots[c.slot].allowOwnedChanges));
+    const fullyEnhanced = completeRules && selected.every(c=>c.enhancement !== null || (slots[c.slot].owned && !slots[c.slot].allowOwnedChanges));
     const consumables = [...quantities].sort(([a],[b])=>a-b).map(([itemId,quantity])=>{
       const quote = input.prices.prices[itemId] ? exactCommodityQuote(input.prices.prices[itemId].ladder,quantity) : {totalCopper:null,levels:[],missingQuantity:quantity};
       return {itemId,kind:kinds.get(itemId)!,quantity,quotedCopper:quote.totalCopper,levels:quote.levels,missingQuantity:quote.missingQuantity};
@@ -267,7 +283,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (totalCopper !== null && !Number.isSafeInteger(totalCopper)) throw new Error("invalid_budget");
     const status = !marketVerified ? "market_unverified" : !known ? "price_unknown" : totalCopper! > input.budgetCopper ? "over_budget" : "priced";
     const config: PricedEnhancementConfiguration = {key:hash({identity:input.simulationIdentity,catalog:catalog.version,slots:configurationSlots,metadata:slots.map(s=>s.metadataKey)}),
-      slots:configurationSlots,consumables,itemsCopper:input.itemsCopper,totalCopper,fullyEnhanced,status,sourceUpdatedAt:input.prices.sourceUpdatedAt};
+      slots:configurationSlots,...(ownedChanges.size ? {ownedChanges:[...ownedChanges.values()]} : {}),consumables,itemsCopper:input.itemsCopper,totalCopper,fullyEnhanced,status,sourceUpdatedAt:input.prices.sourceUpdatedAt};
     return { valid: true, config };
   };
   const indicesAt = (at: bigint) => axes.map(axis => {
@@ -275,10 +291,10 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   });
   const saveCheckpoint = () => {
     checkpoint.confirmed=confirmed;checkpoint.bestValueConfirmed=bestValueConfirmed;checkpoint.bestDpsConfirmed=bestDpsConfirmed;
-    if(exact)checkpoint.bestMeasuredDps=bestMeasuredDps;
+    if (exact) { checkpoint.bestMeasuredDps = bestMeasuredDps; checkpoint.secondMeasuredDps = secondMeasuredDps; checkpoint.thirdMeasuredDps = thirdMeasuredDps; }
     checkpoint.finalists=finalists;checkpoint.reasons=[...reasons];
     if(exact) {
-      const pinned=new Set([...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps]
+      const pinned=new Set([...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps,secondMeasuredDps,thirdMeasuredDps]
         .flatMap(row=>row?[row.configuration.key]:[]));
       const recent=Object.keys(checkpoint.cache).filter(key=>!pinned.has(key)).slice(-Math.max(0,256-pinned.size));
       checkpoint.cache=Object.fromEntries([...recent,...pinned].map(key=>[key,checkpoint.cache[key]]));
@@ -399,7 +415,15 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       const existing = finalists.findIndex(f=>f.configuration.key===config.key);
       if (existing < 0) finalists.push({configuration:config,simulation});
       else if (config.totalCopper! < finalists[existing].configuration.totalCopper!) finalists[existing] = {configuration:config,simulation};
-      if (exact && (!bestMeasuredDps || rankDps({configuration:config,simulation},bestMeasuredDps)<0)) bestMeasuredDps={configuration:config,simulation};
+      if (exact) {
+        const candidate = {configuration: config, simulation};
+        if (!thirdMeasuredDps || rankDps(candidate, thirdMeasuredDps) <= 0) {
+          const top = [bestMeasuredDps, secondMeasuredDps, thirdMeasuredDps]
+            .filter((row): row is typeof candidate => Boolean(row) && row!.configuration.key !== config.key);
+          top.push(candidate);
+          [bestMeasuredDps, secondMeasuredDps, thirdMeasuredDps] = top.sort(rankDps);
+        }
+      }
       if (baseline) {
         if (baseline.engine !== simulation.engine) throw new Error("simulation_version_changed");
         const comparison = compareGearSimulationResults(baseline, simulation);

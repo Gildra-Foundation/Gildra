@@ -111,6 +111,14 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
         })}</ul> : null}
       </li>;
     })}</ul>
+    {result.enhancement?.configuration.ownedChanges?.length ? <div data-auction-owned-upgrades>
+      <h5 className={tools.subtitle}>{t("Улучшить надетые вещи", "Upgrade equipped items")}</h5>
+      <ul className={styles.replacements}>{result.enhancement.configuration.ownedChanges.map(change => <li key={change.slotType}>
+        <strong>{upgradeSlotName(change.slotType, ru)}</strong>
+        {change.gems.map(gem => <span className={styles.note} key={gem.index}>{t("Гнездо", "Socket")} {gem.index + 1} · {result.enhancement?.enhancementNames?.gems[gem.itemId] ?? t("Камень", "Gem")}</span>)}
+        {change.enchantId ? <span className={styles.note}>{t("Чары", "Enchant")} · {result.enhancement?.enhancementNames?.enchants[change.enchantId] ?? t("Постоянные чары", "Permanent enchant")}</span> : null}
+      </li>)}</ul>
+    </div> : null}
     <dl className={styles.totals}><div><dt>{check ? t("Осталось купить по проверенным ценам", "Remaining at checked prices") : t("Осталось купить по прежним ценам", "Remaining at previous prices")}</dt><dd>{money(check ? check.remainingCopper : quotedRemaining)}</dd></div></dl>
     {check ? <p className={styles.note}>{t("Проверено", "Checked")}: {new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(check.checkedAt))}</p> : null}
     {result.totalCopper === null ? <p className={styles.note}>{t("Сумма относится только к перечисленным покупкам. Полная стоимость комплекта неизвестна.", "This total covers only the listed purchases. Full loadout cost is unknown.")}</p> : null}

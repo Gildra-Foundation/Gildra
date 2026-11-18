@@ -1,13 +1,14 @@
 import { createHash } from 'node:crypto';
 import { auctionEnhancementCatalogInfo, auctionEnhancementRecords, lookupInstalled, resolveExactEnhancements, type EnhancementRecord } from './auctionEnhancementCatalog';
-import { optimizeAuctionGearEnhancements, type Enhancement, type EnhancementSlot, type EnhancementResolution, type EnhancementCheckpoint, type PricedEnhancementConfiguration } from './auctionGearEnhancementOptimizer';
+import { optimizeAuctionGearEnhancements, type Enhancement, type EnhancementSlot, type EnhancementResolution, type EnhancementCheckpoint, type PricedEnhancementConfiguration, type OwnedAuctionGearChange } from './auctionGearEnhancementOptimizer';
 import { exactCommodityPrices } from './auctionBrowserData';
 import { auctionPlanCost, auctionGearPurchase } from './auctionGearPlanner';
-import { customizedAuctionGearOptions } from './auctionGearEnhancedConfiguration';
+import { customizedAuctionGearOptions, ownedAuctionGearChanges } from './auctionGearEnhancedConfiguration';
 import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulation';
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
+import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
 
@@ -19,7 +20,9 @@ export type AuctionEnhancedRecommendation = { label: string; configuration: Pric
   purchases: AuctionGearPurchase[]; consumableNames: Record<string, string>;
   enhancementNames?: { gems: Record<string, string>; enchants: Record<string, string> } };
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
-  traversal?: 'exhaustive'; equipmentChecked?: number;
+  traversal?: 'exhaustive'; includesOwnedEquipment?: true; equipmentChecked?: number;
+  finalistRecheck?: { keys: string[]; significant: boolean; marginDps: number;
+    leaderKey?: string; indistinguishableKeys?: string[]; preferredKey?: string; competingKey?: string };
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };
 const obj = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const rows = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
@@ -48,19 +51,21 @@ export async function evaluateAuctionEnhancementStage(input: {
   finalists: { label: string; options: AuctionGearOption[] }[]; equipment: Record<string, unknown>; loadout: GearLoadoutItem[];
   specId: number; level: number; region: 'eu' | 'us' | 'kr' | 'tw'; engine: string; profileFingerprint: string;
   encounter: AuctionGearEncounter; budgetCopper: number; objective: 'dps' | 'value'; baseline: GearPlanSimulation;
-  simulate: (options: AuctionGearOption[], signal: AbortSignal) => Promise<GearPlanSimulation>;
+  selectedSlots?: readonly string[];
+  simulate: (options: AuctionGearOption[], signal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[]) => Promise<GearPlanSimulation>;
   signal: AbortSignal; shouldYield: () => boolean; state: AuctionEnhancementStageState;
   onCacheHit?: () => void;
   quote?: typeof exactCommodityPrices;
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
+  includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
   additionalSearchReasons?: readonly string[];
 }): Promise<AuctionEnhancementStageResult> {
   if(input.exhaustive!==undefined && typeof input.exhaustive!=='boolean')throw new Error('invalid_enhancement_input');
   const info = auctionEnhancementCatalogInfo, reasons = new Set<string>(input.additionalSearchReasons);
   const result: AuctionEnhancementStageResult = { complete: true, status: 'unavailable', searchLimited: true,
-    reasons: [], recommendations: [], catalogRevision: info.revision, ...(input.exhaustive?{traversal:'exhaustive'}:{}) };
+    reasons: [], recommendations: [], catalogRevision: info.revision, ...(input.exhaustive?{traversal:'exhaustive',includesOwnedEquipment:true}:{}) };
   if(input.exhaustive)reasons.add('enhancement_catalog_subset');
   const informationalReasons = new Set(['owned_equipment_preserved', 'configuration_limit', 'bare_configuration', 'over_budget', 'socket_candidate_subset', 'socket_candidate_limit', 'enhancement_catalog_subset']);
   const finish = () => {
@@ -75,6 +80,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   if (!input.engine.includes(info.simcRevision.slice(0, 7))) { reasons.add('engine_build_mismatch'); return finish(); }
   // At most three retained equipment objectives and two socket proposals.
   if (input.finalists.length > 5) throw new Error('invalid_enhancement_candidate_limit');
+  const editableSlots = new Set<string>(input.exhaustive ? input.selectedSlots ?? auctionGearSlots : []);
   const activeKeys = new Set<string>();
   const equipmentSets = new Set<string>();
   for (const finalist of input.finalists) {
@@ -101,7 +107,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash(variant.resolution?.metadataVersion===3 ? [target,metadata,3] : [target,metadata]),owned:false,
         sockets:metadata.socketColors.flatMap((color,index)=>color ? [{key:String(index),type:String(color)}] : [])};
       slots.push(slot);
-      resolutions.set(slot.slotType,{verified:true,enchantApplicable:resolved.enchantApplicable,
+      resolutions.set(slot.slotType,{...resolved,
         enchantChoices:resolved.enchantChoices.map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
     }
     if (unsupported) continue;
@@ -125,7 +131,31 @@ export async function evaluateAuctionEnhancementStage(input: {
         if(!found.verified){reasons.add(found.reason);unsupported=true;break;} enchant=normalized(found.enhancement);}
       const slot:EnhancementSlot={slotType,variantKey:`owned:${hash(item)}`,metadataKey:input.profileFingerprint,owned:true,
         sockets:gems.map((_,index)=>({key:String(index),type:'retained'})),installed:{gems,...(enchant?{enchant}:{})}};
-      slots.push(slot);resolutions.set(slotType,{verified:true,enchantApplicable:Boolean(enchant),enchantChoices:[],gemChoices:Object.fromEntries(slot.sockets.map(s=>[s.key,[]]))});
+      let resolution: EnhancementResolution = {verified:true,enchantApplicable:Boolean(enchant),enchantChoices:[],
+        gemChoices:Object.fromEntries(slot.sockets.map(s=>[s.key,[]]))};
+      if (editableSlots.has(slotType)) {
+        const itemId = Number(obj(item.item).id);
+        const equipped = input.loadout.find(row => row.slotType === slotType && row.itemId === itemId);
+        const socketColors: number[] = rows(item.sockets).map(socket => obj(obj(socket).socket_type).type === 'PRISMATIC' ? 14 : -1);
+        while (socketColors.length < 3) socketColors.push(0);
+        const target = {itemId, inventoryType:equipped?.inventoryType ?? -1, itemClassId:Number(obj(item.item_class).id),
+          itemSubclassId:equipped?.itemSubclassId ?? -1, itemLevel:Number(obj(item.level).value), socketColors,
+          build:info.build,revision:info.simcRevision,engine:input.engine};
+        const resolved = resolveExactEnhancements(target,{level:input.level,professions:[]});
+        if (resolved.verified) {
+          slot.ownedItemId = itemId;
+          slot.allowOwnedChanges = true;
+          slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
+          resolution = {...resolved,enchantApplicable:resolved.enchantApplicable || Boolean(enchant),
+            enchantChoices:resolved.enchantChoices.map(normalized),
+            gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))};
+        } else {
+          // Preserve unknown instances and their installed unique limits while
+          // allowing independently verified slots to contribute upgrades.
+          resolution = {...resolution,coverageGaps:[resolved.reason]};
+        }
+      }
+      slots.push(slot);resolutions.set(slotType,resolution);
     }
     if(unsupported)continue;
     if(input.shouldYield()){result.complete=false;break;}
@@ -152,7 +182,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationConcurrency:input.simulationConcurrency,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2}} : {}),
       onCheckpoint:(checkpoint:EnhancementCheckpoint)=>{input.state.checkpoints[identity]=checkpoint;},
-      simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal)};
+      simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal,ownedAuctionGearChanges(config))};
     let optimized;
     try { optimized=await optimizeAuctionGearEnhancements(args); }
     catch(error){if(!(error instanceof Error)||error.message!=='enhancement_checkpoint_changed')throw error;
@@ -165,7 +195,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       return comparison.deltaDps > 0 && comparison.uncertainty.significant;
     });
     const retained = input.exhaustive
-      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
+      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed, ...(input.includePrecisionContenders ? [optimized.checkpoint.secondMeasuredDps, optimized.checkpoint.thirdMeasuredDps] : [])].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : input.includeObjectiveAlternatives
       ? [confirmed, optimized.checkpoint.bestValueConfirmed, optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : confirmed ? [confirmed] : [];

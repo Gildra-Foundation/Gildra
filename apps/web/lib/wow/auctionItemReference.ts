@@ -86,8 +86,13 @@ const statKeys: Record<string, string[]> = {
   MASTERY_RATING: ["mastery_rating"],
   VERSATILITY: ["versatility_rating"]
 };
-export function nativeMatchesItemReference(reference: AuctionItemReference | undefined, native: ResolvedAuctionVariant | undefined) {
+export function nativeMatchesItemReference(reference: AuctionItemReference | undefined, native: ResolvedAuctionVariant | undefined, exactEquipped = false) {
   if (!reference || !native || native.error || native.itemId !== reference.offer.itemId || native.itemLevel !== reference.itemLevel || native.requiredLevel !== reference.requiredLevel) return false;
+  if (exactEquipped) {
+    const reportedKeys = new Set(reference.stats.flatMap(stat => statKeys[stat.type] ?? []));
+    if (Boolean(reference.weapon) !== Boolean(native.weapon) ||
+        Object.entries(native.stats).some(([key, value]) => value !== 0 && !reportedKeys.has(key))) return false;
+  }
   if (reference.weapon && native.weapon) {
     // Permit sub-unit rounding in published weapon values while rejecting
     // differences in damage or speed; localized display names are irrelevant.
@@ -99,11 +104,29 @@ export function nativeMatchesItemReference(reference: AuctionItemReference | und
   }
   return reference.stats.every(stat => !statKeys[stat.type] || statKeys[stat.type].some(key => native.stats[key] === stat.value));
 }
+/** An equipped instance from the authenticated Blizzard snapshot can corroborate
+ * its own tuple when the static preview uses a different scaling context. */
+export function equippedAuctionReferences(equipment: Record<string, unknown> | undefined): AuctionItemReference[] {
+  if (!Array.isArray(equipment?.equipped_items)) return [];
+  return equipment.equipped_items.flatMap(raw => {
+    const item = object(raw), id = object(item.item).id;
+    if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0 ||
+        !Number.isSafeInteger(item.context) || !Array.isArray(item.bonus_list) ||
+        (item.enchantments !== undefined && !(Array.isArray(item.enchantments) && !item.enchantments.length)) ||
+        (item.sockets !== undefined && !(Array.isArray(item.sockets) && item.sockets.every(s => object(s).item === undefined)))) return [];
+    const reference = parseAuctionItemReference({ id, preview_item: item }, id);
+    // Empty or unmapped stats alone provide no independent numeric comparison.
+    return reference && reference.stats.some(stat => stat.value > 0) && reference.stats.every(stat => Object.hasOwn(statKeys, stat.type))
+      ? [reference] : [];
+  });
+}
 const references = new Map<string, {
   value: AuctionItemReference | null;
+  nonEquipmentClass?: number;
   expires: number;
 }>();
-export async function getAuctionItemReferences(ids: number[], region: string, token: string, signal: AbortSignal, locale = "en_GB") {
+export async function getAuctionItemReferences(ids: number[], region: string, token: string, signal: AbortSignal, locale = "en_GB",
+  nonEquipment?: Map<number, number>) {
   if (!["eu", "us", "kr", "tw"].includes(region) || ids.length > 256 || !["en_GB", "en_US", "ru_RU"].includes(locale)) throw new Error("invalid_item_reference_request");
   const apiLocale = locale === "ru_RU" && region === "eu" ? "ru_RU" : region === "us" ? "en_US" : "en_GB";
   const result = new Map<number, AuctionItemReference>();
@@ -114,6 +137,7 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
     const key = `${region}:${itemId}:${apiLocale}`,
       cached = references.get(key);
     if (cached && cached.expires > Date.now()) {
+      if (cached.nonEquipmentClass !== undefined) nonEquipment?.set(itemId, cached.nonEquipmentClass);
       if (cached.value) result.set(itemId, cached.value);
       return;
     }
@@ -126,6 +150,7 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
       signal: AbortSignal.any([requestSignal, AbortSignal.timeout(15000)])
     });
     let value: AuctionItemReference | null = null;
+    let nonEquipmentClass: number | undefined;
     if (response.status !== 404) {
       if (!response.ok) throw new Error("item_reference_unavailable");
       const reader = response.body?.getReader();
@@ -145,11 +170,18 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
         }
         chunks.push(chunk);
       }
-      value = parseAuctionItemReference(JSON.parse(Buffer.concat(chunks).toString("utf8")), itemId);
+      const raw = object(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      const classId = object(raw.item_class).id;
+      if (raw.id === itemId && raw.is_equippable === false && object(raw.inventory_type).type === "NON_EQUIP" &&
+          typeof classId === "number" && Number.isSafeInteger(classId) && classId >= 0 && classId !== 2 && classId !== 4) {
+        nonEquipmentClass = classId;
+        nonEquipment?.set(itemId, classId);
+      }
+      value = parseAuctionItemReference(raw, itemId);
     }
     requestSignal.throwIfAborted();
     references.set(key, {
-      value,
+      value, nonEquipmentClass,
       expires: Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS
     });
     while (references.size > 512) references.delete(references.keys().next().value!);

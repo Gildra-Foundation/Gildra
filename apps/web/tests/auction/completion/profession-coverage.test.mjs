@@ -22,7 +22,11 @@ async function setup(rows,offers=rows.map(row=>offer(row.id))) {
  const d=new vm.Script(strip(source)+'\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryCoverage})').runInNewContext({Map,Set,Object,Number,JSON,Date:Clock,auctionVariantKey,supportedAuctionModifiers,normalizeGearCandidate,
   lookupGearRecords:async(ids,_locale,itemClass,maxRequired,signal)=>{state.lookups.push([...ids]);assert(ids.length<=800);assert.equal(itemClass,undefined);assert.equal(maxRequired,undefined);if(state.hold)await state.hold;signal.throwIfAborted();if(state.fail)throw Error('offline_catalog_unavailable');return ids.flatMap(id=>{const row=state.rows.get(id);return row&&!row.missingSummary?[record(row)]:[];});},
   gearEntityDetails:async(records,_locale,_sources,signal)=>{state.details.push(records.map(r=>r.externalId));assert(records.length<=8);signal.throwIfAborted();if(state.holdDetails)await state.holdDetails;return records.flatMap(r=>{const row=state.rows.get(r.externalId);return row&&!row.missingDetail?[record(row,true)]:[];});},
-  getAuctionItemReferences:impossible,resolveAuctionVariants:impossible,
+  getAuctionItemReferences:async(ids,_region,_token,_signal,_locale,nonEquipment)=>{
+    if (!nonEquipment) return impossible();
+    for (const id of ids) if (state.officialClasses?.has(id)) nonEquipment.set(id,state.officialClasses.get(id));
+    return new Map();
+  },resolveAuctionVariants:impossible,
  });
  const input={locale:'ru_RU',region:'eu',token:'offline-no-secret',spec:'fury-warrior',characterLevel:81,selectedSlots:['WRIST'],context,signal:new AbortController().signal,maxSteps:100,onCheckpoint:()=>state.checkpoints++};
  const discovery=d.createAuctionGearDiscovery(market(offers,now),1000);
@@ -78,4 +82,16 @@ test('all unsupported IDs use the existing bounded summary batches without detai
 });
 test('cancellation after classification details resolve preserves the whole pending batch',async()=>{
  const h=await setup([{id:1,detailClass:19}]);await h.advance({maxSteps:1});let release;h.state.holdDetails=new Promise(r=>{release=r;});const controller=new AbortController();const pending=h.advance({signal:controller.signal});controller.abort();release();await assert.rejects(pending);assert.equal(h.discovery.records.length,1);assert.equal(h.coverage().unsupportedModifierLots,1);h.state.holdDetails=null;await h.advance();assert.equal(h.coverage().dataComplete,true);
+});
+
+test('official non-equipment repairs a catalog miss without suppressing a simultaneous unknown item',async()=>{
+ const rows=[{id:8383,missingSummary:true},{id:123865,missingSummary:true}];
+ const h=await setup(rows,rows.map(r=>offer(r.id,r.id,100,[])));
+ h.state.officialClasses=new Map([[8383,15]]);
+ await h.advance();
+ assert.deepEqual([...h.discovery.catalogUnmatched],[123865]);
+ assert.equal(h.coverage().catalogUnmatchedItemIds,1);
+ assert.equal(h.coverage().dataComplete,false);
+ h.clock(60001);h.refresh();await h.advance();
+ assert.deepEqual(h.state.lookups.map(ids=>Array.from(ids)),[[8383,123865],[123865]]);
 });

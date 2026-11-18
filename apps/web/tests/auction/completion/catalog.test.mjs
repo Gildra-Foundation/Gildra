@@ -6,7 +6,7 @@ import { strip, record, offer, market, context } from "../reliability/market-har
 import { normalizeGearCandidate } from "../../../lib/wow/gearCandidates.ts";
 import { auctionVariantKey, resolvedAuctionVariant } from "../../../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../../../lib/wow/gearItemModifiers.ts";
-import { AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
+import { AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
 
 // Real discovery + eligibility/variant code, synthetic catalog/native transport.
 // A deterministic clock exercises retry bounds without sleeping or network.
@@ -18,7 +18,7 @@ async function setup(missing) {
   const source = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
   const d = new vm.Script(strip(source) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
     .runInNewContext({ Date: Clock, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey,
-      resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
+      resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference,
       lookupGearRecords: async (_ids, _locale, itemClass) => {
         state.lookupCalls++;
         return (itemClass === undefined || itemClass === 4) && (missing !== "summary" || state.repaired) ? [entity] : [];
