@@ -92,3 +92,8 @@ test('a price mutation followed by abort cannot silently reuse the old global ra
   h.abortAfterQuotes=false;const resumed=await h.run();assert.equal(resumed.result.equipmentChecked,1);
   assert(!resumed.result.recommendations.some(row=>row.optionIds.includes('option-1')));
 });
+
+test('restored completion still validates the exact cursor proof',async()=>{
+  const h=fixture();await finish(h);h.state.cursor.visited='0';
+  await assert.rejects(h.run(),/invalid_search_checkpoint/);
+});

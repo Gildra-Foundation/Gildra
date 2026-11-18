@@ -70,6 +70,13 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     version: 1, inputKey, cursor: iterator.initialState(), stage, equipmentChecked: 0, reasons: [], unavailable: false,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
+  // Validate even an exhausted restored cursor without advancing it. Completed
+  // state must satisfy the same mixed-radix ordinal proof as an active cursor.
+  await iterator.nextBatch(state.cursor, { maxAssignments: 1, maxResults: 1, signal: input.signal, shouldYield: () => true });
+  if (!Number.isSafeInteger(state.equipmentChecked) || state.equipmentChecked < 0 ||
+      !Array.isArray(state.reasons) || !state.stage || typeof state.stage.checkpoints !== "object" ||
+      state.currentOptionIds !== undefined && (!Array.isArray(state.currentOptionIds) || state.currentOptionIds.length > 16 ||
+        new Set(state.currentOptionIds).size !== state.currentOptionIds.length)) throw new Error("invalid_enhancement_checkpoint");
   input.onState(state);
   const resetPrices = () => {
     state = initial({ checkpoints: {}, quotes: state.stage.quotes, quotedItemIds: state.stage.quotedItemIds });
