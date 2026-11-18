@@ -62,12 +62,20 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
   };
 }
 
-/** Missing legacy fields are unknown, never evidence of zero sockets. */
+// API v3 contains GemType masks normalized from native SocketType indices.
+// The old v2 wire mislabelled indices as masks: only its all-zero case is safe.
+const normalizedSocketMasks = new Set([0,1,2,4,8,16,32,14,
+  0x40,0x80,0x100,0x200,0x400,0x800,0x1000,0x2000,0x4000,0x8000,0x10000,
+  0x20000,0x40000,0x80000,0x700000,0x800000,0x1000000,0x2000000,
+  0x4000000,0x8000000,0x10000000,0x20000000,0x40000000]);
+/** Missing/ambiguous legacy fields are unknown, never evidence of zero sockets. */
 export function validatedAuctionEnhancementMetadata(value: Pick<ResolvedAuctionVariant, "metadataVersion" | "enhancements">): GearEnhancementMetadata {
-  if (value.metadataVersion !== 2) return { status: "unknown" };
+  if (value.metadataVersion !== 2 && value.metadataVersion !== 3) return { status: "unknown" };
   const data = value.enhancements;
+  if (value.metadataVersion === 2 && data?.status === "verified" &&
+      Array.isArray(data.socketColors) && data.socketColors.some(color => color !== 0)) return { status: "unknown" };
   if (!data || data.status !== "verified" || !Array.isArray(data.socketColors) || data.socketColors.length !== 3 ||
-      data.socketColors.some(color => !Number.isSafeInteger(color) || color < 0 || color > 0xffffffff) ||
+      data.socketColors.some(color => !Number.isSafeInteger(color) || !normalizedSocketMasks.has(color)) ||
       ![data.socketCount, data.socketBonusId, data.requiredProfessionId, data.requiredProfessionRank].every(v => Number.isSafeInteger(v) && v >= 0) ||
       data.socketCount !== data.socketColors.filter(Boolean).length) throw new Error("item_variant_unverified");
   return { ...data, socketColors: [...data.socketColors] };

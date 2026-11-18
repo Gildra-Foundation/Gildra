@@ -7,6 +7,7 @@ import {stripTypeScriptTypes} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import vm from 'node:vm';
+import {validatedAuctionEnhancementMetadata} from '../../../lib/wow/auctionItemVariant.ts';
 import * as catalog from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import {exactCommodityQuote} from '../../../lib/wow/auctionGearCost.ts';
 import {assertFreshMarket} from '../../../lib/wow/auctionMarket.ts';
@@ -28,7 +29,7 @@ const resolved=catalog.resolveExactEnhancements(target,{level:90,professions:[]}
 const gems=resolved.gemChoices['0'].filter(row=>!row.uniqueEquipped&&!row.category).slice(0,8),enchants=resolved.enchantChoices.slice(0,3);assert.equal(gems.length,8);assert.equal(enchants.length,3);
 const candidate={entityId:'synthetic-real-catalog-ring',itemId:target.itemId,name:'Synthetic catalog ring',slotType:'FINGER_1',itemLevel:150,inventoryType:11,itemClassId:4,itemSubclassId:0,
  constraints:{uniqueEquipped:false,crafted:false,allowableClassMask:'1',requiredLevel:1},compatibility:{specId:72,method:'specialization',itemClassId:4,itemSubclassId:0},eligible:true,rejectionReasons:[],
- variants:[{key:'exact-fixture-ring',itemLevel:150,bonusIds:[101],contextId:13,resolution:{engine,stats:{},requiredLevel:1,metadataVersion:2,enhancements:{status:'verified',socketColors:target.socketColors,socketCount:2,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}}}]};
+ variants:[{key:'exact-fixture-ring',itemLevel:150,bonusIds:[101],contextId:13,resolution:{engine,stats:{},requiredLevel:1,metadataVersion:version==="baseline"?2:3,enhancements:{status:'verified',socketColors:target.socketColors,socketCount:2,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}}}]};
 const option={id:'synthetic-ring',auctionId:980010,quantity:1,costCopper:100,candidate,variantKey:candidate.variants[0].key};
 const equipment={equipped_items:[{slot:{type:'FINGER_1'},item:{id:970010}}]},loadout=[{slotType:'FINGER_1',itemId:970010,inventoryType:11,itemSubclassId:0}];
 const prices=Object.fromEntries([...gems,...enchants].map((row,index)=>[row.consumableItemId,{ladder:[[10+(index+1)**2*7,1],[21+(index+1)**2*7,30]]}]));
@@ -38,7 +39,7 @@ async function run(repeat){
  const cryptoFor=label=>(algorithm,...args)=>{const began=performance.now(),h=createHash(algorithm,...args),wrapper={update:(...args)=>{h.update(...args);return wrapper;},digest:(...args)=>{try{return h.digest(...args);}finally{const row=phases[label]??={calls:0,ms:0};row.calls++;row.ms+=performance.now()-began;}}};return wrapper;};
  const globals={Map,Set,WeakMap,Date,Object,Number,JSON,Math,BigInt,Array,Error,AbortSignal,setImmediate,clearImmediate};
  const optimize=new vm.Script(strip(optimizerSource)+'\n;optimizeAuctionGearEnhancements').runInNewContext({...globals,createHash:cryptoFor('optimizerHash'),structuredClone:value=>time('clone',()=>structuredClone(value)),compareGearSimulationResults,assertFreshMarket,exactCommodityQuote:(...args)=>time('commodityQuote',()=>exactCommodityQuote(...args))});
- const stage=new vm.Script(strip(stageSource)+'\n;evaluateAuctionEnhancementStage').runInNewContext({...globals,...catalog,createHash:cryptoFor('stageHash'),auctionPlanCost,auctionGearPurchase,customizedAuctionGearOptions,prepareGearLoadout,compareGearSimulationResults,assertFreshMarket,
+ const stage=new vm.Script(strip(stageSource)+'\n;evaluateAuctionEnhancementStage').runInNewContext({...globals,...catalog,validatedAuctionEnhancementMetadata,createHash:cryptoFor('stageHash'),auctionPlanCost,auctionGearPurchase,customizedAuctionGearOptions,prepareGearLoadout,compareGearSimulationResults,assertFreshMarket,
   resolveExactEnhancements:(...args)=>time('catalogResolve',()=>catalog.resolveExactEnhancements(...args)),lookupInstalled:(...args)=>time('installedResolve',()=>catalog.lookupInstalled(...args)),
   optimizeAuctionGearEnhancements:async input=>{const began=performance.now();try{const result=await optimize(input);configurationTrace.push(...result.configurations);return result;}finally{const row=phases.optimizer??={calls:0,ms:0};row.calls++;row.ms+=performance.now()-began;}}});
  let quoteCalls=0,nativeCalls=0;const trace=[],turns=[];const now=new Date().toISOString();

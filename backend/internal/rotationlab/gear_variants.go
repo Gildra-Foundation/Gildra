@@ -28,8 +28,9 @@ type GearVariantInput struct {
 	Change GearChange `json:"change"`
 }
 
-// Socket colors are native item_socket_color masks, not display color indices.
-// Unknown enhancement fields are omitted; zero is a verified absence only in v2.
+// API v3 socket colors are normalized GemType masks. SimC's raw report v2
+// exports ItemSparse SocketType indices; those must never be exposed as masks.
+// Unknown enhancement fields are omitted; zero requires verified metadata.
 type GearVariantEnhancements struct {
 	Status                 string `json:"status"`
 	SocketColors           []int  `json:"socketColors,omitempty"`
@@ -231,9 +232,13 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 			continue
 		}
 		n := func(key string) int { var value int; _ = json.Unmarshal(item[key], &value); return value }
-		result.MetadataVersion = n("gildra_metadata_version")
-		if result.MetadataVersion != 1 && result.MetadataVersion != 2 {
+		reportVersion := n("gildra_metadata_version")
+		if reportVersion != 1 && reportVersion != 2 {
 			return GearVariantResponse{}, errVariantMetadataMissing
+		}
+		result.MetadataVersion = reportVersion
+		if reportVersion == 2 {
+			result.MetadataVersion = 3
 		}
 		var tuningKnown bool
 		_ = json.Unmarshal(item["content_tuning_known"], &tuningKnown)
@@ -266,7 +271,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		if n("id") != v.Change.ItemID || n("unknown_bonus_count") > 0 || !tuningKnown || !redirectedKnown || result.ItemLevel < 1 || result.ItemLevel > 1000 || result.RequiredLevel < 0 || result.RequiredLevel > 90 {
 			result.Error = "item_variant_unverified"
 		}
-		if result.MetadataVersion == 2 {
+		if reportVersion == 2 {
 			enhancements, err := parseVariantEnhancements(item)
 			if err != nil {
 				result.Error = "item_variant_unverified"
@@ -287,7 +292,8 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 	return response, nil
 }
 
-// Strictly decode required v2 fields. A legacy worker cannot prove zero sockets.
+// Strictly decode raw report v2 fields, normalizing SocketType only once at
+// this boundary. Report version and API metadata version are independent.
 func parseVariantEnhancements(item map[string]json.RawMessage) (GearVariantEnhancements, error) {
 	unknown := GearVariantEnhancements{Status: "unknown"}
 	var colors []*int
@@ -297,11 +303,15 @@ func parseVariantEnhancements(item map[string]json.RawMessage) (GearVariantEnhan
 	out := GearVariantEnhancements{Status: "verified", SocketColors: make([]int, 3)}
 	count := 0
 	for i, color := range colors {
-		if color == nil || !validNativeSocketColor(*color) {
+		if color == nil {
 			return unknown, errors.New("invalid socket color")
 		}
-		out.SocketColors[i] = *color
-		if *color != 0 {
+		mask, known := nativeSocketGemMask(*color)
+		if !known {
+			return unknown, errors.New("invalid socket color")
+		}
+		out.SocketColors[i] = mask
+		if mask != 0 {
 			count++
 		}
 	}
@@ -321,17 +331,26 @@ func parseVariantEnhancements(item map[string]json.RawMessage) (GearVariantEnhan
 	return out, nil
 }
 
-// Pinned SimC 18428cd data_enums.hh item_socket_color. Reject unknown masks;
-// adding new native socket kinds requires explicit contract validation here.
-func validNativeSocketColor(color int) bool {
-	switch color {
-	case 0, 1, 2, 4, 8, 6, 10, 12, 14, 16, 32,
-		0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000,
-		0x1ffc0, 0x20000, 0x40000, 0x80000, 0x100000, 0x800000,
-		0x1000000, 0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000:
-		return true
+// ItemSparse SocketType -> GemProperties Type mask. Source: TrinityCore
+// c4192c00729bfb1edf9d68dcb88e0a33b4c53e33 ItemTemplate.cpp
+// SocketColorToGemTypeMask and ItemTemplate.h SocketColor:
+// https://github.com/TrinityCore/TrinityCore/blob/c4192c00729bfb1edf9d68dcb88e0a33b4c53e33/src/server/game/Entities/Item/ItemTemplate.cpp#L25
+// Pinned SimC 18428cd copies ItemSparse socket_color directly and bonus type
+// ITEM_BONUS_SOCKET assigns value_2 to the same field (sc_item_data.cpp).
+// Live item 240948 and bonus 1808/13695 witnesses use index 7 for PRISMATIC.
+// In particular raw 14 is FIRE (0x1000), never the prismatic mask 14.
+func nativeSocketGemMask(socketType int) (int, bool) {
+	masks := [...]int{
+		0, 1, 2, 4, 8, 0x10, 0x20, 14,
+		0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000,
+		0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000,
+		0x700000, 0x800000, 0x1000000, 0x2000000, 0x4000000,
+		0x8000000, 0x10000000, 0x20000000, 0x40000000,
 	}
-	return false
+	if socketType < 0 || socketType >= len(masks) {
+		return 0, false
+	}
+	return masks[socketType], true
 }
 
 func (h *WorkerHandler) resolveVariants(w http.ResponseWriter, r *http.Request) {

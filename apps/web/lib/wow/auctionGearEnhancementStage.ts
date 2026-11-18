@@ -9,6 +9,7 @@ import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
 import { assertFreshMarket } from './auctionMarket';
+import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
 
 type Quotes = Awaited<ReturnType<typeof exactCommodityPrices>>;
 export type AuctionEnhancementStageState = { checkpoints: Record<string, EnhancementCheckpoint>; quotes?: Quotes; quotedItemIds?: number[] };
@@ -53,6 +54,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   quote?: typeof exactCommodityPrices;
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
+  simulationConcurrency?: 1 | 2;
   additionalSearchReasons?: readonly string[];
 }): Promise<AuctionEnhancementStageResult> {
   if(input.exhaustive!==undefined && typeof input.exhaustive!=='boolean')throw new Error('invalid_enhancement_input');
@@ -85,7 +87,9 @@ export async function evaluateAuctionEnhancementStage(input: {
     let unsupported = false;
     for (const option of finalist.options) {
       const variant = option.candidate.variants.find(v => v.key === option.variantKey)!;
-      const metadata = variant.resolution?.enhancements;
+      let metadata;
+      try { metadata = variant.resolution ? validatedAuctionEnhancementMetadata(variant.resolution) : undefined; }
+      catch { metadata = undefined; }
       if (metadata?.status !== 'verified') { reasons.add('variant_enhancements_unknown'); unsupported = true; break; }
       // Profession facts are absent from the current trusted profile contract.
       if (metadata.requiredProfessionId) { reasons.add('profession_unverified'); unsupported = true; break; }
@@ -94,7 +98,7 @@ export async function evaluateAuctionEnhancementStage(input: {
         socketColors:metadata.socketColors, build:info.build, revision:info.simcRevision, engine:input.engine };
       const resolved = resolveExactEnhancements(target,{level:input.level,professions:[]});
       if (!resolved.verified) { reasons.add(resolved.reason); unsupported = true; break; }
-      const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash([target,metadata]),owned:false,
+      const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash(variant.resolution?.metadataVersion===3 ? [target,metadata,3] : [target,metadata]),owned:false,
         sockets:metadata.socketColors.flatMap((color,index)=>color ? [{key:String(index),type:String(color)}] : [])};
       slots.push(slot);
       resolutions.set(slot.slotType,{verified:true,enchantApplicable:resolved.enchantApplicable,
@@ -145,6 +149,9 @@ export async function evaluateAuctionEnhancementStage(input: {
       budgetCopper:input.budgetCopper,simulationIdentity:identity,objective:input.objective,baselineDps:input.baseline.dps,baseline:input.baseline,
       signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache,onCacheHit:input.onCacheHit,
       exhaustive:input.exhaustive,
+      simulationConcurrency:input.simulationConcurrency,
+      ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2}} : {}),
+      onCheckpoint:(checkpoint:EnhancementCheckpoint)=>{input.state.checkpoints[identity]=checkpoint;},
       simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal)};
     let optimized;
     try { optimized=await optimizeAuctionGearEnhancements(args); }

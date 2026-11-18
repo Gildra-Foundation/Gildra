@@ -616,7 +616,12 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           publishResult?.(published);
           lastPublishedEnhancement = result;
         };
+        // Live capacity is scoped to this exact enhancement turn; a worker
+        // downgrade keeps the serial path. Legacy and quick remain unchanged.
+        const enhancementConcurrency = shouldYield() ? 1 : await context.simulate.concurrency?.(signal) ?? 1;
+        signal.throwIfAborted();
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
+          simulationConcurrency: enhancementConcurrency,
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
           specId: context.specId, level: context.character.level, region: context.character.region,
           engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
@@ -796,6 +801,11 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   parseAuctionGearCompareScenarios(data.input.compareScenarios);
   if (data.encounter.fightLengthSeconds !== expectedEncounter.fightLengthSeconds || data.encounter.targets !== expectedEncounter.targets)
     throw new Error("invalid_auction_checkpoint");
+  // A pre-v3 complete cursor can include former socket decoding rejections.
+  // Rediscover the saved market rather than trust either accepted or rejected variants.
+  const discovery = data.discovery.socketMetadataRevision === 3 ? data.discovery
+    : createAuctionGearDiscovery(data.market, data.input.budgetCopper);
+  const coverage = discovery === data.discovery ? data.coverage : auctionGearDiscoveryCoverage(discovery);
   const discoveryContext = (slotType: string) => ({
     classId: data.character.playableClass.id, specId: data.specId, characterLevel: data.character.level,
     raceId: data.character.playableRace.id, faction: data.character.faction.type, slotType,
@@ -804,8 +814,9 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   });
   const simulate = createAuctionSimulator({ armory: data.armory, loadout: data.loadout,
     specId: data.specId, specSlug: data.specSlug, scenario: data.input.scenario, encounter: data.encounter,
-    market: data.market, engine: () => data.discovery.engine, freshMetadata: false });
-  return { ...data, options: auctionGearDiscoveryOptions(data.discovery), discoveryContext, simulate, engineVerificationRequired: true };
+    market: data.market, engine: () => discovery.engine, freshMetadata: false });
+  return { ...data, discovery, coverage, searchLimited: !coverage.discoveryComplete || !coverage.dataComplete,
+    options: auctionGearDiscoveryOptions(discovery), discoveryContext, simulate, engineVerificationRequired: true };
 }
 
 function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, encounter, market, engine, freshMetadata = true }: {

@@ -103,6 +103,36 @@ if (mode === "cancel-seed") {
   assert.equal(recovered.status, 200); assert.equal(recovered.body.id, input.id); assert.equal(recovered.body.status, "cancelled");
   assert.equal(tasks, 0, "A previously acknowledged cancellation must not execute after restart");
   output = { status: recovered.body.status, tasks };
+} else if (mode === "legacy-socket-seed") {
+  const saved = context();
+  const offer = { itemId: 501, auctionId: 9999, buyoutCopper: 1, quantity: 1, contextId: 0, bonusIds: [], modifiers: [] };
+  saved.market.offers.push(offer);
+  saved.discovery = createAuctionGearDiscovery(saved.market, saved.input.budgetCopper);
+  delete saved.discovery.socketMetadataRevision;
+  saved.discovery.rejectedReferences.add(offer.itemId);
+  saved.discovery.itemCursor = saved.discovery.itemIds.length;
+  const entry = store.createAuctionGearSearch(owner, saved);
+  entry.exhaustiveEnhancementState = { equipmentChecked: 7 };
+  entry.searchCheckpoint = { nextOption: 10 };
+  entry.latestAssemblyResult = { complete: true };
+  entry.excludedOptionIds = ["formerly-known-lot"];
+  entry.knownOptionIds.add("formerly-known-lot");
+  store.saveAuctionGearSearch(entry);
+  output = { searchId: entry.id };
+} else if (mode === "legacy-socket-read") {
+  const entry = store.getAuctionGearSearch(owner, input.searchId);
+  assert(entry);
+  assert.equal(entry.context.discovery.socketMetadataRevision, 3);
+  assert.equal(entry.context.discovery.itemCursor, 0);
+  assert.deepEqual(entry.context.discovery.itemIds, [501]);
+  assert.equal(entry.context.discovery.rejectedReferences.size, 0);
+  assert.equal(entry.context.coverage.discoveryComplete, false);
+  assert.equal(entry.searchCheckpoint, undefined);
+  assert.equal(entry.exhaustiveEnhancementState, undefined);
+  assert.equal(entry.latestAssemblyResult, undefined);
+  assert.deepEqual(entry.excludedOptionIds, ["formerly-known-lot"]);
+  assert(entry.knownOptionIds.has("formerly-known-lot"));
+  output = { reset: true };
 } else if (mode === "search-initial") {
   const entry = store.createAuctionGearSearch(owner, context());
   entry.searchCheckpoint = { version: 1, nextOption: 73 }; store.saveAuctionGearSearch(entry);

@@ -43,7 +43,7 @@ function option(id) {
     inventoryType:12,itemClassId:4,itemSubclassId:0,constraints:{uniqueEquipped:false,crafted:false,allowableClassMask:'1',requiredLevel:1},
     compatibility:{specId:72,method:'specialization',itemClassId:4,itemSubclassId:0},eligible:true,rejectionReasons:[],
     provenance:{buildId:1},season:{id:'synthetic',patch:'synthetic',status:'current',evidence:'synthetic'},source:{type:'auction',evidence:'synthetic'},
-    variants:[{key:variantKey,itemLevel:150,bonusIds:[],resolution:{engine:measurement(1).engine,metadataVersion:2,stats:{},requiredLevel:1,
+    variants:[{key:variantKey,itemLevel:150,bonusIds:[],resolution:{engine:measurement(1).engine,metadataVersion:3,stats:{},requiredLevel:1,
       enhancements:{status:'verified',socketColors:[14,0,0],socketCount:1,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}}}]};
   return {id:`synthetic-option-${id}`,auctionId:id,quantity:1,costCopper:100,candidate,variantKey};
 }

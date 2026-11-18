@@ -79,3 +79,8 @@ test("an interrupted initial job without a result marker runs new work and publi
   const seed = await run(directory, "precision-queued-seed");
   assert.equal((await run(directory, "precision-queued-read", seed)).tasks, 1);
 }));
+
+test("legacy socket proof restarts discovery from the saved market and preserves player exclusions", () => isolated(async directory => {
+  const seed = await run(directory, "legacy-socket-seed");
+  assert.equal((await run(directory, "legacy-socket-read", seed)).reset, true);
+}));
