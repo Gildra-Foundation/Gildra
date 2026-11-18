@@ -81,7 +81,7 @@ export type AuctionGearPlan = {
   optionsConsidered: number;
 };
 export type AuctionPlanProgress = {
-  phase: "market" | "catalog" | "variants" | "simulating";
+  phase: "market" | "catalog" | "variants" | "simulating" | "enhancements" | "scenarios";
   completed: number;
   total: number;
 };

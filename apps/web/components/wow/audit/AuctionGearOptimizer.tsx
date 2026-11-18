@@ -23,7 +23,8 @@ import { AuctionGearResult } from "./AuctionGearResult";
 import { advanceAuctionGearRunPolicy, createAuctionGearRunPolicy, auctionGearSearchRunPhase, type AuctionGearRunPolicy } from "@/lib/wow/auctionGearRunPolicy";
 import { auctionGearResultMatchesIntent as intentMatchesSearch } from "@/lib/wow/auctionGearResult";
 import { AtlasSegmented } from "@gildra/atlas-ui/AtlasSegmented";
-import { AlertTriangle, LoaderCircle, Search } from "lucide-react";
+import { AuctionProgress } from "./AuctionProgress";
+import { AlertTriangle, Search } from "lucide-react";
 import { MaterialButton } from "@/components/wow/shared/materialAtlas";
 import { CHARACTERS_KIT } from "@/lib/wow/charactersKit";
 import styles from "./auctionGearOptimizer.module.css";
@@ -869,13 +870,18 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
     void run({ action: "resume", searchId: search.searchId }, "search");
   }
   const progress = transport?.progress;
-  const progressText = !progress ? t("Ожидаем расчёта…", "Waiting for calculation…")
-    : progress?.phase === "market" ? t("Загружаем рынок сервера…", "Loading your realm market…")
-    : progress?.phase === "catalog" || progress?.phase === "variants" ? t("Проверяем вещи…", "Checking items…")
-    : transport?.mode === "assembly" ? t("Собираем сет…", "Building the loadout…")
-    : t("Сравниваем замены…", "Comparing replacements…");
+  const waiting = ["plan_reconnecting", "plan_cancelling", "plan_waiting_for_quota"].includes(transport?.error ?? "");
+  const stageLabel = waiting ? failureText(transport?.error ?? null)
+    : transport?.status === "queued" ? t("Расчёт в очереди", "Calculation queued")
+    : progress?.phase === "market" ? t("Загружаем цены аукциона", "Loading auction prices")
+    : progress?.phase === "catalog" ? t("Проверяем подходящие предметы", "Checking eligible items")
+    : progress?.phase === "variants" ? t("Проверяем варианты предметов", "Checking item variants")
+    : progress?.phase === "enhancements" ? t("Подбираем камни и чары", "Selecting gems and enchants")
+    : progress?.phase === "scenarios" ? t("Сравниваем комплекты в дополнительных боях", "Comparing loadouts in additional encounters")
+    : transport?.mode === "assembly" ? t("Сравниваем комплекты", "Comparing loadouts")
+    : progress ? t("Сравниваем замены по DPS", "Comparing replacement DPS") : t("Готовим поиск", "Preparing search");
+  const counted = !waiting && progress && progress.total > 0 && ["catalog", "variants", "scenarios"].includes(progress.phase) ? progress : null;
   const feedback = (mode: Mode) => transport?.mode !== mode ? null : <>
-    {running ? <p role="status" className={tools.status}><LoaderCircle className={tools.spin} aria-hidden="true" />{["plan_reconnecting", "plan_cancelling", "plan_waiting_for_quota"].includes(transport.error ?? "") ? failureText(transport.error) : progressText}{progress ? ` ${number(progress.completed)} / ${number(progress.total)}` : ""}</p> : null}
     {transport.status === "failed" ? <p role="alert" className={tools.alert}><AlertTriangle aria-hidden="true" />{failureText(transport.error)}</p> : null}
     {transport.status === "cancelled" ? <p role="status" className={tools.status}>{search ? t("Расчёт остановлен.", "Calculation stopped.") : t("Поиск отменён.", "Search cancelled.")}</p> : null}
     {transport.status === "failed" && cancellation === "failed" ? <button type="button" className={tools.quiet} onClick={() => void cancel()}>{t("Повторить отмену", "Retry cancellation")}</button> : null}
@@ -930,6 +936,8 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           <MaterialButton kit={CHARACTERS_KIT} fit="stack" variant="primary" type="submit" disabled={formLocked || !validBudget} icon={<Search aria-hidden="true" />}>{running ? t("Подбираем улучшения…", "Finding upgrades…") : buildMode === "quick" ? t("Быстро подобрать вещи", "Find gear quickly") : buildMode === "full" ? t("Подобрать вещи полностью", "Run full gear selection") : t("Подобрать вещи, камни и чары", "Find gear, gems and enchants")}</MaterialButton>
         </div>
       </div>
+      {running && <AuctionProgress label={stageLabel} counted={counted} locale={locale}
+        stageKey={`${transport?.mode}-${progress?.phase}-${cache.current?.orchestration?.searchTurns}-${cache.current?.orchestration?.assemblyTurns}`} />}
       <details className={styles.disclosure} data-auction-advanced-settings><summary>{t("Дополнительные настройки", "Advanced settings")}</summary>
       <div className={styles.advancedSettingsContent}>
         <div className={tools.fields}>
