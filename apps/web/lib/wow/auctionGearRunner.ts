@@ -13,7 +13,8 @@ export function auctionGearRunDiagnostics(entry: AuctionGearSearchEntry) {
 }
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type AuctionGearEncounter } from "./auctionGearScenarios";
 import { evaluateAuctionGearScenarios } from "./auctionGearScenarioExecution";
-import { evaluateAuctionEnhancementStage } from "./auctionGearEnhancementStage";
+import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from "./auctionGearEnhancementStage";
+import { additionalAuctionSocketFinalists } from "./auctionGearEnhancementCandidates";
 import { auctionEnhancementCatalogInfo } from "./auctionEnhancementCatalog";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 import { customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
@@ -554,7 +555,9 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       const published = publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
         ...(context.input.compareScenarios?.length ? { scenarioComparisonsComplete: false } : {}),
         purchases: result.purchases.map(present),
-        bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null });
+        bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null,
+        bestValueConfirmed: result.bestValueConfirmed ? { ...result.bestValueConfirmed, purchases: result.bestValueConfirmed.purchases.map(present) } : null,
+        bestDpsConfirmed: result.bestDpsConfirmed ? { ...result.bestDpsConfirmed, purchases: result.bestDpsConfirmed.purchases.map(present) } : null });
       entry.latestAssemblyResult = published;
       scheduleAuctionGearSearchSave(entry);
       // Persist and publish each completed assembly evaluation before starting
@@ -575,10 +578,28 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       published = { ...published, ...(encounters.length ? {scenarioComparisonsComplete: false} : {}) };
       const finalists = new Map<string, AuctionGearOption[]>();
       const byId = new Map(options.map(option => [option.id, option]));
-      for (const [label, best] of [["measured", checkpoint.best], ["confirmed", checkpoint.bestConfirmed]] as const) {
+      const selectedSets = new Set<string>();
+      for (const [label, best] of [["confirmed", checkpoint.bestConfirmed], ["measured", checkpoint.best],
+        ["value", checkpoint.bestValueConfirmed], ["dps", checkpoint.bestDpsConfirmed]] as const) {
         if (!best || !best.optionIds.length) continue;
+        const key = JSON.stringify([...best.optionIds].sort());
+        if (selectedSets.has(key)) continue;
         const selected = best.optionIds.map(id => byId.get(id));
-        if (selected.every((option): option is AuctionGearOption => Boolean(option))) finalists.set(label, selected);
+        if (selected.every((option): option is AuctionGearOption => Boolean(option))) {
+          selectedSets.add(key); finalists.set(label, selected);
+        }
+      }
+      const equipmentFinalists = new Map(finalists);
+      let additionalSearchReasons: string[] = [];
+      if (context.input.enhancementMode === "enhanced") {
+        const proposals = additionalAuctionSocketFinalists({
+          finalists: [...finalists].map(([label, selected]) => ({label, options:selected})), options,
+          measured: entry.latestSearchResult.items, equipment: context.armory.equipment,
+          loadout: context.loadout, specId: context.specId, budgetCopper: context.input.budgetCopper, signal,
+          selectedSlots: context.input.selectedSlots,
+        });
+        for (const proposal of proposals.finalists) finalists.set(proposal.label, proposal.options);
+        additionalSearchReasons = proposals.reasons;
       }
       // A bare item may lose DPS because replacement removes installed upgrades.
       // Keep two measured single-item proposals when no winning bare set exists.
@@ -603,6 +624,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           encounter: {scenario:context.input.scenario,...context.encounter}, budgetCopper:context.input.budgetCopper,
           objective:context.input.objective ?? "dps", baseline:checkpoint.baseline, simulate:context.simulate,
           signal, shouldYield, state: entry.enhancementState ??= {checkpoints:{}},
+          includeObjectiveAlternatives: context.input.enhancementMode === "enhanced", additionalSearchReasons,
           onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         })).finally(() => scheduleAuctionGearSearchSave(entry));
         signal.throwIfAborted();
@@ -613,12 +635,17 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         publishResult?.(published);
         if (!enhanced.complete) return published;
         if(enhanced.recommendations.length) {
-          const original = new Map(finalists);
           finalists.clear();
-          for(const recommendation of enhanced.recommendations) {
-            const selected=original.get(recommendation.label);
-            if(selected)finalists.set(`enhanced-${recommendation.label}`,customizedAuctionGearOptions(selected,recommendation.configuration));
+          for(const recommendation of auctionEnhancementScenarioFinalists(enhanced.recommendations, context.input.objective ?? "dps")) {
+            const selected=recommendation.optionIds.map(id=>byId.get(id));
+            if(selected.every((option): option is AuctionGearOption => Boolean(option)))
+              finalists.set(`enhanced-${recommendation.label}`,customizedAuctionGearOptions(selected,recommendation.configuration));
           }
+        } else {
+          // Unpriced socket proposals are not scenario recommendations. Preserve
+          // the already measured equipment sets and the three-candidate bound.
+          finalists.clear();
+          for (const [label, selected] of equipmentFinalists) finalists.set(label, selected);
         }
         // Further scenario work must not mutate the snapshot already published.
         published = {...published};

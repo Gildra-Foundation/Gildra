@@ -19,10 +19,12 @@ export type AuctionGearJob = {
   searchId?: string;
   /** Safe intent kind for recovery across tabs; no private work payload. */
   mode?: "search" | "assembly";
+  /** Server owns every continuation of this full calculation. */
+  runMode?: "full";
 };
-export type AuctionGearWork = { action: "search"; input: AuctionGearRunInput }
+export type AuctionGearWork = ({ action: "search"; input: AuctionGearRunInput }
   | { action: "resume"; searchId: string }
-  | { action: "assemble"; searchId: string; selection: AuctionGearAssemblySelection };
+  | { action: "assemble"; searchId: string; selection: AuctionGearAssemblySelection }) & { runMode?: "full" };
 /** Form fields copied only from validated, server-owned work or context. */
 export type AuctionGearFormIntent = AuctionGearRunInput & {
   objective: "value" | "dps";
@@ -30,7 +32,7 @@ export type AuctionGearFormIntent = AuctionGearRunInput & {
 };
 export type AuctionGearActiveRecovery = { activeJob: AuctionGearJob | null; formIntent: AuctionGearFormIntent | null };
 export type AuctionGearTask = (signal: AbortSignal, progress: (p: AuctionPlanProgress) => void,
-  hooks: { searchCreated: (searchId: string) => void; publishResult: (result: AuctionGearRunResult) => void }) => Promise<AuctionGearRunResult>;
+  hooks: { searchCreated: (searchId: string) => void; publishResult: (result: AuctionGearRunResult) => void; continueWith: (task: AuctionGearTask) => void }) => Promise<AuctionGearRunResult>;
 type Job = AuctionGearJob & {
   owner: string;
   /** Private idempotency identity; never include these fields in view(). */
@@ -110,6 +112,8 @@ function nextRecency() { return state.__gildraAuctionJobRecency = (state.__gildr
 function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefined {
   if (!work) return;
   if (typeof work !== "object" || !["search", "resume", "assemble"].includes(work.action)) throw new Error("invalid_plan_request");
+  if (work.runMode !== undefined && work.runMode !== "full") throw new Error("invalid_plan_request");
+  const execution = work.runMode ? { runMode: work.runMode } : {};
   if (work.action === "search") {
     if (!work.input || typeof work.input !== "object") throw new Error("invalid_plan_request");
     const { characterSlug, budgetCopper, scenario, objective, locale, selectedSlots } = work.input;
@@ -120,7 +124,7 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
     const custom = work.input as AuctionGearRunInput & { fightLengthSeconds?: number; targets?: number };
     const encounter = parseAuctionGearEncounter(custom);
     const compareScenarios = parseAuctionGearCompareScenarios(work.input.compareScenarios);
-    return { action: "search", input: { characterSlug, budgetCopper, scenario, locale,
+    return { ...execution, action: "search", input: { characterSlug, budgetCopper, scenario, locale,
       ...(work.input.enhancementMode !== undefined ? { enhancementMode } : {}),
       ...(work.input.compareScenarios !== undefined ? { compareScenarios } : {}),
       ...(custom.fightLengthSeconds !== undefined ? { fightLengthSeconds: encounter.fightLengthSeconds } : {}),
@@ -128,14 +132,14 @@ function copyWork(work: AuctionGearWork | undefined): AuctionGearWork | undefine
       ...(selectedSlots !== undefined ? { selectedSlots: parseAuctionGearSlots(selectedSlots) } : {}) } };
   }
   if (typeof work.searchId !== "string" || !work.searchId || work.searchId.length > 100) throw new Error("invalid_plan_request");
-  if (work.action === "resume") return { action: "resume", searchId: work.searchId };
+  if (work.action === "resume") return { ...execution, action: "resume", searchId: work.searchId };
   const selection = work.selection;
   const ids = Array.isArray(selection) ? selection : selection?.excludedOptionIds;
   if (selection !== undefined && (!Array.isArray(ids) || ids.length > 20000 || new Set(ids).size !== ids.length ||
       ids.some(id => typeof id !== "string" || !id || id.length > 180))) throw new Error("invalid_plan_request");
   const variants = !Array.isArray(selection) ? selection?.excludedVariantKeys : undefined;
   if (variants !== undefined && (!Array.isArray(variants) || variants.length > 20000 || new Set(variants).size !== variants.length || variants.some(key => typeof key !== "string" || !key || key.length > 240))) throw new Error("invalid_plan_request");
-  return { action: "assemble", searchId: work.searchId, selection: Array.isArray(selection) ? [...selection]
+  return { ...execution, action: "assemble", searchId: work.searchId, selection: Array.isArray(selection) ? [...selection]
     : selection ? { excludedOptionIds: [...selection.excludedOptionIds], ...(variants ? { excludedVariantKeys: [...variants] } : {}) } : undefined };
 }
 export function auctionGearFormIntent(input: AuctionGearRunInput | undefined, scope: AuctionGearJob["scope"]): AuctionGearFormIntent | null {
@@ -152,7 +156,7 @@ function metadata(j: Job): JobMetadata {
     expires: j.expires, createdAt: j.createdAt, continuation: j.continuation, recency: j.recency,
     clientRequestId: j.clientRequestId, requestFingerprint: j.requestFingerprint,
     cancelledBeforeAcceptance: j.cancelledBeforeAcceptance, hasWork: Boolean(j.work ?? j.recoverable), mode: j.mode,
-    resultMeasurementContract: j.resultMeasurementContract };
+    resultMeasurementContract: j.resultMeasurementContract, runMode: j.runMode };
 }
 function hydrate(j: Job) {
   if (!j.lazy) return true;
@@ -164,6 +168,7 @@ function hydrate(j: Job) {
   }
   try { j.work = copyWork(data.work); }
   catch { removeAuctionState("job", j.id); jobs.delete(j.id); notifyJobWaiters(j); return false; }
+  if (j.work?.runMode !== j.runMode) { removeAuctionState("job", j.id); jobs.delete(j.id); notifyJobWaiters(j); return false; }
   j.recoverable = Boolean(j.work);
   const legacyResult = data.resultMeasurementContract !== auctionMeasurementContract;
   j.result = legacyResult ? null : data.result; j.progress = data.progress; j.lazy = false;
@@ -248,6 +253,7 @@ function publicData(j: Job, includeRevision = true): AuctionGearJob {
     ...(j.scope ? { scope: { ...j.scope } } : {}),
     ...(j.searchId ? { searchId: j.searchId } : {}),
     ...(j.mode ? { mode: j.mode } : {}),
+    ...(j.runMode ? { runMode: j.runMode } : {}),
   };
 }
 function cleanup() {
@@ -272,6 +278,8 @@ function cleanup() {
     if (jobs.get(queue[index])?.status !== "queued") queue.splice(index, 1);
   }
 }
+const fullJobLifetimeMs = 6 * 60 * 60_000;
+const activeExpiry = (job: Job) => job.runMode === "full" ? job.createdAt + fullJobLifetimeMs : Date.now() + 30 * 60_000;
 async function drain() {
   if (state.__gildraAuctionRunning) return;
   state.__gildraAuctionRunning = true;
@@ -281,25 +289,34 @@ async function drain() {
       if (!j || j.status !== "queued") continue;
       j.status = "running";
       const timing = diagnostics.get(j);
+      let nextTask: AuctionGearTask | undefined;
+      let requeued = false;
       const taskStarted = performance.now();
       timing?.metrics.duration("queue", taskStarted - timing.queued);
       try {
         persist(j);
         publishedJobChange(j);
-        const signal = AbortSignal.any([j.controller.signal, AbortSignal.timeout(10 * 60_000)]);
+        const remaining = j.runMode === "full" ? j.createdAt + fullJobLifetimeMs - Date.now() : 10 * 60_000;
+        if (remaining <= 0) throw new Error("plan_timeout");
+        const signal = AbortSignal.any([j.controller.signal, AbortSignal.timeout(Math.min(10 * 60_000, remaining))]);
         const result = await j.task!(signal, p => {
           if (!signal.aborted && jobs.get(j.id) === j && j.status === "running") {
             j.progress = p;
-            j.expires = Date.now() + 30 * 60_000;
+            j.expires = activeExpiry(j);
             if (Date.now() - (lastPersisted.get(j) ?? 0) >= 30_000) persist(j);
           }
-        }, { publishResult: result => {
+        }, { continueWith: task => {
+          signal.throwIfAborted();
+          if (j.runMode !== "full" || nextTask) throw new Error("invalid_plan_request");
+          nextTask = task;
+        }, publishResult: result => {
           signal.throwIfAborted();
           if (jobs.get(j.id) !== j || j.status !== "running") return;
           if (j.searchId && j.searchId !== result.searchId) throw new Error("invalid_plan_request");
-          const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract };
+          const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract, mode: j.mode };
           j.searchId = result.searchId; j.result = result;
-          j.resultMeasurementContract = auctionMeasurementContract; j.expires = Date.now() + 30 * 60_000;
+          if (j.runMode === "full") j.mode = result.kind;
+          j.resultMeasurementContract = auctionMeasurementContract; j.expires = activeExpiry(j);
           try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
           publishedJobChange(j);
         }, searchCreated: searchId => {
@@ -307,13 +324,22 @@ async function drain() {
         } });
         signal.throwIfAborted();
         if (jobs.get(j.id) !== j || j.status !== "running") continue;
-        const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract };
+        const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract, mode: j.mode };
         j.result = result;
+        if (j.runMode === "full") j.mode = result.kind;
         j.resultMeasurementContract = auctionMeasurementContract;
         j.searchId = result.searchId;
-        j.status = "completed";
-        j.expires = Date.now() + 30 * 60_000;
+        j.status = nextTask ? "queued" : "completed";
+        j.expires = nextTask ? j.createdAt + fullJobLifetimeMs : Date.now() + 30 * 60_000;
         try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
+        if (nextTask) {
+          // Preserve the owned job and reservation while giving the next
+          // character a turn at the same bounded simulation capacity.
+          j.task = nextTask;
+          queue.push(j.id);
+          if (timing) timing.queued = performance.now();
+          requeued = true;
+        }
         publishedJobChange(j);
       } catch (error) {
         // Expired work must never recreate its deleted durable job record.
@@ -328,11 +354,13 @@ async function drain() {
         catch { j.error = "auction_storage_unavailable"; notifyJobWaiters(j, new Error("auction_storage_unavailable")); }
       } finally {
         timing?.metrics.duration("task", performance.now() - taskStarted);
-        if (timing) logAuctionGearDiagnostics(timing.metrics.snapshot(), "job");
-        delete j.task;
-        settle(j);
-        j.expires = Date.now() + 30 * 60_000;
+        if (!requeued) {
+          if (timing) logAuctionGearDiagnostics(timing.metrics.snapshot(), "job");
+          delete j.task;
+          settle(j);
+        }
       }
+      if (requeued) await new Promise<void>(resolve => setImmediate(resolve));
     }
   } finally {
     state.__gildraAuctionRunning = false;
@@ -369,10 +397,11 @@ export function enqueueAuctionGearJob(owner: string, task: AuctionGearTask, opti
     owner,
     task,
     ...(options.work ? { work: copyWork(options.work) } : {}),
+    ...(options.work?.runMode ? { runMode: options.work.runMode } : {}),
     ...(options.work ? { mode: options.work.action === "assemble" ? "assembly" as const : "search" as const } : {}),
     ...(options.onSettled ? { onSettled: options.onSettled } : {}),
     controller: new AbortController(),
-    expires: Date.now() + 30 * 60_000,
+    expires: Date.now() + (options.work?.runMode === "full" ? fullJobLifetimeMs : 30 * 60_000),
     createdAt: Date.now(), continuation: Boolean(options.continuation),
     recency: nextRecency(),
     status: "queued",
@@ -468,6 +497,17 @@ export function getOwnerActiveAuctionGearJob(owner: string): AuctionGearActiveRe
   const job = [...jobs.values()].find(job => job.owner === owner && (job.status === "queued" || job.status === "running"));
   if (!job || !hydrate(job)) return { activeJob: null, formIntent: null };
   return { activeJob: view(job), formIntent: job.work?.action === "search" ? auctionGearFormIntent(job.work.input, job.scope) : null };
+}
+/** Scoped discovery works without browser storage. Only full-job intent is
+ * exposed; it never starts work or refreshes old prices. */
+export function getLatestAuctionGearFullJob(owner: string, scope: NonNullable<AuctionGearJob["scope"]>) {
+  cleanup();
+  const candidates = [...jobs.values()].filter(job => job.owner === owner && job.runMode === "full" &&
+    job.scope?.characterSlug === scope.characterSlug && job.scope.locale === scope.locale)
+    .sort((a, b) => b.recency - a.recency);
+  for (const job of candidates) if (hydrate(job)) return { job: view(job),
+    formIntent: job.work?.action === "search" ? auctionGearFormIntent(job.work.input, job.scope) : null };
+  return { job: null, formIntent: null };
 }
 export function cancelAuctionGearJob(owner: string, id: string) {
   cleanup();

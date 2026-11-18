@@ -103,3 +103,58 @@ test("build modes: explicit enhanced submit replaces a legacy search that never 
   await expect(quick.result.locator("[data-auction-shopping-list]")).toContainText("Synthetic ruby"); await idle(quick);
   expect(quick.requests[0]).toMatchObject({ action: "search", enhancementMode: "enhanced" });
 });
+
+for (const completedWhileAway of [true, false]) {
+  test(`new tab restores full calculation ${completedWhileAway ? "completed" : "running"} while away`, async ({ quick, page, context }, info) => {
+    const language = info.project.metadata.language;
+    let submitted = 0;
+    let finished = false;
+    let lookups = 0;
+    let polls = 0;
+    const job = () => ({
+      id: "synthetic-persistent-full-job", status: finished ? "completed" : "running", mode: finished ? "assembly" : "search",
+      runMode: "full", scope: { characterSlug: "eu--synthetic-reliability--synthetic", locale: language },
+      searchId: quick.makeSearch().searchId, result: finished ? quick.makeAssembly() : null, progress: null, error: null,
+    });
+    await page.unroute("**/api/wow/auction-gear-plans**");
+    await context.route("**/api/wow/auction-gear-plans**", async route => {
+      const request = route.request(), query = new URL(request.url()).searchParams;
+      if (request.method() === "POST") {
+        submitted++;
+        quick.input = request.postDataJSON();
+        expect(quick.input).toMatchObject({ action: "search", runMode: "full", enhancementMode: "equipment" });
+        return route.fulfill({ status: 202, json: job() });
+      }
+      expect(request.method()).toBe("GET");
+      if (query.has("latest")) {
+        lookups++;
+        return route.fulfill({ json: { job: submitted ? job() : null, specializationSlug: "fury-warrior", excludedOptionIds: [], excludedVariantKeys: [],
+          formIntent: submitted ? { ...quick.input, budgetCopper: quick.makeSearch().budgetCopper } : null } });
+      }
+      if (query.has("id") || query.has("clientRequestId")) {
+        polls++;
+        return route.fulfill({ json: job() });
+      }
+      if (query.has("searchId")) return route.fulfill({ json: { kind: "recovery", search: quick.makeSearch(),
+        assembly: finished ? quick.makeAssembly() : null, activeJob: finished ? null : job(), excludedOptionIds: [] } });
+      return route.fulfill({ json: { activeJob: null } });
+    });
+    quick.completeSearch = true;
+    quick.completeAssemblyAt = 0;
+    await quick.open();
+    await choice(quick, "full").click();
+    await quick.find.click();
+    await expect.poll(() => submitted).toBe(1);
+    const url = page.url();
+    await page.close();
+    finished = completedWhileAway;
+    const priorLookups = lookups, priorPolls = polls;
+    const returning = await context.newPage();
+    await returning.goto(url);
+    await expect.poll(() => lookups).toBeGreaterThan(priorLookups);
+    if (!completedWhileAway) await expect.poll(() => polls).toBeGreaterThan(priorPolls);
+    finished = true;
+    await expect(returning.locator("[data-auction-assembly-result]")).toHaveAttribute("data-exhaustive", "true", { timeout: 10_000 });
+    expect(submitted).toBe(1);
+  });
+}

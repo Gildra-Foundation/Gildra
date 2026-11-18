@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { auctionGearAssemblyGoalComplete } from "@/lib/wow/auctionGearEnhancementMode";
 import type { AuctionGearAssemblyResult } from "@/lib/wow/auctionGearTypes";
-import { auctionGearResults, recommendedAuctionGearResult, type AuctionGearResult as Result } from "@/lib/wow/auctionGearResult";
+import { auctionGearResults, recommendedAuctionGearResult, auctionGearLoadoutComparison, type AuctionGearResult as Result } from "@/lib/wow/auctionGearResult";
 import { AuctionShoppingList } from "./AuctionShoppingList";
 import { auctionFormats, formatGold, formatGoldRate } from "./auctionFormat";
 import styles from "./auctionGearOptimizer.module.css";
@@ -19,13 +19,14 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
   const money = (value: number | null) => value === null ? t("Неизвестна", "Unknown") : formatGold(value, locale);
   const candidates = useMemo(() => auctionGearResults(assembly), [assembly]);
   const recommended = recommendedAuctionGearResult(candidates, assembly.objective ?? "dps");
+  const comparison = useMemo(() => auctionGearLoadoutComparison(candidates), [candidates]);
   const [selection, setSelection] = useState<{ searchId: string; key: string } | null>(null);
   const selected = (selection?.searchId === assembly.searchId && candidates.find(result => result.key === selection.key)) || recommended;
   const summary = useRef<HTMLHeadingElement>(null);
   if (!selected) return null;
   const label = (result: Result) => result.kind === "items" ? t("Только вещи", "Equipment only") : result.fullyEnhanced
     ? t("С камнями и чарами", "With gems and enchants") : t("Неполный комплект улучшений", "Partial enhancements");
-  const alternatives = candidates.filter(candidate => candidate.key !== selected.key);
+  const alternatives = candidates.filter(candidate => candidate.key !== selected.key && candidate.key !== comparison?.value.key && candidate.key !== comparison?.dps.key);
   const choose = (candidate: Result) => {
     setSelection({ searchId: assembly.searchId, key: candidate.key });
     summary.current?.focus();
@@ -47,6 +48,21 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
         <dd>{signed.format(selected.comparison.deltaPercent)}%<span className={styles.metricNote}>{signed.format(selected.comparison.deltaDps)} ± {numeric.format(selected.comparison.uncertainty.marginDps)} DPS</span></dd></div>
     </dl>
     <p className={styles.note} data-auction-price-context>{t("Цены на момент расчёта", "Prices at calculation time")}</p>
+    {comparison ? <div className={styles.loadoutComparison} role="group" aria-label={t("Сравнение проверенных комплектов", "Compare checked loadouts")} data-auction-loadout-comparison>
+      <p className={styles.note}>{t("Среди проверенных вариантов", "Among the options checked")}</p>
+      {(["value", "dps"] as const).map(objective => {
+        const candidate = comparison[objective];
+        const title = objective === "value" ? t("Выгодный комплект", "Best value loadout") : t("Максимум подтверждённого DPS", "Highest confirmed DPS");
+        return <div key={objective} className={styles.comparisonOption} data-auction-comparison-option={objective} data-selected={selected.key === candidate.key || undefined}>
+          <h5 className={styles.comparisonTitle}>{title}</h5>
+          <dl className={styles.comparisonMetrics}>
+            <div><dt>{t("Стоимость", "Cost")}</dt><dd>{money(candidate.totalCopper)}</dd></div>
+            <div><dt>{t("Прирост DPS", "DPS gain")}</dt><dd>{signed.format(candidate.comparison.deltaPercent)}%<span className={styles.metricNote}>{signed.format(candidate.comparison.deltaDps)} ± {numeric.format(candidate.comparison.uncertainty.marginDps)} DPS</span></dd></div>
+          </dl>
+          <button type="button" className={tools.quiet} aria-pressed={selected.key === candidate.key} aria-label={`${t("Выбрать", "Select")}: ${title}`} data-auction-select-comparison={objective} onClick={() => choose(candidate)}>{selected.key === candidate.key ? t("Выбран", "Selected") : t("Выбрать комплект", "Select loadout")}</button>
+        </div>;
+      })}
+    </div> : null}
     {!complete ? <p className={styles.note}>{selected.significant
       ? t("Рекомендация по проверенным вариантам. Можно продолжить поиск.", "Recommended from the options checked. You can keep searching.")
       : t("Проверена часть вариантов. Можно продолжить поиск.", "Only some options have been checked. You can keep searching.")}</p> : null}

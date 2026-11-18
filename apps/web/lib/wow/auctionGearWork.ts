@@ -2,6 +2,7 @@ import "server-only";
 import { getAuctionGearJob, getAuctionGearPendingWork, resumeAuctionGearJob, type AuctionGearTask } from "./auctionGearJobs";
 import { getAuctionGearSearch, reserveAuctionGearSearch } from "./auctionGearSearchStore";
 import { assembleAuctionGearSearch, continueAuctionGearSearch, selectedAuctionGearAssemblyOptions, startAuctionGearSearch, verifyAuctionGearSearch } from "./auctionGearRunner";
+import { fullAuctionGearTask } from "./auctionGearBackground";
 
 /** Reattach interrupted work only after the route authenticates its owner. */
 export function resumeOwnedAuctionGearWork(owner: string, id: string, token: string) {
@@ -36,6 +37,6 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
     task = async () => { throw error; };
   }
   try {
-    if (!resumeAuctionGearJob(owner, id, task, { onSettled: release })) release?.();
+    if (!resumeAuctionGearJob(owner, id, work.runMode === "full" ? fullAuctionGearTask(task, owner, token, work.action === "assemble" ? work.selection : undefined) : task, { onSettled: release })) release?.();
   } catch (error) { release?.(); throw error; }
 }

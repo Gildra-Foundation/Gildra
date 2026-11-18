@@ -129,6 +129,7 @@ export class QuickHarness {
       await route.fulfill({ json: job ? this.view(job) : { id: "synthetic-cancelled", status: "cancelled" } }); return;
     }
     this.lookups.push(query.toString());
+    if (query.has("latest")) { await route.fulfill({ json: { job: null, formIntent: null } }); return; }
     if (query.has("active")) { await route.fulfill({ json: { activeJob: null, formIntent: null } }); return; }
     if (query.has("searchId")) {
       if (this.failContextRecovery) { await route.fulfill({ status: 503, json: { error: "auction_storage_unavailable" } }); return; }
@@ -145,7 +146,7 @@ export const test = base.extend<{ quick: QuickHarness }>({ quick: async ({ page 
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/api/wow/auction-gear-plans**", route => app.route(route));
   try { await provide(app); } finally {
-    await page.unrouteAll({ behavior: "ignoreErrors" });
+    if (!page.isClosed()) await page.unrouteAll({ behavior: "ignoreErrors" });
     await info.attach("synthetic-quick-full-http", { contentType: "application/json",
       body: JSON.stringify({ requests: app.requests, deletes: app.deletes, lookups: app.lookups, errors }) });
   }

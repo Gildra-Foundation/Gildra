@@ -64,6 +64,15 @@
 .decisionMetrics dd { margin: var(--atlas-space-1) 0 0; color: var(--atlas-text-strong); font: var(--atlas-weight-display) var(--atlas-text-title) / var(--atlas-leading-snug) var(--atlas-font-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .decisionMetrics .gain dd { color: var(--atlas-positive); }
 .metricNote { display: block; color: var(--atlas-text-muted); font: var(--atlas-text-small) / var(--atlas-leading-body) var(--atlas-font-ui); }
+.loadoutComparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--atlas-space-3); min-width: 0; }
+.loadoutComparison > p { grid-column: 1 / -1; }
+.comparisonOption { display: grid; align-content: start; gap: var(--atlas-space-2); min-width: 0; padding: var(--atlas-space-3); border: 1px solid var(--atlas-line); }
+.comparisonOption[data-selected] { border-color: var(--atlas-accent); }
+.comparisonTitle { margin: 0; color: var(--atlas-text-strong); font: 600 var(--atlas-text-small) / var(--atlas-leading-snug) var(--atlas-font-ui); overflow-wrap: anywhere; }
+.comparisonMetrics { display: grid; gap: var(--atlas-space-2); margin: 0; }
+.comparisonMetrics dt { color: var(--atlas-text-muted); font-size: var(--atlas-text-meta); }
+.comparisonMetrics dd { margin: 0; color: var(--atlas-text-strong); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.comparisonOption > button { justify-self: start; max-width: 100%; white-space: normal; text-align: start; }
 .lots, .replacements { margin: 0; padding: 0; list-style: none; }
 .lot { display: grid; gap: var(--atlas-space-2); padding-block: var(--atlas-space-3); border-bottom: 1px solid var(--atlas-line-soft); }
 .lot > button { justify-self: start; }

@@ -36,7 +36,7 @@ const significant = (comparison: AuctionGearComparison) => comparison.deltaDps >
 
 export function auctionGearResults(assembly: AuctionGearAssemblyResult): AuctionGearResult[] {
   const results: AuctionGearResult[] = [];
-  for (const plan of [assembly.bestConfirmed, assembly]) {
+  for (const plan of [assembly.bestConfirmed, assembly.bestValueConfirmed, assembly.bestDpsConfirmed, assembly]) {
     if (!plan) continue;
     const key = `items:${signature(plan.purchases)}`;
     if (results.some(result => result.key === key)) continue;
@@ -55,7 +55,7 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
     const totalCopper = configuration.status === "priced" && configuration.totalCopper !== null && gemsCopper !== null && enchantsCopper !== null &&
       configuration.totalCopper === configuration.itemsCopper + gemsCopper + enchantsCopper && configuration.totalCopper <= assembly.budgetCopper
       ? configuration.totalCopper : null;
-    const original = [assembly.bestConfirmed, assembly].find(plan => plan && signature(plan.purchases) === signature(enhancement.purchases));
+    const original = [assembly.bestConfirmed, assembly.bestValueConfirmed, assembly.bestDpsConfirmed, assembly].find(plan => plan && signature(plan.purchases) === signature(enhancement.purchases));
     results.push({ key: `enhanced:${configuration.key}`, kind: "enhanced", purchases: enhancement.purchases,
       comparison: enhancement.comparison, itemsCopper: configuration.itemsCopper, gemsCopper, enchantsCopper,
       totalCopper, remainingCopper: totalCopper === null ? null : assembly.budgetCopper - totalCopper,
@@ -81,4 +81,19 @@ export function recommendedAuctionGearResult(results: AuctionGearResult[], objec
     }
     return b.comparison.deltaDps - a.comparison.deltaDps || Number(b.fullyEnhanced) - Number(a.fullyEnhanced) || a.itemsCopper - b.itemsCopper;
   })[0];
+}
+
+/** Two independently ranked, priced, significant choices from this calculation.
+ * Unknown totals and extra physical copies never create a second buying promise. */
+export function auctionGearLoadoutComparison(results: readonly AuctionGearResult[]): { value: AuctionGearResult; dps: AuctionGearResult } | null {
+  const priced = results.filter(result => result.significant && result.totalCopper !== null &&
+    Number.isSafeInteger(result.totalCopper) && result.totalCopper >= 0 &&
+    Number.isFinite(result.comparison.deltaDps) && result.comparison.deltaDps > 0);
+  const value = recommendedAuctionGearResult(priced, "value"), dps = recommendedAuctionGearResult(priced, "dps");
+  if (!value || !dps || value.key === dps.key || dps.comparison.deltaDps <= value.comparison.deltaDps) return null;
+  const loadout = (result: AuctionGearResult) => JSON.stringify([
+    result.purchases.map(item => [item.slotType, item.itemId, item.variantKey]).sort(),
+    result.enhancement?.configuration.slots.map(slot => [slot.slotType, slot.variantKey, slot.enchantId, slot.gemIds]).sort() ?? [],
+  ]);
+  return loadout(value) === loadout(dps) ? null : { value, dps };
 }
