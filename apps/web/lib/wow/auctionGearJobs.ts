@@ -74,6 +74,9 @@ type JobMetadata = Omit<StoredJob, "result" | "progress" | "work"> & { hasWork: 
 const revisions = state.__gildraAuctionJobRevisions ??= new WeakMap<Job, string>();
 const waiters = state.__gildraAuctionJobWaiters ??= new Map<Job, Set<(error?: Error) => void>>();
 const notifications = state.__gildraAuctionJobNotifications ??= new WeakMap<Job, ReturnType<typeof setImmediate>>();
+// A migrated manual assembly needs one search/bootstrap turn before its normal
+// assembly turn. This is runtime-only permission granted on owned recovery.
+const recoveryContinuations = new WeakSet<Job>();
 const jobWaitMs = 5_000, jobWaitLimit = 8, totalWaitLimit = 256;
 function jobRevision(j: Job) {
   let revision = revisions.get(j);
@@ -307,7 +310,7 @@ async function drain() {
           }
         }, { continueWith: task => {
           signal.throwIfAborted();
-          if (j.runMode !== "full" || nextTask) throw new Error("invalid_plan_request");
+          if (j.runMode !== "full" && !recoveryContinuations.delete(j) || nextTask) throw new Error("invalid_plan_request");
           nextTask = task;
         }, publishResult: result => {
           signal.throwIfAborted();
@@ -330,7 +333,7 @@ async function drain() {
         j.resultMeasurementContract = auctionMeasurementContract;
         j.searchId = result.searchId;
         j.status = nextTask ? "queued" : "completed";
-        j.expires = nextTask ? j.createdAt + fullJobLifetimeMs : Date.now() + 30 * 60_000;
+        j.expires = nextTask ? activeExpiry(j) : Date.now() + 30 * 60_000;
         try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
         if (nextTask) {
           // Preserve the owned job and reservation while giving the next
@@ -560,11 +563,18 @@ export function getAuctionGearPendingWork(owner: string, id: string) {
 }
 
 export function resumeAuctionGearJob(owner: string, id: string, task: AuctionGearTask,
-  options: { onSettled?: () => void } = {}) {
+  options: { onSettled?: () => void; clearResult?: boolean } = {}) {
   cleanup();
   const j = jobs.get(id);
   if (!j || j.owner !== owner || j.status !== "queued" || j.task || !hydrate(j) || !j.work) return false;
   if (queue.length >= 8) throw new Error("plan_queue_full");
+  if (options.clearResult) {
+    const previous = { result: j.result, progress: j.progress };
+    j.result = null; j.progress = null;
+    try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
+    publishedJobChange(j);
+    if (j.work.action === "assemble") recoveryContinuations.add(j);
+  }
   j.task = task; j.onSettled = options.onSettled;
   diagnostics.set(j, { queued: performance.now(), metrics: createAuctionGearDiagnostics() });
   queue.push(j.id);

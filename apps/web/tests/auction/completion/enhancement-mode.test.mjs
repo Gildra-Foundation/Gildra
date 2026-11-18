@@ -50,7 +50,7 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
   const input = { ...(mode !== undefined ? { enhancementMode: mode } : {}), compareScenarios: scenarios ? [{}] : [] };
   const option = { id: 'fixture-option', variantKey: 'fixture-variant', candidate: { variants: [{ key: 'fixture-variant',
     resolution: { ...(verified ? { enhancements: { status: 'verified' } } : {}) } }] } };
-  const entry = { id: 'fixture-search', context: { input, options: [option], currentBySlot: new Map(), armory: { equipment: {} }, character: {} },
+  const entry = { id: 'fixture-search', context: { input, options: [option], simulate: async () => assert.fail('unexpected direct simulation'), currentBySlot: new Map(), armory: { equipment: {} }, character: {} },
     latestSearchResult: { kind: 'search', items: [] }, retainedBaseline: {}, allowedKey: 'same' };
   const calls = { equipment: [], enhancement: [], exact: 0, scenarios: 0, saved: 0 }, publications = [];
   const controller = new AbortController(); if (aborted) controller.abort();

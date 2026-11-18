@@ -19,6 +19,10 @@ export type AuctionGearSearchEntry = {
   busy: boolean;
   nextSearchPhase?: "discovery" | "simulation";
   nextAssemblyPhase?: "discovery" | "simulation";
+  /** A migrated proof must bootstrap a new search before any saved assembly. */
+  metadataRebuildRequired?: boolean;
+  /** Refresh raw market exactly once; later bootstrap turns keep their cursor. */
+  metadataMarketRefreshRequired?: boolean;
   enhancementState?: AuctionEnhancementStageState;
   exhaustiveEnhancementState?: AuctionGearExhaustiveEnhancementState;
   /** Persisted logical order preserves recency when wall-clock timestamps tie. */
@@ -94,6 +98,8 @@ function load(id: string) {
     const restored = reset ? {
       id: data.id, knownOptionIds: data.knownOptionIds, knownVariantKeys: data.knownVariantKeys,
       excludedOptionIds: data.excludedOptionIds, excludedVariantKeys: data.excludedVariantKeys,
+      metadataRebuildRequired: true,
+      metadataMarketRefreshRequired: true,
     } : data;
     const entry = { ...restored, ...record.metadata, expiresAt: record.expiresAt, context, busy: false };
     entries.set(id, entry);
@@ -105,6 +111,8 @@ function storedEntry(entry: AuctionGearSearchEntry): StoredEntry {
     id: entry.id, owner: entry.owner, context: snapshotAuctionGearContext(entry.context),
     createdAt: entry.createdAt, touchedAt: entry.touchedAt, expiresAt: entry.expiresAt, busy: false, recency: entry.recency,
     nextSearchPhase: entry.nextSearchPhase, nextAssemblyPhase: entry.nextAssemblyPhase,
+    metadataRebuildRequired: entry.metadataRebuildRequired,
+    metadataMarketRefreshRequired: entry.metadataMarketRefreshRequired,
     enhancementState: entry.enhancementState,
     exhaustiveEnhancementState: entry.exhaustiveEnhancementState,
     knownOptionIds: entry.knownOptionIds, searchCheckpoint: entry.searchCheckpoint,

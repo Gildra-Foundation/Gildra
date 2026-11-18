@@ -109,6 +109,7 @@ if (mode === "cancel-seed") {
   saved.market.offers.push(offer);
   saved.discovery = createAuctionGearDiscovery(saved.market, saved.input.budgetCopper);
   delete saved.discovery.socketMetadataRevision;
+  saved.market.offers = []; // Production retains normalized lots only inside discovery.offers.
   saved.discovery.rejectedReferences.add(offer.itemId);
   saved.discovery.itemCursor = saved.discovery.itemIds.length;
   const entry = store.createAuctionGearSearch(owner, saved);

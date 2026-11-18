@@ -11,6 +11,7 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
   const job = getAuctionGearJob(owner, id)!;
   let release: (() => void) | undefined;
   let task: AuctionGearTask;
+  let clearResult = false;
   try {
     const searchId = work.action === "search" ? job.searchId : work.searchId;
     if (!searchId && work.action === "search") {
@@ -20,14 +21,20 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
       const entry = getAuctionGearSearch(owner, searchId ?? "");
       if (!entry || entry.context.input.characterSlug !== job.scope?.characterSlug || entry.context.input.locale !== job.scope.locale) throw new Error("search_expired");
       const selection = work.action === "assemble" ? work.selection : undefined;
+      clearResult = entry.metadataRebuildRequired === true;
       if (work.action === "assemble") selectedAuctionGearAssemblyOptions(entry, selection);
       release = reserveAuctionGearSearch(entry);
       task = async (signal, progress, hooks) => {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, token, signal);
-          return work.action === "assemble" ? await assembleAuctionGearSearch(entry, selection, signal, progress, token, hooks.publishResult)
+          const result = work.action === "assemble" ? await assembleAuctionGearSearch(entry, selection, signal, progress, token, hooks.publishResult)
             : await continueAuctionGearSearch(entry, signal, progress, token, hooks.publishResult);
+          // A parked manual assembly owns its original selected/excluded IDs.
+          // Yield the bootstrap turn fairly, then finish that same assembly.
+          // Full jobs already requeue through fullAuctionGearTask.
+          if (clearResult && work.action === "assemble" && work.runMode !== "full" && result.kind === "search") hooks.continueWith(task);
+          return result;
         } finally { entry.busy = false; }
       };
     }
@@ -37,6 +44,6 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
     task = async () => { throw error; };
   }
   try {
-    if (!resumeAuctionGearJob(owner, id, work.runMode === "full" ? fullAuctionGearTask(task, owner, token, work.action === "assemble" ? work.selection : undefined) : task, { onSettled: release })) release?.();
+    if (!resumeAuctionGearJob(owner, id, work.runMode === "full" ? fullAuctionGearTask(task, owner, token, work.action === "assemble" ? work.selection : undefined) : task, { onSettled: release, clearResult })) release?.();
   } catch (error) { release?.(); throw error; }
 }

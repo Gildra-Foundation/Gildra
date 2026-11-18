@@ -301,6 +301,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   entry.latestSearchResult = publicAuctionResult(context, { ...result, discoveryComplete, dataComplete,
     searchComplete: result.pendingItems === 0 && discoveryComplete, searchLimited: result.searchLimited || context.searchLimited,
     items: result.items.map(item => ({ ...item, currentItem: context.currentBySlot.get(item.slotType) })) });
+  if (entry.metadataRebuildRequired && checkpoint.baseline) entry.metadataRebuildRequired = false;
   scheduleAuctionGearSearchSave(entry);
   return entry.latestSearchResult;
 }
@@ -435,7 +436,13 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   }
   context.marketChange = changes;
   if (context.discovery) {
-    refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true });
+    if (entry.metadataMarketRefreshRequired) {
+      // The persisted market omits raw offers. Rebuild from this authoritative
+      // response even when its snapshot ID equals the saved one. Keep the object
+      // identity used by the simulator's engine callback.
+      Object.assign(context.discovery, createAuctionGearDiscovery(market, context.input.budgetCopper));
+      entry.metadataMarketRefreshRequired = false;
+    } else refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true });
     synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery));
   } else {
     // Trusted historical contexts have no discovery state. Refresh only their
@@ -504,8 +511,11 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
   // Include discovery in the time budget; an in-flight upstream request may
   // finish after it, but no further native comparison starts after yielding.
   const context = entry.context, started = Date.now(), shouldYield = () => Date.now() - started >= 10_000;
-  if (!entry.latestSearchResult || !(entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)) throw new Error("search_not_ready");
   selectedAuctionGearAssemblyOptions(entry, selection);
+  if (!entry.latestSearchResult || !(entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)) {
+    if (entry.metadataRebuildRequired) return continueAuctionGearSearch(entry, signal, progress, token, publishResult);
+    throw new Error("search_not_ready");
+  }
   const diagnostics = metricsFor(context.armory ?? context);
   const finishStep = diagnostics.beginStep("assembly");
   entry.busy = true;
@@ -804,8 +814,9 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   // A pre-v3 complete cursor can include former socket decoding rejections.
   // Rediscover the saved market rather than trust either accepted or rejected variants.
   const discovery = data.discovery.socketMetadataRevision === 3 ? data.discovery
-    : createAuctionGearDiscovery(data.market, data.input.budgetCopper);
-  const coverage = discovery === data.discovery ? data.coverage : auctionGearDiscoveryCoverage(discovery);
+    : createAuctionGearDiscovery({ ...data.market, offers: [...data.discovery.offers.values()].flat() }, data.input.budgetCopper);
+  const coverage = discovery === data.discovery ? data.coverage
+    : { ...auctionGearDiscoveryCoverage(discovery), discoveryComplete: false, dataComplete: false };
   const discoveryContext = (slotType: string) => ({
     classId: data.character.playableClass.id, specId: data.specId, characterLevel: data.character.level,
     raceId: data.character.playableRace.id, faction: data.character.faction.type, slotType,
