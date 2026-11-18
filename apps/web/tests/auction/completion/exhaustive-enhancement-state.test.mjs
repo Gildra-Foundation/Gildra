@@ -102,7 +102,7 @@ test('restored completion still validates the exact cursor proof',async()=>{
 test('only the two distinct close leaders are rechecked, with restart after the first measurement',async()=>{
   const h=fixture(), calls=[];
   h.input.options.push({...h.input.options[2],id:'same-effect-dearer',auctionId:4,costCopper:200});
-  h.input.recheck=async(options,configuration)=>{
+  h.input.recheck=async(options)=>{
     calls.push(options[0].id); h.slice++;
     return {...simulation(options[0].id==='option-3'?1008.03:1008),iterations:3000,dpsError:0.2};
   };

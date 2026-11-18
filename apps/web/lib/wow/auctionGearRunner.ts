@@ -26,6 +26,7 @@ import { auctionGearProfileFingerprint } from "./auctionGearFingerprint";
 import { getCharacterAuctionMarket } from "./auctionMarketProvider";
 import { assertFreshMarket } from "./auctionMarket";
 import { auctionGearVariantSelectionKey } from "./auctionGearExclusions";
+import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
@@ -821,8 +822,15 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
     throw new Error("invalid_auction_checkpoint");
   // A pre-v3 complete cursor can include former socket decoding rejections.
   // Rediscover the saved market rather than trust either accepted or rejected variants.
-  const discovery = data.discovery.socketMetadataRevision === 3 ? data.discovery
+  const savedDiscovery = data.discovery;
+  // Reopen a prior rejection only if this character actually has a control
+  // for a retained offer. Unrelated long-running traversals keep their work.
+  const retryEquippedReference = !savedDiscovery.equippedReferenceRevision && savedDiscovery.rejectedReferences?.size &&
+    equippedAuctionReferences(data.armory.equipment).some(reference =>
+      savedDiscovery.rejectedReferences.has(reference.offer.itemId) && savedDiscovery.offers.has(auctionVariantKey(reference.offer)));
+  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference ? savedDiscovery
     : createAuctionGearDiscovery({ ...data.market, offers: [...data.discovery.offers.values()].flat() }, data.input.budgetCopper);
+  discovery.equippedReferenceRevision = 1;
   const coverage = discovery === data.discovery ? data.coverage
     : { ...auctionGearDiscoveryCoverage(discovery), discoveryComplete: false, dataComplete: false };
   const discoveryContext = (slotType: string) => ({

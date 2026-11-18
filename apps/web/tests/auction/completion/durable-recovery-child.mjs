@@ -103,12 +103,17 @@ if (mode === "cancel-seed") {
   assert.equal(recovered.status, 200); assert.equal(recovered.body.id, input.id); assert.equal(recovered.body.status, "cancelled");
   assert.equal(tasks, 0, "A previously acknowledged cancellation must not execute after restart");
   output = { status: recovered.body.status, tasks };
-} else if (mode === "legacy-socket-seed") {
+} else if (mode === "legacy-socket-seed" || mode === "legacy-equipped-reference-seed") {
   const saved = context();
   const offer = { itemId: 501, auctionId: 9999, buyoutCopper: 1, quantity: 1, contextId: 0, bonusIds: [], modifiers: [] };
   saved.market.offers.push(offer);
   saved.discovery = createAuctionGearDiscovery(saved.market, saved.input.budgetCopper);
-  delete saved.discovery.socketMetadataRevision;
+  if (mode === "legacy-socket-seed") delete saved.discovery.socketMetadataRevision;
+  else {
+    delete saved.discovery.equippedReferenceRevision;
+    saved.armory.equipment = {equipped_items:[{item:{id:501},context:0,bonus_list:[],level:{value:30},
+      requirements:{level:{value:1}},stats:[{type:{type:"STAMINA"},value:10}]}]};
+  }
   saved.market.offers = []; // Production retains normalized lots only inside discovery.offers.
   saved.discovery.rejectedReferences.add(offer.itemId);
   saved.discovery.itemCursor = saved.discovery.itemIds.length;

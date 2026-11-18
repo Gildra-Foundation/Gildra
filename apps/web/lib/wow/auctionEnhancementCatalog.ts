@@ -64,6 +64,19 @@ function record(sparse: Row, enchantRow: Row, kind: "gem" | "enchant", chain: Ro
 }
 
 function buildRecords(): EnhancementRecord[] {
+  function groupByField(name: string, field: string) {
+    const groups = new Map<number, Row[]>();
+    for (const row of table(name)) {
+      const id = num(row.payload, field);
+      const group = groups.get(id);
+      if (group) group.push(row);
+      else groups.set(id, [row]);
+    }
+    return groups;
+  }
+  const linksByItem = groupByField("ItemXItemEffect", "ItemID");
+  const effectsBySpell = groupByField("SpellEffect", "SpellID");
+  const requirementsBySpell = groupByField("SpellEquippedItems", "SpellID");
   const result: EnhancementRecord[] = [];
   for (const sparse of table("ItemSparse")) {
     const g = gem.get(num(sparse.payload,"Gem_properties"));
@@ -72,13 +85,13 @@ function buildRecords(): EnhancementRecord[] {
       if (e) result.push(record(sparse,e,"gem",[g],num(g.payload,"Type")));
       continue;
     }
-    for (const link of table("ItemXItemEffect").filter(r=>num(r.payload,"ItemID")===sparse.id)) {
+    for (const link of linksByItem.get(sparse.id) ?? []) {
       const effect = effects.get(num(link.payload,"ItemEffectID"));
       if (!effect || num(effect.payload,"TriggerType")!==0 || num(effect.payload,"PlayerConditionID")!==0 || num(effect.payload,"ChrSpecializationID")!==0) continue;
       const spellId = num(effect.payload,"SpellID");
-      const spellEffects = table("SpellEffect").filter(r=>num(r.payload,"SpellID")===spellId && num(r.payload,"DifficultyID")===0);
+      const spellEffects = (effectsBySpell.get(spellId) ?? []).filter(r=>num(r.payload,"DifficultyID")===0);
       const applying = spellEffects.filter(r=>[53,301].includes(num(r.payload,"Effect")));
-      const equipped = table("SpellEquippedItems").filter(r=>num(r.payload,"SpellID")===spellId);
+      const equipped = requirementsBySpell.get(spellId) ?? [];
       if (applying.length!==1 || equipped.length!==1) continue;
       const ranked = num(applying[0].payload,"Effect")===301;
       let enchantId=num(applying[0].payload,"EffectMiscValue_0");

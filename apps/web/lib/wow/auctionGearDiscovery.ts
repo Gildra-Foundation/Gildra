@@ -20,6 +20,7 @@ type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
 export type AuctionGearDiscovery = {
   /** Older persisted coverage may already have excluded gear with prismatic sockets. */
   socketMetadataRevision?: 3;
+  equippedReferenceRevision?: 1;
   marketId: string;
   discoveredSnapshotId?: string;
   budgetCopper: number;
@@ -71,7 +72,7 @@ const optionCache = new WeakMap<AuctionGearDiscovery, {
 }>();
 
 export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper: number): AuctionGearDiscovery {
-  const state: AuctionGearDiscovery = { socketMetadataRevision: 3, marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
+  const state: AuctionGearDiscovery = { socketMetadataRevision: 3, equippedReferenceRevision: 1, marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
     queuedItems: new Set(), records: [], catalogHints: new Map(), entities: new Map(), variantKeys: [], variantCursor: 0, queuedVariants: new Set(),
     candidates: new Map(), rejectedVariants: new Set(), references: new Map(),
     verifiedReferences: new Set(), rejectedReferences: new Set(), referenceRetryAt: new Map(), referenceRejectedVariants: new Map(),
