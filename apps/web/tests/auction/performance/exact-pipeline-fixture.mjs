@@ -53,7 +53,7 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, befo
   const discoveryBindings=await fixture.discovery.advanceAuctionGearDiscovery.constructor('return globalThis')();
   const discovery=evaluate(await source('auctionGearDiscovery'),{...discoveryBindings,
     resolveAuctionVariants:async input=>{const result=await discoveryBindings.resolveAuctionVariants(input);
-      for(const row of result.variants.values()) Object.assign(row,{metadataVersion:2,enhancements:{status:'verified',socketColors:[14,0,0],socketCount:1,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}});
+      for(const row of result.variants.values()) Object.assign(row,{metadataVersion:3,enhancements:{status:'verified',socketColors:[14,0,0],socketCount:1,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}});
       return result;}});
   let runner, entry;
   const store=evaluate(sources.auctionGearSearchStore,{...globals,...disk,getActiveAuctionGearJob:jobs.getActiveAuctionGearJob,
@@ -72,7 +72,8 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, befo
     getBattleNetSimulationSnapshot:async()=>{counts.armory++;return fixture.state.armory;},
     getCharacterAuctionMarket:async(...args)=>{counts.market++;if(counts.ownership)assert.equal(args[2].refresh,true);return runnerBindings.getCharacterAuctionMarket(...args);},
     fetch:async(url,options)=>{
-      if(new URL(url).pathname==='/healthz')return runnerBindings.fetch(url,options);
+      // This persistence benchmark measures one durable slice per native call.
+      if(new URL(url).pathname==='/healthz')return Response.json({status:'ok'}, {headers:{'x-gildra-simulation-concurrency':'1'}});
       counts.native++;const request=JSON.parse(options.body);requests.push(request);
       assert.equal(request.actionListMode,'native');
       if(nativeMs)await new Promise(resolve=>setTimeout(resolve,nativeMs));options.signal?.throwIfAborted();

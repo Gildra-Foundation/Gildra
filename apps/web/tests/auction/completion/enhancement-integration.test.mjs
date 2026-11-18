@@ -170,7 +170,7 @@ function stageFixture({verified=true,slotType='TRINKET_1',inventoryType=12,itemS
     compatibility:{specId:72,method:'specialization',itemClassId:4,itemSubclassId},
     variants:[{key:variantKey,itemLevel:150,bonusIds:[101],contextId:13,
       resolution:{engine:'SimulationCraft 18428cd synthetic-transport',stats:{},requiredLevel:1,
-        metadataVersion:verified?2:1,...(verified?{enhancements:native}:{})}}]};
+        metadataVersion:verified?3:1,...(verified?{enhancements:native}:{})}}]};
   const option={id:'synthetic-trinket-option',auctionId:980010,quantity:1,costCopper:100,candidate:trinket,variantKey};
   const state={checkpoints:{}},calls=[],quotes=[];let quotePrice=10;
   const equipment={equipped_items:[{slot:{type:slotType},item:{id:970010}}]};
@@ -301,8 +301,9 @@ test('actual stage prices a supported leg enchant and gem together and sends the
   assert(h.calls.some(changes=>changes[0].slot==='legs'&&changes[0].enchantId===best.slots[0].enchantId&&changes[0].gemIds[0]===paidGem.itemId));
 });
 
-for (const fixtureCase of ['winning bare set','two unverified bare leaders must not hide third verified loser','socket loser beats an existing bare winner only with a gem','late two-slot synergy beats both initial bare leaders']) test(`actual Runner continues priced finalists and scenario comparisons (${fixtureCase})`,async()=>{
+for (const fixtureCase of ['winning bare set','two unverified bare leaders must not hide third verified loser','socket loser beats an existing bare winner only with a gem','late two-slot synergy beats both initial bare leaders','socket loser with live capacity two then downgrade']) test(`actual Runner continues priced finalists and scenario comparisons (${fixtureCase})`,async()=>{
   const bareLoserFallback=fixtureCase.startsWith('two unverified'), socketLoser=fixtureCase.startsWith('socket loser'), synergy=fixtureCase.startsWith('late two-slot');
+  const capacityDowngrade=fixtureCase.includes('live capacity');
   const h=stageFixture({slotType:'LEGS',inventoryType:7,itemSubclassId:4});
   if(bareLoserFallback){
     const verified=h.input.finalists[0].options[0];
@@ -333,7 +334,7 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
     const pricedGem=auctionEnhancementRecords.find(row=>row.kind==='gem'&&row.consumableItemId>0).consumableItemId;
     h.input.quote=async(_region,ids)=>({prices:Object.fromEntries(ids.filter(id=>id===pricedGem).map(id=>[String(id),{ladder:[[10,100]]}])),sourceUpdatedAt:timestamp,fetchedAt:new Date().toISOString()});
   }
-  const requests=[],publications=[],stageOutputs=[];let flushes=0;
+  const requests=[],publications=[],stageOutputs=[],stageCapacities=[],stagePeaks=[];let flushes=0,healthProbes=0,inFlight=0,stagePeak=0;
   const runnerSource=await readFile(new URL('../../../lib/wow/auctionGearRunner.ts',import.meta.url),'utf8');
   const code=stripTypeScriptTypes(runnerSource,{mode:'strip'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
   const nativeEngine=h.input.engine;
@@ -341,7 +342,12 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
     ...planner,createAuctionGearDiagnostics,logAuctionGearDiagnostics,parseAuctionGearEncounter,parseAuctionGearCompareScenarios,
     evaluateAuctionGearScenarios,customizedAuctionGearOptions,prepareGearLoadout,nativeGearSimulationMeasurement,
     auctionSelectionEffectKey,auctionEnhancementScenarioFinalists,
-    advanceAuctionGearExhaustiveEnhancements:async input=>{const result=await advanceAuctionGearExhaustiveEnhancements({...input,quote:h.input.quote});stageOutputs.push(result.result);return result;},
+    advanceAuctionGearExhaustiveEnhancements:async input=>{
+      stageCapacities.push(input.simulationConcurrency);stagePeak=0;const before=requests.length;
+      const result=await advanceAuctionGearExhaustiveEnhancements({...input,quote:h.input.quote});
+      assert(requests.length-before<=8,'Exact enhancement continuation retains its total eight-native budget');
+      stagePeaks.push(stagePeak);stageOutputs.push(result.result);return result;
+    },
     auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey,
     auctionGearMechanicalCache:createAuctionGearMechanicalCache(),assertFreshMarket,
     Map,Set,Object,Number,JSON,Date,AbortSignal,process,
@@ -351,7 +357,13 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
       const result=await evaluateAuctionEnhancementStage({...input,quote:h.input.quote});stageOutputs.push(result);return result;
     },
     fetch:async(url,options)=>{
+      if(capacityDowngrade && new URL(url).pathname.endsWith('/healthz')) {
+        const capacity=healthProbes++===0?'2':'1';
+        return new Response(null,{headers:{'x-gildra-simulation-concurrency':capacity}});
+      }
       assert(new URL(url).pathname.endsWith('/v1/wow/rotation/simulations'));
+      if(capacityDowngrade){stagePeak=Math.max(stagePeak,++inFlight);await new Promise(resolve=>setImmediate(resolve));inFlight--;}
+
       const request=JSON.parse(options.body);requests.push(request);
       assert.equal(request.actionListMode,'native');
       const changes=request.gearChanges??[];
@@ -398,6 +410,12 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
   assert.equal(result.enhancementOptimization.status,'ready');assert.equal(result.enhancementOptimization.complete,true);
   assert.equal(result.scenarioComparisonsComplete,true);assert.equal(firstPending.enhancementOptimization.complete,false,'Previously published result is immutable');
   assert(stageOutputs.length>1);assert(flushes>stageOutputs.length);
+  if(capacityDowngrade) {
+    assert(healthProbes>1,'Each continuation must probe live worker capacity');
+    assert.equal(stageCapacities[0],2);assert(stageCapacities.slice(1).every(capacity=>capacity===1));
+    assert.equal(stagePeaks[0],2,'Actual Runner starts independent enhancement native requests together');
+    assert(stagePeaks.slice(1).every(peak=>peak<=1),'Downgrade applies on the next continuation without restore');
+  }
   const recommendation=socketLoser ? result.enhancementOptimization.recommendations.find(row=>row.optionIds.includes('synthetic-trinket-option')) : result.enhancementOptimization.recommendations[0];
   if(socketLoser) {
     assert.deepEqual(Array.from(result.purchases,row=>row.itemId),[960011],'Bare assembly still selects the genuinely better unmodified item');

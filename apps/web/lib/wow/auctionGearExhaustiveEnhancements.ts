@@ -118,7 +118,10 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (staleQuotes(state.stage.quotes)) throw new Error("market_stale");
   }
   let lastUpdate: ReturnType<typeof finish> | undefined;
-  for (let turns = 0; turns < 8; turns++) {
+  // Reserve each slice's maximum native budget, including empty/cache slices.
+  // Confirmed capacity two must not double the per-turn work allowance.
+  const sliceBudget = input.simulationConcurrency === 2 ? 2 : 1;
+  for (let turns = 0; turns < 8; turns += sliceBudget) {
     // Entering another slice may change the cursor or prices without producing
     // an update. Only reuse a snapshot when no later slice has touched state.
     lastUpdate = undefined;

@@ -129,7 +129,7 @@ function stageFixture(socketCount=1,budgetCopper=500) {
   const engine=`SimulationCraft ${auctionEnhancementCatalogInfo.simcRevision.slice(0,7)} synthetic-exact-stage`;
   const candidate={entityId:'synthetic-stage-item',itemId:960010,name:'Synthetic trinket',slotType:'TRINKET_1',itemLevel:150,inventoryType:12,itemClassId:4,itemSubclassId:0,
     constraints:{uniqueEquipped:false,crafted:false,allowableClassMask:'1',requiredLevel:1},compatibility:{specId:72,method:'specialization',itemClassId:4,itemSubclassId:0},eligible:true,rejectionReasons:[],
-    variants:[{key:'synthetic-verified',itemLevel:150,bonusIds:[101],contextId:13,resolution:{engine,stats:{},requiredLevel:1,metadataVersion:2,
+    variants:[{key:'synthetic-verified',itemLevel:150,bonusIds:[101],contextId:13,resolution:{engine,stats:{},requiredLevel:1,metadataVersion:3,
       enhancements:{status:'verified',socketColors:[14,socketCount===2?14:0,0],socketCount,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}}}]};
   const equipment={equipped_items:[{slot:{type:'TRINKET_1'},item:{id:970010}}]};
   const loadout=[{slotType:'TRINKET_1',itemId:970010,inventoryType:12,itemSubclassId:0}];
@@ -176,4 +176,32 @@ test('actual exact stage sends a positional empty socket and prices an affordabl
   assert.equal(best.configuration.consumables[0].quantity,1);
   assert(h.calls.some(changes=>changes[0].gemIds?.[0]===0&&changes[0].gemIds[1]>0));
   assert(h.calls.some(changes=>!changes[0].gemIds?.length),'Bare replacement is evaluated with no purchased gem');
+});
+
+test('actual exact stage retains a successful sibling through failure and JSON-restored retry',async()=>{
+  const h=stageFixture();h.input.simulationConcurrency=2;
+  const original=h.input.simulate,attempts=[];let failSecond=true;
+  h.input.simulate=async(options,signal)=>{
+    attempts.push(JSON.stringify(options.map(option=>option.customization)));
+    if(failSecond&&attempts.length===2){await new Promise(resolve=>setImmediate(resolve));throw Error('stage_second_failed');}
+    return original(options,signal);
+  };
+  await assert.rejects(evaluateAuctionEnhancementStage(h.input),/stage_second_failed/);
+  const pending=Object.values(h.input.state.checkpoints)[0];
+  assert.equal(pending.exactNextConfiguration,'0');assert.equal(Object.keys(pending.cache).length,1);
+  const completed=attempts[0],failed=attempts[1];failSecond=false;h.input.state=JSON.parse(JSON.stringify(h.input.state));
+  const result=await finishStage(h);assert.equal(result.complete,true);assert.equal(result.status,'ready');
+  assert.equal(attempts.filter(key=>key===completed).length,1);
+  assert.equal(attempts.filter(key=>key===failed).length,2);
+  assert(result.recommendations.every(row=>row.configuration.totalCopper<=h.input.budgetCopper));
+});
+
+test('stage rejects ambiguous legacy nonzero sockets and retains valid v2 all-zero compatibility',async()=>{
+  const ambiguous=stageFixture();ambiguous.input.finalists[0].options[0].candidate.variants[0].resolution.metadataVersion=2;
+  const unavailable=await evaluateAuctionEnhancementStage(ambiguous.input);
+  assert.equal(unavailable.status,'unavailable');assert(unavailable.reasons.includes('variant_enhancements_unknown'));assert.equal(ambiguous.calls.length,0);
+  const zero=stageFixture(),resolution=zero.input.finalists[0].options[0].candidate.variants[0].resolution;
+  resolution.metadataVersion=2;resolution.enhancements.socketColors=[0,0,0];resolution.enhancements.socketCount=0;
+  const ready=await evaluateAuctionEnhancementStage(zero.input);
+  assert.equal(ready.status,'ready');assert.equal(zero.calls.length,1);assert.equal(ready.recommendations[0].configuration.consumables.length,0);
 });

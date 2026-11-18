@@ -39,6 +39,10 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   objective?: "dps" | "value"; baselineDps?: number; baseline?: GearPlanSimulation;
   simulate: (configuration: PricedEnhancementConfiguration, signal: AbortSignal) => Promise<GearPlanSimulation>;
   shouldYield?: () => boolean; onCacheHit?: () => void; checkpoint?: EnhancementCheckpoint;
+  /** Runtime worker capacity; never part of the durable traversal identity. */
+  simulationConcurrency?: 1 | 2;
+  /** Preserve validated completed siblings on an interrupted pair; cursor stays put. */
+  onCheckpoint?: (checkpoint: EnhancementCheckpoint) => void;
   limits?: { configurations?: number; simulations?: number; finalists?: number }; now?: number };
 export type EnhancementOptimizerResult = { checkpoint: EnhancementCheckpoint; complete: boolean; searchLimited: boolean; catalogComplete: boolean;
   visited: number; simulations: number; reasons: string[];
@@ -89,6 +93,7 @@ function validateEnhancement(e: Enhancement, kind: Enhancement["kind"], retained
 export async function optimizeAuctionGearEnhancements(input: EnhancementOptimizerInput): Promise<EnhancementOptimizerResult> {
   const { catalog, character, signal } = input;
   const exact = input.exhaustive === true;
+  const parallel = exact && input.simulationConcurrency === 2;
   signal.throwIfAborted();
   const baseline = input.baseline ? measurement(input.baseline) : undefined;
   const baselineDps = baseline?.dps ?? input.baselineDps;
@@ -98,6 +103,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       !Number.isSafeInteger(input.budgetCopper) || input.budgetCopper < 0 || !input.simulationIdentity || !catalog.version ||
       (input.objective !== undefined && !["dps", "value"].includes(input.objective)) ||
       (input.exhaustive !== undefined && typeof input.exhaustive !== "boolean") ||
+      (input.simulationConcurrency !== undefined && input.simulationConcurrency !== 1 && input.simulationConcurrency !== 2) ||
       (input.objective === "value" && (!Number.isFinite(baselineDps) || baselineDps! <= 0)) ||
       input.slots.length > 20) throw new Error("invalid_enhancement_input");
   const slots = [...input.slots].sort((a,b) => a.slotType.localeCompare(b.slotType));
@@ -199,22 +205,12 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const countStep = () => { checkpoint.traversalSteps=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.traversalSteps!+1);visited++; };
   if (exact && position() > total) throw new Error("invalid_enhancement_checkpoint");
   const hasSeed = () => !exact && checkpoint.nextSeed! < (checkpoint.seedSelections?.length ?? 0);
-  while ((hasSeed() || position() < total) && visited < bounds.configurations && simulations < bounds.simulations &&
-    (exact || checkpoint.totalSimulations < 12 && checkpoint.traversalSteps < 4096)) {
-    if(exact && visited && visited%32===0) await new Promise<void>(resolve=>setImmediate(resolve));
-    signal.throwIfAborted();
-    if (input.shouldYield?.()) break;
-    const fromSeed = hasSeed();
-    let cursor = position();
-    const indices = fromSeed ? checkpoint.seedSelections![checkpoint.nextSeed!] : axes.map(axis => {
-      const index = Number(cursor % BigInt(axis.length)); cursor /= BigInt(axis.length); return index;
-    });
+  // Main traversal and lookahead use exactly the same compatibility, ladder
+  // pricing and positional configuration construction. Lookahead has no cursor
+  // or ranking effects and cannot certify a configuration out of order.
+  const prepare = (indices: number[], configurationReasons: Set<string>):
+    { valid: false; pruneAxis: number } | { valid: true; config: PricedEnhancementConfiguration } => {
     const selected = axes.map((axis,index)=>axis[indices[index]]);
-    const advance = () => {
-      if (fromSeed) checkpoint.nextSeed!++; else moveTo(position()+1n);
-      countStep();
-    };
-    if (!exact && !Number.isSafeInteger(checkpoint.nextConfiguration + 1)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
     const categories = new Map<string,{count:number;limit:number}>();
     const identities = new Map<string,{count:number;unique:boolean}>();
     let valid = true, pruneAxis = 0;
@@ -229,7 +225,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
         identity.count++; identity.unique ||= e.uniqueEquipped === true; identities.set(key,identity);
         if (identity.unique && identity.count > 1) valid = false;
       }
-      if (e?.profession && (character.professions?.[String(e.profession.id)] ?? -1) < e.profession.rank) { valid = false; reasons.add("profession_unverified_or_insufficient"); }
+      if (e?.profession && (character.professions?.[String(e.profession.id)] ?? -1) < e.profession.rank) { valid = false; configurationReasons.add("profession_unverified_or_insufficient"); }
       if (e?.category) {
         const previous = categories.get(e.category.id) ?? {count:0,limit:e.category.limit};
         previous.count++; previous.limit = Math.min(previous.limit,e.category.limit); categories.set(e.category.id,previous);
@@ -240,20 +236,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       for (const [itemId, quantity] of partialQuantities) {
         const price = input.prices.prices[itemId];
         const quote = price ? exactCommodityQuote(price.ladder,quantity).totalCopper : null;
-        if (quote === null) { reasons.add("price_unknown_or_insufficient_quantity"); valid = false; break; }
+        if (quote === null) { configurationReasons.add("price_unknown_or_insufficient_quantity"); valid = false; break; }
         partialCost += quote;
         if (!Number.isSafeInteger(partialCost)) throw new Error("invalid_budget");
       }
-      if (partialCost > input.budgetCopper) { valid = false; reasons.add("over_budget"); }
+      if (partialCost > input.budgetCopper) { valid = false; configurationReasons.add("over_budget"); }
       if (!valid) { pruneAxis = axis; break; }
     }
-    if (!valid) {
-      if (fromSeed) { advance(); continue; }
-      const stride = strides[pruneAxis];
-      const next = (position() / stride + 1n) * stride;
-      if (!exact && next > BigInt(Number.MAX_SAFE_INTEGER)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
-      moveTo(next);countStep();continue;
-    }
+    if (!valid) return { valid: false, pruneAxis };
     const configurationSlots = slots.map(slot=>({slotType:slot.slotType,variantKey:slot.variantKey,enchantId:0,gemIds:slot.sockets.map(()=>0)}));
     const quantities = new Map<number,number>();
     const kinds = new Map<number, Enhancement["kind"]>();
@@ -278,6 +268,46 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     const status = !marketVerified ? "market_unverified" : !known ? "price_unknown" : totalCopper! > input.budgetCopper ? "over_budget" : "priced";
     const config: PricedEnhancementConfiguration = {key:hash({identity:input.simulationIdentity,catalog:catalog.version,slots:configurationSlots,metadata:slots.map(s=>s.metadataKey)}),
       slots:configurationSlots,consumables,itemsCopper:input.itemsCopper,totalCopper,fullyEnhanced,status,sourceUpdatedAt:input.prices.sourceUpdatedAt};
+    return { valid: true, config };
+  };
+  const indicesAt = (at: bigint) => axes.map(axis => {
+    const index = Number(at % BigInt(axis.length)); at /= BigInt(axis.length); return index;
+  });
+  const saveCheckpoint = () => {
+    checkpoint.confirmed=confirmed;checkpoint.bestValueConfirmed=bestValueConfirmed;checkpoint.bestDpsConfirmed=bestDpsConfirmed;
+    if(exact)checkpoint.bestMeasuredDps=bestMeasuredDps;
+    checkpoint.finalists=finalists;checkpoint.reasons=[...reasons];
+    if(exact) {
+      const pinned=new Set([...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps]
+        .flatMap(row=>row?[row.configuration.key]:[]));
+      const recent=Object.keys(checkpoint.cache).filter(key=>!pinned.has(key)).slice(-Math.max(0,256-pinned.size));
+      checkpoint.cache=Object.fromEntries([...recent,...pinned].map(key=>[key,checkpoint.cache[key]]));
+    }
+  };
+  let prefetchedThrough: bigint | undefined;
+  const measuredHere = new Set<string>();
+  while ((hasSeed() || position() < total) && visited < bounds.configurations && (simulations < bounds.simulations || prefetchedThrough !== undefined && position() <= prefetchedThrough) &&
+    (exact || checkpoint.totalSimulations < 12 && checkpoint.traversalSteps < 4096)) {
+    if(exact && visited && visited%32===0) await new Promise<void>(resolve=>setImmediate(resolve));
+    signal.throwIfAborted();
+    if (input.shouldYield?.()) break;
+    const fromSeed = hasSeed();
+    const indices = fromSeed ? checkpoint.seedSelections![checkpoint.nextSeed!] : indicesAt(position());
+    const advance = () => {
+      if (fromSeed) checkpoint.nextSeed!++; else moveTo(position()+1n);
+      countStep();
+    };
+    if (!exact && !Number.isSafeInteger(checkpoint.nextConfiguration + 1)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
+    const prepared = prepare(indices,reasons);
+    if (!prepared.valid) {
+      if (fromSeed) { advance(); continue; }
+      const stride = strides[prepared.pruneAxis];
+      const next = (position() / stride + 1n) * stride;
+      if (!exact && next > BigInt(Number.MAX_SAFE_INTEGER)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
+      moveTo(next);countStep();continue;
+    }
+    const { config } = prepared;
+    const { fullyEnhanced, status } = config;
     configurations.push(config);
     if (!fullyEnhanced) reasons.add("bare_configuration");
     if (status === "price_unknown") reasons.add("price_unknown_or_insufficient_quantity");
@@ -285,10 +315,65 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (status === "priced" && (fullyEnhanced || exact)) {
       let simulation = checkpoint.cache[config.key];
       if (!simulation) {
-        simulation = measurement(await input.simulate(structuredClone(config),signal));
-        signal.throwIfAborted(); checkpoint.cache[config.key] = simulation; simulations++;
-        checkpoint.totalSimulations=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.totalSimulations+1);
-      } else { simulation = measurement(simulation); input.onCacheHit?.(); }
+        const batch = [config];
+        let nextPosition: bigint | undefined;
+        if (parallel && simulations + 1 < bounds.simulations) {
+          let next = position()+1n;
+          // Bound both repeated preparation work and the later real traversal.
+          for (let scanned=1; next<total && visited+scanned<bounds.configurations; scanned++) {
+            if(scanned%32===0)await new Promise<void>(resolve=>setImmediate(resolve));
+            signal.throwIfAborted();
+            if(input.shouldYield?.())break;
+            const candidate=prepare(indicesAt(next),new Set());
+            if(!candidate.valid) {
+              const stride=strides[candidate.pruneAxis];next=(next/stride+1n)*stride;continue;
+            }
+            if(candidate.config.status==='priced' && candidate.config.key!==config.key && !checkpoint.cache[candidate.config.key]) {
+              batch.push(candidate.config);nextPosition=next;break;
+            }
+            next++;
+          }
+        }
+        if(parallel && input.shouldYield?.())break;
+        if(batch.length===1) {
+          simulation = measurement(await input.simulate(structuredClone(config),signal));
+          signal.throwIfAborted(); checkpoint.cache[config.key] = simulation; simulations++;
+          checkpoint.totalSimulations=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.totalSimulations+1);
+        } else {
+          const controller=new AbortController(), pairSignal=AbortSignal.any([signal,controller.signal]);
+          let failure: unknown;
+          const results=await Promise.allSettled(batch.map(async candidate=>{
+            try {
+              pairSignal.throwIfAborted();
+              const measured=await input.simulate(structuredClone(candidate),pairSignal);
+              pairSignal.throwIfAborted();
+              const result=measurement(measured);
+              if((baseline && result.engine!==baseline.engine) || finalists.some(row=>row.simulation.engine!==result.engine))
+                throw new Error('simulation_version_changed');
+              return result;
+            }catch(error){failure??=error;controller.abort(error);throw error;}
+          }));
+          const engines=new Set(results.flatMap(result=>result.status==='fulfilled'?[result.value.engine]:[]));
+          if(engines.size>1) {
+            // Without a retained engine/baseline neither differing build can be
+            // certified. Keep the cursor and retry against one worker version.
+            saveCheckpoint();input.onCheckpoint?.(structuredClone(checkpoint));
+            signal.throwIfAborted();throw new Error('simulation_version_changed');
+          }
+          for(const [index,result] of results.entries())if(result.status==='fulfilled') {
+            checkpoint.cache[batch[index].key]=result.value;measuredHere.add(batch[index].key);simulations++;
+            checkpoint.totalSimulations=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.totalSimulations+1);
+          }
+          // Drain every sibling before publishing facts or returning control.
+          // Never move the cursor past a failed or aborted native measurement.
+          if(results.some(result=>result.status==='rejected') || signal.aborted) {
+            saveCheckpoint();input.onCheckpoint?.(structuredClone(checkpoint));
+            signal.throwIfAborted();throw failure;
+          }
+          prefetchedThrough=nextPosition;
+          simulation=checkpoint.cache[config.key];measuredHere.delete(config.key);
+        }
+      } else { simulation = measurement(simulation); if(!measuredHere.delete(config.key))input.onCacheHit?.(); }
       try { assertFreshMarket({sourceUpdatedAt:input.prices.sourceUpdatedAt ?? ""}, input.now); }
       catch { config.status = "market_unverified"; marketVerified=false;clearRetained();reasons.add("market_unverified"); if(!exact)advance();break; }
       if (!exact && !checkpoint.seedSelections) {
@@ -337,19 +422,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const exhaustive = !hasSeed() && position() >= total;
   const capped = !exact && !exhaustive && (checkpoint.totalSimulations >= 12 || checkpoint.traversalSteps >= 4096);
   if (capped) reasons.add("configuration_limit");
-  checkpoint.confirmed = confirmed;
-  checkpoint.bestValueConfirmed = bestValueConfirmed;
-  checkpoint.bestDpsConfirmed = bestDpsConfirmed;
-  if(exact)checkpoint.bestMeasuredDps=bestMeasuredDps;
-  checkpoint.finalists = finalists; checkpoint.reasons = [...reasons];
-  if(exact) {
-    // A monotonic exact cursor needs no unbounded history. Keep recent reusable
-    // measurements and every retained leader required to validate a continuation.
-    const pinned=new Set([...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps]
-      .flatMap(row=>row?[row.configuration.key]:[]));
-    const recent=Object.keys(checkpoint.cache).filter(key=>!pinned.has(key)).slice(-Math.max(0,256-pinned.size));
-    checkpoint.cache=Object.fromEntries([...recent,...pinned].map(key=>[key,checkpoint.cache[key]]));
-  }
+  saveCheckpoint();
   return {checkpoint,complete:exhaustive || capped || exact&&!marketVerified,
     searchLimited:!exhaustive || !catalog.complete || exact&&(reasons.has("price_unknown_or_insufficient_quantity")||reasons.has("profession_unverified_or_insufficient")),
     catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists};
