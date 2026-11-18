@@ -51,8 +51,8 @@ const simcSlotByBattleNet: Record<string, string> = {
 };
 
 // Slot-level transport guard, not an enchant compatibility proof. The pinned
-// native data includes Midnight helm and shoulder enchants (inventory masks 2/8).
-const enchantableSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND", "OFF_HAND"]);
+// catalog resolver separately checks the item level, class, subclass and inventory mask.
+const enchantableSlots = new Set(["HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND", "OFF_HAND"]);
 const socketableSlots = new Set(["HEAD", "NECK", "WRIST", "WAIST", "FINGER_1", "FINGER_2"]);
 
 function integerId(value: unknown) {
