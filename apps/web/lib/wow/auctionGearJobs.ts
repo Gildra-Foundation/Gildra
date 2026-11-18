@@ -347,7 +347,7 @@ async function drain() {
         timing?.metrics.failure(j.controller.signal.aborted ? j.controller.signal.reason : error);
         j.status = j.controller.signal.aborted ? "cancelled" : "failed";
         // Only fixed internal identifiers reach clients, never upstream URLs or tokens.
-        const message = error instanceof Error ? error.message : "";
+        const message = error instanceof Error && error.name === "TimeoutError" ? "plan_timeout" : error instanceof Error ? error.message : "";
         j.error = /^[a-z_]{3,80}$/.test(message) ? message : "auction_plan_unavailable";
         j.expires = Date.now() + 30 * 60_000;
         try { persist(j); publishedJobChange(j); }

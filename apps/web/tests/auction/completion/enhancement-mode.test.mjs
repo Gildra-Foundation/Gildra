@@ -52,7 +52,7 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
     resolution: { ...(verified ? { enhancements: { status: 'verified' } } : {}) } }] } };
   const entry = { id: 'fixture-search', context: { input, options: [option], currentBySlot: new Map(), armory: { equipment: {} }, character: {} },
     latestSearchResult: { kind: 'search', items: [] }, retainedBaseline: {}, allowedKey: 'same' };
-  const calls = { equipment: [], enhancement: [], socketProposals: 0, scenarios: 0, saved: 0 }, publications = [];
+  const calls = { equipment: [], enhancement: [], exact: 0, scenarios: 0, saved: 0 }, publications = [];
   const controller = new AbortController(); if (aborted) controller.abort();
   const checkpoint = { best: { optionIds: ['fixture-option'] }, bestConfirmed: null, baseline: { engine: 'fixture', iterations: 750, confidence: 95 }, simulationCache: {} };
   const flush = async () => { calls.saved++; if (failSave && entry.latestAssemblyResult?.enhancementOptimization) throw Error('auction_storage_unavailable'); };
@@ -65,9 +65,15 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
     updateAuctionSearchResult: async () => entry.latestSearchResult,
     scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: flush, flushPendingAuctionGearSearch: flush,
     parseAuctionGearCompareScenarios: () => input.compareScenarios,
-    additionalAuctionSocketFinalists: () => { calls.socketProposals++; return { finalists: [], reasons: [] }; },
     evaluateAuctionEnhancementStage: async request => { calls.enhancement.push(request); return { complete: stageComplete, status: stageComplete ? 'ready' : 'pending', recommendations: [], searchLimited: true }; },
-    auctionEnhancementCatalogInfo: { revision: 'fixture-catalog' },
+    advanceAuctionGearExhaustiveEnhancements: async request => {
+      calls.exact++;
+      const state = request.state ?? { cursor: {}, stage: { checkpoints: {} } };
+      request.onState(state);
+      if (verified) calls.enhancement.push({ ...request, state });
+      return { state, result: { complete: verified ? stageComplete : true, status: verified ? stageComplete ? 'ready' : 'pending' : 'unavailable',
+        recommendations: [], searchLimited: true, reasons: verified ? [] : ['variant_enhancements_unknown'], traversal: 'exhaustive' } };
+    },
     evaluateAuctionGearScenarios: async () => { calls.scenarios++; return []; }, withFreshEnhancementQuotes: value => value,
   });
   return { entry, calls, publications, execute: () => run(entry, undefined, controller.signal, () => {}, 'fixture-token', value => publications.push(value)) };
@@ -76,7 +82,7 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
 test('actual Runner equipment mode skips all enhancement calls/state and keeps native equipment parameters', async () => {
   const h = await runner('equipment', { scenarios: true }); const result = await h.execute();
   assert.equal(h.calls.equipment.length, 1); assert.equal(h.calls.enhancement.length, 0);
-  assert.equal(h.calls.socketProposals, 0);
+  assert.equal(h.calls.exact, 0);
   assert.equal(h.calls.equipment[0].maxNewSimulations, 1); assert.equal(h.calls.equipment[0].baseline, h.entry.retainedBaseline);
   assert.equal(h.entry.enhancementState, undefined); assert.equal(result.enhancementOptimization, undefined);
   assert.equal(h.calls.scenarios, 1); assert.equal(result.scenarioComparisonsComplete, true);
@@ -86,11 +92,11 @@ test('actual Runner enhanced and legacy modes retain the stage, checkpoints, and
   for (const mode of ['enhanced', undefined]) {
     const h = await runner(mode, { stageComplete: false, scenarios: true }); const result = await h.execute();
     assert.equal(h.calls.enhancement.length, 1); assert.equal(h.calls.scenarios, 0);
-    assert.equal(h.calls.socketProposals, mode === 'enhanced' ? 1 : 0);
-    assert.equal(h.calls.enhancement[0].includeObjectiveAlternatives, mode === 'enhanced');
+    assert.equal(h.calls.exact, mode === 'enhanced' ? 1 : 0);
+    if (mode === 'enhanced') assert.equal(h.calls.enhancement[0].options.length, 1);
     assert.equal(h.calls.enhancement[0].baseline.iterations, 750); assert.equal(h.calls.enhancement[0].baseline.confidence, 95);
     assert.equal(result.enhancementOptimization.status, 'pending'); assert.equal(result.scenarioComparisonsComplete, false);
-    assert.equal(h.calls.enhancement[0].state, h.entry.enhancementState);
+    assert.equal(h.calls.enhancement[0].state, mode === 'enhanced' ? h.entry.exhaustiveEnhancementState : h.entry.enhancementState);
     assert.equal(h.publications.at(-1).enhancementOptimization.status, 'pending');
   }
 });
@@ -104,7 +110,7 @@ test('actual Runner explicit enhanced without exact metadata publishes unavailab
       assert.equal(result.enhancementOptimization.searchLimited, true); assert.equal(auctionGearAssemblyGoalComplete(result), true);
       assert.equal(result.enhancementOptimization.reasons[0], 'variant_enhancements_unknown');
       assert(h.calls.saved >= 2, 'Unavailable terminal outcome passes the durable final checkpoint barrier');
-      assert(h.publications.every(value => !value.enhancementOptimization), 'Earlier published equipment snapshots remain immutable');
+      assert.equal(h.publications[0].enhancementOptimization, undefined, 'Earlier published equipment snapshots remain immutable');
     } else assert.equal(result.enhancementOptimization, undefined);
   }
 });

@@ -55,3 +55,16 @@ test('a full job yields to another owner between turns and keeps its handle and 
   assert.equal(getAuctionGearJob(owner, job.id).status, 'completed');
   assert.equal(settled, 1);
 });
+
+test('time-limited full work keeps the last published result provisional', async () => {
+  const result = { kind: 'assembly', searchId: 'timed-search', enhancementOptimization: { complete: false } };
+  const job = enqueueAuctionGearJob('timed-owner', async (_signal, _progress, hooks) => {
+    hooks.publishResult(result);
+    throw new DOMException('The operation timed out', 'TimeoutError');
+  }, { work: { action: 'resume', searchId: result.searchId, runMode: 'full' } });
+  await new Promise(resolve => setImmediate(resolve));
+  const saved = getAuctionGearJob('timed-owner', job.id);
+  assert.equal(saved.status, 'failed');
+  assert.equal(saved.error, 'plan_timeout');
+  assert.deepEqual(saved.result, result);
+});

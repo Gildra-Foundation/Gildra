@@ -22,15 +22,20 @@ export type PricedEnhancementConfiguration = { key: string; slots: { slotType: s
   status: "priced" | "price_unknown" | "market_unverified" | "over_budget";
   sourceUpdatedAt: string | null };
 export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfiguration: number;
+  /** Authoritative decimal cursor for exhaustive traversal; JSON preserves every digit. */
+  exactNextConfiguration?: string;
   cache: Record<string, GearPlanSimulation>; totalSimulations?: number; traversalSteps?: number; seedSelections?: number[][]; nextSeed?: number; reasons?: string[];
   confirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   bestValueConfirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   bestDpsConfirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
+  bestMeasuredDps?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   finalists?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation }[] };
 export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; catalog: EnhancementCatalog; character: EnhancementCharacter;
   prices: { prices: ExactCommodityPrices; sourceUpdatedAt: string | null }; itemsCopper: number; budgetCopper: number;
   simulationIdentity: string; signal: AbortSignal;
   simulationCache?: Record<string, GearPlanSimulation>;
+  /** Enumerate every supported priced configuration, including partial and bare. */
+  exhaustive?: boolean;
   objective?: "dps" | "value"; baselineDps?: number; baseline?: GearPlanSimulation;
   simulate: (configuration: PricedEnhancementConfiguration, signal: AbortSignal) => Promise<GearPlanSimulation>;
   shouldYield?: () => boolean; onCacheHit?: () => void; checkpoint?: EnhancementCheckpoint;
@@ -63,6 +68,8 @@ function validateEnhancement(e: Enhancement, kind: Enhancement["kind"], retained
  */
 export async function optimizeAuctionGearEnhancements(input: EnhancementOptimizerInput): Promise<EnhancementOptimizerResult> {
   const { catalog, character, signal } = input;
+  const exact = input.exhaustive === true;
+  signal.throwIfAborted();
   const baseline = input.baseline ? measurement(input.baseline) : undefined;
   const baselineDps = baseline?.dps ?? input.baselineDps;
   const bounds = { configurations: input.limits?.configurations ?? 128, simulations: input.limits?.simulations ?? 1, finalists: input.limits?.finalists ?? 3 };
@@ -70,6 +77,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       !positive(bounds.finalists) || bounds.finalists > 3 || !Number.isSafeInteger(input.itemsCopper) || input.itemsCopper < 0 ||
       !Number.isSafeInteger(input.budgetCopper) || input.budgetCopper < 0 || !input.simulationIdentity || !catalog.version ||
       (input.objective !== undefined && !["dps", "value"].includes(input.objective)) ||
+      (input.exhaustive !== undefined && typeof input.exhaustive !== "boolean") ||
       (input.objective === "value" && (!Number.isFinite(baselineDps) || baselineDps! <= 0)) ||
       input.slots.length > 20) throw new Error("invalid_enhancement_input");
   const slots = [...input.slots].sort((a,b) => a.slotType.localeCompare(b.slotType));
@@ -83,7 +91,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (!resolved.enchantApplicable && slot.installed?.enchant) throw new Error("invalid_installed_enchant");
     const addAxis = (socket: number | null, options: readonly Enhancement[], installed: Enhancement | null) => {
       const kind = socket === null ? "enchant" : "gem";
-      if (options.length > 100) throw new Error("enhancement_catalog_limit");
+      if (!exact && options.length > 100) throw new Error("enhancement_catalog_limit");
       if (installed) validateEnhancement(installed, kind, true);
       const choices: Choice[] = [{slot:slotIndex,socket,enhancement:installed,retained:Boolean(installed)}];
       if (!slot.owned || slot.allowOwnedChanges) for (const e of [...options].sort((a,b)=>a.key.localeCompare(b.key))) {
@@ -111,28 +119,35 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     }
   }
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
-  const inputKey = hash({ traversal: "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character, prices:input.prices,
+  const inputKey = hash({ traversal: exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    prices:exact ? input.prices.prices : input.prices,
     budget:input.budgetCopper, items:input.itemsCopper, objective:input.objective ?? "dps", baselineDps, baseline, identity:input.simulationIdentity, axes });
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
-  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{}};
+  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(exact?{exactNextConfiguration:"0"}:{})};
   if (!Number.isSafeInteger(checkpoint.nextConfiguration) || checkpoint.nextConfiguration < 0) throw new Error("invalid_enhancement_checkpoint");
+  if (exact && (typeof checkpoint.exactNextConfiguration !== "string" || checkpoint.exactNextConfiguration.length > 512 ||
+    !/^(0|[1-9][0-9]*)$/.test(checkpoint.exactNextConfiguration))) throw new Error("invalid_enhancement_checkpoint");
   checkpoint.totalSimulations ??= 0;
   checkpoint.traversalSteps ??= 0;
   checkpoint.nextSeed ??= 0;
+  if (![checkpoint.totalSimulations,checkpoint.traversalSteps,checkpoint.nextSeed].every(value=>Number.isSafeInteger(value)&&value!>=0)) throw new Error("invalid_enhancement_checkpoint");
   checkpoint.cache = {...input.simulationCache,...checkpoint.cache};
-  for (const retained of [checkpoint.confirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) {
+  const confirmedEntries=[checkpoint.confirmed,checkpoint.bestValueConfirmed,checkpoint.bestDpsConfirmed];
+  for (const retained of [...confirmedEntries, ...(exact?[checkpoint.bestMeasuredDps,...checkpoint.finalists??[]]:[])]) {
     if (!retained) continue;
     const simulation = measurement(retained.simulation), config = retained.configuration;
-    if (!config || config.status !== "priced" || !config.fullyEnhanced || config.itemsCopper !== input.itemsCopper ||
+    if (!config || config.status !== "priced" || (!exact && !config.fullyEnhanced) || config.itemsCopper !== input.itemsCopper ||
       !Number.isSafeInteger(config.totalCopper) || Number(config.totalCopper) < input.itemsCopper || Number(config.totalCopper) > input.budgetCopper ||
       !checkpoint.cache[config.key] || JSON.stringify(measurement(checkpoint.cache[config.key])) !== JSON.stringify(simulation) ||
-      baseline && (simulation.engine !== baseline.engine || !compareGearSimulationResults(baseline, simulation).uncertainty.significant || simulation.dps <= baseline.dps)) {
+      baseline && (simulation.engine !== baseline.engine || confirmedEntries.includes(retained) &&
+        (!compareGearSimulationResults(baseline, simulation).uncertainty.significant || simulation.dps <= baseline.dps))) {
       throw new Error("invalid_enhancement_checkpoint");
     }
   }
   const finalists = [...(checkpoint.finalists ?? [])];
   let confirmed = checkpoint.confirmed;
   let bestValueConfirmed = checkpoint.bestValueConfirmed, bestDpsConfirmed = checkpoint.bestDpsConfirmed;
+  let bestMeasuredDps = checkpoint.bestMeasuredDps;
   const score = (f: typeof finalists[number], objective: "dps" | "value") => {
     if (objective !== "value") return f.simulation.dps;
     const gain = f.simulation.dps - baselineDps!;
@@ -141,30 +156,45 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const rankFor = (objective: "dps" | "value") => (a: typeof finalists[number], b: typeof finalists[number]) => score(b,objective)-score(a,objective) || b.simulation.dps-a.simulation.dps ||
     a.configuration.totalCopper!-b.configuration.totalCopper! || a.configuration.key.localeCompare(b.configuration.key);
   const rank = rankFor(input.objective ?? "dps"), rankValue = rankFor("value"), rankDps = rankFor("dps");
-  for (const reason of checkpoint.reasons ?? []) reasons.add(reason);
+  for (const reason of checkpoint.reasons ?? []) if(!exact || reason!=="market_unverified")reasons.add(reason);
   const configurations: PricedEnhancementConfiguration[] = [];
   let simulations = 0, visited = 0;
   let marketVerified = true;
   try { assertFreshMarket({ sourceUpdatedAt:input.prices.sourceUpdatedAt ?? "" }, input.now); } catch { marketVerified = false; reasons.add("market_unverified"); }
-  if (!marketVerified) { finalists.length = 0; confirmed = bestValueConfirmed = bestDpsConfirmed = undefined; }
+  const clearRetained = () => { finalists.length = 0; confirmed = bestValueConfirmed = bestDpsConfirmed = bestMeasuredDps = undefined;
+    checkpoint.finalists=[];checkpoint.confirmed=checkpoint.bestValueConfirmed=checkpoint.bestDpsConfirmed=checkpoint.bestMeasuredDps=undefined;
+    // Fresh quotes may reuse native measurements, but must rebuild all price-certified leaders.
+    if(exact) checkpoint.exactNextConfiguration="0";
+  };
+  if (!marketVerified) clearRetained();
+  else if (exact) for (const retained of [...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps]) {
+    if(retained) retained.configuration.sourceUpdatedAt=input.prices.sourceUpdatedAt;
+  }
+  if (exact && !marketVerified) return {checkpoint,complete:true,searchLimited:true,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
   if (resolutions.some(r=>!r.verified) || reasons.has("socket_compatibility_unverified")) return {checkpoint,complete:true,searchLimited:true,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
   const strides: bigint[] = [];
   const total = axes.reduce((n,a)=>{strides.push(n);return n*BigInt(a.length);},1n);
-  const hasSeed = () => checkpoint.nextSeed! < (checkpoint.seedSelections?.length ?? 0);
-  while ((hasSeed() || BigInt(checkpoint.nextConfiguration) < total) && visited < bounds.configurations && simulations < bounds.simulations && checkpoint.totalSimulations < 12 && checkpoint.traversalSteps < 4096) {
+  const position = () => BigInt(exact ? checkpoint.exactNextConfiguration! : checkpoint.nextConfiguration);
+  const moveTo = (next: bigint) => { if(exact) checkpoint.exactNextConfiguration=next.toString(); else checkpoint.nextConfiguration=Number(next); };
+  const countStep = () => { checkpoint.traversalSteps=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.traversalSteps!+1);visited++; };
+  if (exact && position() > total) throw new Error("invalid_enhancement_checkpoint");
+  const hasSeed = () => !exact && checkpoint.nextSeed! < (checkpoint.seedSelections?.length ?? 0);
+  while ((hasSeed() || position() < total) && visited < bounds.configurations && simulations < bounds.simulations &&
+    (exact || checkpoint.totalSimulations < 12 && checkpoint.traversalSteps < 4096)) {
+    if(exact && visited && visited%32===0) await new Promise<void>(resolve=>setImmediate(resolve));
     signal.throwIfAborted();
     if (input.shouldYield?.()) break;
     const fromSeed = hasSeed();
-    let cursor = BigInt(checkpoint.nextConfiguration);
+    let cursor = position();
     const indices = fromSeed ? checkpoint.seedSelections![checkpoint.nextSeed!] : axes.map(axis => {
       const index = Number(cursor % BigInt(axis.length)); cursor /= BigInt(axis.length); return index;
     });
     const selected = axes.map((axis,index)=>axis[indices[index]]);
     const advance = () => {
-      if (fromSeed) checkpoint.nextSeed!++; else checkpoint.nextConfiguration++;
-      checkpoint.traversalSteps!++; visited++;
+      if (fromSeed) checkpoint.nextSeed!++; else moveTo(position()+1n);
+      countStep();
     };
-    if (!Number.isSafeInteger(checkpoint.nextConfiguration + 1)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
+    if (!exact && !Number.isSafeInteger(checkpoint.nextConfiguration + 1)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
     const categories = new Map<string,{count:number;limit:number}>();
     const identities = new Map<string,{count:number;unique:boolean}>();
     let valid = true, pruneAxis = 0;
@@ -200,9 +230,9 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (!valid) {
       if (fromSeed) { advance(); continue; }
       const stride = strides[pruneAxis];
-      const next = (BigInt(checkpoint.nextConfiguration) / stride + 1n) * stride;
-      if (next > BigInt(Number.MAX_SAFE_INTEGER)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
-      checkpoint.nextConfiguration = Number(next); checkpoint.traversalSteps++; visited++; continue;
+      const next = (position() / stride + 1n) * stride;
+      if (!exact && next > BigInt(Number.MAX_SAFE_INTEGER)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
+      moveTo(next);countStep();continue;
     }
     const configurationSlots = slots.map(slot=>({slotType:slot.slotType,variantKey:slot.variantKey,enchantId:0,gemIds:slot.sockets.map(()=>0)}));
     const quantities = new Map<number,number>();
@@ -231,16 +261,17 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     configurations.push(config);
     if (!fullyEnhanced) reasons.add("bare_configuration");
     if (status === "price_unknown") reasons.add("price_unknown_or_insufficient_quantity");
-    // Fully filled configurations avoid ambiguous zero/hole transport semantics. Bare configurations are reported, not simulated.
-    if (status === "priced" && fullyEnhanced) {
+    // Exact metadata authorizes positional zeros. Legacy mode retains its full-fill contract.
+    if (status === "priced" && (fullyEnhanced || exact)) {
       let simulation = checkpoint.cache[config.key];
       if (!simulation) {
         simulation = measurement(await input.simulate(structuredClone(config),signal));
-        signal.throwIfAborted(); checkpoint.cache[config.key] = simulation; simulations++; checkpoint.totalSimulations++;
+        signal.throwIfAborted(); checkpoint.cache[config.key] = simulation; simulations++;
+        checkpoint.totalSimulations=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.totalSimulations+1);
       } else { simulation = measurement(simulation); input.onCacheHit?.(); }
       try { assertFreshMarket({sourceUpdatedAt:input.prices.sourceUpdatedAt ?? ""}, input.now); }
-      catch { config.status = "market_unverified"; finalists.length = 0; confirmed = bestValueConfirmed = bestDpsConfirmed = undefined; reasons.add("market_unverified"); advance(); break; }
-      if (!checkpoint.seedSelections) {
+      catch { config.status = "market_unverified"; marketVerified=false;clearRetained();reasons.add("market_unverified"); if(!exact)advance();break; }
+      if (!exact && !checkpoint.seedSelections) {
         // Diversify before the fast radix digit can spend the native budget on one enchant axis.
         // Seeds share ALL normal feasibility checks and the mechanical cache. They are heuristic,
         // not evidence of a globally optimal combination or independent statistical confirmation.
@@ -263,6 +294,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       const existing = finalists.findIndex(f=>f.configuration.key===config.key);
       if (existing < 0) finalists.push({configuration:config,simulation});
       else if (config.totalCopper! < finalists[existing].configuration.totalCopper!) finalists[existing] = {configuration:config,simulation};
+      if (exact && (!bestMeasuredDps || rankDps({configuration:config,simulation},bestMeasuredDps)<0)) bestMeasuredDps={configuration:config,simulation};
       if (baseline) {
         if (baseline.engine !== simulation.engine) throw new Error("simulation_version_changed");
         const comparison = compareGearSimulationResults(baseline, simulation);
@@ -282,12 +314,23 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     }
     advance();
   }
-  const exhaustive = !hasSeed() && BigInt(checkpoint.nextConfiguration) >= total;
-  const capped = !exhaustive && (checkpoint.totalSimulations >= 12 || checkpoint.traversalSteps >= 4096);
+  const exhaustive = !hasSeed() && position() >= total;
+  const capped = !exact && !exhaustive && (checkpoint.totalSimulations >= 12 || checkpoint.traversalSteps >= 4096);
   if (capped) reasons.add("configuration_limit");
   checkpoint.confirmed = confirmed;
   checkpoint.bestValueConfirmed = bestValueConfirmed;
   checkpoint.bestDpsConfirmed = bestDpsConfirmed;
+  if(exact)checkpoint.bestMeasuredDps=bestMeasuredDps;
   checkpoint.finalists = finalists; checkpoint.reasons = [...reasons];
-  return {checkpoint,complete:exhaustive || capped,searchLimited:!exhaustive || !catalog.complete,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists};
+  if(exact) {
+    // A monotonic exact cursor needs no unbounded history. Keep recent reusable
+    // measurements and every retained leader required to validate a continuation.
+    const pinned=new Set([...finalists,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps]
+      .flatMap(row=>row?[row.configuration.key]:[]));
+    const recent=Object.keys(checkpoint.cache).filter(key=>!pinned.has(key)).slice(-Math.max(0,256-pinned.size));
+    checkpoint.cache=Object.fromEntries([...recent,...pinned].map(key=>[key,checkpoint.cache[key]]));
+  }
+  return {checkpoint,complete:exhaustive || capped || exact&&!marketVerified,
+    searchLimited:!exhaustive || !catalog.complete || exact&&(reasons.has("price_unknown_or_insufficient_quantity")||reasons.has("profession_unverified_or_insufficient")),
+    catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists};
 }

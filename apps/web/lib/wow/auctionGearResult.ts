@@ -36,11 +36,12 @@ const significant = (comparison: AuctionGearComparison) => comparison.deltaDps >
 
 export function auctionGearResults(assembly: AuctionGearAssemblyResult): AuctionGearResult[] {
   const results: AuctionGearResult[] = [];
+  const exactEnhancements = assembly.enhancementOptimization?.traversal === "exhaustive";
   for (const plan of [assembly.bestConfirmed, assembly.bestValueConfirmed, assembly.bestDpsConfirmed, assembly]) {
     if (!plan) continue;
     const key = `items:${signature(plan.purchases)}`;
     if (results.some(result => result.key === key)) continue;
-    const equipmentTotal = assembly.enhancementMode === "equipment" && Number.isSafeInteger(plan.spentCopper) &&
+    const equipmentTotal = (assembly.enhancementMode === "equipment" || exactEnhancements) && Number.isSafeInteger(plan.spentCopper) &&
       plan.spentCopper >= 0 && plan.spentCopper <= assembly.budgetCopper ? plan.spentCopper : null;
     results.push({ key, kind: "items", purchases: plan.purchases, comparison: plan.comparison,
       itemsCopper: plan.spentCopper, gemsCopper: equipmentTotal === null ? null : 0, enchantsCopper: equipmentTotal === null ? null : 0,
@@ -56,11 +57,13 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
       configuration.totalCopper === configuration.itemsCopper + gemsCopper + enchantsCopper && configuration.totalCopper <= assembly.budgetCopper
       ? configuration.totalCopper : null;
     const original = [assembly.bestConfirmed, assembly.bestValueConfirmed, assembly.bestDpsConfirmed, assembly].find(plan => plan && signature(plan.purchases) === signature(enhancement.purchases));
+    if (exactEnhancements && original && configuration.consumables.length === 0 &&
+        totalCopper === original.spentCopper && enhancement.comparison.candidateDps === original.comparison.candidateDps) continue;
     results.push({ key: `enhanced:${configuration.key}`, kind: "enhanced", purchases: enhancement.purchases,
       comparison: enhancement.comparison, itemsCopper: configuration.itemsCopper, gemsCopper, enchantsCopper,
       totalCopper, remainingCopper: totalCopper === null ? null : assembly.budgetCopper - totalCopper,
       significant: significant(enhancement.comparison), fullyEnhanced: configuration.fullyEnhanced,
-      removedSlots: original?.removedSlots ?? [], enhancement });
+      removedSlots: enhancement.removedSlots ?? original?.removedSlots ?? [], enhancement });
   }
   return results;
 }

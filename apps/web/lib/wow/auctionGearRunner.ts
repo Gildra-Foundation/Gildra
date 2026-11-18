@@ -14,8 +14,8 @@ export function auctionGearRunDiagnostics(entry: AuctionGearSearchEntry) {
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type AuctionGearEncounter } from "./auctionGearScenarios";
 import { evaluateAuctionGearScenarios } from "./auctionGearScenarioExecution";
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from "./auctionGearEnhancementStage";
-import { additionalAuctionSocketFinalists } from "./auctionGearEnhancementCandidates";
-import { auctionEnhancementCatalogInfo } from "./auctionEnhancementCatalog";
+import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiveEnhancements";
+import { auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 import { customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
@@ -205,6 +205,7 @@ function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
   retainAuctionIncumbents(entry);
   entry.searchCheckpoint = undefined;
   entry.assemblyCheckpoint = undefined;
+  entry.exhaustiveEnhancementState = undefined;
   entry.allowedKey = undefined;
 }
 
@@ -530,6 +531,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       retainAuctionSimulations(entry);
       retainAuctionIncumbents(entry);
       entry.assemblyCheckpoint = undefined;
+      entry.exhaustiveEnhancementState = undefined;
       entry.allowedKey = allowedKey;
       scheduleAuctionGearSearchSave(entry);
     }
@@ -590,20 +592,9 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         }
       }
       const equipmentFinalists = new Map(finalists);
-      let additionalSearchReasons: string[] = [];
-      if (context.input.enhancementMode === "enhanced") {
-        const proposals = additionalAuctionSocketFinalists({
-          finalists: [...finalists].map(([label, selected]) => ({label, options:selected})), options,
-          measured: entry.latestSearchResult.items, equipment: context.armory.equipment,
-          loadout: context.loadout, specId: context.specId, budgetCopper: context.input.budgetCopper, signal,
-          selectedSlots: context.input.selectedSlots,
-        });
-        for (const proposal of proposals.finalists) finalists.set(proposal.label, proposal.options);
-        additionalSearchReasons = proposals.reasons;
-      }
       // A bare item may lose DPS because replacement removes installed upgrades.
       // Keep two measured single-item proposals when no winning bare set exists.
-      if (context.input.enhancementMode !== "equipment" && !finalists.size) {
+      if (context.input.enhancementMode === undefined && !finalists.size) {
         const measured = [...(entry.latestSearchResult?.items ?? [])].filter(item => item.comparison && item.evaluation !== "requires_combination"
           && byId.get(item.optionId)?.candidate.variants.find(v=>v.key===byId.get(item.optionId)?.variantKey)?.resolution?.enhancements?.status === "verified")
           .sort((a,b) => b.comparison!.candidateDps-a.comparison!.candidateDps || a.optionId.localeCompare(b.optionId));
@@ -613,9 +604,55 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             finalists.set(`candidate-${finalists.size+1}`,[option]);
         }
       }
-      // Enhanced configuration search is a bounded second stage; equipment lot
-      // procurement and its exhaustive combination cursor remain unchanged.
-      if (context.input.enhancementMode !== "equipment" && [...finalists.values()].flat().some(option => option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.enhancements?.status === "verified")) {
+      if (context.input.enhancementMode === "enhanced") {
+        progress({ phase: "enhancements", completed: entry.exhaustiveEnhancementState?.equipmentChecked ?? 0, total: 0 });
+        const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
+          options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
+          specId: context.specId, level: context.character.level, region: context.character.region,
+          engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
+          encounter: { scenario: context.input.scenario, ...context.encounter }, budgetCopper: context.input.budgetCopper,
+          objective: context.input.objective ?? "dps", baseline: checkpoint.baseline,
+          simulate: async (selected, simSignal) => {
+            simSignal.throwIfAborted();
+            // Zero bought enhancements reproduce the already measured bare
+            // replacement. Keep its native precision/engine checks on reuse.
+            if (selected.every(option => !option.customization?.enchantId && !option.customization?.gemIds?.some(id => id !== 0))) {
+              const bare = selected.map(option => { const copy = { ...option }; delete copy.customization; return copy; });
+              const cached = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
+              if (cached && cached.engine === checkpoint.baseline.engine && Number.isFinite(cached.dps) && cached.dps >= 0 &&
+                  Number.isFinite(cached.dpsError) && cached.dpsError >= 0 && cached.confidence === 95 && Number.isSafeInteger(cached.iterations) && cached.iterations > 0) {
+                metricsFor(context.armory ?? context).cacheHit(); return { ...cached };
+              }
+            }
+            return context.simulate(selected, simSignal);
+          },
+          signal, shouldYield, state: entry.exhaustiveEnhancementState,
+          onState: state => { entry.exhaustiveEnhancementState = state; scheduleAuctionGearSearchSave(entry); },
+          onUpdate: async result => {
+            published = { ...published, enhancementOptimization: result };
+            entry.latestAssemblyResult = published;
+            await metricsFor(context.armory ?? context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
+            signal.throwIfAborted(); publishResult?.(published);
+          },
+          onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
+        })).finally(() => scheduleAuctionGearSearchSave(entry));
+        signal.throwIfAborted();
+        published = { ...published, enhancementOptimization: enhanced.result };
+        entry.latestAssemblyResult = published;
+        await metricsFor(context.armory ?? context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
+        signal.throwIfAborted(); publishResult?.(published);
+        if (!enhanced.result.complete) return published;
+        if (enhanced.result.recommendations.length) {
+          finalists.clear();
+          for (const recommendation of auctionEnhancementScenarioFinalists(enhanced.result.recommendations, context.input.objective ?? "dps")) {
+            const selected = recommendation.optionIds.map(id => byId.get(id));
+            if (selected.every((option): option is AuctionGearOption => Boolean(option)))
+              finalists.set(`enhanced-${recommendation.label}-${recommendation.configuration.key}`, customizedAuctionGearOptions(selected, recommendation.configuration));
+          }
+        }
+        published = { ...published };
+      // Legacy saved searches preserve their former bounded finalist behavior.
+      } else if (context.input.enhancementMode !== "equipment" && [...finalists.values()].flat().some(option => option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.enhancements?.status === "verified")) {
         progress({ phase: "enhancements", completed: 0, total: 0 });
         const enhanced = await diagnostics.measureStage("enhancements", () => evaluateAuctionEnhancementStage({
           finalists: [...finalists].map(([label, selected]) => ({label, options:selected})),
@@ -624,7 +661,6 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           encounter: {scenario:context.input.scenario,...context.encounter}, budgetCopper:context.input.budgetCopper,
           objective:context.input.objective ?? "dps", baseline:checkpoint.baseline, simulate:context.simulate,
           signal, shouldYield, state: entry.enhancementState ??= {checkpoints:{}},
-          includeObjectiveAlternatives: context.input.enhancementMode === "enhanced", additionalSearchReasons,
           onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         })).finally(() => scheduleAuctionGearSearchSave(entry));
         signal.throwIfAborted();
@@ -649,14 +685,6 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         }
         // Further scenario work must not mutate the snapshot already published.
         published = {...published};
-      } else if (context.input.enhancementMode === "enhanced") {
-        // Explicit enhancement requests must finish with an honest outcome even
-        // when the exact native metadata cannot authorize this second stage.
-        published = { ...published, enhancementOptimization: { complete: true, status: "unavailable",
-          searchLimited: true, reasons: ["variant_enhancements_unknown"], recommendations: [],
-          catalogRevision: auctionEnhancementCatalogInfo.revision } };
-        entry.latestAssemblyResult = published;
-        scheduleAuctionGearSearchSave(entry);
       }
       if (encounters.length && finalists.size) {
         progress({ phase: "scenarios", completed: 0, total: encounters.length });
