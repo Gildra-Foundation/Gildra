@@ -13,10 +13,10 @@ test('full exact pipeline persists every slice once and keeps the completed resu
   assert.equal(run.final.result.enhancementOptimization.complete,true);
   assert.equal(run.summary.equipmentChecked,2,'Both retained equipment and the purchasable replacement were exhaustively evaluated');
   assert.equal(run.summary.counts.stage,431);
-  assert.equal(run.summary.counts.native,433,'The 431 ordinary requests and two high-precision rechecks each run once');
+  assert.equal(run.summary.counts.native,434,'The 431 ordinary requests and three high-precision rechecks each run once');
   assert.equal(new Set(run.requests.map(nativeKey)).size,run.requests.length);
-  assert.equal(run.summary.counts.searchWrites,547);
-  assert.equal(run.summary.counts.jobWrites,659);
+  assert.equal(run.summary.counts.searchWrites,548);
+  assert.equal(run.summary.counts.jobWrites,660);
   assert.equal(run.summary.counts.ownership,run.summary.counts.turns-1);
   assert.equal(run.summary.counts.armory,run.summary.counts.ownership);
   assert.equal(run.summary.counts.market,run.summary.counts.ownership+1);
@@ -24,7 +24,7 @@ test('full exact pipeline persists every slice once and keeps the completed resu
   assert.deepEqual(structuredClone(run.diskEntry.data.latestAssemblyResult.enhancementOptimization),structuredClone(run.final.result.enhancementOptimization));
   assert.equal(run.diskEntry.data.exhaustiveEnhancementState.cursor.exhausted,true);
   const stage = run.final.result.enhancementOptimization;
-  assert.equal(run.requests.filter(request=>request.precision==='finalist').length,2);
+  assert.equal(run.requests.filter(request=>request.precision==='finalist').length,3);
   assert.equal(stage.finalistRecheck.significant,false);
   for(const row of stage.recommendations){
     assert.equal(row.simulation.iterations,stage.finalistRecheck.keys.includes(row.configuration.key)?3000:750);

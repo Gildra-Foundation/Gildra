@@ -35,11 +35,14 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
   const equipmentOnly = assembly.enhancementMode === "equipment";
   const stage = assembly.enhancementOptimization;
   const recheck = stage?.finalistRecheck;
-  const finalistPrices = recheck && !recheck.significant
-    ? recheck.keys.flatMap(key => {
-      const amount = stage?.recommendations.find(row => row.configuration.key === key)?.configuration.totalCopper;
-      return typeof amount === "number" ? [amount] : [];
-    }).sort((a, b) => a - b) : [];
+  const pricesFor = (keys: readonly string[]) => keys.flatMap(key => {
+    const amount = stage?.recommendations.find(row => row.configuration.key === key)?.configuration.totalCopper;
+    return typeof amount === "number" ? [amount] : [];
+  }).sort((a, b) => a - b);
+  const finalistPrices = pricesFor(recheck?.keys ?? []);
+  const tiedPrices = pricesFor(recheck?.indistinguishableKeys ?? (recheck && !recheck.significant ? recheck.keys : []));
+  const listPrices = (prices: number[]) => new Intl.ListFormat(ru ? "ru" : "en", { type: "conjunction" }).format(prices.map(money));
+  const leaderPrice = recheck?.leaderKey ? pricesFor([recheck.leaderKey])[0] : undefined;
   const complete = auctionGearAssemblyGoalComplete(assembly);
   const exhaustiveEnhancements = stage?.traversal === "exhaustive";
   const limitedEnhancements = !exhaustiveEnhancements && assembly.enhancementMode === "enhanced" && stage?.searchLimited;
@@ -55,10 +58,15 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
         <dd>{signed.format(selected.comparison.deltaPercent)}%<span className={styles.metricNote}>{signed.format(selected.comparison.deltaDps)} ± {numeric.format(selected.comparison.uncertainty.marginDps)} DPS</span></dd></div>
     </dl>
     <p className={styles.note} data-auction-price-context>{t("Цены на момент расчёта", "Prices at calculation time")}</p>
-    {finalistPrices.length === 2 ? <p className={styles.note} data-auction-close-finalists>
-      {t("Повторная симуляция не выявила различия в DPS у комплектов за ", "The higher-precision simulation could not distinguish the DPS of the loadouts priced at ")}
-      {money(finalistPrices[0])}{t(" и ", " and ")}{money(finalistPrices[1])}.
-      {finalistPrices[0] < finalistPrices[1] ? t(" Доплата не даёт подтверждённого прироста DPS.", " Paying more gives no confirmed DPS gain.") : ""}
+    {finalistPrices.length >= 2 && recheck && (recheck.leaderKey || !recheck.significant) ? <p className={styles.note} data-auction-close-finalists>
+      {t("С повышенной точностью проверены комплекты за ", "The higher-precision simulation compared loadouts priced at ")}{listPrices(finalistPrices)}.
+      {tiedPrices.length > 1 ? <>
+        {tiedPrices.length === finalistPrices.length ? t(" Все эти варианты оказались в пределах погрешности лучшего измеренного DPS.", " All were within simulation uncertainty of the highest measured DPS.") :
+          <>{t(" У комплектов за ", " The loadouts priced at ")}{listPrices(tiedPrices)}
+            {t(" разница с лучшим измеренным DPS в пределах погрешности.", " were within simulation uncertainty of the highest measured DPS.")}</>}
+        {tiedPrices[0] < tiedPrices[tiedPrices.length - 1] ? t(" Доплата между этими вариантами не даёт подтверждённого прироста DPS.", " Paying more among these options gives no confirmed DPS gain.") : ""}
+      </> : leaderPrice !== undefined ? <>{t(" У комплекта за ", " The loadout priced at ")}{money(leaderPrice)}
+        {t(" подтверждено преимущество по DPS над остальными финалистами.", " had a confirmed DPS advantage over the other rechecked finalists.")}</> : null}
     </p> : null}
     {recheck?.competingKey ? <p className={styles.note}>{t(
       "Ещё один комплект остаётся среди лидеров по исходной симуляции. Повышенная точность применялась только к двум первоначальным лидерам.",

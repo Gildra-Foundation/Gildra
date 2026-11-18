@@ -29,6 +29,7 @@ export type AuctionGearResult = {
   removedSlots: string[];
   enhancement?: AuctionEnhancedRecommendation;
   unresolvedCheaperKey?: string;
+  preferredFinalist?: boolean;
 };
 const signature = (purchases: AuctionGearPurchase[]) => JSON.stringify(purchases.map(p => [p.slotType, p.auctionId, p.variantKey]).sort());
 const subtotal = (rows: { quotedCopper: number | null }[]) => rows.some(row => row.quotedCopper === null)
@@ -74,12 +75,15 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
       significant: significant(enhancement.comparison), fullyEnhanced: configuration.fullyEnhanced,
       removedSlots: enhancement.removedSlots ?? original?.removedSlots ?? [], enhancement });
   }
-  if (recheck && !recheck.significant) {
-    const pair = recheck.keys.map(key => results.find(row => row.key === preciseKeys.get(key)));
-    const [first, second] = pair;
-    if (first && second && first.totalCopper !== null && second.totalCopper !== null && first.totalCopper !== second.totalCopper) {
-      const [cheaper, dearer] = first.totalCopper < second.totalCopper ? [first, second] : [second, first];
-      dearer.unresolvedCheaperKey = cheaper.key;
+  if (recheck) {
+    const checkedResult = (key: string) => results.find(row => row.key === preciseKeys.get(key));
+    const tied = (recheck.indistinguishableKeys ?? (recheck.significant ? [] : recheck.keys))
+      .map(checkedResult).filter((row): row is AuctionGearResult => Boolean(row && row.totalCopper !== null));
+    const preferred = recheck.preferredKey ? checkedResult(recheck.preferredKey) :
+      [...tied].sort((a, b) => a.totalCopper! - b.totalCopper!)[0];
+    if (preferred) {
+      if (recheck.preferredKey) preferred.preferredFinalist = true;
+      for (const row of tied) if (row.totalCopper! > preferred.totalCopper!) row.unresolvedCheaperKey = preferred.key;
     }
   }
   return results;
@@ -87,6 +91,8 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
 
 /** Choose among computed results only; this does not compute a second optimum. */
 export function recommendedAuctionGearResult(results: AuctionGearResult[], objective: AuctionGearObjective): AuctionGearResult | undefined {
+  const preferred = results.find(row => row.preferredFinalist && row.totalCopper !== null);
+  if (objective === "dps" && preferred && (preferred.significant || !results.some(row => row.significant))) return preferred;
   const confirmedKeys = new Set(results.filter(row => row.significant).map(row => row.key));
   const verified = results.filter(result => result.significant && result.totalCopper !== null &&
     !(result.unresolvedCheaperKey && confirmedKeys.has(result.unresolvedCheaperKey)));

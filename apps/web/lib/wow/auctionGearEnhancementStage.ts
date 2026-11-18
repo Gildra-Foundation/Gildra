@@ -21,7 +21,8 @@ export type AuctionEnhancedRecommendation = { label: string; configuration: Pric
   enhancementNames?: { gems: Record<string, string>; enchants: Record<string, string> } };
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
   traversal?: 'exhaustive'; includesOwnedEquipment?: true; equipmentChecked?: number;
-  finalistRecheck?: { keys: [string, string]; significant: boolean; marginDps: number; competingKey?: string };
+  finalistRecheck?: { keys: string[]; significant: boolean; marginDps: number;
+    leaderKey?: string; indistinguishableKeys?: string[]; preferredKey?: string; competingKey?: string };
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };
 const obj = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const rows = (value: unknown): unknown[] => Array.isArray(value) ? value : [];

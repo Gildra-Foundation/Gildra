@@ -117,56 +117,65 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   // A quote fetch can mutate stage state before a later abort. Compare against
   // the persisted ranking basis, not just this invocation's local old value.
   acceptQuotes();
-  const closePair = () => {
-    if (!input.recheck || !state.cursor.exhausted || state.currentOptionIds !== undefined || !state.measured || !state.runnerUp) return;
-    const pair = [state.measured, state.runnerUp] as const;
-    if (!compareGearSimulationResults(pair[0].recommendation.simulation, pair[1].recommendation.simulation).uncertainty.significant) return pair;
+  const contenders = (): Leader[] => {
+    if (!input.recheck || !state.cursor.exhausted || state.currentOptionIds !== undefined || !state.measured || !state.runnerUp) return [];
+    const pair = [state.measured, state.runnerUp];
+    const [a, b] = pair.map(row => row.recommendation);
+    if (compareGearSimulationResults(a.simulation, b.simulation).uncertainty.significant) return [];
+    const refinedA = state.precise?.[a.configuration.key], refinedB = state.precise?.[b.configuration.key];
+    if (refinedA && refinedB && state.nextMeasured) {
+      const leading = refinedA.dps >= refinedB.dps ? refinedA : refinedB;
+      const next = state.nextMeasured.recommendation.simulation;
+      if (next.dps >= leading.dps || !compareGearSimulationResults(leading, next).uncertainty.significant) pair.push(state.nextMeasured);
+    }
+    return pair;
   };
   const finish = (): { state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult } => {
-    const pair = closePair();
-    const refined = pair?.map(row => state.precise?.[row.recommendation.configuration.key]);
-    if (pair && refined?.some((simulation, index) => simulation && !validRecheck(simulation, pair[index].recommendation.simulation))) {
-      throw new Error("invalid_enhancement_checkpoint");
-    }
-    const complete = state.cursor.exhausted && state.currentOptionIds === undefined && (!refined || refined.every(Boolean));
+    const group = contenders();
+    const refined = group.flatMap(leader => {
+      const simulation = state.precise?.[leader.recommendation.configuration.key];
+      if (!simulation) return [];
+      if (!validRecheck(simulation, leader.recommendation.simulation)) throw new Error("invalid_enhancement_checkpoint");
+      return [{ ...leader.recommendation, simulation }];
+    });
+    const complete = state.cursor.exhausted && state.currentOptionIds === undefined && group.length === refined.length;
     let all = recommendations(state, input.objective);
     let finalistRecheck: AuctionEnhancementStageResult["finalistRecheck"];
-    if (pair && refined?.[0] && refined[1]) {
-      const keys: [string, string] = [pair[0].recommendation.configuration.key, pair[1].recommendation.configuration.key];
-      const comparison = compareGearSimulationResults(refined[0], refined[1]);
-      finalistRecheck = { keys, significant: comparison.uncertainty.significant, marginDps: comparison.uncertainty.marginDps };
-      const candidates = new Map(all.map(row => [row.configuration.key, row]));
-      const next = state.nextMeasured?.recommendation;
-      if (next) {
-        const leading = refined[0].dps >= refined[1].dps ? refined[0] : refined[1];
-        const versusNext = compareGearSimulationResults(leading, next.simulation);
-        if (next.simulation.dps >= leading.dps || !versusNext.uncertainty.significant) {
-          finalistRecheck.competingKey = next.configuration.key;
-          candidates.set(next.configuration.key, next);
-        }
-      }
-      const unchangedIndex = pair.findIndex(leader => !leader.options.length && !leader.recommendation.configuration.ownedChanges?.length);
-      const baseline = unchangedIndex < 0 ? input.baseline : refined[unchangedIndex]!;
-      if (unchangedIndex >= 0) for (const [key, candidate] of candidates) {
-        candidates.set(key, { ...candidate, comparison: compareGearSimulationResults(baseline, candidate.simulation) });
-      }
-      pair.forEach((leader, index) => {
-        const simulation = refined[index]!;
-        candidates.set(keys[index], { ...leader.recommendation, simulation, comparison: compareGearSimulationResults(baseline, simulation) });
-      });
-      // Keep the requested objective first after a refined measurement changes
-      // the order. Both members of a precision tie remain available to inspect.
+    if (complete && refined.length) {
+      const baselineIndex = group.findIndex(leader => !leader.options.length && !leader.recommendation.configuration.ownedChanges?.length);
+      const baseline = refined[baselineIndex]?.simulation ?? input.baseline;
       const confirmed = (row: AuctionEnhancedRecommendation) => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant;
-      const ranked = [...candidates.values()].sort((a, b) => {
+      const candidates = new Map(all.map(row => [row.configuration.key, baselineIndex < 0 ? row :
+        { ...row, comparison: compareGearSimulationResults(baseline, row.simulation) }]));
+      for (const row of refined) {
+        row.comparison = compareGearSimulationResults(baseline, row.simulation);
+        candidates.set(row.configuration.key, row);
+      }
+      const byDps = [...refined].sort((a, b) => b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper!);
+      const leading = byDps[0];
+      // Compare every member directly to the highest refined mean. Overlapping
+      // intervals against an intermediate candidate cannot create a chain of ties.
+      const comparisons = byDps.slice(1).map(row => ({ row, ...compareGearSimulationResults(leading.simulation, row.simulation).uncertainty }));
+      const tied = [leading, ...comparisons.filter(row => !row.significant).map(entry => entry.row)];
+      const preferred = [...tied].sort((a, b) => Number(confirmed(b)) - Number(confirmed(a)) ||
+        a.configuration.totalCopper! - b.configuration.totalCopper! || b.simulation.dps - a.simulation.dps)[0];
+      finalistRecheck = { keys: refined.map(row => row.configuration.key), leaderKey: leading.configuration.key,
+        indistinguishableKeys: tied.map(row => row.configuration.key), preferredKey: preferred.configuration.key,
+        significant: tied.length === 1, marginDps: comparisons[0].marginDps };
+      const dearerTies = new Set(tied.filter(row => row.configuration.totalCopper! > preferred.configuration.totalCopper!)
+        .map(row => row.configuration.key));
+      all = [...candidates.values()].sort((a, b) => {
         const confirmation = Number(confirmed(b)) - Number(confirmed(a));
         if (confirmation) return confirmation;
+        const premium = Number(dearerTies.has(a.configuration.key)) - Number(dearerTies.has(b.configuration.key));
+        if (premium) return premium;
         if (input.objective === "value" && confirmed(a) && confirmed(b)) {
           const difference = a.configuration.totalCopper! / a.comparison.deltaDps - b.configuration.totalCopper! / b.comparison.deltaDps;
           if (difference) return difference;
         }
-        return b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper!;
+        const preference = Number(b === preferred) - Number(a === preferred);
+        return preference || b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper!;
       });
-      all = ranked;
     }
     const fresh = all.filter(row => {
       try { assertFreshMarket({ sourceUpdatedAt: row.configuration.sourceUpdatedAt ?? "" }); return true; }
@@ -204,7 +213,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       input.onState(state);
     }
     if (state.currentOptionIds === undefined) {
-      const next = closePair()?.find(row => !state.precise?.[row.recommendation.configuration.key]);
+      const next = contenders().find(row => !state.precise?.[row.recommendation.configuration.key]);
       if (!next || !input.recheck || input.shouldYield()) break;
       const row = next.recommendation;
       const simulation = await input.recheck(next.options, row.configuration, input.signal);

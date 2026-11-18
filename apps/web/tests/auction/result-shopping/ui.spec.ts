@@ -208,7 +208,7 @@ test("unresolved finalist recheck shows both prices and selects the lower-cost c
   const explanation = result.locator("[data-auction-close-finalists]");
   await expect(explanation).toContainText("100");
   await expect(explanation).toContainText("120");
-  await expect(explanation).toContainText(lang(info) === "ru" ? "Доплата не даёт подтверждённого прироста DPS" : "Paying more gives no confirmed DPS gain");
+  await expect(explanation).toContainText(lang(info) === "ru" ? "не даёт подтверждённого прироста DPS" : "gives no confirmed DPS gain");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath("close-finalists.png"), fullPage: true });
 });
@@ -220,10 +220,18 @@ test("unresolved finalist prices remain visible when neither loadout confirms an
   await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120/);
 });
 
-test("unresolved finalist comparison keeps a higher unrefined third loadout selectable", async ({ page }, info) => {
+test("unresolved finalist comparison shows all three prices and chooses the affordable tied option", async ({ page }, info) => {
   await open(page, info, "close-with-contender");
   const result = page.locator("[data-auction-assembly-result]");
+  await expect(result).toHaveAttribute("data-selected-result", /^items:/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120.*130/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(lang(info) === "ru" ? "не даёт подтверждённого прироста DPS" : "gives no confirmed DPS gain");
+});
+
+test("higher-precision third finalist with a distinct gain remains the selected loadout", async ({ page }, info) => {
+  await open(page, info, "third-wins");
+  const result = page.locator("[data-auction-assembly-result]");
   await expect(result).toHaveAttribute("data-selected-result", "enhanced:synthetic-third");
-  await expect(result).toContainText(lang(info) === "ru" ? "Повышенная точность применялась только к двум первоначальным лидерам" : "Only the two original leaders were rechecked");
-  await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(/100.*120.*130/);
+  await expect(result.locator("[data-auction-close-finalists]")).toContainText(lang(info) === "ru" ? "подтверждено преимущество по DPS" : "confirmed DPS advantage");
 });

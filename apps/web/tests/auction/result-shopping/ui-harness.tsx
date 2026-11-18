@@ -30,7 +30,7 @@ export function ResultShoppingPanels({ locale, initialRevision = 0, mode }: { lo
     Object.assign(rec.configuration,{itemsCopper:0,totalCopper:200000,ownedChanges:[{slotType:"HEAD",itemId:7001,gems:[{index:1,itemId:5}]}]});
     rec.configuration.consumables[0].quantity = 1;
   }
-  if (mode === "close-finalists" || mode === "close-no-upgrade" || mode === "close-with-contender") {
+  if (mode === "close-finalists" || mode === "close-no-upgrade" || mode === "close-with-contender" || mode === "third-wins") {
     const stage = assembly.enhancementOptimization!, enhanced = stage.recommendations[0];
     Object.assign(assembly, { objective: "dps", enhancementMode: "enhanced", comparison: comparison(70) });
     Object.assign(stage, { traversal: "exhaustive", finalistRecheck: { keys: ["synthetic-enhanced-config", "synthetic-bare"], significant: false, marginDps: 3 } });
@@ -38,7 +38,7 @@ export function ResultShoppingPanels({ locale, initialRevision = 0, mode }: { lo
       configuration: { ...enhanced.configuration, key: "synthetic-bare", totalCopper: purchase.lotCostCopper, consumables: [],
         fullyEnhanced: false, slots: [{ slotType: "HEAD", variantKey: purchase.variantKey, gemIds: [], enchantId: 0 }] } });
   }
-  if (mode === "close-with-contender") {
+  if (mode === "close-with-contender" || mode === "third-wins") {
     const stage = assembly.enhancementOptimization!, contender = structuredClone(stage.recommendations[0]);
     contender.configuration.key = "synthetic-third";
     contender.configuration.consumables[0].quotedCopper = 300000;
@@ -46,7 +46,10 @@ export function ResultShoppingPanels({ locale, initialRevision = 0, mode }: { lo
     contender.configuration.slots[0].gemIds = [6];
     contender.comparison = { ...contender.comparison, ...comparison(55) };
     stage.recommendations.push(contender);
-    stage.finalistRecheck!.competingKey = contender.configuration.key;
+    const keys = [...stage.finalistRecheck!.keys, contender.configuration.key];
+    stage.finalistRecheck = { keys, leaderKey: contender.configuration.key, marginDps: 3, significant: mode === "third-wins",
+      preferredKey: mode === "third-wins" ? contender.configuration.key : "synthetic-bare",
+      indistinguishableKeys: mode === "third-wins" ? [contender.configuration.key] : keys };
   }
   if (mode === "tradeoff" || mode === "same-winner") {
     const stronger = { ...purchase, auctionId: 7002, itemId: 7002, variantKey: "synthetic-stronger", name: "Synthetic Stronger Helm", lotCostCopper: 5000000 };
