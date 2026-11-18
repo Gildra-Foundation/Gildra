@@ -254,7 +254,7 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
   if (!context.coverage.discoveryComplete) {
     if (!token) throw new Error("auction_discovery_authorization_required");
     await metricsFor(context.armory ?? context).measure("discovery", () => advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
-      region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
+      equipment: context.armory?.equipment, region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
       selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps,
       measure: (stage, work) => metricsFor(context.armory ?? context).measureStage(stage, work),
       stopAfterNewCandidates: !entry.latestSearchResult?.items.some(item => item.comparison), onProgress: progress,
@@ -772,7 +772,7 @@ export async function runAuctionGearPlanFromSnapshot(input: AuctionGearRunInput,
   const context = await createAuctionGearContextFromSnapshot(input, character, armory, token, signal, progress);
   const started = Date.now();
   await advanceAuctionGearDiscovery(context.discovery, { locale: input.locale === "en" ? "en_US" : "ru_RU", region: character.region,
-    token, spec: context.specSlug, characterLevel: character.level, selectedSlots: context.input.selectedSlots,
+    equipment: context.armory?.equipment, token, spec: context.specSlug, characterLevel: character.level, selectedSlots: context.input.selectedSlots,
     context: context.discoveryContext, signal, shouldYield: () => Date.now() - started >= 90_000, onProgress: progress,
     measure: (stage, work) => metricsFor(context.armory ?? context).measureStage(stage, work) });
   context.options = auctionGearDiscoveryOptions(context.discovery);

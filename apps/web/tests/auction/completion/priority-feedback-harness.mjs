@@ -17,7 +17,7 @@ import { supportedAuctionModifiers } from "../../../lib/wow/gearItemModifiers.ts
 import { auctionGearProfileFingerprint } from "../../../lib/wow/auctionGearFingerprint.ts";
 import { nativeGearSimulationMeasurement } from "../../../lib/wow/gearSimulation.ts";
 import { assertFreshMarket } from "../../../lib/wow/auctionMarket.ts";
-import { AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
+import { AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference } from "../../../lib/wow/auctionItemReference.ts";
 
 // Current production modules execute unchanged. Only public-data/native
 // transports are synthetic, with zero external requests or native processes.
@@ -49,7 +49,7 @@ export async function harness({ entity = record(), availableReference = true, re
   const discoverySource = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
   const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
     .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
-      supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
+      supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference,
       lookupGearRecords: async (ids, _locale, itemClass, _level, _signal, _cache, { cachedOnly = false } = {}) => !cachedOnly && (itemClass === undefined || itemClass === 4) ? (entities ?? [state.entity]).filter(row=>ids.includes(row.externalId)) : [],
       gearEntityDetails: async records => records,
       getAuctionItemReferences: async (ids, _region, _token, _signal, locale) => {

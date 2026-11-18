@@ -91,3 +91,11 @@ test('market: presentation requests references in the discovery locale', async (
   await h.discovery.advanceAuctionGearDiscovery(d, { ...h.discoveryInput, locale: 'ru_RU' });
   assert.deepEqual(h.state.referenceLocales, ['ru_RU']);
 });
+
+test('an equipped control cannot corroborate an extra native stat or a missing weapon', () => {
+  const reference = {offer:{itemId:1}, itemLevel:100, requiredLevel:1, stats:[{type:'STAMINA',value:10}]};
+  const measurement = {itemId:1,itemLevel:100,requiredLevel:1,stats:{stamina:10}};
+  assert.equal(nativeMatchesItemReference(reference,measurement,true),true);
+  assert.equal(nativeMatchesItemReference(reference,{...measurement,stats:{stamina:10,crit_rating:1}},true),false);
+  assert.equal(nativeMatchesItemReference({...reference,weapon:{minDamage:20,maxDamage:30,dps:10,speedSeconds:2.5}},measurement,true),false);
+});
