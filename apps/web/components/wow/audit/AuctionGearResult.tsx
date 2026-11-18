@@ -64,7 +64,10 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
         {tiedPrices.length === finalistPrices.length ? t(" Все эти варианты оказались в пределах погрешности лучшего измеренного DPS.", " All were within simulation uncertainty of the highest measured DPS.") :
           <>{t(" У комплектов за ", " The loadouts priced at ")}{listPrices(tiedPrices)}
             {t(" разница с лучшим измеренным DPS в пределах погрешности.", " were within simulation uncertainty of the highest measured DPS.")}</>}
-        {tiedPrices[0] < tiedPrices[tiedPrices.length - 1] ? t(" Доплата между этими вариантами не даёт подтверждённого прироста DPS.", " Paying more among these options gives no confirmed DPS gain.") : ""}
+        {tiedPrices[0] < tiedPrices[tiedPrices.length - 1] ? leaderPrice !== undefined && leaderPrice > tiedPrices[0]
+          ? t(" Доплата за вариант с лучшим измеренным DPS не даёт подтверждённого прироста DPS по сравнению с самым дешёвым из этих комплектов.",
+            " Paying extra for the highest measured DPS gives no confirmed DPS gain over the cheapest of these loadouts.")
+          : t(" Доплата не даёт подтверждённого прироста DPS.", " Paying more gives no confirmed DPS gain.") : ""}
       </> : leaderPrice !== undefined ? <>{t(" У комплекта за ", " The loadout priced at ")}{money(leaderPrice)}
         {t(" подтверждено преимущество по DPS над остальными финалистами.", " had a confirmed DPS advantage over the other rechecked finalists.")}</> : null}
     </p> : null}
