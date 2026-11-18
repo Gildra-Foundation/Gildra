@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import vm from "node:vm";
 import { strip, record, offer, market, context } from "../reliability/market-harness.mjs";
+import { auctionSummarySlotMatch } from "../../../lib/wow/gearCompatibility.ts";
 import { normalizeGearCandidate } from "../../../lib/wow/gearCandidates.ts";
 import { auctionVariantKey, resolvedAuctionVariant } from "../../../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../../../lib/wow/gearItemModifiers.ts";
@@ -21,7 +22,7 @@ async function setup(rows, locale = "en_US", characterLevel = 81) {
   const state = { events: [], scanned: new Set(), hold: null, fail: false, checkpoints: 0 };
   const source = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
   const d = new vm.Script(strip(source) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions})")
-    .runInNewContext({ Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey,
+    .runInNewContext({ Date, Map, Set, Object, Number, JSON, auctionSummarySlotMatch, normalizeGearCandidate, auctionVariantKey,
       resolvedAuctionVariant, supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, nativeMatchesItemReference,
       lookupGearRecords: async (ids, _locale, itemClass, maxRequiredLevel, signal) => {
         assert.equal(maxRequiredLevel, undefined, "Base required level must never filter scaled variants");
@@ -154,4 +155,20 @@ test("old checkpoints and refreshed IDs preserve processed native work while pro
   assert.equal(options.length, 11);
   for (const key of processed) assert(!subsequent.some(event => event.ids.some(id => auctionVariantKey(h.makeOffer(id)) === key)));
   assert.equal(h.discovery.queuedItems.size, 11);
+});
+
+test("published inventory codes skip unrelated combat slots and keep ambiguous responses for details", async () => {
+  const file = new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url);
+  const matches = new vm.Script(strip(await readFile(file, "utf8")) + "\n;summaryMayMatch")
+    .runInNewContext({ auctionSummarySlotMatch });
+  assert.equal(matches({ inventoryType: "WRIST" }, ["SHOULDER"]), false);
+  for (const [inventoryType, slot] of [["FINGER", "FINGER_2"], ["TWOHWEAPON", "OFF_HAND"], ["20", "CHEST"]]) {
+    assert.equal(matches({ inventoryType }, [slot]), true);
+  }
+  for (const inventoryType of [undefined, "UNRECOGNIZED", "PROFESSION_TOOL", "0"]) {
+    assert.equal(matches({ inventoryType }, ["SHOULDER"]), true);
+  }
+  const conflict = { inventoryType: "SHOULDER", highlights: [{ key: "inventory_type", value: "Wrist" }] };
+  assert.equal(matches(conflict, ["SHOULDER"]), true);
+  assert.equal(matches(conflict, ["WRIST"]), true);
 });

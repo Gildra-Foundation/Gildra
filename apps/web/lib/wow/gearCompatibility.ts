@@ -91,6 +91,33 @@ const rangedSpecs = new Set([253, 254]);
 const armorSlots = new Set([1, 3, 5, 6, 7, 8, 9, 10, 20]);
 export const isTwoHandWeapon = (inventoryType: number) => [15, 17].includes(inventoryType);
 export const supportsTitanGrip = (specId: number, subclass: number) => specId === 72 && [1, 5, 6, 8, 10].includes(subclass);
+const allowedSlots: Record<string, readonly number[]> = {
+  HEAD: [1],
+  NECK: [2],
+  SHOULDER: [3],
+  CHEST: [5, 20],
+  WAIST: [6],
+  LEGS: [7],
+  FEET: [8],
+  WRIST: [9],
+  HANDS: [10],
+  FINGER_1: [11],
+  FINGER_2: [11],
+  TRINKET_1: [12],
+  TRINKET_2: [12],
+  BACK: [16],
+  MAIN_HAND: [13, 15, 17, 21, 26],
+  OFF_HAND: [13, 14, 17, 22, 23]
+};
+
+const combatInventoryTypes = new Set(Object.values(allowedSlots).flat());
+
+/** Unknown and noncombat inventory codes still go through detailed discovery. */
+export function auctionSummarySlotMatch(inventory: unknown, slots: readonly string[]): boolean | undefined {
+  const type = normalizeInventoryType(inventory);
+  if (!combatInventoryTypes.has(type)) return undefined;
+  return slots.some(slot => allowedSlots[slot]?.includes(type));
+}
 export function equipmentCompatibility(input: {
   classId: number;
   specId: number;
@@ -108,24 +135,6 @@ export function equipmentCompatibility(input: {
     inventoryType
   } = input;
   if (!specsByClass[classId]?.includes(specId)) return "specialization_unverified";
-  const allowedSlots: Record<string, number[]> = {
-    HEAD: [1],
-    NECK: [2],
-    SHOULDER: [3],
-    CHEST: [5, 20],
-    WAIST: [6],
-    LEGS: [7],
-    FEET: [8],
-    WRIST: [9],
-    HANDS: [10],
-    FINGER_1: [11],
-    FINGER_2: [11],
-    TRINKET_1: [12],
-    TRINKET_2: [12],
-    BACK: [16],
-    MAIN_HAND: [13, 15, 17, 21, 26],
-    OFF_HAND: [13, 14, 17, 22, 23]
-  };
   if (!allowedSlots[slotType]?.includes(inventoryType)) return "slot_mismatch";
   if (itemClassId === 4) {
     if (["MAIN_HAND", "OFF_HAND"].includes(slotType) && ![14, 23].includes(inventoryType)) return "weapon_not_supported";

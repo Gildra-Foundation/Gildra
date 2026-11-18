@@ -45,8 +45,28 @@ export type EnhancementOptimizerResult = { checkpoint: EnhancementCheckpoint; co
   configurations: PricedEnhancementConfiguration[];
   finalists: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation }[] };
 
-const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical) : value && typeof value === "object"
-  ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,v])=>[key,canonical(v)])) : value;
+const canonical = (value: unknown): unknown => {
+  // Repeated catalog records occur in both resolutions and axes. Reuse their
+  // canonical form only during this synchronous hash, never across a retry or
+  // quote/profile mutation. The resulting JSON and checkpoint keys stay exact.
+  const objects = new WeakMap<object, unknown>(), orders = new Map<string, string[]>();
+  const visit = (current: unknown): unknown => {
+    if (!current || typeof current !== "object") return current;
+    const previous = objects.get(current);
+    if (previous !== undefined) return previous;
+    if (Array.isArray(current)) {
+      const result = current.map(visit); objects.set(current, result); return result;
+    }
+    const keys = Object.keys(current), shape = JSON.stringify(keys);
+    let ordered = orders.get(shape);
+    if (!ordered) { ordered = keys.sort((a,b)=>a.localeCompare(b)); orders.set(shape, ordered); }
+    const result: Record<string, unknown> = Object.create(null);
+    objects.set(current, result);
+    for (const key of ordered) result[key] = visit((current as Record<string, unknown>)[key]);
+    return result;
+  };
+  return visit(value);
+};
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(canonical(value))).digest("hex");
 const positive = (value: number) => Number.isSafeInteger(value) && value > 0;
 

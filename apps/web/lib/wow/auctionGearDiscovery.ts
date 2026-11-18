@@ -1,4 +1,5 @@
 import "server-only";
+import { auctionSummarySlotMatch } from "./gearCompatibility";
 import type { CatalogRecord } from "@/lib/api/client";
 import { auctionVariantKey, resolvedAuctionVariant } from "./auctionItemVariant";
 import { AUCTION_ITEM_REFERENCE_TTL_MS, getAuctionItemReferences, nativeMatchesItemReference, type AuctionItemReference } from "./auctionItemReference";
@@ -210,8 +211,12 @@ function rememberCatalogClass(state: AuctionGearDiscovery, record: CatalogGearEn
 
 function summaryMayMatch(record: CatalogRecord, slots: readonly string[]) {
   const inventory = record.highlights?.find(highlight => highlight.key === "inventory_type")?.value;
-  // Missing/unknown presentation is never evidence that a candidate is unusable.
-  return !inventory || !summarySlots[inventory] || summarySlots[inventory].some(slot => slots.includes(slot));
+  const highlighted = inventory ? summarySlots[inventory] : undefined;
+  if (highlighted?.some(slot => slots.includes(slot))) return true;
+  // Both representations come from the published inventory type. Older API
+  // responses may provide only a highlight, or only a Battle.net enum.
+  const raw = record.inventoryType == null ? undefined : auctionSummarySlotMatch(record.inventoryType, slots);
+  return raw ?? !highlighted;
 }
 
 function catalogPriorityHint(record: CatalogRecord): CatalogPriorityHint {

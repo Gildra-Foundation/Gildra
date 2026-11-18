@@ -117,7 +117,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     input.onState(state);
     if (staleQuotes(state.stage.quotes)) throw new Error("market_stale");
   }
+  let lastUpdate: ReturnType<typeof finish> | undefined;
   for (let turns = 0; turns < 8; turns++) {
+    // Entering another slice may change the cursor or prices without producing
+    // an update. Only reuse a snapshot when no later slice has touched state.
+    lastUpdate = undefined;
     if (state.currentOptionIds === undefined && !state.cursor.exhausted) {
       const batch = await iterator.nextBatch(state.cursor, { maxAssignments: 128, maxResults: 1, signal: input.signal, shouldYield: input.shouldYield });
       state.cursor = batch.state;
@@ -154,7 +158,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const update = finish();
     await input.onUpdate?.(update.result);
     input.signal.throwIfAborted();
+    lastUpdate = update;
     if (update.result.complete || input.shouldYield()) return update;
   }
-  return finish();
+  // Revalidate freshness after the durable callback, but preserve the identity
+  // of its exact snapshot so the runner need not save/publish it a second time.
+  const final = finish();
+  return lastUpdate ?? final;
 }
