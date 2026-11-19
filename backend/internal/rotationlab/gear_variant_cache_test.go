@@ -57,3 +57,40 @@ func TestNativeMetadataCacheResolvesCurrentRequest(t *testing.T) {
 		t.Fatal("reused metadata after executable replacement")
 	}
 }
+
+func TestNativeMetadataPartialHitPreservesFailureAndDoesNotCacheIt(t *testing.T) {
+	dir := t.TempDir()
+	binary := filepath.Join(dir, "simc")
+	logPath := filepath.Join(dir, "calls")
+	t.Setenv("NATIVE_FIXTURE_LOG", logPath)
+	if err := os.WriteFile(binary, []byte("#!/bin/sh\necho called >> \"$NATIVE_FIXTURE_LOG\"\nexit 1\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	engine, err := NewSimCEngine(binary, "", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(binary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81, Variants: []GearVariantInput{
+		{Key: "missing", Change: GearChange{Slot: "head", ItemID: 101}},
+		{Key: "cached", Change: GearChange{Slot: "chest", ItemID: 102}},
+	}}
+	engine.variants.store(info, gearVariantKeys(in)[1:], GearVariantResponse{Engine: "fixture", Variants: []GearVariantMetadata{{ItemID: 102}}})
+	for i := 0; i < 2; i++ {
+		out, err := engine.ResolveGearVariants(context.Background(), in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(out.Variants) != 2 || out.Engine != "fixture" || out.Variants[0].Error != "item_resolution_failed" ||
+			out.Variants[0].Key != "missing" || out.Variants[1].Key != "cached" || out.Variants[1].ItemID != 102 {
+			t.Fatalf("mixed response lost its ordering or failure: %+v", out)
+		}
+	}
+	calls, err := os.ReadFile(logPath)
+	if err != nil || string(calls) != "called\ncalled\n" {
+		t.Fatalf("expected one native retry of the missing row per request: %q, %v", calls, err)
+	}
+}
