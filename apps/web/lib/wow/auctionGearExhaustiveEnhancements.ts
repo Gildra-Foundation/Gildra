@@ -251,6 +251,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     // an update. Only reuse a snapshot when no later slice has touched state.
     lastUpdate = undefined;
     if (state.currentOptionIds === undefined && state.replay?.length) {
+      if (input.shouldYield()) break;
       const range = state.replay.at(-1)!;
       if (!Array.isArray(range) || range.length !== 2 || range.some(value => typeof value !== "string" ||
           value.length > state.cursor.visited.length || !/^(0|[1-9]\d*)$/.test(value)) ||
@@ -333,8 +334,16 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       }
       const cache = Object.values(state.stage.checkpoints)[0]?.cache;
       if (ordinal !== undefined && cache && Object.keys(cache).length) {
-        state.recentMeasurements = [...(state.recentMeasurements ?? []).filter(row => row.ordinal !== ordinal),
-          { ordinal, cache }].slice(-maxMeasurementSets);
+        const recent = (state.recentMeasurements ?? []).filter(row => row.ordinal !== ordinal);
+        recent.push({ ordinal, cache });
+        if (recent.length > maxMeasurementSets) {
+          // A large reprice can start before every warm set. Keep measurements
+          // for queued assignments until their turn to consume them.
+          const obsolete = recent.findIndex(row => !state.replay?.some(([start, end]) =>
+            BigInt(start) <= BigInt(row.ordinal) && BigInt(row.ordinal) <= BigInt(end)));
+          recent.splice(obsolete < 0 ? 0 : obsolete, 1);
+        }
+        state.recentMeasurements = recent;
       }
       state.equipmentChecked++;
       state.unavailable ||= result.status === "unavailable";
