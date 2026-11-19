@@ -988,7 +988,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
           ? t("Проверим часть вариантов и предложим комплект вещей.", "Check a limited set of options and suggest a gear loadout.")
           : buildMode === "full" ? t("Проверим все доступные варианты вещей в пределах бюджета.", "Check all available gear options within your budget.")
           : t("Сравним покупки и улучшения надетых вещей в выбранных слотах. Камни и чары входят в общий бюджет.", "Compare gear purchases and upgrades to equipped items in the selected slots. Gems and enchants count toward your budget.")}
-          {buildMode !== "quick" ? <> {t("Вкладку можно закрыть. Результат доступен у персонажа 30 минут после завершения.", "You can close this tab. Return to your character within 30 minutes of completion to see the result.")}</> : null}</p>
+          {buildMode !== "quick" ? <> {t("Если выбрать много слотов, полный перебор может не уложиться в 6 часов. Для меньшего поиска выберите слоты в дополнительных настройках. Вкладку можно закрыть. Результат доступен у персонажа 30 минут после завершения.", "With many slots, a full search can exceed the six-hour limit. Select fewer slots in advanced settings to narrow the search. You can close this tab. Return to your character within 30 minutes of completion to see the result.")}</> : null}</p>
         {restoredSnapshot ? <p className={styles.note} data-auction-restored-snapshot>{t("Восстановлен расчёт по сохранённой экипировке. После её изменения запустите новый подбор.", "Restored a calculation for the saved equipment. Start a new selection if your gear has changed.")}</p> : null}
       </fieldset>
       <div className={tools.fields}>
@@ -1012,6 +1012,10 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
       </div>
       {running && <AuctionProgress label={stageLabel} counted={counted} locale={locale}
         stageKey={`${transport?.mode}-${progress?.phase}-${cache.current?.orchestration?.searchTurns}-${cache.current?.orchestration?.assemblyTurns}`} />}
+      {running && search && assembly && !assemblyStale && !assembly.exhaustiveComplete && transport?.mode === "assembly" ?
+        <p className={styles.note}>{t("Проверено сочетаний", "Combinations checked")}: {assembly.combinationsChecked.toLocaleString(locale)}.{" "}
+          {t("Вариантов до проверки бюджета и совместимости", "Combinations before budget and compatibility checks")}: {BigInt(assembly.combinationCount).toLocaleString(locale)}.{" "}
+          <a href="#auction-assembly">{t("Посмотреть текущий комплект", "View current loadout")}</a></p> : null}
       <details className={styles.disclosure} data-auction-advanced-settings><summary>{t("Дополнительные настройки", "Advanced settings")}</summary>
       <div className={styles.advancedSettingsContent}>
         <div className={tools.fields}>

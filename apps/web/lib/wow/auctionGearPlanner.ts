@@ -164,9 +164,9 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   let checkpoint: AuctionGearSearchCheckpoint, calls = 0;
   if (input.checkpoint) {
     requireCheckpoint(inputKey, input.checkpoint, input.checkpoint.version === 1 ? 1 : 2);
-    checkpoint = structuredClone(input.checkpoint);
+    const { simulationCache, ...state } = input.checkpoint;
+    checkpoint = { ...structuredClone(state), simulationCache: cloneCache(simulationCache, state.baseline.engine) };
     checkpoint.baseline = validSimulation(checkpoint.baseline);
-    checkpoint.simulationCache = cloneCache(checkpoint.simulationCache, checkpoint.baseline.engine);
     if (!Number.isInteger(checkpoint.nextOption) || checkpoint.nextOption < 0 || checkpoint.nextOption > options.length) throw new Error("invalid_search_checkpoint");
   } else {
     const cache = cloneCache(input.simulationCache);
@@ -288,9 +288,9 @@ export async function assembleAuctionGear(input: PlannerInput & {
   let replayLegacyCandidates = false;
   if (input.checkpoint) {
     requireCheckpoint(inputKey, input.checkpoint, 3);
-    checkpoint = structuredClone(input.checkpoint);
+    const { simulationCache, ...state } = input.checkpoint;
+    checkpoint = { ...structuredClone(state), simulationCache: cloneCache(simulationCache, state.baseline.engine) };
     checkpoint.baseline = validSimulation(checkpoint.baseline);
-    checkpoint.simulationCache = cloneCache(checkpoint.simulationCache, checkpoint.baseline.engine);
     if (checkpoint.cursor.length !== slots.length || checkpoint.cursor.some((index, slot) => !Number.isInteger(index) || index < 0 || index >= radices[slot])) throw new Error("invalid_search_checkpoint");
     if (checkpoint.pairScores.length !== flatGroups.length || checkpoint.pairScores.some(score => !Number.isFinite(score) || score <= 0) ||
         !Number.isSafeInteger(checkpoint.nextPair) || checkpoint.nextPair < 0) throw new Error("invalid_search_checkpoint");
@@ -554,6 +554,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
       if (pending.size >= window || selections.length >= 256) await commitWindow();
       if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
     }
+    // Adjacent cursor positions share their leading choices. Reuse only the
+    // exact receipt for an unchanged prefix in this immutable offer pool.
+    const previousChoices: number[] = [];
+    const prefixReceipts: AuctionGearOption[][] = [[]];
     while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair === pairs.length && !traversal.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
       const chosenGroups = traversal.cursor.flatMap((choice, index) => choice ? [groups[index][choice - 1]] : []);
@@ -578,9 +582,20 @@ export async function assembleAuctionGear(input: PlannerInput & {
       for (let index = 0; index < groups.length; index++) {
         const choice = traversal.cursor[index];
         if (choice) effectSelection.push(groups[index][choice - 1]);
-        const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
-        if (!purchase) invalidPrefix = index;
-        else selection = purchase.options;
+        if (previousChoices[index] === choice) {
+          selection = prefixReceipts[index + 1];
+          continue;
+        }
+        previousChoices.length = index;
+        if (choice) {
+          const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
+          if (!purchase) invalidPrefix = index;
+          else selection = purchase.options;
+        }
+        if (invalidPrefix < 0) {
+          previousChoices.push(choice);
+          prefixReceipts[index + 1] = selection;
+        }
         if (invalidPrefix >= 0) break;
       }
       if (invalidPrefix < 0 && !evaluate(selection)) break;
