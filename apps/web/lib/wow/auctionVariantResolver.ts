@@ -20,18 +20,26 @@ export async function resolveAuctionVariants(input: {
       key: auctionVariantKey(v.offer),
       change: auctionVariantChange(v.offer, v.slot)
     }));
-    const response = await fetch(`${(process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "")}/v1/wow/gear/variants`, {
+    const signal = AbortSignal.any([input.signal, AbortSignal.timeout(65000)]);
+    const request = () => fetch(`${(process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "")}/v1/wow/gear/variants`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       cache: "no-store",
-      signal: AbortSignal.any([input.signal, AbortSignal.timeout(65000)]),
+      signal,
       body: JSON.stringify({
         spec: input.spec,
         characterLevel: input.characterLevel,
         variants
       })
+    });
+    // A dropped connection can leave this read-only lookup without a response.
+    // Keep the second attempt under the same deadline as the first.
+    const response = await request().catch((error: unknown) => {
+      signal.throwIfAborted();
+      if (!(error instanceof TypeError) || error.message !== "fetch failed") throw error;
+      return request();
     });
     const payload = (await response.json()) as {
       engine?: string;
