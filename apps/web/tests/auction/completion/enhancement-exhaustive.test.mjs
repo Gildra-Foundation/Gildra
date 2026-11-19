@@ -48,13 +48,14 @@ test('exact resumes past twelve calls to a winner excluded by the legacy cap',as
   assert.equal(resumed.simulations,0);assert.equal(exact.calls.length,21);
 });
 
-test('exact visits 101 compatible choices plus bare while legacy retains its catalog bound',async()=>{
+test('exact visits 101 compatible choices plus bare and the quick search accepts the same catalog',async()=>{
   const h=fixture({choices:gems(101),limits:{configurations:128,simulations:12}});
   const result=await complete(h);
   assert.equal(h.calls.length,102);assert.equal(result.checkpoint.exactNextConfiguration,'102');
   assert.equal(new Set(h.calls.map(config=>config.key)).size,102);
   assert.equal(result.complete,true);assert.equal(result.searchLimited,false);
-  await assert.rejects(()=>optimizeAuctionGearEnhancements({...h.input,exhaustive:false}),/enhancement_catalog_limit/);
+  const quick=await optimizeAuctionGearEnhancements({...h.input,exhaustive:false});
+  assert.equal(quick.searchLimited,true);
 });
 
 test('exact passes 4096 traversal steps with bounded durable cache and pinned leaders',async()=>{
@@ -221,4 +222,23 @@ test('value mode retains the two highest measured configurations even when value
   assert(result.checkpoint.cache[result.checkpoint.thirdMeasuredDps.configuration.key]);
   assert(result.checkpoint.bestValueConfirmed.configuration.slots[0].gemIds[0]>=8002);
   assert(result.checkpoint.cache[result.checkpoint.secondMeasuredDps.configuration.key]);
+});
+
+test('the three measured finalists retain the cheapest scroll for each distinct native enchant',async()=>{
+  const h=fixture({sockets:0,limits:{configurations:1,simulations:1}});
+  const enchants=[{id:6101,cost:5},{id:6102,cost:10},{id:6103,cost:15}].flatMap(({id,cost})=>
+    [0,1].map(offset=>({key:`scroll-${id}-${offset}`,kind:'enchant',simulationId:id,
+      consumableItemId:2*id+offset,cost:cost+100*offset})));
+  h.input.catalog.resolve=()=>({verified:true,enchantApplicable:true,enchantChoices:enchants,gemChoices:{}});
+  h.input.prices.prices=Object.fromEntries(enchants.map(scroll=>[scroll.consumableItemId,{ladder:[[scroll.cost,1]]}]));
+  const ids=[];
+  h.input.simulate=async config=>{
+    const enchant=config.slots[0].enchantId;ids.push(enchant);
+    return measurement(enchant?2000-enchant%100:1000);
+  };
+  const {checkpoint}=await complete(h);
+  assert.equal(ids.length,4,'Six scrolls and bare yield only four native effects across restored slices');
+  const leaders=[checkpoint.bestMeasuredDps,checkpoint.secondMeasuredDps,checkpoint.thirdMeasuredDps];
+  assert.deepEqual(leaders.map(row=>[row.configuration.slots[0].enchantId,row.configuration.totalCopper,
+    row.configuration.consumables[0].itemId]),[[6101,55,12202],[6102,60,12204],[6103,65,12206]]);
 });

@@ -155,10 +155,10 @@ test('late transport resolutions after abort cannot update retained state', asyn
 test('equal-latency dependency benchmark retains call count while removing one sequential wait', async t => {
   // Restore only the old serialized read scheduling in the same extracted
   // production function. Fresh ownership, validation and publication stay equal.
-  const parallelReads = /const \[current, market\] = await Promise\.all\(\[\s*diagnostics\.measureStage\("armory", \(\) => getBattleNetSimulationSnapshot\(token, context\.character, signal\)\),\s*diagnostics\.measureStage\("market", \(\) => getCharacterAuctionMarket\(context\.character, token, \{ refresh: true, signal \}\)\),?\s*\]\);/;
+  const parallelReads = /const \[current, market\] = await Promise\.all\(\[\s*diagnostics\.measureStage\("armory", \(\) => getBattleNetSimulationSnapshot\(token, context\.character, signal, \{ professions: true \}\)\),\s*diagnostics\.measureStage\("market", \(\) => getCharacterAuctionMarket\(context\.character, token, \{ refresh: true, signal \}\)\),?\s*\]\);/;
   assert(parallelReads.test(verifierSource), 'Benchmark requires the explicit concurrent fresh-read boundary');
   const serialSource = verifierSource.replace(parallelReads,
-    'const current = await getBattleNetSimulationSnapshot(token, context.character, signal);\n' +
+    'const current = await getBattleNetSimulationSnapshot(token, context.character, signal, { professions: true });\n' +
     'signal.throwIfAborted();\n' +
     'if (auctionGearProfileFingerprint(current) !== context.profileFingerprint) throw new Error("character_snapshot_changed");\n' +
     'const market = await getCharacterAuctionMarket(context.character, token, { refresh: true, signal });');

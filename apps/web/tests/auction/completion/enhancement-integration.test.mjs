@@ -15,7 +15,7 @@ import { optimizeAuctionGearEnhancements } from '../../../lib/wow/auctionGearEnh
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/auctionGearExhaustiveEnhancements.ts';
 import { auctionSelectionEffectKey } from '../../../lib/wow/auctionGearEffects.ts';
-import { auctionEnhancementCatalogInfo, auctionEnhancementRecords } from '../../../lib/wow/auctionEnhancementCatalog.ts';
+import { auctionEnhancementCatalogInfo, auctionEnhancementRecords, resolveExactEnhancements } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { prepareGearLoadout, nativeGearSimulationMeasurement } from '../../../lib/wow/gearSimulation.ts';
 import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 
@@ -318,6 +318,13 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
     h.input.finalists[0].options.unshift(...unverified);
   }
   if(socketLoser) {
+    // Fixed market inventory keeps the continuation fixture independent of
+    // how many historical, unlisted consumables enter the pinned catalog.
+    const stocked=new Set([173121,173122,173123,173124,240094,240133,244643]);
+    h.input.quote=async(_region,ids)=>({
+      prices:Object.fromEntries(ids.filter(id=>stocked.has(id)).map(id=>[id,{ladder:[[10,10]]}])),
+      sourceUpdatedAt:timestamp,fetchedAt:new Date().toISOString(),
+    });
     const bareWinner=structuredClone(h.input.finalists[0].options[0]);
     bareWinner.id='synthetic-bare-winner';bareWinner.auctionId++;bareWinner.candidate.itemId++;
     bareWinner.variantKey='synthetic-no-socket';bareWinner.candidate.variants[0].key=bareWinner.variantKey;
@@ -469,7 +476,7 @@ test('over-budget enhancement stage with preserved owned equipment reports no af
   assert.equal(h.calls.length,0);
 });
 
-test('actual head and ring stage quotes all 115 pinned consumables and resumes within the full equipment budget',async()=>{
+test('actual head and ring stage quotes all pinned consumables and resumes within the full equipment budget',async()=>{
   const h=stageFixture({slotType:'HEAD',inventoryType:1,itemSubclassId:4});
   const ring=stageFixture({slotType:'FINGER_1',inventoryType:11,itemSubclassId:0});
   const ringOption=ring.input.finalists[0].options[0];
@@ -490,8 +497,16 @@ test('actual head and ring stage quotes all 115 pinned consumables and resumes w
   const first=await evaluateAuctionEnhancementStage(h.input);
   assert.equal(first.status,'pending');assert.equal(first.complete,false);
   assert.equal(h.quotes.length,1);
-  assert.equal(h.quotes[0].length,115,'85 gem IDs + 12 helm enchant items + 18 ring enchant items');
-  assert.equal(new Set(h.quotes[0]).size,115);
+  assert.equal(h.quotes[0].length,368,'302 gem IDs + 12 helm enchant items + 54 ring enchant items');
+  const expected = new Set();
+  for (const {candidate} of h.input.finalists[0].options) {
+    const variant = candidate.variants[0];
+    const eligible = resolveExactEnhancements({...candidate,itemLevel:variant.itemLevel,socketColors:variant.resolution.enhancements.socketColors,
+      build:auctionEnhancementCatalogInfo.build,revision:auctionEnhancementCatalogInfo.simcRevision,engine:h.input.engine},{level:h.input.level});
+    assert(eligible.verified);
+    for (const row of [...eligible.enchantChoices,...Object.values(eligible.gemChoices).flat()]) expected.add(row.consumableItemId);
+  }
+  assert.deepEqual(new Set(h.quotes[0]),expected);
   assert(!first.reasons.includes('enhancement_catalog_limit'));
   const final=await finishStage(h);
   assert.equal(final.status,'ready');assert.equal(final.complete,true);
@@ -506,7 +521,7 @@ test('actual head and ring stage quotes all 115 pinned consumables and resumes w
   for(const slot of config.slots){assert(slot.enchantId>0);assert.equal(slot.gemIds.length,1);}
 });
 
-test('missing scroll and gem mappings retain bare, socketed and other-slot purchases in exact mode',async()=>{
+test('missing scroll mappings and unpriced low-level gems retain bare, socketed and other-slot purchases in exact mode',async()=>{
   const h=stageFixture({slotType:'WAIST',inventoryType:6,itemSubclassId:4});
   const belt=h.input.finalists[0].options[0];
   belt.candidate.variants[0].itemLevel=210;
@@ -541,7 +556,7 @@ test('missing scroll and gem mappings retain bare, socketed and other-slot purch
   };
   const result=await finishStage(h);
   assert.deepEqual(seen,new Set([[0,0],[gemId,0],[0,scroll.simulationId],[gemId,scroll.simulationId]].map(ids=>JSON.stringify(ids))));
-  assert(result.reasons.includes('no_supported_enchant') && result.reasons.includes('no_supported_gem'));
+  assert(result.reasons.includes('no_supported_enchant') && result.reasons.includes('price_unknown_or_insufficient_quantity'));
   const best=result.recommendations[0].configuration;
   assert.equal(best.fullyEnhanced,false);
   assert.deepEqual(best.slots.find(slot=>slot.slotType==='TRINKET_1').gemIds,[0]);

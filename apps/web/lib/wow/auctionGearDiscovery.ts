@@ -1,3 +1,4 @@
+import { professionEligibility } from "./characterProfessions";
 import "server-only";
 import { auctionSummarySlotMatch } from "./gearCompatibility";
 import type { CatalogRecord } from "@/lib/api/client";
@@ -423,6 +424,14 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         }
         if (metadata.requiredLevel > input.characterLevel) continue;
         const variant = resolvedAuctionVariant(probe.offer, metadata, state.engine);
+        const requirement = variant.resolution?.enhancements;
+        if (requirement?.status === "verified" && requirement.requiredProfessionId) {
+          const eligible = professionEligibility(input.context(probe.slot).professions, requirement.requiredProfessionId, requirement.requiredProfessionRank);
+          if (eligible !== "eligible") {
+            if (eligible === "unknown") state.eligibilityUnverifiedItems.add(probe.offer.itemId);
+            continue;
+          }
+        }
         if (instanceVerified) {
           (state.equippedVerifiedVariants ??= new Set()).add(key);
           state.rejectedVariants.delete(key);

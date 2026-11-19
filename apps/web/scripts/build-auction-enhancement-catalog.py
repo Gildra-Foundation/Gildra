@@ -67,25 +67,22 @@ def main():
     if not declared_count or int(declared_count[1]) != len(native_rules) or not native_rules:
         raise ValueError('incomplete native permanent enchant table')
 
-    # Walk from native enchant IDs to actual consumables. The profession lists omit
-    # earlier expansions, including the shoulders, necklaces and rings on Eversong.
-    jewelry_shoulders = {r['enchantId'] for r in native_rules if r['itemClassId'] == 4
-                        and r['inventoryMask'] & ((1 << 2) | (1 << 3) | (1 << 11))}
-    wrist_ids = [r['enchantId'] for r in native_rules if r['itemClassId'] == 4 and r['inventoryMask'] & (1 << 9)]
-    uncapped_wrist = rows('SpellItemEnchantment', "r.row_id IN (" + ids(wrist_ids) + ") AND r.payload->>'ItemLevelMax'='0'")
-    direct_ids = jewelry_shoulders | {r['id'] for r in uncapped_wrist}
-    direct_spells = rows('SpellEffect', "r.payload->>'Effect'='53' AND (r.payload->>'EffectMiscValue_0')::bigint IN (" + ids(direct_ids) + ')')
-    direct_effects = rows('ItemEffect', "(r.payload->>'SpellID')::bigint IN (" + ids(r['payload']['SpellID'] for r in direct_spells) + ')')
+    # Reverse the pinned rules through application spells, then restrict to
+    # tradeable item enhancements. An on-use scroll and its formula can share a spell.
+    native_ids = {r['enchantId'] for r in native_rules}
+    direct_spells = rows('SpellEffect', "r.payload->>'Effect'='53' AND r.payload->>'DifficultyID'='0' AND (r.payload->>'EffectMiscValue_0')::bigint IN (" + ids(native_ids) + ')')
+    direct_effects = rows('ItemEffect', "r.payload->>'TriggerType'='0' AND (r.payload->>'SpellID')::bigint IN (" + ids(r['payload']['SpellID'] for r in direct_spells) + ')')
     direct_links = rows('ItemXItemEffect', "(r.payload->>'ItemEffectID')::bigint IN (" + ids(r['id'] for r in direct_effects) + ')')
-    direct_item_ids = ids(r['payload']['ItemID'] for r in direct_links)
-    enhancement_items = rows('Item', "r.row_id IN (" + direct_item_ids + ") AND r.payload->>'ClassID'='8'")
-    tradeable = rows('ItemSparse', "r.row_id IN (" + ids(r['id'] for r in enhancement_items) + ") AND r.payload->>'Bonding'='0'")
+
+    enhancement_items = rows('Item', "r.payload->>'ClassID' IN ('0','8') AND r.row_id IN (" + ids(r['payload']['ItemID'] for r in direct_links) + ')')
+    tradeable = rows('ItemSparse', "r.payload->>'Bonding' IN ('0','2','3') AND r.row_id IN (" + ids(r['id'] for r in enhancement_items) + ')')
     candidates = {r['id'] for r in tradeable}
-    # The captured Shadowlands rings and necklaces have low-level prismatic sockets.
-    # Include that expansion's tradeable gems only through their actual GemProperties rows.
+
+    # Prismatic gems can share an enchant ID while remaining separate priced
+    # items. Follow every pinned prismatic property, independent of expansion.
     prismatic = rows('GemProperties', "r.payload->>'Type'='14'")
-    older_gems = rows('ItemSparse', "r.payload->>'ExpansionID'='8' AND r.payload->>'Bonding'='0' AND (r.payload->>'Gem_properties')::bigint IN (" + ids(r['id'] for r in prismatic) + ')')
-    gem_items = rows('Item', "r.payload->>'ClassID'='3' AND r.row_id IN (" + ids(r['id'] for r in older_gems) + ')')
+    gem_sparse = rows('ItemSparse', "r.payload->>'Bonding' IN ('0','2','3') AND (r.payload->>'Gem_properties')::bigint IN (" + ids(r['id'] for r in prismatic) + ')')
+    gem_items = rows('Item', "r.payload->>'ClassID'='3' AND r.row_id IN (" + ids(r['id'] for r in gem_sparse) + ')')
     candidates.update(r['id'] for r in gem_items)
     for profession in ['jewelcrafting', 'enchanting', 'leatherworking', 'tailoring', 'blacksmithing', 'engineering']:
         doc = json.loads((ROOT / f'apps/web/data/wow/professions/{profession}.json').read_text())
@@ -93,11 +90,9 @@ def main():
             out = recipe.get('output', {})
             candidates.update(out.get('ranks', []))
             if out.get('item'): candidates.add(out['item'])
-    seed_links = rows('ItemXItemEffect', "(r.payload->>'ItemID')::bigint IN (" + ids(candidates) + ')')
-    seed_effects = rows('ItemEffect', 'r.row_id IN (' + ids(r['payload']['ItemEffectID'] for r in seed_links) + ')')
-    seed_spells = rows('SpellEffect', "(r.payload->>'SpellID')::bigint IN (" + ids(r['payload']['SpellID'] for r in seed_effects) + ')')
-    crafting_ids = [r['payload']['EffectMiscValue_0'] for r in seed_spells if r['payload'].get('Effect') == '301']
-    ranked = rows('CraftingDataEnchantQuality', "(r.payload->>'CraftingDataID')::bigint IN (" + ids(crafting_ids) + ')', MAPPING_BUILD)
+    # Try each later quality mapping for a native enchant. A source row only
+    # seeds a candidate; the full two-build chain below must still pass parity.
+    ranked = rows('CraftingDataEnchantQuality', "(r.payload->>'SpellItemEnchantmentID')::bigint IN (" + ids(native_ids) + ')', MAPPING_BUILD)
     candidates.update(int(r['payload']['ItemID']) for r in ranked)
     data = []
     def take(table, condition='true'):

@@ -26,13 +26,21 @@ const source = async (name, ref) => ref ? execFileSync('git', ['show', `${ref}:a
 const exportsOf = value => [...value.matchAll(/^export (?:async )?function (\w+)/gm)].map(row => row[1]);
 const evaluate = (value, bindings, names=exportsOf(value)) => new vm.Script(strip(value)+`;({${names.join(',')}})`).runInNewContext(bindings);
 const sharedHashes=Object.fromEntries(await Promise.all(['auctionGearPlanner','auctionGearEnhancedLoadouts','auctionGearEnhancementStage','auctionGearEnhancementOptimizer','auctionGearPersistence'].map(async name=>[name,createHash('sha256').update(await source(name)).digest('hex')])));
+// The synthetic market stocks twenty distinct wrist scrolls and twenty gems.
+// Compatible catalog entries outside this list are still eligible but unpriced.
+const stockedConsumables = new Set([
+  35420, 35421, 35422, 35423, 35424, 35425, 35426, 35427, 38679, 38768,
+  38771, 38774, 38777, 38778, 38783, 38793, 38797, 38803, 38809, 38811,
+  22459, 22460, 34142, 34143, 115803, 115804, 115805, 115806, 115807, 115808,
+  115809, 115811, 115812, 115813, 115814, 115815, 127760, 127761, 127762, 127763,
+]);
 const globals = { randomUUID, createHash, process, Map, Set, WeakMap, Date, Object, JSON, Number, Math, Error, AbortController, AbortSignal,
   DOMException, structuredClone, setTimeout, clearTimeout, setImmediate, clearImmediate, queueMicrotask, performance };
 
 /** Actual full-task wrapper, Runner, discovery, planners, exact stage, Jobs and
  * SearchStore/persistence. Only owned-account/catalog/native/quote transports
  * use labeled local fixtures; no network request or live worker is involved. */
-export async function exactPipeline({ ref, items=3, onPublication, onWrite, beforeTurn, nativeMs=0 }={}) {
+export async function exactPipeline({ ref, items=3, onPublication, onWrite, onEnhancementSlice, beforeTurn, nativeMs=0 }={}) {
   assert.equal(process.env.GILDRA_AUCTION_STATE_DIR, undefined, 'Never use service state');
   const directory = await mkdtemp(join(tmpdir(), 'gildra-exact-pipeline-'));
   process.env.GILDRA_AUCTION_STATE_DIR = directory;
@@ -58,7 +66,7 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, befo
   let runner, entry;
   const store=evaluate(sources.auctionGearSearchStore,{...globals,...disk,getActiveAuctionGearJob:jobs.getActiveAuctionGearJob,
     snapshotAuctionGearContext:context=>runner.snapshotAuctionGearContext(context),restoreAuctionGearContext:data=>runner.restoreAuctionGearContext(data)});
-  const quote=async(_region,ids)=>({prices:Object.fromEntries(ids.map(id=>[String(id),{ladder:[[10,100]]}])),
+  const quote=async(_region,ids)=>({prices:Object.fromEntries(ids.filter(id=>stockedConsumables.has(id)).map(id=>[String(id),{ladder:[[10,100]]}])),
     sourceUpdatedAt:fixture.state.market.sourceUpdatedAt,fetchedAt:fixture.state.market.fetchedAt});
   const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,createAuctionGearEnhancedLoadoutIterator,compareGearSimulationResults,
     evaluateAuctionEnhancementStage:input=>measure('stage',()=>evaluateAuctionEnhancementStage({...input,quote})),
@@ -66,13 +74,20 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, befo
   const requests=[], publications=[];
   runner=evaluate(sources.auctionGearRunner,{...runnerBindings,...globals,...store,...discovery,...exact,prepareGearLoadout,
     auctionSelectionEffectKey,auctionEnhancementScenarioFinalists,customizedAuctionGearOptions,ownedAuctionGearChanges,applyOwnedAuctionGearChanges,
+    advanceAuctionGearExhaustiveEnhancements:input=>exact.advanceAuctionGearExhaustiveEnhancements(onEnhancementSlice ? {
+      ...input, onUpdate:async result=>{
+        const writesBefore=counts.searchWrites;
+        await input.onUpdate(result);
+        onEnhancementSlice({result,entry,jobs,owner,counts,writesBefore});
+      },
+    } : input),
     assembleAuctionGear:input=>measure('assembly',()=>runnerBindings.assembleAuctionGear(input)),
     searchAuctionGearOptions:input=>measure('searchPlanning',()=>runnerBindings.searchAuctionGearOptions(input)),
     getBattleNetCharacterBySlug:async()=>{counts.ownership++;return character;},
     getBattleNetSimulationSnapshot:async()=>{counts.armory++;return fixture.state.armory;},
     getCharacterAuctionMarket:async(...args)=>{counts.market++;if(counts.ownership)assert.equal(args[2].refresh,true);return runnerBindings.getCharacterAuctionMarket(...args);},
     fetch:async(url,options)=>{
-      // This persistence benchmark measures one durable slice per native call.
+      // Use the serial native path to observe each eligible publication independently.
       if(new URL(url).pathname==='/healthz')return Response.json({status:'ok'}, {headers:{'x-gildra-simulation-concurrency':'1'}});
       counts.native++;const request=JSON.parse(options.body);requests.push(request);
       assert.equal(request.actionListMode,'native');

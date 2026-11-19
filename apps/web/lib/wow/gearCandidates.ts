@@ -1,3 +1,4 @@
+import { professionEligibility, type CharacterProfessions } from "./characterProfessions";
 import { supportedAuctionModifiers } from "./gearItemModifiers";
 import { normalizeInventoryType, equipmentCompatibility, type GearLoadoutItem } from "./gearCompatibility";
 import type { GearPlannerWeapon } from "./gearPlannerPresentation";
@@ -74,6 +75,7 @@ export type CatalogGearEntity = {
 };
 
 export type GearCandidateContext = {
+  professions?: CharacterProfessions;
   classId: number;
   specId: number;
   characterLevel: number;
@@ -215,9 +217,13 @@ export function normalizeGearCandidate(entity: CatalogGearEntity, context: GearC
     const mask=race && race>64 ? race1 : race0;
     if(!race || !/^-?\d+$/.test(mask) || (BigInt(mask) & (1n << BigInt((race-1)%64)))===0n) rejectionReasons.push("race_restricted");
   }
-  // These requirements need account skill/reputation/ability data that is not
-  // part of the equipment snapshot. Exclude rather than assume they are met.
-  if(number(requirements.required_skill_id ?? payloadValue(entity,"RequiredSkill"))>0 || number(requirements.required_ability_id ?? payloadValue(entity,"RequiredAbility"))>0 || number(requirements.faction_id ?? payloadValue(entity,"MinFactionID"))>0 || number(requirements.holiday_id ?? payloadValue(entity,"RequiredHoliday"))>0) rejectionReasons.push("equip_requirements_unverified");
+  const requiredSkill = number(requirements.required_skill_id ?? payloadValue(entity, "RequiredSkill"));
+  if (requiredSkill > 0) {
+    const rank = number(requirements.required_skill_rank ?? payloadValue(entity, "RequiredSkillRank"), -1);
+    const eligibility = professionEligibility(context.professions, requiredSkill, rank);
+    if (eligibility !== "eligible") rejectionReasons.push(eligibility === "unknown" ? "equip_requirements_unverified" : "profession_restricted");
+  }
+  if (number(requirements.required_ability_id ?? payloadValue(entity,"RequiredAbility"))>0 || number(requirements.faction_id ?? payloadValue(entity,"MinFactionID"))>0 || number(requirements.holiday_id ?? payloadValue(entity,"RequiredHoliday"))>0) rejectionReasons.push("equip_requirements_unverified");
   const factionFlags=number(payloadValue(entity,"Flags_1"));
   if(((factionFlags & 1)!==0 && context.faction!=="HORDE") || ((factionFlags & 2)!==0 && context.faction!=="ALLIANCE")) rejectionReasons.push("faction_restricted");
   if (requiredLevel > context.characterLevel) rejectionReasons.push("level_restricted");

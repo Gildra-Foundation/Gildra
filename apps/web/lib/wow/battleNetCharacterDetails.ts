@@ -1,5 +1,7 @@
 import type { BattleNetCharacter } from "./battleNetCharacters";
 
+import { characterProfessions, type CharacterProfessions } from "./characterProfessions";
+
 type Localized = { name?: string; type?: string };
 type RawValue = { value?: number; display_string?: string };
 type RawItem = {
@@ -34,6 +36,7 @@ type RawSpecializations = {
 };
 
 export type BattleNetSimulationSnapshot = {
+  professions?: CharacterProfessions;
   profile: Record<string, unknown>;
   specializations: Record<string, unknown>;
   equipment: Record<string, unknown>;
@@ -116,13 +119,14 @@ async function requiredApi<T>(url: string, token: string, endpoint: string): Pro
   }
 }
 
-export async function getBattleNetSimulationSnapshot(token: string, character: BattleNetCharacter, signal?: AbortSignal): Promise<BattleNetSimulationSnapshot> {
+export async function getBattleNetSimulationSnapshot(token: string, character: BattleNetCharacter, signal?: AbortSignal, options?: { professions: boolean }): Promise<BattleNetSimulationSnapshot> {
   const region = character.region;
   const root = `https://${region}.api.blizzard.com/profile/wow/character/${character.realm.slug}/${encodeURIComponent(character.name.toLowerCase())}`;
-  const [profile, specializations, equipment] = await Promise.all([
+  const [profile, specializations, equipment, professions] = await Promise.all([
     api<Record<string, unknown>>(withLocale(root, region, "en"), token, signal),
     api<RawSpecializations & Record<string, unknown>>(withLocale(`${root}/specializations`, region, "en"), token, signal),
     api<Record<string, unknown>>(withLocale(`${root}/equipment`, region, "en"), token, signal),
+    options?.professions ? api<unknown>(withLocale(`${root}/professions`, region, "en"), token, signal) : undefined,
   ]);
   if (!profile || !specializations || !equipment) throw new Error("Battle.net character simulation data is incomplete");
   const activeSpecializationId = specializations.active_specialization?.id ?? 0;
@@ -142,6 +146,7 @@ export async function getBattleNetSimulationSnapshot(token: string, character: B
   };
   return {
     profile,
+    professions: characterProfessions(professions, character),
     specializations: simulationSpecializations,
     equipment,
     activeSpecializationId,
