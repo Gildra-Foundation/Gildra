@@ -50,3 +50,43 @@ export function exactCommodityQuote(ladder: readonly (readonly [number, number])
   }
   return { totalCopper, levels, missingQuantity: remaining };
 }
+
+/** One evaluation owns one price snapshot. Capture each used ladder once; never
+ * reuse a cache across a refreshed/mutated snapshot or expose its cached levels. */
+export function createExactCommodityPriceCache(prices: ExactCommodityPrices) {
+  type Quote = ReturnType<typeof exactCommodityQuote>;
+  const items = new Map<number, { ladder: readonly (readonly [number, number])[] | undefined; quantities: Map<number, { totalCopper: number | null; quote?: Quote }> }>();
+  const entry = (itemId: number, quantity: number) => {
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) throw new Error("invalid_commodity_quantity");
+    let item = items.get(itemId);
+    if (!item) {
+      item = { ladder: prices[itemId]?.ladder.map(([price, available]) => [price, available] as const), quantities: new Map() };
+      items.set(itemId, item);
+    }
+    let value = item.quantities.get(quantity);
+    if (!value) {
+      value = { totalCopper: item.ladder ? exactCommodityCost(item.ladder, quantity) : null };
+      item.quantities.set(quantity, value);
+    }
+    return value;
+  };
+  return {
+    cost(itemId: number, quantity: number) { return entry(itemId, quantity).totalCopper; },
+    quote(itemId: number, quantity: number): Quote {
+      const value = entry(itemId, quantity);
+      if (!value.quote) {
+        let remaining = quantity;
+        const levels: Quote["levels"] = [];
+        for (const [unitCopper, available] of items.get(itemId)!.ladder ?? []) {
+          const used = Math.min(remaining, available);
+          if (used) levels.push({ unitCopper, quantity: used });
+          remaining -= used;
+          if (!remaining) break;
+        }
+        value.quote = { totalCopper: value.totalCopper, levels, missingQuantity: remaining };
+      }
+      return { totalCopper: value.quote.totalCopper, levels: value.quote.levels.map(level => ({ unitCopper: level.unitCopper, quantity: level.quantity })),
+        missingQuantity: value.quote.missingQuantity };
+    },
+  };
+}

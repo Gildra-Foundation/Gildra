@@ -9,7 +9,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {validatedAuctionEnhancementMetadata} from '../../../lib/wow/auctionItemVariant.ts';
 import * as catalog from '../../../lib/wow/auctionEnhancementCatalog.ts';
-import {exactCommodityQuote} from '../../../lib/wow/auctionGearCost.ts';
+import {createExactCommodityPriceCache,exactCommodityQuote} from '../../../lib/wow/auctionGearCost.ts';
 import {assertFreshMarket} from '../../../lib/wow/auctionMarket.ts';
 import {prepareGearLoadout,compareGearSimulationResults} from '../../../lib/wow/gearSimulation.ts';
 import {auctionPlanCost,auctionGearPurchase} from '../../../lib/wow/auctionGearPlanner.ts';
@@ -39,7 +39,7 @@ async function run(repeat){
  const phases={},configurationTrace=[];const time=(key,work)=>{const began=performance.now();try{return work();}finally{const row=phases[key]??={calls:0,ms:0};row.calls++;row.ms+=performance.now()-began;}};
  const cryptoFor=label=>(algorithm,...args)=>{const began=performance.now(),h=createHash(algorithm,...args),wrapper={update:(...args)=>{h.update(...args);return wrapper;},digest:(...args)=>{try{return h.digest(...args);}finally{const row=phases[label]??={calls:0,ms:0};row.calls++;row.ms+=performance.now()-began;}}};return wrapper;};
  const globals={Map,Set,WeakMap,Date,Object,Number,JSON,Math,BigInt,Array,Error,AbortSignal,setImmediate,clearImmediate};
- const optimize=new vm.Script(strip(optimizerSource)+'\n;optimizeAuctionGearEnhancements').runInNewContext({...globals,createHash:cryptoFor('optimizerHash'),structuredClone:value=>time('clone',()=>structuredClone(value)),compareGearSimulationResults,assertFreshMarket,exactCommodityQuote:(...args)=>time('commodityQuote',()=>exactCommodityQuote(...args))});
+ const optimize=new vm.Script(strip(optimizerSource)+'\n;optimizeAuctionGearEnhancements').runInNewContext({...globals,createHash:cryptoFor('optimizerHash'),structuredClone:value=>time('clone',()=>structuredClone(value)),compareGearSimulationResults,assertFreshMarket,createExactCommodityPriceCache:prices=>{const cache=time('commoditySnapshot',()=>createExactCommodityPriceCache(prices));return {cost:(...args)=>time('commodityCost',()=>cache.cost(...args)),quote:(...args)=>time('commodityQuote',()=>cache.quote(...args))};},exactCommodityQuote:(...args)=>time('commodityQuote',()=>exactCommodityQuote(...args))});
  const stage=new vm.Script(strip(stageSource)+'\n;evaluateAuctionEnhancementStage').runInNewContext({...globals,...catalog,validatedAuctionEnhancementMetadata,createHash:cryptoFor('stageHash'),auctionPlanCost,auctionGearPurchase,customizedAuctionGearOptions,ownedAuctionGearChanges,auctionGearSlots,prepareGearLoadout,compareGearSimulationResults,assertFreshMarket,
   resolveExactEnhancements:(...args)=>time('catalogResolve',()=>catalog.resolveExactEnhancements(...args)),lookupInstalled:(...args)=>time('installedResolve',()=>catalog.lookupInstalled(...args)),
   optimizeAuctionGearEnhancements:async input=>{const began=performance.now();try{const result=await optimize(input);configurationTrace.push(...result.configurations);return result;}finally{const row=phases.optimizer??={calls:0,ms:0};row.calls++;row.ms+=performance.now()-began;}}});

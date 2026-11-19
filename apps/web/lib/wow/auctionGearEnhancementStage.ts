@@ -61,6 +61,8 @@ export async function evaluateAuctionEnhancementStage(input: {
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
   additionalSearchReasons?: readonly string[];
+  onPriceDependencies?: (itemIds: number[]) => void;
+  priorSimulations?: EnhancementCheckpoint["cache"];
 }): Promise<AuctionEnhancementStageResult> {
   if(input.exhaustive!==undefined && typeof input.exhaustive!=='boolean')throw new Error('invalid_enhancement_input');
   const info = auctionEnhancementCatalogInfo, reasons = new Set<string>(input.additionalSearchReasons);
@@ -160,6 +162,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     if(unsupported)continue;
     if(input.shouldYield()){result.complete=false;break;}
     const ids=[...new Set([...resolutions.values()].flatMap(r=>r.verified ? [...r.enchantChoices,...Object.values(r.gemChoices).flat()].map(e=>e.consumableItemId).filter(id=>id>0) : []))].sort((a,b)=>a-b);
+    input.onPriceDependencies?.(ids);
     const now=Date.now();
     let sourceFresh=true;
     if(input.exhaustive && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
@@ -174,10 +177,13 @@ export async function evaluateAuctionEnhancementStage(input: {
     const identity=hash([input.profileFingerprint,input.engine,input.encounter,finalist.options.map(o=>[o.id,o.variantKey])]);
     activeKeys.add(identity);
     const previous=input.state.checkpoints[identity];
+    // Only the prices eligible for these exact slots enter the exhaustive cursor.
+    const prices = input.exhaustive ? Object.fromEntries(ids.filter(id=>Object.hasOwn(input.state.quotes!.prices,id))
+      .map(id=>[id,input.state.quotes!.prices[id]])) : input.state.quotes.prices;
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},character:{},
-      prices:{prices:input.state.quotes.prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
+      prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
       budgetCopper:input.budgetCopper,simulationIdentity:identity,objective:input.objective,baselineDps:input.baseline.dps,baseline:input.baseline,
-      signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache,onCacheHit:input.onCacheHit,
+      signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache ?? input.priorSimulations,onCacheHit:input.onCacheHit,
       exhaustive:input.exhaustive,
       simulationConcurrency:input.simulationConcurrency,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2}} : {}),

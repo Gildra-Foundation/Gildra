@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { compareGearSimulationResults } from "./gearSimulation";
 import { assertFreshMarket } from "./auctionMarket";
-import { exactCommodityQuote, type ExactCommodityPrices } from "./auctionGearCost";
+import { createExactCommodityPriceCache, type ExactCommodityPrices } from "./auctionGearCost";
 import type { GearPlanSimulation } from "./auctionGearTypes";
 
 export type Enhancement = { key: string; kind: "gem" | "enchant"; consumableItemId: number; simulationId: number;
@@ -112,6 +112,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       (input.objective === "value" && (!Number.isFinite(baselineDps) || baselineDps! <= 0)) ||
       input.slots.length > 20) throw new Error("invalid_enhancement_input");
   const slots = [...input.slots].sort((a,b) => a.slotType.localeCompare(b.slotType));
+  const commodityPrices = createExactCommodityPriceCache(input.prices.prices);
   if (new Set(slots.map(s => s.slotType)).size !== slots.length) throw new Error("duplicate_equipment_slot");
   const axes: Choice[][] = [], resolutions: EnhancementResolution[] = [], reasons = new Set<string>();
   for (const [slotIndex, slot] of slots.entries()) {
@@ -135,8 +136,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       const priceRank = (choice: Choice) => {
         if (!choice.enhancement) return Infinity;
         if (choice.retained) return 0;
-        const price = input.prices.prices[choice.enhancement.consumableItemId];
-        const cost = price ? exactCommodityQuote(price.ladder,1).totalCopper : null;
+        const cost = commodityPrices.cost(choice.enhancement.consumableItemId,1);
         if (cost === null) reasons.add("price_unknown_or_insufficient_quantity");
         return cost ?? Infinity;
       };
@@ -242,8 +242,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       if (e && !retained) partialQuantities.set(e.consumableItemId,(partialQuantities.get(e.consumableItemId) ?? 0)+1);
       let partialCost = input.itemsCopper;
       for (const [itemId, quantity] of partialQuantities) {
-        const price = input.prices.prices[itemId];
-        const quote = price ? exactCommodityQuote(price.ladder,quantity).totalCopper : null;
+        const quote = commodityPrices.cost(itemId,quantity);
         if (quote === null) { configurationReasons.add("price_unknown_or_insufficient_quantity"); valid = false; break; }
         partialCost += quote;
         if (!Number.isSafeInteger(partialCost)) throw new Error("invalid_budget");
@@ -275,7 +274,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     }
     const fullyEnhanced = completeRules && selected.every(c=>c.enhancement !== null || (slots[c.slot].owned && !slots[c.slot].allowOwnedChanges));
     const consumables = [...quantities].sort(([a],[b])=>a-b).map(([itemId,quantity])=>{
-      const quote = input.prices.prices[itemId] ? exactCommodityQuote(input.prices.prices[itemId].ladder,quantity) : {totalCopper:null,levels:[],missingQuantity:quantity};
+      const quote = commodityPrices.quote(itemId,quantity);
       return {itemId,kind:kinds.get(itemId)!,quantity,quotedCopper:quote.totalCopper,levels:quote.levels,missingQuantity:quote.missingQuantity};
     });
     const known = consumables.every(c=>c.quotedCopper !== null);
