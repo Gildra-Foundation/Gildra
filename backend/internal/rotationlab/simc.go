@@ -54,6 +54,7 @@ type SimCEngine struct {
 	limit      chan struct{}
 	waiting    chan struct{}
 	queueWait  time.Duration
+	variants   gearVariantCache
 	cacheMu    sync.RWMutex
 	baseline   map[string]int
 }

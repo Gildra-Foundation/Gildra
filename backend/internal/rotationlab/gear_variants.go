@@ -112,13 +112,58 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	if err := validateVariantRequest(input); err != nil {
 		return GearVariantResponse{}, err
 	}
+	if err := ctx.Err(); err != nil {
+		return GearVariantResponse{}, err
+	}
+	binary, _ := os.Stat(e.binary)
+	keys := gearVariantKeys(input)
+	hits := e.variants.lookup(binary, keys)
+	out := GearVariantResponse{Variants: make([]GearVariantMetadata, len(keys))}
+	missing := input
+	missing.Variants = nil
+	var positions []int
+	var missingKeys []gearVariantKey
+	for i, hit := range hits {
+		if hit.engine != "" {
+			if err := json.Unmarshal(hit.row, &out.Variants[i]); err != nil {
+				return GearVariantResponse{}, err
+			}
+			out.Variants[i].Key = input.Variants[i].Key
+			out.Engine = hit.engine
+			continue
+		}
+		positions = append(positions, i)
+		missingKeys = append(missingKeys, keys[i])
+		missing.Variants = append(missing.Variants, input.Variants[i])
+	}
+	if len(positions) == 0 {
+		return out, ctx.Err()
+	}
 	if err := e.acquire(ctx); err != nil {
 		return GearVariantResponse{}, err
 	}
 	defer e.release()
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-	return e.resolveVariantBatch(ctx, input)
+	resolved, err := e.resolveVariantBatch(ctx, missing)
+	if err != nil {
+		return GearVariantResponse{}, err
+	}
+	if out.Engine != "" && resolved.Engine != "" && out.Engine != resolved.Engine {
+		return GearVariantResponse{}, errors.New("native variant engine changed")
+	}
+	if resolved.Engine != "" {
+		out.Engine = resolved.Engine
+	}
+	for n, i := range positions {
+		out.Variants[i] = resolved.Variants[n]
+	}
+	after, _ := os.Stat(e.binary)
+	if !sameVariantBinary(binary, after) && binary != nil {
+		return GearVariantResponse{}, errors.New("native variant executable changed")
+	}
+	e.variants.store(binary, missingKeys, resolved)
+	return out, ctx.Err()
 }
 func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantRequest) (GearVariantResponse, error) {
 	out, err := e.runVariantBatch(ctx, input)
