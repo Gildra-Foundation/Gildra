@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { restoreAuctionGearContext } from '../../../lib/wow/auctionGearRunner.ts';
 import { createAuctionGearDiscovery } from '../../../lib/wow/auctionGearDiscovery.ts';
+import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/auctionGearExhaustiveEnhancements.ts';
 import { auctionEnhancementRecords } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { buildAuctionShoppingRows } from '../../../lib/wow/auctionShoppingList.ts';
@@ -53,6 +54,18 @@ test('exact assembly upgrades selected equipped gear with commodity-only checkou
       return {prices:{[replacement.consumableItemId]:{ladder:[[10,1]]},[enchant.consumableItemId]:{ladder:[[15,1]]}},
         sourceUpdatedAt,fetchedAt:sourceUpdatedAt};
     }};
+  const previewState = { checkpoints: {} };
+  let preview;
+  for (let slice = 0; slice < 16; slice++) {
+    preview = await evaluateAuctionEnhancementStage({...stage, preview: true, finalists:[{label:'leader', options:[]}], state:previewState});
+    if (preview.recommendations.some(row => row.configuration.consumables.length)) break;
+    if (preview.complete) break;
+  }
+  const priced = preview.recommendations.find(row => row.configuration.consumables.length);
+  assert(priced, 'seeded preview finds a purchasable improvement to the equipped ring');
+  assert(priced.configuration.totalCopper <= stage.budgetCopper);
+  assert(priced.comparison.deltaDps > 0);
+  assert(priced.configuration.ownedChanges.every(change => change.slotType === 'FINGER_1'));
   let next;
   for(let step=0;step<20;step++) {
     next = await advanceAuctionGearExhaustiveEnhancements({...stage,state:next?.state});

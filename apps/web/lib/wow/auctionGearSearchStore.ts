@@ -1,5 +1,5 @@
 import "server-only";
-import type { AuctionEnhancementStageState } from "./auctionGearEnhancementStage";
+import type { AuctionEnhancementStageState, AuctionEnhancementStageResult } from "./auctionGearEnhancementStage";
 import type { AuctionGearExhaustiveEnhancementState } from "./auctionGearExhaustiveEnhancements";
 import { randomUUID } from "node:crypto";
 import type { AuctionGearContext, AuctionGearRunMetadata } from "./auctionGearRunner";
@@ -24,6 +24,8 @@ export type AuctionGearSearchEntry = {
   /** Refresh raw market exactly once; later bootstrap turns keep their cursor. */
   metadataMarketRefreshRequired?: boolean;
   enhancementState?: AuctionEnhancementStageState;
+  enhancementPreview?: { leader: string; stage: AuctionEnhancementStageState; retryAt: number;
+    result?: AuctionEnhancementStageResult; validUntil?: number };
   exhaustiveEnhancementState?: AuctionGearExhaustiveEnhancementState;
   /** Persisted logical order preserves recency when wall-clock timestamps tie. */
   recency: number;
@@ -114,7 +116,7 @@ function storedEntry(entry: AuctionGearSearchEntry): StoredEntry {
     nextSearchPhase: entry.nextSearchPhase, nextAssemblyPhase: entry.nextAssemblyPhase,
     metadataRebuildRequired: entry.metadataRebuildRequired,
     metadataMarketRefreshRequired: entry.metadataMarketRefreshRequired,
-    enhancementState: entry.enhancementState,
+    enhancementState: entry.enhancementState, enhancementPreview: entry.enhancementPreview,
     exhaustiveEnhancementState: entry.exhaustiveEnhancementState,
     knownOptionIds: entry.knownOptionIds, searchCheckpoint: entry.searchCheckpoint,
     assemblyCheckpoint: entry.assemblyCheckpoint, allowedKey: entry.allowedKey,

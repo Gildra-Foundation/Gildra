@@ -24,7 +24,7 @@ import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNe
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "./battleNetCharacterDetails";
 import { auctionGearProfileFingerprint } from "./auctionGearFingerprint";
 import { getCharacterAuctionMarket } from "./auctionMarketProvider";
-import { assertFreshMarket } from "./auctionMarket";
+import { assertFreshMarket, MARKET_MAX_AGE_MS } from "./auctionMarket";
 import { auctionGearVariantSelectionKey } from "./auctionGearExclusions";
 import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
@@ -207,6 +207,7 @@ function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
   retainAuctionIncumbents(entry);
   entry.searchCheckpoint = undefined;
   entry.assemblyCheckpoint = undefined;
+  entry.enhancementPreview = undefined;
   entry.exhaustiveEnhancementState = undefined;
   entry.allowedKey = undefined;
 }
@@ -514,6 +515,53 @@ export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value:
   return selectedAuctionGearAssemblyOptions(entry, value);
 }
 
+/** Sample one leader after equipment has advanced. The bounded optimizer tries
+ * seeded configurations first and resumes its own cursor on the next turn. */
+async function previewAuctionGearLeader(entry: AuctionGearSearchEntry, options: AuctionGearOption[],
+  signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
+  const context = entry.context, checkpoint = entry.assemblyCheckpoint!;
+  const ids = (checkpoint.bestConfirmed ?? checkpoint.best).optionIds;
+  const key = JSON.stringify([...ids].sort());
+  if (entry.enhancementPreview?.leader !== key)
+    entry.enhancementPreview = { leader: key, stage: { checkpoints: {} }, retryAt: 0 };
+  const preview = entry.enhancementPreview;
+  if (Date.now() < preview.retryAt) return;
+  const byId = new Map(options.map(option => [option.id, option]));
+  const selected = ids.map(id => byId.get(id));
+  if (!selected.every((option): option is AuctionGearOption => Boolean(option))) return;
+  const deadline = Date.now() + 3000;
+  progress({ phase: "enhancements", completed: 0, total: 0 });
+  let result: Awaited<ReturnType<typeof evaluateAuctionEnhancementStage>>;
+  try {
+    result = await evaluateAuctionEnhancementStage({
+      preview: true, finalists: [{label: "leader", options: selected}], selectedSlots: context.input.selectedSlots,
+      equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId,
+      level: context.character.level, professions: context.armory.professions, faction: context.character.faction?.type,
+      region: context.character.region, engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
+      encounter: { scenario: context.input.scenario, ...context.encounter }, budgetCopper: context.input.budgetCopper,
+      objective: context.input.objective ?? "dps", baseline: checkpoint.baseline, simulate: context.simulate,
+      state: preview.stage, signal, shouldYield: () => Date.now() >= deadline,
+    });
+  } catch (error) {
+    signal.throwIfAborted();
+    // This optional measurement cannot fail the authoritative equipment traversal.
+    console.warn("auction enhancement preview unavailable", error instanceof Error ? error.name : "Error");
+    preview.retryAt = Date.now() + 60_000;
+    preview.result = undefined;
+    return;
+  }
+  signal.throwIfAborted();
+  const refreshed = Date.parse(preview.stage.quotes?.fetchedAt ?? "");
+  const source = Date.parse(preview.stage.quotes?.sourceUpdatedAt ?? "");
+  preview.validUntil = Number.isFinite(refreshed) && Number.isFinite(source)
+    ? Math.min(refreshed + 60_000, source + MARKET_MAX_AGE_MS) : undefined;
+  preview.retryAt = result.complete ? Math.max(Date.now() + 1000, preview.validUntil ?? Date.now() + 60_000) : 0;
+  const recommendations = result.recommendations.filter(row => row.configuration.status === "priced" &&
+    row.configuration.consumables.length > 0 && row.configuration.totalCopper !== null &&
+    row.configuration.totalCopper <= context.input.budgetCopper);
+  preview.result = recommendations.length ? { ...result, traversal: "preview", complete: false, recommendations } : undefined;
+}
+
 export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, selection: unknown, signal: AbortSignal,
   progress: (p: AuctionPlanProgress) => void, token?: string,
   publishResult?: (result: AuctionGearRunResult) => void, fullMarket = false) {
@@ -551,12 +599,17 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       retainAuctionSimulations(entry);
       retainAuctionIncumbents(entry);
       entry.assemblyCheckpoint = undefined;
+      entry.enhancementPreview = undefined;
       entry.exhaustiveEnhancementState = undefined;
       entry.allowedKey = allowedKey;
       scheduleAuctionGearSearchSave(entry);
     }
     const capacity = fullMarket && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
     const assemblyBatchSize = capacity === 2 ? context.simulate.batchSize : undefined;
+    const currentPreview = () => {
+      const cached = entry.enhancementPreview;
+      return cached?.validUntil !== undefined && cached.validUntil > Date.now() ? cached.result : undefined;
+    };
     const advanceAssembly = async () => {
       const { result, checkpoint } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
         searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
@@ -575,7 +628,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true);
       const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
         currentItem: context.currentBySlot.get(purchase.slotType) });
-      const published = publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
+      const preview = currentPreview();
+      const published = publicAuctionResult(context, { ...result, ...(preview ? { enhancementOptimization: preview } : {}), updatedSearch, marketChange: context.marketChange,
         ...(context.input.compareScenarios?.length ? { scenarioComparisonsComplete: false } : {}),
         purchases: result.purchases.map(present),
         bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null,
@@ -591,6 +645,18 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       return { checkpoint, published, poolComplete: result.exhaustiveComplete };
     };
     let { checkpoint, published, poolComplete } = await advanceAssembly();
+    if (fullMarket && context.input.enhancementMode === "enhanced" && !published.exhaustiveComplete) {
+      await diagnostics.measureStage("enhancements", () => previewAuctionGearLeader(entry, options, signal, progress));
+      const preview = currentPreview();
+      scheduleAuctionGearSearchSave(entry);
+      if (published.enhancementOptimization !== preview) {
+        published = { ...published, enhancementOptimization: preview };
+        entry.latestAssemblyResult = published;
+        await diagnostics.measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
+        signal.throwIfAborted();
+        publishResult?.(published);
+      }
+    }
     for (let step = 1; publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
       ({ checkpoint, published, poolComplete } = await advanceAssembly());
     }
@@ -639,7 +705,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             lastPublishedEnhancement = result;
             return;
           }
-          published = { ...published, enhancementOptimization: result };
+          const visible = !result.complete && !result.recommendations.length ? currentPreview() ?? result : result;
+          published = { ...published, enhancementOptimization: visible };
           entry.latestAssemblyResult = published;
           scheduleAuctionGearSearchSave(entry);
           await diagnostics.measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));

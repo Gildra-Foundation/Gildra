@@ -21,7 +21,7 @@ export type AuctionEnhancedRecommendation = { label: string; configuration: Pric
   purchases: AuctionGearPurchase[]; consumableNames: Record<string, string>;
   enhancementNames?: { gems: Record<string, string>; enchants: Record<string, string> } };
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
-  traversal?: 'exhaustive'; includesOwnedEquipment?: true; equipmentChecked?: number;
+  traversal?: 'exhaustive' | 'preview'; includesOwnedEquipment?: true; equipmentChecked?: number;
   finalistRecheck?: { keys: string[]; significant: boolean; marginDps: number;
     leaderKey?: string; indistinguishableKeys?: string[]; preferredKey?: string; competingKey?: string };
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };
@@ -59,6 +59,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   quote?: typeof exactCommodityPrices;
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
+  preview?: boolean;
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
   simulationBatchSize?: number;
@@ -85,7 +86,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   if (!input.engine.includes(info.simcRevision.slice(0, 7))) { reasons.add('engine_build_mismatch'); return finish(); }
   // At most three retained equipment objectives and two socket proposals.
   if (input.finalists.length > 5) throw new Error('invalid_enhancement_candidate_limit');
-  const editableSlots = new Set<string>(input.exhaustive ? input.selectedSlots ?? auctionGearSlots : []);
+  const editableSlots = new Set<string>((input.exhaustive || input.preview) ? input.selectedSlots ?? auctionGearSlots : []);
   const activeKeys = new Set<string>();
   const equipmentSets = new Set<string>();
   for (const finalist of input.finalists) {
@@ -177,7 +178,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     input.onPriceDependencies?.(ids);
     const now=Date.now();
     let sourceFresh=true;
-    if(input.exhaustive && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
+    if((input.exhaustive || input.preview) && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
     if(!input.state.quotes || !sourceFresh || ids.some(id=>!input.state.quotedItemIds?.includes(id)) || !Number.isFinite(Date.parse(input.state.quotes.fetchedAt)) || now-Date.parse(input.state.quotes.fetchedAt)>60_000) {
       const requested=[...new Set([...(input.state.quotedItemIds??[]),...ids])].sort((a,b)=>a-b);
       input.state.quotes=requested.length ? await (input.quote??exactCommodityPrices)(input.region,requested,{refresh:true,signal:input.signal})
