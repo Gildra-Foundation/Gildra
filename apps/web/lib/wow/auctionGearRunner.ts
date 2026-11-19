@@ -15,6 +15,7 @@ import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type Aucti
 import { evaluateAuctionGearScenarios } from "./auctionGearScenarioExecution";
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from "./auctionGearEnhancementStage";
 import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiveEnhancements";
+import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
@@ -287,6 +288,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
+    statPriority: context.input.enhancementMode === "equipment",
     baseline: entry.retainedBaseline, simulationCache: cache,
     simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
     // The initial response includes baseline plus two native comparisons.
@@ -593,7 +595,13 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     } else {
       setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     }
-    const options = selectedAuctionGearAssemblyOptions(entry, selection);
+    const available = selectedAuctionGearAssemblyOptions(entry, selection);
+    const options = !fullMarket && context.input.enhancementMode === "equipment" && !entry.latestAssemblyResult
+      ? quickAuctionStatChoices(available, option => {
+          const key = auctionSelectionEffectKey([option]);
+          return entry.retainedSimulationCache?.[key]?.dps ?? entry.searchCheckpoint?.simulationCache[key]?.dps;
+        }) : available;
+    const statLimited = options.length < available.length;
     const allowedKey = auctionFactsKey(options);
     if (entry.allowedKey !== allowedKey) {
       retainAuctionSimulations(entry);
@@ -629,7 +637,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
         currentItem: context.currentBySlot.get(purchase.slotType) });
       const preview = currentPreview();
-      const published = publicAuctionResult(context, { ...result, ...(preview ? { enhancementOptimization: preview } : {}), updatedSearch, marketChange: context.marketChange,
+      const published = publicAuctionResult(context, { ...result, ...(statLimited ? { exhaustiveComplete: false, searchLimited: true } : {}), ...(preview ? { enhancementOptimization: preview } : {}), updatedSearch, marketChange: context.marketChange,
         ...(context.input.compareScenarios?.length ? { scenarioComparisonsComplete: false } : {}),
         purchases: result.purchases.map(present),
         bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null,

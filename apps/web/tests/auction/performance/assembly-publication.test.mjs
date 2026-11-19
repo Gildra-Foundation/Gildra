@@ -5,7 +5,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagnostics.ts';
 
-async function harness(evaluate, previewEvaluator) {
+async function harness(evaluate, previewEvaluator, overrides = {}) {
   const source = await readFile(new URL('../../../lib/wow/auctionGearRunner.ts', import.meta.url), 'utf8');
   const start = source.indexOf('export async function assembleAuctionGearSearch(');
   const end = source.indexOf('\nexport async function ', start + 1);
@@ -24,7 +24,7 @@ async function harness(evaluate, previewEvaluator) {
     assembleAuctionGear: evaluate,
     updateAuctionSearchResult: async () => entry.latestSearchResult,
     scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => { flushes++; }, flushPendingAuctionGearSearch: async () => { flushes++; },
-    parseAuctionGearCompareScenarios: () => [],
+    parseAuctionGearCompareScenarios: () => [], ...overrides,
   });
   return { entry, run, advance: ms => { now += ms; }, flushes: () => flushes };
 }
@@ -119,4 +119,24 @@ test('enhanced full search publishes a priced leader before gear enumeration fin
   await h.run(h.entry, undefined, new AbortController().signal, () => {}, 'token', row => afterExpiry.push(row), true);
   assert.equal(previews, 2, 'prices are requested again');
   assert(afterExpiry.every(row => !row.enhancementOptimization), 'expired prices cannot authorize a shopping list');
+});
+
+test('a completed shortlist stays partial and the following full turn restores the original domain', async () => {
+  const weak = {id:'weak'}, strong = {id:'strong'};
+  const pools = [];
+  const h = await harness(async input => {
+    pools.push(input.options.map(o => o.id));
+    assert.equal(input.checkpoint, undefined, 'domain change resets its enumeration cursor');
+    return { result:resultFor(1, pools.length === 1), checkpoint:{simulationCache:{}} };
+  }, undefined, {
+    quickAuctionStatChoices: () => [strong], auctionFactsKey: options => options.map(o=>o.id).join(','),
+    retainAuctionIncumbents: () => {},
+  });
+  Object.assign(h.entry.context,{options:[weak,strong],input:{enhancementMode:'equipment'},simulate:{}});
+  const signal = new AbortController().signal;
+  const preview = await h.run(h.entry, undefined, signal, () => {}, 'token');
+  assert.equal(preview.exhaustiveComplete,false);
+  assert.equal(preview.searchLimited,true);
+  await h.run(h.entry, undefined, signal, () => {}, 'token', undefined, true);
+  assert.deepEqual(pools,[['strong'],['weak','strong']]);
 });

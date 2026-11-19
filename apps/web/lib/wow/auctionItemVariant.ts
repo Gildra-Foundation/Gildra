@@ -22,6 +22,7 @@ export function auctionVariantChange(offer: AuctionOffer, slot: string) {
   };
 }
 export type ResolvedAuctionVariant = {
+  nativeNoItemEffects?: boolean;
   metadataVersion?: number;
   enhancements?: GearEnhancementMetadata;
   key: string;
@@ -53,6 +54,7 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
       engine,
       requiredLevel: resolved.requiredLevel,
       stats: resolved.stats,
+      ...(resolved.nativeNoItemEffects === true ? { nativeNoItemEffects: true } : {}),
       ...(resolved.metadataVersion !== undefined ? { metadataVersion: resolved.metadataVersion, enhancements } : {}),
       ...(validAuctionWeapon(resolved.weapon) ? { weapon: { ...resolved.weapon } } : {}),
       ...(resolved.effectsVerified === true && Array.isArray(resolved.effects) && resolved.effects.every(effect =>

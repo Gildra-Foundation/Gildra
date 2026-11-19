@@ -1,3 +1,4 @@
+import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
 import { candidateLoadoutItem, compareGearSimulationResults } from "./gearSimulation";
@@ -157,6 +158,7 @@ function requireCheckpoint(key: string, checkpoint: { version: number; inputKey:
 
 /** Every distinct purchasable option remains visible; repeated native effects share a simulation. */
 export async function searchAuctionGearOptions(input: PlannerInput & {
+  statPriority?: boolean;
   checkpoint?: AuctionGearSearchCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearSearchCheckpoint) => void;
 }): Promise<{ result: AuctionGearSearchResult; checkpoint: AuctionGearSearchCheckpoint }> {
@@ -172,7 +174,10 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 2, inputKey, nextOption: 0, optionOrder: priorityOptions.map(option => option.id), baseline: baseline.baseline, simulationCache: cache, simulations: calls };
+    const first = input.statPriority ? quickAuctionStatChoices(priorityOptions, option => cache[auctionSelectionEffectKey([option])]?.dps) : priorityOptions;
+    const preferred = new Set(first.map(option => option.id));
+    const optionOrder = first === priorityOptions ? priorityOptions : [...first, ...priorityOptions.filter(option => !preferred.has(option.id))];
+    checkpoint = { version: 2, inputKey, nextOption: 0, optionOrder: optionOrder.map(option => option.id), baseline: baseline.baseline, simulationCache: cache, simulations: calls };
   }
   const byId = new Map(options.map(option => [option.id, option]));
   // Version 2 guards older deployed readers from misreading a priority cursor.

@@ -41,21 +41,22 @@ type GearVariantEnhancements struct {
 }
 
 type GearVariantMetadata struct {
-	MetadataVersion int                     `json:"metadataVersion"`
-	Enhancements    GearVariantEnhancements `json:"enhancements"`
-	Key             string                  `json:"key"`
-	ItemID          int                     `json:"itemId"`
-	ItemLevel       int                     `json:"itemLevel"`
-	RequiredLevel   int                     `json:"requiredLevel"`
-	InventoryType   int                     `json:"inventoryType"`
-	ItemClassID     int                     `json:"itemClassId"`
-	ItemSubclassID  int                     `json:"itemSubclassId"`
-	Quality         int                     `json:"quality"`
-	UniqueEquipped  bool                    `json:"uniqueEquipped"`
-	SetID           int                     `json:"setId"`
-	Stats           map[string]float64      `json:"stats"`
-	Weapon          *GearVariantWeapon      `json:"weapon,omitempty"`
-	Error           string                  `json:"error,omitempty"`
+	MetadataVersion     int                     `json:"metadataVersion"`
+	Enhancements        GearVariantEnhancements `json:"enhancements"`
+	Key                 string                  `json:"key"`
+	ItemID              int                     `json:"itemId"`
+	ItemLevel           int                     `json:"itemLevel"`
+	RequiredLevel       int                     `json:"requiredLevel"`
+	InventoryType       int                     `json:"inventoryType"`
+	ItemClassID         int                     `json:"itemClassId"`
+	ItemSubclassID      int                     `json:"itemSubclassId"`
+	Quality             int                     `json:"quality"`
+	UniqueEquipped      bool                    `json:"uniqueEquipped"`
+	SetID               int                     `json:"setId"`
+	NativeNoItemEffects bool                    `json:"nativeNoItemEffects,omitempty"`
+	Stats               map[string]float64      `json:"stats"`
+	Weapon              *GearVariantWeapon      `json:"weapon,omitempty"`
+	Error               string                  `json:"error,omitempty"`
 }
 type GearVariantWeapon struct {
 	MinDamage    float64 `json:"minDamage"`
@@ -239,6 +240,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		result.MetadataVersion = reportVersion
 		if reportVersion == 2 {
 			result.MetadataVersion = 3
+			result.NativeNoItemEffects = string(item["gildra_no_item_effects"]) == "true"
 		}
 		var tuningKnown bool
 		_ = json.Unmarshal(item["content_tuning_known"], &tuningKnown)

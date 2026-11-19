@@ -9,7 +9,7 @@
      {
        continue;
      }
-@@ -393,6 +393,46 @@
+@@ -393,6 +393,48 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -22,6 +22,8 @@
 +    slotnode[ "socket_bonus_id" ] = item.parsed.data.id_socket_bonus;
 +    slotnode[ "required_profession_id" ] = item.parsed.data.req_skill;
 +    slotnode[ "required_profession_rank" ] = item.parsed.data.req_skill_level;
++    slotnode[ "gildra_no_item_effects" ] = item.parsed.special_effects.empty() &&
++      !range::any_of( item.parsed.data.effects, []( const auto& effect ) { return effect.spell_id != 0; } );
 +    // These are the resolved fields, including already-applied item bonuses.
 +    slotnode[ "id" ] = item.parsed.data.id;
 +    slotnode[ "required_level" ] = item.parsed.data.req_level;

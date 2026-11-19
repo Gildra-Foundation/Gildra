@@ -126,3 +126,14 @@ func TestEnhancementV3RealNativeSocketReport(t *testing.T) {
 		t.Fatalf("live socket not normalized: %+v", got)
 	}
 }
+
+func TestNativeNoItemEffectsRequiresPositiveProof(t *testing.T) {
+	for _, value := range []any{nil, false, "true", true} {
+		row := enhancementReport(t, func(item map[string]any) {
+			item["gildra_no_item_effects"] = value
+		})
+		if row.NativeNoItemEffects != (value == true) {
+			t.Fatalf("unexpected absence proof for %v", value)
+		}
+	}
+}

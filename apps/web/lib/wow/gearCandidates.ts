@@ -56,7 +56,7 @@ export type GearCandidateVariant = {
   upgradeTrackId?: number;
   upgradeRank?: number;
   sourceArtifactId?: string;
-  resolution?: {engine:string;requiredLevel:number;stats:Record<string,number>;
+  resolution?: {nativeNoItemEffects?: boolean;engine:string;requiredLevel:number;stats:Record<string,number>;
     weapon?: GearPlannerWeapon; effects?: string[]; effectsVerified?: boolean;
     metadataVersion?: number; enhancements?: GearEnhancementMetadata};
   modifiers?: Array<{ type: number; value: number }>;
