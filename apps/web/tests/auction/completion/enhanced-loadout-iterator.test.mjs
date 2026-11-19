@@ -1,7 +1,8 @@
-/** Physical assignment enumeration fixtures only: no simulation, account or remote requests. */
+/** Grouped equipment enumeration fixtures only: no simulation, account or remote requests. */
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createAuctionGearEnhancedLoadoutIterator as create} from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import {auctionPlanCost} from '../../../lib/wow/auctionGearPlanner.ts';
 import {auctionGearSlots} from '../../../lib/wow/auctionGearSelection.ts';
 const signal=()=>new AbortController().signal;
 const inventory={HEAD:1,NECK:2,SHOULDER:3,BACK:16,CHEST:5,WRIST:9,HANDS:10,WAIST:6,LEGS:7,FEET:8,FINGER_1:11,FINGER_2:11,TRINKET_1:12,TRINKET_2:12,MAIN_HAND:13,OFF_HAND:13};
@@ -25,11 +26,123 @@ test('emits empty purchase/retained equipment case with zero budget without modi
  const input=base([],['HEAD'],[{slotType:'HEAD',itemId:50,inventoryType:1,itemSubclassId:4}],0);const snapshot=structuredClone(input),{rows,state,total}=await all(input);
  assert.equal(total,'1');assert.equal(state.visited,'1');assert.equal(rows.length,1);assert.deepEqual(rows[0].options,[]);assert.deepEqual(rows[0].loadout,input.loadout);assert.equal(rows[0].spentCopper,0);assert.equal(rows[0].remainingCopper,0);assert.deepEqual(input,snapshot);
 });
-test('keeps every physical option, including equal effects and late copies, without a shortlist',async()=>{
- const offers=Array.from({length:80},(_,i)=>{const row=option(i+1,'HEAD');row.candidate.itemId=1;return row;});
- const input=base(offers),result=await all(input);assert.equal(result.total,'81');assert.equal(result.rows.length,81);assert.deepEqual(new Set(result.rows.flatMap(r=>r.options.map(o=>o.id))),new Set(offers.map(o=>o.id)));
- const other=option(100,'CHEST');assert.equal((await all(base([...offers,other]))).rows.length,81,'unselected slots cannot be replaced');
+test('visits each mechanical variant once and buys the cheapest allowed physical lot', async () => {
+  const copies = Array.from({length: 80}, (_, i) => option(i + 1, 'HEAD', 100 - i));
+  for (const row of copies) row.candidate.itemId = 1;
+  const distinct = option(81, 'HEAD', 5);
+  const result = await all(base([...copies, distinct, option(100, 'CHEST')]));
+  assert.equal(result.total, '3');
+  assert.deepEqual(result.rows.map(row => row.options[0]?.auctionId), [undefined, 80, 81]);
+  const withoutCheapest = await all(base(copies.slice(0, -1)));
+  assert.equal(withoutCheapest.rows[1].options[0].auctionId, 79);
+  assert.equal(withoutCheapest.rows[1].spentCopper, 22);
 });
+
+test('keeps distinct native effects, equip constraints and enhancement eligibility in separate branches', async () => {
+  const variants = Array.from({length: 10}, (_, i) => option(i + 1, 'FINGER_1'));
+  for (const row of variants) row.candidate.itemId = 1;
+  const variant = index => variants[index].candidate.variants[0];
+  variant(1).bonusIds = [10];
+  variant(2).contextId = 13;
+  variant(3).modifiers = [{type: 9, value: 80}];
+  variants[4].candidate.constraints.uniqueEquipped = true;
+  variant(5).itemLevel++;
+  variants[6].candidate.itemClassId++;
+  for (const i of [7, 8, 9]) {
+    variant(i).resolution = {metadataVersion: 3, enhancements: {status: 'verified', socketColors: [14, 0, 0],
+      socketCount: 1, socketBonusId: 0, requiredProfessionId: 0, requiredProfessionRank: 0}};
+  }
+  variant(8).resolution.enhancements.socketColors = [0, 14, 0];
+  variant(9).resolution.enhancements.requiredProfessionId = 4;
+  assert.equal((await all(base(variants, ['FINGER_1']))).total, '11');
+});
+
+test('an invalid zero enchant on a cheaper copy cannot hide the valid unenchanted lot', async () => {
+  const bad = option(1, 'HEAD', 1, {customization: {enchantId: 0}});
+  const good = {...bad, auctionId: 2, id: 'valid', costCopper: 2, customization: {}};
+  const {rows} = await all(base([bad, good]));
+  assert.deepEqual(rows.map(row => row.options[0]?.id), [undefined, 'valid']);
+});
+
+test('joint receipt can switch both rings to a dearer multi-piece lot and survives option exclusions', async () => {
+  const makeLot = (id, cost, quantity) => ['FINGER_1', 'FINGER_2'].map(slot => {
+    const row = option(id, slot, cost, {quantity});
+    row.candidate.itemId = 500;
+    return row;
+  });
+  const lots = [...makeLot(1, 20, 1), ...makeLot(2, 23, 1), ...makeLot(3, 30, 2)];
+  const rings = offered => all(base(offered, ['FINGER_1', 'FINGER_2'], [], 43), {maxAssignments: 1, maxResults: 1});
+  const both = await rings(lots);
+  assert.equal(both.total, '4');
+  assert.equal(both.rows[1].spentCopper, 20);
+  assert.deepEqual(both.rows[3].options.map(o => o.auctionId), [3, 3]);
+  assert.equal(both.rows[3].spentCopper, 30);
+  const excluded = await rings(lots.filter(row => row.id !== '3:FINGER_2'));
+  assert.equal(excluded.rows[3].spentCopper, 43);
+  assert.deepEqual(excluded.rows[3].options.map(o => o.auctionId).sort(), [1, 2]);
+});
+test('an overflowing pair of individually valid lots cannot hide an affordable shared lot', async () => {
+  const slots = ['FINGER_1', 'FINGER_2'];
+  const offers = [1, 2, 3].flatMap(id => slots.map(slot => {
+    const row = option(id, slot, id < 3 ? Number.MAX_SAFE_INTEGER : 10, {quantity: id < 3 ? 1 : 2});
+    row.candidate.itemId = 30;
+    return row;
+  }));
+  const {rows} = await all(base(offers, slots, [], Number.MAX_SAFE_INTEGER));
+  assert.equal(rows.length, 4);
+  assert.deepEqual(rows.at(-1).options.map(row => row.auctionId), [3, 3]);
+  assert.equal(rows.at(-1).spentCopper, 10);
+});
+
+test('grouped traversal matches physical receipts across budgets, exclusions and equal-price ties', async () => {
+  const slots = ['HEAD', 'FINGER_1', 'FINGER_2'];
+  const offers = [option(10, 'HEAD', 3), option(11, 'HEAD', 3)];
+  offers[1].candidate.itemId = offers[0].candidate.itemId;
+  for (const [id, itemId, cost, quantity] of [[20, 9, 3, 1], [21, 9, 3, 1], [22, 9, 5, 2], [23, 8, 4, 1]]) {
+    for (const slot of slots.slice(1)) {
+      const row = option(id, slot, cost, {quantity});
+      row.candidate.itemId = itemId;
+      offers.push(row);
+    }
+  }
+  const mechanicalKey = rows => JSON.stringify(rows.map(row => [row.candidate.slotType, row.candidate.itemId]).sort());
+  for (const exclusion of [null, '10:HEAD', '20:FINGER_1', '22:FINGER_2']) {
+    const allowed = offers.filter(o => o.id !== exclusion);
+    for (const budget of [0, 3, 5, 6, 8, 12]) {
+      const expected = new Map();
+      const walk = (axis, rows) => {
+        if (axis < slots.length) {
+          walk(axis + 1, rows);
+          for (const row of allowed.filter(o => o.candidate.slotType === slots[axis])) walk(axis + 1, [...rows, row]);
+          return;
+        }
+        let cost;
+        try { cost = auctionPlanCost(rows); } catch (error) {
+          assert.equal(error.message, 'auction_quantity_exceeded');
+          return;
+        }
+        if (cost > budget) return;
+        const key = mechanicalKey(rows), receipt = rows.map(row => row.id).sort().join('|'), old = expected.get(key);
+        if (!old || cost < old.cost || cost === old.cost && receipt < old.receipt) expected.set(key, {cost, receipt});
+      };
+      walk(0, []);
+      const input = base(allowed, slots, [], budget), iterator = create(input), actual = new Map();
+      let state = iterator.initialState();
+      while (!state.exhausted) {
+        const next = await iterator.nextBatch(state, {maxAssignments: 2, maxResults: 1, signal: signal()});
+        state = JSON.parse(JSON.stringify(next.state));
+        for (const row of next.loadouts) {
+          const key = mechanicalKey(row.options), receipt = row.options.map(o => o.id);
+          assert.deepEqual(await iterator.optionIdsAt((BigInt(state.visited) - 1n).toString(), signal()), receipt);
+          assert(!actual.has(key));
+          actual.set(key, {cost: row.spentCopper, receipt: receipt.sort().join('|')});
+        }
+      }
+      assert.deepEqual(actual, expected);
+    }
+  }
+});
+
 test('two ring aliases charge one whole lot and respect its quantity without unsafe partial-sum pruning',async()=>{
  const a=option(1,'FINGER_1',60),b=option(1,'FINGER_2',60);const one=await all(base([a,b],['FINGER_1','FINGER_2'],[],60));assert.equal(one.rows.length,3);assert(!one.rows.some(r=>r.options.length===2));
  const two=await all(base([{...a,quantity:2},{...b,quantity:2}],['FINGER_1','FINGER_2'],[],60));assert.equal(two.rows.length,4);const pair=two.rows.find(r=>r.options.length===2);assert.equal(pair.spentCopper,60);assert.equal(pair.remainingCopper,0);
@@ -63,7 +176,7 @@ test('yield/abort preserve the last acknowledged cursor and large invalid scans 
 });
 test('identity binds options/prices/quantity/metadata/equipment/budget and rejects corrupt cursor facts',async()=>{
  const input=base([option(1,'HEAD')]),iterator=create(input),state=iterator.initialState(),limits={maxAssignments:1,maxResults:1,signal:signal()};
- for(const corrupt of [{...state,version:2},{...state,cursor:[2]},{...state,visited:'1'},{...state,visited:'01'},{...state,exhausted:true},{...state,inputKey:'foreign'}])await assert.rejects(iterator.nextBatch(corrupt,limits),/invalid_search_checkpoint/);
+ for(const corrupt of [{...state,version:1},{...state,cursor:[2]},{...state,visited:'1'},{...state,visited:'01'},{...state,exhausted:true},{...state,inputKey:'foreign'}])await assert.rejects(iterator.nextBatch(corrupt,limits),/invalid_search_checkpoint/);
  for(const changed of [{...input,budgetCopper:99},{...input,selectedSlots:['CHEST']},{...input,equipment:{equipped_items:[],changed:true}},{...input,options:[{...input.options[0],quantity:2}]},{...input,options:[{...input.options[0],costCopper:9}]},{...input,options:[{...input.options[0],candidate:{...input.options[0].candidate,constraints:{...input.options[0].candidate.constraints,uniqueEquipped:true}}}]}])await assert.rejects(create(changed).nextBatch(state,limits),/invalid_search_checkpoint/);
  for(const maxAssignments of [0,-1,1.5,Infinity])await assert.rejects(iterator.nextBatch(state,{...limits,maxAssignments}),/invalid_search_limit/);
  assert.throws(()=>create({...input,options:[input.options[0],input.options[0]]}),/invalid_auction_selection/);

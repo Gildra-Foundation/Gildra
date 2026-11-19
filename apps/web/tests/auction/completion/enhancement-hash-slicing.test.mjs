@@ -7,13 +7,13 @@ import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
 import {assertFreshMarket} from '../../../lib/wow/auctionMarket.ts';
 import {compareGearSimulationResults} from '../../../lib/wow/gearSimulation.ts';
-import {exactCommodityQuote} from '../../../lib/wow/auctionGearCost.ts';
+import {createExactCommodityPriceCache,exactCommodityQuote} from '../../../lib/wow/auctionGearCost.ts';
 import {auctionEnhancementCatalogInfo as info,resolveExactEnhancements} from '../../../lib/wow/auctionEnhancementCatalog.ts';
 const source=await readFile(new URL('../../../lib/wow/auctionGearEnhancementOptimizer.ts',import.meta.url),'utf8');
 // Former canonical hash from30280ff234453a8d8f61ec9c75b14302deff7693. No Git history is required by tests.
 const oldCanonical='const canonical = (value) => Array.isArray(value) ? value.map(canonical) : value && typeof value === "object" ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,v])=>[key,canonical(v)])) : value;\n';
 const start=source.indexOf('const canonical ='),end=source.indexOf('const hash =',start);assert(start>=0&&end>start);
-const globals={createHash,assertFreshMarket,compareGearSimulationResults,exactCommodityQuote,structuredClone,setImmediate,clearImmediate};
+const globals={createHash,assertFreshMarket,compareGearSimulationResults,createExactCommodityPriceCache,exactCommodityQuote,structuredClone,setImmediate,clearImmediate};
 const strip=code=>stripTypeScriptTypes(code,{mode:'transform'}).replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
 const compile=(legacy=false)=>new vm.Script(strip(legacy?source.slice(0,start)+oldCanonical+source.slice(end):source)+'\n;({canonical,hash,optimizeAuctionGearEnhancements})').runInNewContext({...globals});
 const before=compile(true),after=compile();

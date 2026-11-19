@@ -547,3 +547,36 @@ test('missing scroll and gem mappings retain bare, socketed and other-slot purch
   assert.deepEqual(best.slots.find(slot=>slot.slotType==='TRINKET_1').gemIds,[0]);
   assert.equal(best.totalCopper,325);
 });
+
+test('exact completed equipment retains measured effects across restart and reopens gains from missing or unaffordable gems',async()=>{
+  const h=stageFixture(), calls=[];
+  const gems=auctionEnhancementRecords.filter(r=>r.kind==='gem' && r.consumableItemId && r.color===14 && !r.restrictionReason && !r.profession && !r.category).slice(0,2);
+  assert.equal(gems.length,2);
+  const [a,b]=gems.map(r=>r.consumableItemId);
+  let prices={[a]:{ladder:[[5,10]]}},state;
+  const input={...h.input,options:h.input.finalists[0].options,selectedSlots:['TRINKET_1'],budgetCopper:120,
+    onState:s=>{state=s;}, quote:async()=>({prices,sourceUpdatedAt:timestamp,fetchedAt:new Date().toISOString()}),
+    simulate:async(opts)=>{
+      const gem=opts[0]?.customization?.gemIds?.[0]??0;
+      calls.push([opts.length,gem]);return {...h.input.baseline,dps:1000+(opts.length?10:0)+(gem===a?20:gem===b?40:0)};
+    }};
+  const finish=async()=>{
+    for(let i=0;i<50;i++){
+      const {result}=await advanceAuctionGearExhaustiveEnhancements({...input,state});
+      state=JSON.parse(JSON.stringify(state));
+      if(result.complete)return result;
+    }
+    assert.fail('Exact equipment replay did not complete');
+  };
+  assert.equal((await finish()).recommendations[0].configuration.totalCopper,105);
+  const first=calls.length;
+  prices={[a]:{ladder:[[30,1]]},[b]:{ladder:[[7,1]]}};
+  state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
+  const second=await finish();
+  assert.equal(second.recommendations[0].configuration.totalCopper,107);
+  assert.deepEqual(calls.slice(first),[[1,b]]);
+  prices={[a]:{ladder:[[9,1]]}};
+  state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
+  assert.equal((await finish()).recommendations[0].configuration.totalCopper,109);
+  assert.equal(calls.length,first+1);
+});

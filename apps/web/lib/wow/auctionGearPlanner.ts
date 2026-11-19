@@ -272,6 +272,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const { options, slots, inputKey, max, maxAssignments } = prepare(input);
   const groups = auctionEffectGroups(options, slots);
   const flatGroups = groups.flat();
+  const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
+    option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));
   const radices = groups.map(group => group.length + 1);
   const combinationCount = radices.reduce((product, radix) => product * BigInt(radix), 1n).toString();
   let checkpoint: AuctionGearAssemblyCheckpoint, calls = 0;
@@ -365,7 +367,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   }
   if (!input.checkpoint || replayLegacyCandidates) {
     // Recover confirmed singles even when the caller has already requested a yield.
-    for (const option of options) {
+    for (const option of cheapestSingles) {
       const simulation = checkpoint.simulationCache[auctionSelectionEffectKey([option])];
       if (!simulation) continue;
       try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { continue; }
@@ -389,7 +391,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const groupIndex = new Map(flatGroups.map((group, index) => [group, index]));
   const rankedBySlot = groups.map(slotGroups => slotGroups.map(group => groupIndex.get(group)!)
     .sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b));
-  const groupCosts = flatGroups.map(group => group.options.reduce((cost, option) => Math.min(cost, option.costCopper), Infinity));
+  const groupCosts = cheapestSingles.map(option => option.costCopper);
   const compatibleSelection = (selection: AuctionGearOption[]) => {
     try { auctionPlanLoadout(input.loadout, selection, input.specId, slots); return true; } catch { return false; }
   };

@@ -23,11 +23,12 @@ export function auctionEffectGroupKey(option: AuctionGearOption) {
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */
-export function auctionEffectGroups(options: AuctionGearOption[], slots: string[]): AuctionEffectGroup[][] {
+export function auctionEffectGroups(options: AuctionGearOption[], slots: readonly string[],
+  groupKey = auctionEffectGroupKey): AuctionEffectGroup[][] {
   return slots.map(slot => {
     const groups = new Map<string, AuctionEffectGroup>();
     for (const option of options.filter(option => option.candidate.slotType === slot)) {
-      const key = auctionEffectGroupKey(option);
+      const key = groupKey(option);
       const group = groups.get(key) ?? { options: [] };
       group.options.push(option);
       groups.set(key, group);
@@ -115,7 +116,12 @@ export async function cheapestAuctionEffectSelection(groups: AuctionEffectGroup[
           if (++work % 256 === 0) { await new Promise<void>(resolve => setImmediate(resolve)); signal.throwIfAborted(); }
           if (bitCount(subset) > lot.quantity) continue;
           const costCopper = purchase.costCopper + lot.costCopper;
-          if (!Number.isSafeInteger(costCopper)) throw new Error("invalid_budget");
+          if (!Number.isSafeInteger(costCopper)) {
+            // Two valid lot prices can overflow only on an unaffordable branch
+            // under the planner's safe-integer budget. Other receipts remain legal.
+            if (Number.isSafeInteger(lot.costCopper) && Number.isSafeInteger(budgetCopper) && costCopper > budgetCopper) continue;
+            throw new Error("invalid_budget");
+          }
           if (costCopper > budgetCopper - result.costCopper) continue;
           const options = [...purchase.options, ...[...lot.options].filter(([index]) => subset & (1 << index)).map(([, option]) => option)];
           const candidate = { options, costCopper }, key = covered | subset;
