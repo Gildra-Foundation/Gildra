@@ -1,3 +1,4 @@
+import { professionEligibility, type CharacterProfessions } from "./characterProfessions";
 import snapshot from "../../data/wow/auction-enhancements/catalog.json" with { type: "json" };
 
 type Payload = Record<string, string>;
@@ -14,18 +15,21 @@ export type EnhancementRecord = Enhancement & {
   build: string; revision: string; requiredLevel: number; qualityId: number; rank: number | null;
   minItemLevel: number; maxItemLevel: number; gemPropertiesId?: number; color?: number;
   itemClassId?: number; inventoryMask?: number; subclassMask?: number;
+  requiredFaction?: "HORDE" | "ALLIANCE";
+  requiresNoOnUseEffect?: true;
   categoryKnown: boolean; restrictionReason?: string; uniqueEquipped: boolean;
   sourceRowIds: string[];
 };
 export type EnhancementTarget = {
   itemId: number; inventoryType: number; itemClassId: number; itemSubclassId: number;
   itemLevel: number; socketColors: readonly number[]; build: string; revision: string;
-  engine: string;
+  engine: string; hasOnUseEffect?: boolean;
 };
-export type EnhancementCharacter = { level: number; professions: readonly { id: number; rank: number }[] };
+export type EnhancementCharacter = { level: number; faction?: string; professions?: CharacterProfessions | readonly { id: number; rank: number }[] };
+type CoverageGap = "no_supported_enchant" | "no_supported_gem" | "profession_unverified" | "faction_unverified" | "target_effects_unverified";
 export type EnhancementResolution = { verified: false; reason: string } | {
   verified: true; enchantApplicable: boolean; enchantChoices: EnhancementRecord[]; gemChoices: Record<string, EnhancementRecord[]>;
-  coverageGaps?: ("no_supported_enchant" | "no_supported_gem")[];
+  coverageGaps?: CoverageGap[];
 };
 
 const rows = snapshot.rows as Row[];
@@ -41,7 +45,9 @@ function record(sparse: Row, enchantRow: Row, kind: "gem" | "enchant", chain: Ro
   const c = category.get(categoryId), skill = num(e, "RequiredSkillID") || num(s, "RequiredSkill");
   const skillRank = Math.max(num(e, "RequiredSkillRank"), num(s, "RequiredSkillRank"));
   const categoryKnown = categoryId === 0 || Boolean(c && num(c.payload, "Flags") === 1 && num(c.payload, "Quantity") > 0);
-  const special = ["RequiredAbility", "RequiredHoliday", "MinFactionID", "MinReputation", "ZoneBound_0", "ZoneBound_1", "InstanceBound"].some(k => num(s,k) !== 0)
+  const flags = num(s, "Flags_1"), factionBits = flags & 3;
+  const special = !Number.isSafeInteger(flags) || factionBits === 3 ||
+    ["RequiredAbility", "RequiredHoliday", "RequiredPVPRank", "RequiredPVPMedal", "MinFactionID", "MinReputation", "ZoneBound_0", "ZoneBound_1", "InstanceBound"].some(k => num(s,k) !== 0)
     || num(s,"AllowableClass") !== -1 || num(s,"AllowableRaces_0") !== -1 || num(s,"AllowableRaces_1") !== -1
     || num(e,"Condition_ID") !== 0 || num(e,"TransmogUseConditionID") !== 0
     || !Number.isFinite(skill) || !Number.isFinite(skillRank)
@@ -54,6 +60,8 @@ function record(sparse: Row, enchantRow: Row, kind: "gem" | "enchant", chain: Ro
     qualityId: item.get(sparse.id) ? num(item.get(sparse.id)!.payload,"CraftingQualityID") : 0,
     rank: null,
     minItemLevel: num(e,"ItemLevelMin"), maxItemLevel: num(e,"ItemLevelMax"),
+    ...(factionBits === 1 ? {requiredFaction:"HORDE" as const} : factionBits === 2 ? {requiredFaction:"ALLIANCE" as const} : {}),
+    ...(kind === "enchant" && [0,1,2].some(i=>num(e,`Effect_${i}`)===7) ? {requiresNoOnUseEffect:true} : {}),
     ...(skill > 0 ? {profession:{id:skill, rank:skillRank}} : {}),
     ...(c && categoryKnown ? {category:{id:categoryId,limit:num(c.payload,"Quantity")}} : {}),
     categoryKnown, uniqueEquipped: (num(s,"Flags_0") & 0x80000) !== 0,
@@ -79,15 +87,19 @@ function buildRecords(): EnhancementRecord[] {
   const requirementsBySpell = groupByField("SpellEquippedItems", "SpellID");
   const result: EnhancementRecord[] = [];
   for (const sparse of table("ItemSparse")) {
+    if (![0,2,3].includes(num(sparse.payload,"Bonding"))) continue;
+    const classId = num(item.get(sparse.id)?.payload ?? {}, "ClassID");
     const g = gem.get(num(sparse.payload,"Gem_properties"));
     if (g) {
       const e = enchant.get(num(g.payload,"Enchant_ID"));
-      if (e) result.push(record(sparse,e,"gem",[g],num(g.payload,"Type")));
+      if (classId===3 && num(g.payload,"Type")===14 && e) result.push(record(sparse,e,"gem",[g],num(g.payload,"Type")));
       continue;
     }
-    for (const link of linksByItem.get(sparse.id) ?? []) {
+    const links = linksByItem.get(sparse.id) ?? [];
+    if (![0,8].includes(classId) || links.length !== 1) continue;
+    for (const link of links) {
       const effect = effects.get(num(link.payload,"ItemEffectID"));
-      if (!effect || num(effect.payload,"TriggerType")!==0 || num(effect.payload,"PlayerConditionID")!==0 || num(effect.payload,"ChrSpecializationID")!==0) continue;
+      if (!effect || num(effect.payload,"Charges")!==-1 || num(effect.payload,"TriggerType")!==0 || num(effect.payload,"PlayerConditionID")!==0 || num(effect.payload,"ChrSpecializationID")!==0) continue;
       const spellId = num(effect.payload,"SpellID");
       const spellEffects = (effectsBySpell.get(spellId) ?? []).filter(r=>num(r.payload,"DifficultyID")===0);
       const applying = spellEffects.filter(r=>[53,301].includes(num(r.payload,"Effect")));
@@ -168,10 +180,13 @@ export function resolveExactEnhancements(target: EnhancementTarget, character: E
   if (![target.itemId,target.itemLevel,character.level].every(n=>Number.isSafeInteger(n)&&n>0)
     || ![target.inventoryType,target.itemClassId,target.itemSubclassId].every(n=>Number.isSafeInteger(n)&&n>=0&&n<32)
     || target.socketColors.length!==3 || target.socketColors.some(n=>n!==0&&n!==14)) return {verified:false,reason:"target_metadata_unknown"};
-  const allowed = auctionEnhancementRecords.filter(r=>r.categoryKnown && !r.restrictionReason
-    && character.level>=r.requiredLevel && target.itemLevel>=r.minItemLevel && (r.maxItemLevel===0||target.itemLevel<=r.maxItemLevel)
-    && (!r.profession || character.professions.some(p=>p.id===r.profession!.id&&p.rank>=r.profession!.rank)));
-  const enchantChoices = allowed.filter(r=>r.kind==="enchant" && r.itemClassId===target.itemClassId
+  const professions = character.professions && ("ranks" in character.professions ? character.professions :
+    { complete: true, ranks: Object.fromEntries(character.professions.map(p => [p.id, p.rank])) });
+  const eligible = (record: EnhancementRecord) => record.profession
+    ? professionEligibility(professions, record.profession.id, record.profession.rank) : "eligible";
+  const source = auctionEnhancementRecords.filter(r=>r.categoryKnown && !r.restrictionReason
+    && character.level>=r.requiredLevel && target.itemLevel>=r.minItemLevel && (r.maxItemLevel===0||target.itemLevel<=r.maxItemLevel));
+  const enchants = source.filter(r=>r.kind==="enchant" && r.itemClassId===target.itemClassId
     && (r.inventoryMask===0 || ((r.inventoryMask??0)&(2**target.inventoryType))!==0)
     && (r.subclassMask===0 || ((r.subclassMask??0)&(2**target.itemSubclassId))!==0));
   const nativeApplicable = snapshot.nativeRules.filter(r=>r.itemClassId===target.itemClassId
@@ -188,10 +203,25 @@ export function resolveExactEnhancements(target: EnhancementTarget, character: E
     }
     if (target.itemLevel >= min && (max === 0 || target.itemLevel <= max)) enchantApplicable = true;
   }
-  const coverageGaps: ("no_supported_enchant" | "no_supported_gem")[] = [];
+  const gems = target.socketColors.includes(14) ? source.filter(r=>r.kind==="gem"&&r.color===14) : [];
+  const coverageGaps: CoverageGap[] = [];
+  const factionKnown = character.faction === "HORDE" || character.faction === "ALLIANCE";
+  const usable = (r: EnhancementRecord) => {
+    const skill = eligible(r);
+    if (skill === "insufficient" || (r.requiredFaction && factionKnown && r.requiredFaction !== character.faction)
+      || (r.requiresNoOnUseEffect && target.hasOnUseEffect === true)) return false;
+    const unknown: CoverageGap[] = [];
+    if (skill === "unknown") unknown.push("profession_unverified");
+    if (r.requiredFaction && !factionKnown) unknown.push("faction_unverified");
+    if (r.requiresNoOnUseEffect && target.hasOnUseEffect !== false) unknown.push("target_effects_unverified");
+    for (const gap of unknown) if (!coverageGaps.includes(gap)) coverageGaps.push(gap);
+    return unknown.length === 0;
+  };
+  const enchantChoices = enchants.filter(usable);
+  const availableGems = gems.filter(usable);
   if (enchantApplicable && !enchantChoices.length) coverageGaps.push("no_supported_enchant");
   const gemChoices: Record<string,EnhancementRecord[]> = {};
-  target.socketColors.forEach((color,i)=>{if(color===14) gemChoices[String(i)]=allowed.filter(r=>r.kind==="gem"&&r.color===14);});
+  target.socketColors.forEach((color,i)=>{if(color===14) gemChoices[String(i)]=availableGems;});
   if (Object.values(gemChoices).some(v=>!v.length)) coverageGaps.push("no_supported_gem");
   return {verified:true,enchantApplicable,enchantChoices,gemChoices,...(coverageGaps.length ? {coverageGaps} : {})};
 }

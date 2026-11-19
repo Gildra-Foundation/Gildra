@@ -1,4 +1,5 @@
 import "server-only";
+import nonEquipmentIndex from "../../data/wow/auction-enhancements/non-equipment.json" with { type: "json" };
 import type { AuctionOffer } from "./auctionMarket";
 import type { ResolvedAuctionVariant } from "./auctionItemVariant";
 import { supportedAuctionModifiers } from "./gearItemModifiers";
@@ -125,6 +126,19 @@ const references = new Map<string, {
   nonEquipmentClass?: number;
   expires: number;
 }>();
+/** Only listed IDs have matching non-equipment DB2 rows in every source build. */
+function nonEquipmentClassOnMissingReference(itemId: number) {
+  const ranges = nonEquipmentIndex.ranges;
+  let left = 0, right = ranges.length - 1;
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const [first, last, itemClass] = ranges[mid];
+    if (itemId < first) right = mid - 1;
+    else if (itemId > last) left = mid + 1;
+    else return itemClass;
+  }
+}
+
 export async function getAuctionItemReferences(ids: number[], region: string, token: string, signal: AbortSignal, locale = "en_GB",
   nonEquipment?: Map<number, number>) {
   if (!["eu", "us", "kr", "tw"].includes(region) || ids.length > 256 || !["en_GB", "en_US", "ru_RU"].includes(locale)) throw new Error("invalid_item_reference_request");
@@ -151,7 +165,9 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
     });
     let value: AuctionItemReference | null = null;
     let nonEquipmentClass: number | undefined;
-    if (response.status !== 404) {
+    if (response.status === 404) {
+      nonEquipmentClass = nonEquipmentClassOnMissingReference(itemId);
+    } else {
       if (!response.ok) throw new Error("item_reference_unavailable");
       const reader = response.body?.getReader();
       if (!reader) throw new Error("item_reference_unavailable");
@@ -175,11 +191,11 @@ export async function getAuctionItemReferences(ids: number[], region: string, to
       if (raw.id === itemId && raw.is_equippable === false && object(raw.inventory_type).type === "NON_EQUIP" &&
           typeof classId === "number" && Number.isSafeInteger(classId) && classId >= 0 && classId !== 2 && classId !== 4) {
         nonEquipmentClass = classId;
-        nonEquipment?.set(itemId, classId);
       }
       value = parseAuctionItemReference(raw, itemId);
     }
     requestSignal.throwIfAborted();
+    if (nonEquipmentClass !== undefined) nonEquipment?.set(itemId, nonEquipmentClass);
     references.set(key, {
       value, nonEquipmentClass,
       expires: Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS

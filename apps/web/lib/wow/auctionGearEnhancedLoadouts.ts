@@ -58,7 +58,8 @@ function enhancedGroupKey(option: AuctionGearOption) {
   return JSON.stringify([auctionEffectGroupKey(option), option.variantKey, option.candidate.itemClassId,
     option.customization?.enchantId, variant.itemLevel, variant.resolution?.metadataVersion, metadata?.status,
     ...(metadata?.status === "verified" ? [metadata.socketColors, metadata.socketCount, metadata.socketBonusId,
-      metadata.requiredProfessionId, metadata.requiredProfessionRank] : [])]);
+      metadata.requiredProfessionId, metadata.requiredProfessionRank,
+      variant.resolution?.effectsVerified === true && variant.resolution.effects?.length === 0] : [])]);
 }
 
 /** Traverse mechanical equipment choices. Allocate purchasable lots jointly for
@@ -83,7 +84,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
   // purchase set, allowing the caller to process the retained-equipment case.
   const radices = choices.map(rows => rows.length + 1);
   const total = radices.reduce((count, radix) => count * BigInt(radix), 1n);
-  const inputKey = createHash("sha256").update(JSON.stringify({ traversal: 2, slots, options, loadout: input.loadout,
+  const inputKey = createHash("sha256").update(JSON.stringify({ traversal: 3, slots, options, loadout: input.loadout,
     equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper })).digest("hex");
   // Each stride counts the suffix assignments below one choice at this slot.
   let suffixCount = total;

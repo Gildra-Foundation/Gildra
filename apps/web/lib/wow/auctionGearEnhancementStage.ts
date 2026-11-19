@@ -1,3 +1,4 @@
+import { professionEligibility, type CharacterProfessions } from "./characterProfessions";
 import { createHash } from 'node:crypto';
 import { auctionEnhancementCatalogInfo, auctionEnhancementRecords, lookupInstalled, resolveExactEnhancements, type EnhancementRecord } from './auctionEnhancementCatalog';
 import { optimizeAuctionGearEnhancements, type Enhancement, type EnhancementSlot, type EnhancementResolution, type EnhancementCheckpoint, type PricedEnhancementConfiguration, type OwnedAuctionGearChange } from './auctionGearEnhancementOptimizer';
@@ -49,7 +50,7 @@ export function auctionEnhancementScenarioFinalists(recommendations: AuctionEnha
 
 export async function evaluateAuctionEnhancementStage(input: {
   finalists: { label: string; options: AuctionGearOption[] }[]; equipment: Record<string, unknown>; loadout: GearLoadoutItem[];
-  specId: number; level: number; region: 'eu' | 'us' | 'kr' | 'tw'; engine: string; profileFingerprint: string;
+  specId: number; level: number; faction?: string; professions?: CharacterProfessions; region: 'eu' | 'us' | 'kr' | 'tw'; engine: string; profileFingerprint: string;
   encounter: AuctionGearEncounter; budgetCopper: number; objective: 'dps' | 'value'; baseline: GearPlanSimulation;
   selectedSlots?: readonly string[];
   simulate: (options: AuctionGearOption[], signal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[]) => Promise<GearPlanSimulation>;
@@ -99,12 +100,20 @@ export async function evaluateAuctionEnhancementStage(input: {
       try { metadata = variant.resolution ? validatedAuctionEnhancementMetadata(variant.resolution) : undefined; }
       catch { metadata = undefined; }
       if (metadata?.status !== 'verified') { reasons.add('variant_enhancements_unknown'); unsupported = true; break; }
-      // Profession facts are absent from the current trusted profile contract.
-      if (metadata.requiredProfessionId) { reasons.add('profession_unverified'); unsupported = true; break; }
+      if (metadata.requiredProfessionId) {
+        const eligible = professionEligibility(input.professions, metadata.requiredProfessionId, metadata.requiredProfessionRank);
+        if (eligible !== 'eligible') {
+          reasons.add(eligible === 'unknown' ? 'profession_unverified' : 'profession_restricted');
+          unsupported = true;
+          break;
+        }
+      }
       const target = { itemId:option.candidate.itemId, inventoryType:option.candidate.inventoryType,
         itemClassId:option.candidate.itemClassId, itemSubclassId:option.candidate.itemSubclassId, itemLevel:variant.itemLevel,
+        ...(variant.resolution?.effectsVerified === true && Array.isArray(variant.resolution.effects) && variant.resolution.effects.length === 0
+          ? {hasOnUseEffect:false} : {}),
         socketColors:metadata.socketColors, build:info.build, revision:info.simcRevision, engine:input.engine };
-      const resolved = resolveExactEnhancements(target,{level:input.level,professions:[]});
+      const resolved = resolveExactEnhancements(target,{level:input.level,faction:input.faction,professions:input.professions});
       if (!resolved.verified) { reasons.add(resolved.reason); unsupported = true; break; }
       const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash(variant.resolution?.metadataVersion===3 ? [target,metadata,3] : [target,metadata]),owned:false,
         sockets:metadata.socketColors.flatMap((color,index)=>color ? [{key:String(index),type:String(color)}] : [])};
@@ -142,8 +151,9 @@ export async function evaluateAuctionEnhancementStage(input: {
         while (socketColors.length < 3) socketColors.push(0);
         const target = {itemId, inventoryType:equipped?.inventoryType ?? -1, itemClassId:Number(obj(item.item_class).id),
           itemSubclassId:equipped?.itemSubclassId ?? -1, itemLevel:Number(obj(item.level).value), socketColors,
+          ...(Array.isArray(item.spells) && item.spells.length === 0 ? {hasOnUseEffect:false} : {}),
           build:info.build,revision:info.simcRevision,engine:input.engine};
-        const resolved = resolveExactEnhancements(target,{level:input.level,professions:[]});
+        const resolved = resolveExactEnhancements(target,{level:input.level,faction:input.faction,professions:input.professions});
         if (resolved.verified) {
           slot.ownedItemId = itemId;
           slot.allowOwnedChanges = true;
@@ -168,7 +178,6 @@ export async function evaluateAuctionEnhancementStage(input: {
     if(input.exhaustive && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
     if(!input.state.quotes || !sourceFresh || ids.some(id=>!input.state.quotedItemIds?.includes(id)) || !Number.isFinite(Date.parse(input.state.quotes.fetchedAt)) || now-Date.parse(input.state.quotes.fetchedAt)>60_000) {
       const requested=[...new Set([...(input.state.quotedItemIds??[]),...ids])].sort((a,b)=>a-b);
-      if(requested.length>512){reasons.add('enhancement_catalog_limit');continue;}
       input.state.quotes=requested.length ? await (input.quote??exactCommodityPrices)(input.region,requested,{refresh:true,signal:input.signal})
         : {prices:{},sourceUpdatedAt:new Date(now).toISOString(),fetchedAt:new Date(now).toISOString()};
       input.state.quotedItemIds=requested;
@@ -180,7 +189,8 @@ export async function evaluateAuctionEnhancementStage(input: {
     // Only the prices eligible for these exact slots enter the exhaustive cursor.
     const prices = input.exhaustive ? Object.fromEntries(ids.filter(id=>Object.hasOwn(input.state.quotes!.prices,id))
       .map(id=>[id,input.state.quotes!.prices[id]])) : input.state.quotes.prices;
-    const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},character:{},
+    const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
+      character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
       budgetCopper:input.budgetCopper,simulationIdentity:identity,objective:input.objective,baselineDps:input.baseline.dps,baseline:input.baseline,
       signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache ?? input.priorSimulations,onCacheHit:input.onCacheHit,

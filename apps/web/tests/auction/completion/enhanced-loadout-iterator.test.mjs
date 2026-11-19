@@ -39,7 +39,7 @@ test('visits each mechanical variant once and buys the cheapest allowed physical
 });
 
 test('keeps distinct native effects, equip constraints and enhancement eligibility in separate branches', async () => {
-  const variants = Array.from({length: 10}, (_, i) => option(i + 1, 'FINGER_1'));
+  const variants = Array.from({length: 11}, (_, i) => option(i + 1, 'FINGER_1'));
   for (const row of variants) row.candidate.itemId = 1;
   const variant = index => variants[index].candidate.variants[0];
   variant(1).bonusIds = [10];
@@ -48,13 +48,14 @@ test('keeps distinct native effects, equip constraints and enhancement eligibili
   variants[4].candidate.constraints.uniqueEquipped = true;
   variant(5).itemLevel++;
   variants[6].candidate.itemClassId++;
-  for (const i of [7, 8, 9]) {
+  for (const i of [7, 8, 9, 10]) {
     variant(i).resolution = {metadataVersion: 3, enhancements: {status: 'verified', socketColors: [14, 0, 0],
       socketCount: 1, socketBonusId: 0, requiredProfessionId: 0, requiredProfessionRank: 0}};
   }
   variant(8).resolution.enhancements.socketColors = [0, 14, 0];
   variant(9).resolution.enhancements.requiredProfessionId = 4;
-  assert.equal((await all(base(variants, ['FINGER_1']))).total, '11');
+  Object.assign(variant(10).resolution, {effectsVerified: true, effects: []});
+  assert.equal((await all(base(variants, ['FINGER_1']))).total, '12');
 });
 
 test('an invalid zero enchant on a cheaper copy cannot hide the valid unenchanted lot', async () => {

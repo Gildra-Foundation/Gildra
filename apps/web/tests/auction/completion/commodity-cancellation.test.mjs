@@ -75,3 +75,12 @@ test('server-confirmed identical prices reuse all quantity tiers; changed data r
   assert.deepEqual(JSON.parse(JSON.stringify(c.prices[900001].ladder)),[[100,3],[180,4]]);
   assert.notEqual(b.sourceUpdatedAt,c.sourceUpdatedAt);assert.equal(summaries,2);assert.equal(calls,3);
 });
+
+test('a catalog larger than 512 IDs gets its last price from the same snapshot',async()=>{
+  const h=await heldSnapshotAdapter(), ids=Array.from({length:700},(_,i)=>949302+i);
+  const priced=h.exactCommodityPrices('eu',ids,{refresh:true});
+  await tick();h.release();
+  const {prices}=await priced;
+  assert.deepEqual(JSON.parse(JSON.stringify(prices[ids.at(-1)])),{ladder:[[20,3],[30,2]]});
+  assert.equal(h.calls,1);
+});

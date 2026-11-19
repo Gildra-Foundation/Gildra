@@ -1,3 +1,4 @@
+import { professionEligibility } from "../../../lib/wow/characterProfessions.ts";
 import { parseAuctionGearEnhancementMode } from "../../../lib/wow/auctionGearEnhancementMode.ts";
 import { auctionEnhancementCatalogInfo } from "../../../lib/wow/auctionEnhancementCatalog.ts";
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
@@ -45,10 +46,10 @@ export async function harness({ entity = record(), availableReference = true, re
   const state = { entity, availableReference, armory: structuredClone(armory), market: market([offer()]),
     workerEngine: "SimulationCraft synthetic-v1", referenceCalls: 0, variantCalls: 0, simulationCalls: 0, marketCalls: 0, marketSignals: [], referenceLocales: [], reference: reference ?? { offer: offer(), itemLevel: 100, requiredLevel: 1, stats: [] } };
   const metadata = value => ({ key: auctionVariantKey(value), itemId: value.itemId, itemLevel: 100, requiredLevel: 1,
-    inventoryType: 9, itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {} });
+    inventoryType: 9, itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {}, ...state.nativeMetadata });
   const discoverySource = await readFile(new URL("../../../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
   const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
-    .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
+    .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Date, Map, Set, Object, Number, JSON, professionEligibility, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
       supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference,
       lookupGearRecords: repository?.lookupGearRecords ?? (async (_ids, _locale, itemClass, _level, _signal, _cache, { cachedOnly = false } = {}) => !cachedOnly && (itemClass === undefined || itemClass === 4) ? [state.entity] : []),
       gearEntityDetails: repository?.gearEntityDetails ?? (async records => records),

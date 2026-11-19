@@ -52,7 +52,7 @@ const simcSlotByBattleNet: Record<string, string> = {
 
 // Slot-level transport guard, not an enchant compatibility proof. The pinned
 // catalog resolver separately checks the item level, class, subclass and inventory mask.
-const enchantableSlots = new Set(["HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND", "OFF_HAND"]);
+const enchantableSlots = new Set(["HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "WAIST", "WRIST", "HANDS", "LEGS", "FEET", "FINGER_1", "FINGER_2", "MAIN_HAND", "OFF_HAND"]);
 const socketableSlots = new Set(["HEAD", "NECK", "WRIST", "WAIST", "FINGER_1", "FINGER_2"]);
 
 function integerId(value: unknown) {

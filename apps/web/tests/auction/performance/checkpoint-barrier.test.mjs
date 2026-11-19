@@ -96,7 +96,7 @@ test('marked publication barriers retain identical data with one snapshot instea
   }
 });
 
-for (const yielded of [false, true]) test(`actual Runner ${yielded ? 'skips a clean final checkpoint' : 'persists a changed final phase'} after publication`, async () => {
+for (const yielded of [false, true]) test(`actual Runner publishes the result and its ${yielded ? 'yielded simulation' : 'next discovery'} phase together`, async () => {
   assert.equal(process.env.GILDRA_AUCTION_STATE_DIR, undefined);
   const directory = await fs.mkdtemp(join(tmpdir(), 'gildra-runner-barrier-'));
   process.env.GILDRA_AUCTION_STATE_DIR = directory;
@@ -123,10 +123,11 @@ for (const yielded of [false, true]) test(`actual Runner ${yielded ? 'skips a cl
     });
     await run(entry, new AbortController().signal, () => {}, 'synthetic', result => {
       assert.equal(readAuctionState('search', entry.id).data.latestSearchResult.searchId, result.searchId);
+      assert.equal(readAuctionState('search', entry.id).data.nextSearchPhase, yielded ? 'simulation' : 'discovery');
       publications++;
     });
     assert.equal(publications, 1);
-    assert.equal(serializations, yielded ? 1 : 2, 'Only a real final phase mutation requires a second full snapshot');
+    assert.equal(serializations, 1);
     assert.equal(readAuctionState('search', entry.id).data.nextSearchPhase, yielded ? 'simulation' : 'discovery');
   } finally {
     v8.serialize = original; syncBuiltinESMExports();

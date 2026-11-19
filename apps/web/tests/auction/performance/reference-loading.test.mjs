@@ -4,6 +4,7 @@ import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
 import test from 'node:test';
 import {supportedAuctionModifiers} from '../../../lib/wow/gearItemModifiers.ts';
+import nonEquipmentIndex from "../../../data/wow/auction-enhancements/non-equipment.json" with {type:"json"};
 
 // Real parser/cache/pool, synthetic transport only; no requests or credentials.
 const source = readFileSync(new URL('../../../lib/wow/auctionItemReference.ts', import.meta.url), 'utf8');
@@ -16,7 +17,7 @@ function fixture(fetch) {
   let now = Date.now();
   const Clock = class extends Date { static now() {return now;} };
   const api = vm.runInNewContext(body + ';({getAuctionItemReferences,parseAuctionItemReference,AUCTION_ITEM_REFERENCE_TTL_MS})',
-    {Map, Set, Object, Number, JSON, Buffer, AbortController, AbortSignal, Date: Clock, supportedAuctionModifiers, fetch});
+    {Map, Set, Object, Number, JSON, Buffer, AbortController, AbortSignal, Date: Clock, supportedAuctionModifiers, nonEquipmentIndex, fetch});
   return {...api, advance: ms => {now += ms;}, get: (ids, signal = new AbortController().signal, region = 'eu', locale = 'en_US', token = 'synthetic') =>
     api.getAuctionItemReferences(ids, region, token, signal, locale)};
 }

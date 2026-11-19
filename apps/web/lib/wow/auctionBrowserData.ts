@@ -331,8 +331,9 @@ function awaitCommoditySnapshot<T>(pending: Promise<T>, signal?: AbortSignal): P
 }
 export async function exactCommodityPrices(region: AuctionRegion, itemIds: readonly number[], options: { refresh?: boolean; signal?: AbortSignal } = {}) {
   options.signal?.throwIfAborted();
-  // This is a bounded local projection of one region snapshot, not one HTTP request per ID.
-  if (itemIds.length > 512 || itemIds.some(id => !Number.isSafeInteger(id) || id <= 0)) throw new Error("invalid_commodity_items");
+  // Both consumers supply trusted IDs from a shopping list or the verified catalog.
+  // Project every requested ladder from the same regional snapshot.
+  if (itemIds.some(id => !Number.isSafeInteger(id) || id <= 0)) throw new Error("invalid_commodity_items");
   const market = await awaitCommoditySnapshot(snapshot({ region, lang: "en", realm: "", market: "commodities", q: "", sort: "price", page: 1 }, null, options.refresh), options.signal);
   options.signal?.throwIfAborted();
   const summary = summaryOf(market);

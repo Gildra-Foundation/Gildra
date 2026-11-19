@@ -67,7 +67,7 @@ export async function runAuctionGearPlan(input: AuctionGearRunInput, token: stri
   const diagnostics = createAuctionGearDiagnostics();
   const character = await diagnostics.measureStage("ownership", () => getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal));
   if (!character) throw new Error("character_not_found");
-  const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal));
+  const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal, { professions: true }));
   runDiagnostics.set(armory, diagnostics);
   return runAuctionGearPlanFromSnapshot(input, character, armory, token, signal, progress);
 }
@@ -141,7 +141,7 @@ export async function createAuctionGearContextFromSnapshot(input: AuctionGearRun
   progress({ phase: "catalog", completed: 0, total: discovery.itemIds.length });
   const discoveryContext = (slotType: string) => ({
     classId: character.playableClass.id, specId: theme.specId, characterLevel: character.level,
-    raceId: character.playableRace.id, faction: character.faction.type, slotType,
+    raceId: character.playableRace.id, faction: character.faction.type, professions: armory.professions, slotType,
     currentItemLevel: 0, anchorItemClassId: -1, anchorItemSubclassId: -1, season,
     acquisition: { type: "auction" as const, evidence: "auction" as const },
   });
@@ -313,7 +313,7 @@ export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: 
   const diagnostics = createAuctionGearDiagnostics();
   const character = await diagnostics.measureStage("ownership", () => getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal));
   if (!character) throw new Error("character_not_found");
-  const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal));
+  const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal, { professions: true }));
   runDiagnostics.set(armory, diagnostics);
   return startAuctionGearSearchFromSnapshot(input, character, armory, owner, token, signal, progress, searchCreated, publishResult);
 }
@@ -358,6 +358,9 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
       result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult ? batch : undefined);
       remaining -= batch;
       if (publishResult) {
+        // This comparison batch finishes before the deadline. Store the next
+        // discovery turn in the same durable snapshot as its visible result.
+        if ((remaining === 0 || result.pendingItems === 0) && !shouldYield()) setAuctionGearPhase(entry, "nextSearchPhase", "discovery");
         await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
         signal.throwIfAborted();
         const diagnosticKey = entry.context.armory ?? entry.context;
@@ -418,7 +421,7 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
   // Ownership is verified above; these fresh reads are independent. Keep both
   // validations on every continuation without paying their latency in series.
   const [current, market] = await Promise.all([
-    diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, context.character, signal)),
+    diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, context.character, signal, { professions: true })),
     diagnostics.measureStage("market", () => getCharacterAuctionMarket(context.character, token, { refresh: true, signal })),
   ]);
   signal.throwIfAborted();
@@ -620,7 +623,16 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       if (context.input.enhancementMode === "enhanced") {
         progress({ phase: "enhancements", completed: entry.exhaustiveEnhancementState?.equipmentChecked ?? 0, total: 0 });
         let lastPublishedEnhancement: AuctionGearAssemblyResult["enhancementOptimization"];
+        let lastEnhancementJson: string | undefined;
         const publishEnhancement = async (result: NonNullable<typeof lastPublishedEnhancement>) => {
+          // Many priced configurations advance the private cursor without
+          // changing a single public field. onState already schedules that
+          // progress; the turn's final barrier also covers cancellation/errors.
+          const json = JSON.stringify(result);
+          if (json === lastEnhancementJson) {
+            lastPublishedEnhancement = result;
+            return;
+          }
           published = { ...published, enhancementOptimization: result };
           entry.latestAssemblyResult = published;
           scheduleAuctionGearSearchSave(entry);
@@ -628,6 +640,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           signal.throwIfAborted();
           publishResult?.(published);
           lastPublishedEnhancement = result;
+          lastEnhancementJson = json;
         };
         // Live capacity is scoped to this exact enhancement turn; a worker
         // downgrade keeps the serial path. Legacy and quick remain unchanged.
@@ -638,7 +651,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           recheck: (selected, configuration, simSignal) => context.simulate(
             customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
-          specId: context.specId, level: context.character.level, region: context.character.region,
+          specId: context.specId, level: context.character.level, professions: context.armory.professions, faction: context.character.faction?.type, region: context.character.region,
           engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
           encounter: { scenario: context.input.scenario, ...context.encounter }, budgetCopper: context.input.budgetCopper,
           objective: context.input.objective ?? "dps", baseline: checkpoint.baseline,
@@ -684,7 +697,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         progress({ phase: "enhancements", completed: 0, total: 0 });
         const enhanced = await diagnostics.measureStage("enhancements", () => evaluateAuctionEnhancementStage({
           finalists: [...finalists].map(([label, selected]) => ({label, options:selected})),
-          equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId, level: context.character.level,
+          equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId, level: context.character.level, professions: context.armory.professions, faction: context.character.faction?.type,
           region: context.character.region, engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
           encounter: {scenario:context.input.scenario,...context.encounter}, budgetCopper:context.input.budgetCopper,
           objective:context.input.objective ?? "dps", baseline:checkpoint.baseline, simulate:context.simulate,
@@ -738,7 +751,10 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             const measurement = await simulate(selected, comparisonSignal, ownedChanges);
             comparisonSignal.throwIfAborted();
             cache[cacheKey] = measurement;
-            await metricsFor(entry.context.armory ?? entry.context).measureStage("checkpoint", () => flushAuctionGearSearch(entry));
+            // A baseline precedes another native request. A finalist goes
+            // straight to onProgress, which commits its cache and row together.
+            if (key === null) await diagnostics.measureStage("checkpoint", () => flushAuctionGearSearch(entry));
+            else scheduleAuctionGearSearchSave(entry);
             return measurement;
           }, { shouldYield,
             onYield: () => { yielded = true; },
@@ -828,14 +844,18 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   const retryEquippedReference = !savedDiscovery.equippedReferenceRevision && savedDiscovery.rejectedReferences?.size &&
     equippedAuctionReferences(data.armory.equipment).some(reference =>
       savedDiscovery.rejectedReferences.has(reference.offer.itemId) && savedDiscovery.offers.has(auctionVariantKey(reference.offer)));
-  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference ? savedDiscovery
+  // Older ordinary searches admitted native-only skill requirements without checking ranks.
+  const retryProfessionEquipment = !data.armory.professions && [...savedDiscovery.candidates.values()].some(candidates =>
+    candidates.some(candidate => candidate.variants.some(variant => variant.resolution?.enhancements?.status === "verified" &&
+      variant.resolution.enhancements.requiredProfessionId > 0)));
+  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference && !retryProfessionEquipment ? savedDiscovery
     : createAuctionGearDiscovery({ ...data.market, offers: [...data.discovery.offers.values()].flat() }, data.input.budgetCopper);
   discovery.equippedReferenceRevision = 1;
   const coverage = discovery === data.discovery ? data.coverage
     : { ...auctionGearDiscoveryCoverage(discovery), discoveryComplete: false, dataComplete: false };
   const discoveryContext = (slotType: string) => ({
     classId: data.character.playableClass.id, specId: data.specId, characterLevel: data.character.level,
-    raceId: data.character.playableRace.id, faction: data.character.faction.type, slotType,
+    raceId: data.character.playableRace.id, faction: data.character.faction.type, professions: data.armory.professions, slotType,
     currentItemLevel: 0, anchorItemClassId: -1, anchorItemSubclassId: -1, season: data.discoverySeason,
     acquisition: { type: "auction" as const, evidence: "auction" as const },
   });

@@ -59,6 +59,7 @@ export function auctionGearProfileFingerprint(armory: BattleNetSimulationSnapsho
   return createHash("sha256").update(JSON.stringify(canonical({
     profile: { level: profile.level, classId: object(profile.character_class).id,
       raceId: object(profile.race).id, faction: object(profile.faction).type },
+    professions: armory.professions,
     specialization: armory.activeSpecializationId,
     heroTree: armory.activeHeroTalentTreeId,
     talentLoadout: armory.activeTalentLoadout,

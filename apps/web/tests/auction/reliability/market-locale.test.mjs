@@ -42,7 +42,7 @@ test('classifies a missing summary only for a matching non-equippable Blizzard i
   const original = globalThis.fetch;
   const cases = new Map([
     [8383, { id:8383, is_equippable:false, inventory_type:{ type:'NON_EQUIP' }, item_class:{ id:15 } }],
-    [123865, null],
+    [900003, null],
     [900001, { id:8383, is_equippable:false, inventory_type:{ type:'NON_EQUIP' }, item_class:{ id:15 } }],
     [900002, { id:900002, is_equippable:true, inventory_type:{ type:'NECK' }, item_class:{ id:4 } }],
   ]);
@@ -59,5 +59,28 @@ test('classifies a missing summary only for a matching non-equippable Blizzard i
       assert.deepEqual([...nonEquipment], [[8383,15]]);
     }
     assert.equal(calls, cases.size);
+  } finally { globalThis.fetch = original; }
+});
+
+test('a missing reference uses verified DB2 classification, while unknown IDs and API failures stay unknown', async () => {
+  const original = globalThis.fetch, signal = new AbortController().signal;
+  const known = 123865, unknown = 98765029;
+  try {
+    globalThis.fetch = async () => new Response(null, {status:404});
+    const classified = new Map();
+    const refs = await getAuctionItemReferences([known, unknown], 'eu', 'fixture', signal, 'en_US', classified);
+    assert.equal(refs.size,0);
+    assert.deepEqual([...classified],[[known,0]]);
+    const cached = new Map();
+    await getAuctionItemReferences([known], 'eu', 'fixture', signal, 'en_US', cached);
+    assert.deepEqual([...cached],[[known,0]]);
+
+    globalThis.fetch = async () => new Response(null,{status:503});
+    const failed = new Map();
+    await assert.rejects(getAuctionItemReferences([known], 'us', 'fixture', signal, 'en_US', failed),/item_reference_unavailable/);
+    assert.equal(failed.size,0);
+    globalThis.fetch = async () => Response.json(raw(known,'Live reference takes precedence'));
+    await getAuctionItemReferences([known], 'us', 'fixture', signal, 'en_US', failed);
+    assert.equal(failed.size,0);
   } finally { globalThis.fetch = original; }
 });

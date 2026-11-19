@@ -88,7 +88,7 @@ function measurement(value: GearPlanSimulation) {
 function validateEnhancement(e: Enhancement, kind: Enhancement["kind"], retained = false) {
   if (e.kind !== kind || !e.key || (!positive(e.consumableItemId) && !(retained && e.consumableItemId === 0)) || !positive(e.simulationId) ||
       (e.uniqueEquipped !== undefined && typeof e.uniqueEquipped !== "boolean") ||
-      (e.profession && (!positive(e.profession.id) || !positive(e.profession.rank))) ||
+      (e.profession && (!positive(e.profession.id) || !Number.isSafeInteger(e.profession.rank) || e.profession.rank < 0)) ||
       (e.category && (!e.category.id || !positive(e.category.limit)))) throw new Error("invalid_enhancement_catalog");
 }
 
@@ -124,13 +124,17 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (!resolved.enchantApplicable && slot.installed?.enchant) throw new Error("invalid_installed_enchant");
     const addAxis = (socket: number | null, options: readonly Enhancement[], installed: Enhancement | null) => {
       const kind = socket === null ? "enchant" : "gem";
-      if (!exact && options.length > 100) throw new Error("enhancement_catalog_limit");
+      const consumablesByEffect = new Map<number, Set<number>>();
       if (installed) validateEnhancement(installed, kind, true);
       const choices: Choice[] = [{slot:slotIndex,socket,enhancement:installed,retained:Boolean(installed)}];
       if (!slot.owned || slot.allowOwnedChanges) for (const e of [...options].sort((a,b)=>a.key.localeCompare(b.key))) {
         validateEnhancement(e, kind);
         if (e.profession && (character.professions?.[String(e.profession.id)] ?? -1) < e.profession.rank) continue;
-        if (choices.some(c => c.enhancement?.simulationId === e.simulationId && (c.retained || c.enhancement.consumableItemId === e.consumableItemId))) continue;
+        if (installed?.simulationId === e.simulationId) continue;
+        const consumables = consumablesByEffect.get(e.simulationId);
+        if (consumables?.has(e.consumableItemId)) continue;
+        if (consumables) consumables.add(e.consumableItemId);
+        else consumablesByEffect.set(e.simulationId, new Set([e.consumableItemId]));
         choices.push({slot:slotIndex,socket,enhancement:e,retained:false});
       }
       const priceRank = (choice: Choice) => {
@@ -418,8 +422,12 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
         const candidate = {configuration: config, simulation};
         if (!thirdMeasuredDps || rankDps(candidate, thirdMeasuredDps) <= 0) {
           const top = [bestMeasuredDps, secondMeasuredDps, thirdMeasuredDps]
-            .filter((row): row is typeof candidate => Boolean(row) && row!.configuration.key !== config.key);
-          top.push(candidate);
+            .filter((row): row is typeof candidate => Boolean(row));
+          // Multiple scrolls can apply the same native enchant. Compare their
+          // receipts before replacing that finalist with a different purchase.
+          const previous = top.findIndex(row => row.configuration.key === config.key);
+          if (previous < 0) top.push(candidate);
+          else if (rankDps(candidate, top[previous]) < 0) top[previous] = candidate;
           [bestMeasuredDps, secondMeasuredDps, thirdMeasuredDps] = top.sort(rankDps);
         }
       }
