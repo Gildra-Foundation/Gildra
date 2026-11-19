@@ -143,3 +143,117 @@ test('equivalent procurement variants share native work while later reuse retain
   assert(serial.hits>0);assert.equal(parallel.hits,serial.hits);assert.deepEqual(parallel.calls.map(row=>row.key),serial.calls.map(row=>row.key));
   assert.deepEqual(parallel.checkpoint,serial.checkpoint);
 });
+
+test('a verified 25-profile worker fills a bounded window while the first native measurement is pending', async () => {
+  const choices = Array.from({length: 70}, (_, i) => ({
+    key: String(i), kind: 'gem', consumableItemId: 8000 + i, simulationId: 8000 + i,
+  }));
+  const {input} = fixture({
+    simulationBatchSize: 25, limits: {simulations: 50},
+    slots: [{slotType: 'HEAD', variantKey: 'fixture', metadataKey: 'verified', owned: false, sockets: [{key:'0',type:'14'}]}],
+    catalog: {version: 'batch', complete: true, resolve: () => ({
+      verified: true, enchantApplicable: false, enchantChoices: [], gemChoices: {'0': choices},
+    })},
+    prices: {sourceUpdatedAt: new Date().toISOString(), prices: Object.fromEntries(choices.map(gem => [gem.consumableItemId, {ladder: [[10, 1]]}]))},
+  });
+  const pending = [], full = deferred();
+  const running = optimize({...input, simulate: async config => {
+    const gate = deferred();
+    pending.push({config, gate});
+    if (pending.length === 50) full.resolve();
+    return gate.promise;
+  }});
+  assert.equal(pending.length, 1, 'the first native measurement starts before the producer yields during preparation');
+  await full.promise;
+  assert.equal(new Set(pending.map(row => row.config.key)).size, 50);
+  for (const {config, gate} of [...pending].reverse()) gate.resolve(measureConfig(config));
+  const first = await running;
+  assert.equal(first.simulations, 50);
+  assert.equal(first.checkpoint.exactNextConfiguration, '50');
+
+  const result = await finish({input}, JSON.parse(JSON.stringify(first.checkpoint)));
+  const serial = await finish({input: {...input, simulationConcurrency: 1, simulationBatchSize: 0, limits: {simulations: 1}}});
+  assert.equal(result.checkpoint.totalSimulations, choices.length + 1);
+  assert.deepEqual(result.checkpoint, serial.checkpoint);
+});
+
+test('a cooperative deadline during lookahead keeps the first measurement and admits no further work', async () => {
+  let started = false;
+  const h = fixture({
+    simulationBatchSize: 25, limits: {simulations: 50}, shouldYield: () => started,
+    simulate: async config => { started = true; h.calls.push(config); return measureConfig(config); },
+  });
+  const first = await optimize(h.input);
+  assert.equal(h.calls.length, 1);
+  assert.equal(first.checkpoint.exactNextConfiguration, '1');
+  const next = await finish({...h, input: {...h.input, shouldYield: () => false}}, JSON.parse(JSON.stringify(first.checkpoint)));
+  assert.equal(h.calls.length, new Set(h.calls.map(config => config.key)).size);
+  assert.equal(next.complete, true);
+});
+
+test('interrupted profileset windows retain every validated sibling without ranking beyond the cursor', async () => {
+  let saved;
+  const h = fixture({simulationBatchSize: 4, limits: {simulations: 8}, onCheckpoint: state => { saved = state; }});
+  const pending = [];
+  const running = optimize({...h.input, simulate: async (config, signal) => {
+    const gate = deferred();
+    pending.push({config, signal, gate});
+    return gate.promise;
+  }});
+  assert.equal(pending.length, 8);
+  for (const row of pending.slice(3)) row.gate.resolve(measureConfig(row.config));
+  await nextTurn();
+  pending[0].gate.reject(Error('first_native_failed'));
+  await nextTurn();
+  assert(pending.every(row => row.signal.aborted));
+  for (const row of pending.slice(1, 3)) row.gate.resolve(measureConfig(row.config));
+  await assert.rejects(running, /first_native_failed/);
+  assert.equal(saved.exactNextConfiguration, '0');
+  assert.equal(saved.bestMeasuredDps, undefined);
+  assert.deepEqual(Object.keys(saved.cache), pending.slice(3).map(row => row.config.key));
+  const result = await finish(h, JSON.parse(JSON.stringify(saved)));
+  assert(h.calls.every(config => !saved.cache[config.key]));
+  assert.equal(result.checkpoint.totalSimulations, h.calls.length + 5);
+});
+
+test('a changed owned armory ends the profileset window and resumes at the next ordinal', async () => {
+  const h = fixture({simulationBatchSize: 25, limits: {simulations: 50}, budgetCopper: 300});
+  const slot = {...h.input.slots[0], sockets: [{key: '0', type: '14'}]};
+  const owned = {...slot, slotType: 'LEGS', owned: true, allowOwnedChanges: true, ownedItemId: 9900, installed: {gems: [null]}};
+  h.input.slots = [slot, owned];
+  const first = await optimize(h.input);
+  assert.equal(first.complete, false);
+  assert.equal(first.simulations, 6, 'six purchased gem choices share the first owned armory');
+  assert.equal(new Set(h.calls.map(row => JSON.stringify(row.ownedChanges))).size, 1);
+  const next = await finish(h, JSON.parse(JSON.stringify(first.checkpoint)));
+  const serial = await finish({input: {...h.input, simulationConcurrency: 1, limits: {simulations: 2}}});
+  assert.deepEqual(next.checkpoint, serial.checkpoint);
+  assert.equal(next.checkpoint.totalSimulations, 35);
+});
+
+test('two distinct owned base armories occupy both lanes without accumulating more single requests', async () => {
+  const h = fixture({simulationBatchSize: 25, limits: {simulations: 50}, budgetCopper: 300});
+  const slot = {...h.input.slots[0], sockets: [{key: '0', type: '14'}]};
+  h.input.slots = [{...slot, owned: true, allowOwnedChanges: true, ownedItemId: 9900, installed: {gems: [null]}}, {...slot, slotType: 'LEGS'}];
+  const first = await optimize(h.input);
+  assert.equal(first.simulations, 2);
+  assert.equal(new Set(h.calls.map(row => JSON.stringify(row.ownedChanges))).size, 2);
+  assert.equal(first.checkpoint.exactNextConfiguration, '2');
+});
+
+test('abort during ordered ranking retains all completed native measurements and the processed prefix', async () => {
+  const controller = new AbortController(), h = fixture({simulationBatchSize: 25, budgetCopper: 300, limits: {simulations: 50}});
+  let saved, issued = 0;
+  await assert.rejects(optimize({...h.input, signal: controller.signal, onCheckpoint: state => { saved = state; },
+    simulate: async config => {
+      if (++issued === 35) setImmediate(() => controller.abort());
+      return measureConfig(config);
+    },
+  }), {name: 'AbortError'});
+  assert.equal(issued, 35);
+  assert.equal(saved.totalSimulations, 35);
+  assert.equal(saved.exactNextConfiguration, '32');
+  const result = await finish(h, JSON.parse(JSON.stringify(saved)));
+  assert.equal(h.calls.length, 0);
+  assert(result.complete);
+});

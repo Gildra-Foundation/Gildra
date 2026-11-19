@@ -61,6 +61,8 @@ export async function evaluateAuctionEnhancementStage(input: {
   exhaustive?: boolean;
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
+  simulationBatchSize?: number;
+  simulationOwnedBatch?: boolean;
   additionalSearchReasons?: readonly string[];
   onPriceDependencies?: (itemIds: number[]) => void;
   priorSimulations?: EnhancementCheckpoint["cache"];
@@ -189,6 +191,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     // Only the prices eligible for these exact slots enter the exhaustive cursor.
     const prices = input.exhaustive ? Object.fromEntries(ids.filter(id=>Object.hasOwn(input.state.quotes!.prices,id))
       .map(id=>[id,input.state.quotes!.prices[id]])) : input.state.quotes.prices;
+    const batchSize = finalist.options.length || input.simulationOwnedBatch ? input.simulationBatchSize ?? 0 : 0;
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
       character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
@@ -196,14 +199,15 @@ export async function evaluateAuctionEnhancementStage(input: {
       signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache ?? input.priorSimulations,onCacheHit:input.onCacheHit,
       exhaustive:input.exhaustive,
       simulationConcurrency:input.simulationConcurrency,
-      ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2}} : {}),
+      simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
+      ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       onCheckpoint:(checkpoint:EnhancementCheckpoint)=>{input.state.checkpoints[identity]=checkpoint;},
       simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal,ownedAuctionGearChanges(config))};
     let optimized;
     try { optimized=await optimizeAuctionGearEnhancements(args); }
     catch(error){if(!(error instanceof Error)||error.message!=='enhancement_checkpoint_changed')throw error;
       optimized=await optimizeAuctionGearEnhancements({...args,checkpoint:undefined});}
-    input.signal.throwIfAborted();input.state.checkpoints[identity]=optimized.checkpoint;
+    input.state.checkpoints[identity]=optimized.checkpoint;input.signal.throwIfAborted();
     result.complete &&= optimized.complete;
     for(const reason of optimized.reasons) if(reason!=='bare_configuration')reasons.add(reason);
     const confirmed = optimized.finalists.find(candidate => {

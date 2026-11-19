@@ -30,7 +30,7 @@ func configuredSimCConcurrency() int {
 // rather than an environment value that may not match the running engine.
 func (e *SimCEngine) NativeSimulationConcurrency() int { return cap(e.limit) }
 
-// Both native entry points share the same bounded process permits. A burst can wait,
+// All native entry points share the same bounded process permits. A burst can wait,
 // but at most eight requests wait and each wait ends within five seconds (or
 // its caller's earlier deadline). No background worker goroutines are needed.
 func (e *SimCEngine) acquire(ctx context.Context) error {

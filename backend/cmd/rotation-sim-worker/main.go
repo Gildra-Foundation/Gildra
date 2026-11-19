@@ -56,11 +56,7 @@ func run() error {
 			return err
 		}
 		rotationlab.NewHandler(rotationlab.NewServiceWithEngine(postgres, engine)).Register(mux)
-		rotationlab.NewWorkerHandler(engine).RegisterGearVariants(mux)
-		mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			_, _ = w.Write([]byte(`{"status":"ok","engine":"simulationcraft","storage":"postgres"}`))
-		})
+		rotationlab.NewWorkerHandler(engine).RegisterNativeRoutes(mux, true)
 	}
 	server := &http.Server{
 		Addr:              envOr("ROTATION_WORKER_ADDR", "127.0.0.1:58081"),

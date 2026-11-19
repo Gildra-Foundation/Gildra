@@ -83,11 +83,11 @@ test("measurement cache fence changes independently of the maintained APL contra
 });
 
 test("finalist precision travels to the worker and never shares a cache entry with an ordinary simulation",async()=>{
- const {run,calls}=simulator((i,request)=>({...wires[i],iterations:request.precision==="finalist"?3000:750}));
+ const {run,calls}=simulator((i,request)=>({...wires[i],iterations:({"auction-finalist":750,"auction-candidate":100})[request.precision]}));
  const signal=new AbortController().signal;
- assert.equal((await run([option],signal)).iterations,750);
- assert.equal((await run([option],signal,[],"finalist")).iterations,3000);
- assert.equal((await run([option],signal,[],"finalist")).iterations,3000);
- assert.equal((await run([option],signal)).iterations,750);
+ assert.equal((await run([option],signal)).iterations,100);
+ assert.equal((await run([option],signal,[],"finalist")).iterations,750);
+ assert.equal((await run([option],signal,[],"finalist")).iterations,750);
+ assert.equal((await run([option],signal)).iterations,100);
  assert.equal(calls(),2);
 });

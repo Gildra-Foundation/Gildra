@@ -61,7 +61,7 @@ func TestNativeGearPrecisionPreservesMeanAndStandardError(t *testing.T) {
 	}
 }
 
-func TestFinalistPrecisionUsesFourNativeIterationBatches(t *testing.T) {
+func TestNativePrecisionIterationBudgets(t *testing.T) {
 	engine := &SimCEngine{iterations: 750}
 	input := nativeGearInput(t)
 	if !slices.Contains(engine.arguments(input, "report", "profile"), "iterations=750") {
@@ -73,6 +73,12 @@ func TestFinalistPrecisionUsesFourNativeIterationBatches(t *testing.T) {
 	}
 	if !slices.Contains(engine.arguments(input, "report", "profile"), "iterations=3000") {
 		t.Fatal("missing high-precision native iterations")
+	}
+	for precision, argument := range map[string]string{auctionCandidatePrecision: "iterations=100", auctionFinalistPrecision: "iterations=750"} {
+		input.Precision = precision
+		if err := ValidateInput(input); err != nil || !slices.Contains(engine.arguments(input, "report", "profile"), argument) {
+			t.Fatalf("%s: expected %s, validation error %v", precision, argument, err)
+		}
 	}
 	input.Precision = "arbitrary"
 	if ValidateInput(input) == nil {

@@ -20,6 +20,8 @@ import (
 )
 
 const (
+	auctionCandidatePrecision   = "auction-candidate"
+	auctionFinalistPrecision    = "auction-finalist"
 	defaultSimCIterations       = 750
 	finalistIterationMultiplier = 4
 	maxSimCOutputBytes          = 2 << 20
@@ -110,6 +112,10 @@ func (e *SimCEngine) Simulate(ctx context.Context, input SimulationInput) (Simul
 	}
 	defer e.release()
 
+	if isAuctionMeasurement(input) {
+		return e.simulateMeasurement(ctx, input)
+	}
+
 	report, err := e.run(ctx, input)
 	if err != nil {
 		return SimulationResult{}, err
@@ -158,37 +164,9 @@ func (e *SimCEngine) storeBaseline(key string, dps int) {
 }
 
 func (e *SimCEngine) run(ctx context.Context, input SimulationInput) (simcReport, error) {
-	timeout := e.timeout
-	if input.Precision == "finalist" {
-		timeout *= finalistIterationMultiplier
-	}
-	runCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	tempDir, err := os.MkdirTemp("", "gildra-simc-")
+	payload, err := e.runReport(ctx, input, nil)
 	if err != nil {
 		return simcReport{}, err
-	}
-	defer os.RemoveAll(tempDir)
-	reportPath := filepath.Join(tempDir, "report.json")
-	profilePath, err := e.profileForInput(input, tempDir)
-	if err != nil {
-		return simcReport{}, err
-	}
-	args := e.arguments(input, reportPath, profilePath)
-	command := exec.CommandContext(runCtx, e.binary, args...)
-	command.Dir = filepath.Dir(profilePath)
-	var stdout, stderr bytes.Buffer
-	command.Stdout = &limitedBuffer{buffer: &stdout, remaining: maxSimCOutputBytes}
-	command.Stderr = &limitedBuffer{buffer: &stderr, remaining: maxSimCOutputBytes}
-	if err := runTimedNative(runCtx, command.Run); err != nil {
-		if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
-			return simcReport{}, errors.New("SimulationCraft timed out")
-		}
-		return simcReport{}, fmt.Errorf("SimulationCraft failed: %w: %s", err, strings.TrimSpace(stderr.String()))
-	}
-	payload, err := os.ReadFile(reportPath)
-	if err != nil {
-		return simcReport{}, fmt.Errorf("read SimulationCraft report: %w", err)
 	}
 	var report simcReport
 	if err := json.Unmarshal(payload, &report); err != nil {
@@ -198,6 +176,60 @@ func (e *SimCEngine) run(ctx context.Context, input SimulationInput) (simcReport
 		return simcReport{}, errors.New("SimulationCraft returned no player DPS")
 	}
 	return report, nil
+}
+
+func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candidates []batchCandidate) ([]byte, error) {
+	timeout := e.timeout
+	if input.Precision == "finalist" {
+		timeout *= finalistIterationMultiplier
+	}
+	if len(candidates) > 0 {
+		// Stay within the worker HTTP write deadline (200s, including admission).
+		timeout *= time.Duration(min(len(candidates), 4))
+	}
+	runCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	tempDir, err := os.MkdirTemp("", "gildra-simc-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tempDir)
+	reportPath := filepath.Join(tempDir, "report.json")
+	profilePath, err := e.profileForInput(input, tempDir)
+	if err != nil {
+		return nil, err
+	}
+	args := e.arguments(input, reportPath, profilePath)
+	if len(candidates) > 0 {
+		args = append(args, candidates[0].ownedLines...)
+	}
+	if len(candidates) > 1 {
+		args = append(args, "profileset_work_threads=0", "profileset_init_threads=1")
+		for i, candidate := range candidates[1:] {
+			for _, line := range candidate.ownedLines {
+				args = append(args, fmt.Sprintf("profileset.c%d+=%s", i+1, line))
+			}
+			for _, change := range candidate.GearChanges {
+				args = append(args, fmt.Sprintf("profileset.c%d+=%s", i+1, serializeGearChange(change)))
+			}
+		}
+	}
+	command := exec.CommandContext(runCtx, e.binary, args...)
+	command.Dir = filepath.Dir(profilePath)
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &limitedBuffer{buffer: &stdout, remaining: maxSimCOutputBytes}
+	command.Stderr = &limitedBuffer{buffer: &stderr, remaining: maxSimCOutputBytes}
+	if err := runTimedNative(runCtx, command.Run); err != nil {
+		if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
+			return nil, errors.New("SimulationCraft timed out")
+		}
+		return nil, fmt.Errorf("SimulationCraft failed: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	payload, err := os.ReadFile(reportPath)
+	if err != nil {
+		return nil, fmt.Errorf("read SimulationCraft report: %w", err)
+	}
+	return payload, nil
 }
 
 func (e *SimCEngine) profileForInput(input SimulationInput, tempDir string) (string, error) {
@@ -279,7 +311,11 @@ func (e *SimCEngine) profileForInput(input SimulationInput, tempDir string) (str
 }
 
 func serializeGearChange(change GearChange) string {
-	parts := []string{change.Slot + "=gildra_candidate", "id=" + strconv.Itoa(change.ItemID), "source=local"}
+	return serializeGearItem(change, "gildra_candidate")
+}
+
+func serializeGearItem(change GearChange, name string) string {
+	parts := []string{change.Slot + "=" + name, "id=" + strconv.Itoa(change.ItemID), "source=local"}
 	if change.ContextID > 0 {
 		parts = append(parts, "context="+strconv.Itoa(change.ContextID))
 	}
@@ -617,19 +653,32 @@ func containsString(values []string, target string) bool {
 	return false
 }
 
-func (e *SimCEngine) arguments(input SimulationInput, reportPath, profilePath string) []string {
+func (e *SimCEngine) iterationBudget(input SimulationInput) int {
 	iterations := e.iterations
-	if input.Precision == "finalist" {
+	switch input.Precision {
+	case auctionCandidatePrecision:
+		iterations = 100
+	case auctionFinalistPrecision:
+		iterations = 750
+	case "finalist":
 		iterations *= finalistIterationMultiplier
+	}
+	return iterations
+}
+
+func (e *SimCEngine) arguments(input SimulationInput, reportPath, profilePath string) []string {
+	details := 1
+	if isAuctionMeasurement(input) {
+		details = 0
 	}
 	args := []string{
 		profilePath,
-		fmt.Sprintf("iterations=%d", iterations),
+		fmt.Sprintf("iterations=%d", e.iterationBudget(input)),
 		fmt.Sprintf("max_time=%d", input.FightLengthSeconds),
 		fmt.Sprintf("desired_targets=%d", input.Targets),
 		"vary_combat_length=0", "fixed_time=1", "threads=1", "deterministic=1",
-		"calculate_scale_factors=0", "report_details=1", "fight_style=Patchwerk",
-		fmt.Sprintf("json=%s,version=2,full_states=1", reportPath),
+		"calculate_scale_factors=0", fmt.Sprintf("report_details=%d", details), "fight_style=Patchwerk",
+		fmt.Sprintf("json=%s,version=2,full_states=%d", reportPath, details),
 	}
 	if input.TalentLoadout != "" {
 		args = append(args, "talents="+input.TalentLoadout)
@@ -801,6 +850,14 @@ type simcReport struct {
 	} `json:"sim"`
 }
 
+func nativeEngineLabel(version, revision string) string {
+	engine := "SimulationCraft " + version
+	if revision != "" {
+		engine += " · " + revision[:min(7, len(revision))]
+	}
+	return engine
+}
+
 func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (SimulationResult, error) {
 	if len(report.Sim.Players) == 0 {
 		return SimulationResult{}, errors.New("SimulationCraft report has no players")
@@ -813,10 +870,7 @@ func resultFromSimC(input SimulationInput, report simcReport, baselineDPS int) (
 	} else {
 		result = Calculate(input)
 	}
-	result.Engine = "SimulationCraft " + report.Version
-	if report.GitRevision != "" {
-		result.Engine += " · " + report.GitRevision[:min(7, len(report.GitRevision))]
-	}
+	result.Engine = nativeEngineLabel(report.Version, report.GitRevision)
 	reference := supportedSpecs[input.Spec]
 	profileLabel := "generated reference gear"
 	if reference.ProfileFile != "" {

@@ -5,12 +5,12 @@ import { mkdir, open, unlink } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { deserialize, serialize } from "node:v8";
 import { gunzipSync, gzip, gzipSync } from "node:zlib";
-import { nativeGearMeasurementContract, nativeGearSimulationContract } from "./gearSimulation";
+import { auctionMeasurementContract, nativeGearSimulationContract } from "./gearSimulation";
 
 /** Private single-writer checkpoints. No bearer tokens or executable tasks. */
 const version = 2;
 export const auctionSimulationContract = nativeGearSimulationContract;
-export const auctionMeasurementContract = nativeGearMeasurementContract;
+export { auctionMeasurementContract };
 const maxHeader = 64 * 1024, maxCompressed = 16 * 1024 * 1024, maxUncompressed = 128 * 1024 * 1024;
 const limits = { search: 40, job: 200 };
 type Kind = keyof typeof limits;

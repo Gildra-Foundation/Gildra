@@ -242,3 +242,40 @@ test('the three measured finalists retain the cheapest scroll for each distinct 
   assert.deepEqual(leaders.map(row=>[row.configuration.slots[0].enchantId,row.configuration.totalCopper,
     row.configuration.consumables[0].itemId]),[[6101,55,12202],[6102,60,12204],[6103,65,12206]]);
 });
+
+test('the real enhancement stage uses the advertised profileset capacity for affordable gem choices', async () => {
+  const h = stageFixture();
+  Object.assign(h.input, {simulationConcurrency: 2, simulationBatchSize: 25});
+  await evaluateAuctionEnhancementStage(h.input);
+  assert.equal(h.calls.length, 20, 'all stocked gems fit in one slice before the sparse tail');
+  const result = await finishStage(h);
+  assert.equal(h.calls.length, 21);
+  assert.equal(result.complete, true);
+  assert.deepEqual(result.recommendations.map(row => row.simulation.dps), [2000, 1500]);
+});
+
+test('owned-only stage admits queued gem edits when the native worker advertises that contract', async () => {
+  for (const supported of [false, true]) {
+    const h = stageFixture();
+    h.input.finalists[0].options = [];
+    Object.assign(h.input.equipment.equipped_items[0], {item_class:{id:4},level:{value:150},sockets:[{socket_type:{type:'PRISMATIC'}}]});
+    Object.assign(h.input, {selectedSlots:['TRINKET_1'],simulationConcurrency:2,simulationBatchSize:25,simulationOwnedBatch:supported,
+      simulate: async (options,signal,edits) => {
+        assert.deepEqual(options,[]);
+        signal.throwIfAborted();
+        h.calls.push(edits);
+        return {...measurement(1200),engine:h.input.engine};
+      }});
+    await evaluateAuctionEnhancementStage(h.input);
+    assert.equal(h.calls.length,supported ? 20 : 2);
+    for (const [change] of h.calls) {
+      assert.equal(change.itemId,970010);
+      assert.equal(change.slotType,'TRINKET_1');
+      assert.equal(change.gems[0].index,0);
+    }
+    assert.equal(new Set(h.calls.map(([change])=>change.gems[0].itemId)).size,h.calls.length);
+    const result = await finishStage(h);
+    assert(result.complete);
+    assert.equal(h.calls.length,21);
+  }
+});

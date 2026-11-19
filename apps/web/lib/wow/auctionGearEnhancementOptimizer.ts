@@ -46,7 +46,11 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   shouldYield?: () => boolean; onCacheHit?: () => void; checkpoint?: EnhancementCheckpoint;
   /** Runtime worker capacity; never part of the durable traversal identity. */
   simulationConcurrency?: 1 | 2;
-  /** Preserve validated completed siblings on an interrupted pair; cursor stays put. */
+  /** Maximum candidates per native request confirmed by this worker. */
+  simulationBatchSize?: number;
+  /** Worker can import owned item edits independently for each profileset. */
+  simulationOwnedBatch?: boolean;
+  /** Preserve validated completed siblings on interruption; cursor stays put. */
   onCheckpoint?: (checkpoint: EnhancementCheckpoint) => void;
   limits?: { configurations?: number; simulations?: number; finalists?: number }; now?: number };
 export type EnhancementOptimizerResult = { checkpoint: EnhancementCheckpoint; complete: boolean; searchLimited: boolean; catalogComplete: boolean;
@@ -99,11 +103,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const { catalog, character, signal } = input;
   const exact = input.exhaustive === true;
   const parallel = exact && input.simulationConcurrency === 2;
+  const batchSize = input.simulationBatchSize ?? 0;
+  const windowSize = parallel ? 2 * Math.max(1, batchSize) : 1;
   signal.throwIfAborted();
   const baseline = input.baseline ? measurement(input.baseline) : undefined;
   const baselineDps = baseline?.dps ?? input.baselineDps;
   const bounds = { configurations: input.limits?.configurations ?? 128, simulations: input.limits?.simulations ?? 1, finalists: input.limits?.finalists ?? 3 };
-  if (!positive(bounds.configurations) || bounds.configurations > 1024 || !positive(bounds.simulations) || bounds.simulations > 12 ||
+  if (!positive(bounds.configurations) || bounds.configurations > 1024 || !positive(bounds.simulations) || bounds.simulations > Math.max(12, windowSize) ||
+      !Number.isInteger(batchSize) || batchSize < 0 || batchSize > 25 ||
       !positive(bounds.finalists) || bounds.finalists > 3 || !Number.isSafeInteger(input.itemsCopper) || input.itemsCopper < 0 ||
       !Number.isSafeInteger(input.budgetCopper) || input.budgetCopper < 0 || !input.simulationIdentity || !catalog.version ||
       (input.objective !== undefined && !["dps", "value"].includes(input.objective)) ||
@@ -304,10 +311,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     }
   };
   let prefetchedThrough: bigint | undefined;
+  let simulationLimit = bounds.simulations;
   const measuredHere = new Set<string>();
-  while ((hasSeed() || position() < total) && visited < bounds.configurations && (simulations < bounds.simulations || prefetchedThrough !== undefined && position() <= prefetchedThrough) &&
+  while ((hasSeed() || position() < total) && visited < bounds.configurations && (simulations < simulationLimit || prefetchedThrough !== undefined && position() <= prefetchedThrough) &&
     (exact || checkpoint.totalSimulations < 12 && checkpoint.traversalSteps < 4096)) {
     if(exact && visited && visited%32===0) await new Promise<void>(resolve=>setImmediate(resolve));
+    if (signal.aborted && exact && simulations) {
+      saveCheckpoint(); input.onCheckpoint?.(structuredClone(checkpoint));
+    }
     signal.throwIfAborted();
     if (input.shouldYield?.()) break;
     const fromSeed = hasSeed();
@@ -334,63 +345,84 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (status === "priced" && (fullyEnhanced || exact)) {
       let simulation = checkpoint.cache[config.key];
       if (!simulation) {
-        const batch = [config];
-        let nextPosition: bigint | undefined;
-        if (parallel && simulations + 1 < bounds.simulations) {
-          let next = position()+1n;
-          // Bound both repeated preparation work and the later real traversal.
-          for (let scanned=1; next<total && visited+scanned<bounds.configurations; scanned++) {
-            if(scanned%32===0)await new Promise<void>(resolve=>setImmediate(resolve));
-            signal.throwIfAborted();
-            if(input.shouldYield?.())break;
-            const candidate=prepare(indicesAt(next),new Set());
-            if(!candidate.valid) {
-              const stride=strides[candidate.pruneAxis];next=(next/stride+1n)*stride;continue;
-            }
-            if(candidate.config.status==='priced' && candidate.config.key!==config.key && !checkpoint.cache[candidate.config.key]) {
-              batch.push(candidate.config);nextPosition=next;break;
-            }
-            next++;
-          }
-        }
-        if(parallel && input.shouldYield?.())break;
-        if(batch.length===1) {
+        const capacity = Math.min(windowSize, simulationLimit - simulations);
+        if (capacity === 1) {
           simulation = measurement(await input.simulate(structuredClone(config),signal));
           signal.throwIfAborted(); checkpoint.cache[config.key] = simulation; simulations++;
           checkpoint.totalSimulations=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.totalSimulations+1);
         } else {
-          const controller=new AbortController(), pairSignal=AbortSignal.any([signal,controller.signal]);
-          let failure: unknown;
-          const results=await Promise.allSettled(batch.map(async candidate=>{
-            try {
-              pairSignal.throwIfAborted();
-              const measured=await input.simulate(structuredClone(candidate),pairSignal);
-              pairSignal.throwIfAborted();
-              const result=measurement(measured);
-              if((baseline && result.engine!==baseline.engine) || finalists.some(row=>row.simulation.engine!==result.engine))
-                throw new Error('simulation_version_changed');
-              return result;
-            }catch(error){failure??=error;controller.abort(error);throw error;}
-          }));
-          const engines=new Set(results.flatMap(result=>result.status==='fulfilled'?[result.value.engine]:[]));
-          if(engines.size>1) {
-            // Without a retained engine/baseline neither differing build can be
-            // certified. Keep the cursor and retry against one worker version.
-            saveCheckpoint();input.onCheckpoint?.(structuredClone(checkpoint));
-            signal.throwIfAborted();throw new Error('simulation_version_changed');
+          const controller = new AbortController(), batchSignal = AbortSignal.any([signal, controller.signal]);
+          const completed = new Map<string, GearPlanSimulation>();
+          const pending: Promise<void>[] = [];
+          const candidates = new Map([[config.key, config]]);
+          const start = (candidate: PricedEnhancementConfiguration) => {
+            const run = async () => {
+              batchSignal.throwIfAborted();
+              const measured = await input.simulate(structuredClone(candidate), batchSignal);
+              batchSignal.throwIfAborted();
+              const result = measurement(measured);
+              if ((baseline && result.engine !== baseline.engine) || finalists.some(row => row.simulation.engine !== result.engine))
+                throw new Error("simulation_version_changed");
+              completed.set(candidate.key, result);
+            };
+            pending.push(run().catch(error => controller.abort(error)));
+          };
+          // Start the first native calculation before preparing the remaining
+          // configurations. Submit the rest together so profilesets can coalesce.
+          start(config);
+          const ownedIdentity = input.simulationOwnedBatch ? undefined : JSON.stringify(config.ownedChanges);
+          let next = position() + 1n;
+          try {
+            for (let scanned = 1; candidates.size < capacity && next < total && visited + scanned < bounds.configurations; scanned++) {
+              if (scanned % 32 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+              if (batchSignal.aborted || input.shouldYield?.()) break;
+              const candidate = prepare(indicesAt(next), new Set());
+              if (!candidate.valid) {
+                const stride = strides[candidate.pruneAxis];
+                next = (next / stride + 1n) * stride;
+                continue;
+              }
+              if (candidate.config.status === "priced" && !checkpoint.cache[candidate.config.key] && !candidates.has(candidate.config.key)) {
+                // Older workers can only vary purchased items within one profileset.
+                const differentArmory = capacity > 2 && !input.simulationOwnedBatch && JSON.stringify(candidate.config.ownedChanges) !== ownedIdentity;
+                if (!differentArmory || candidates.size === 1) {
+                  candidates.set(candidate.config.key, candidate.config);
+                  prefetchedThrough = next;
+                }
+                if (differentArmory) {
+                  simulationLimit = simulations + candidates.size;
+                  break;
+                }
+              }
+              next++;
+            }
+            if (!batchSignal.aborted && !input.shouldYield?.()) {
+              for (const candidate of candidates.values()) if (candidate !== config) start(candidate);
+            } else {
+              // Prepared but unsubmitted candidates remain at the durable cursor.
+              prefetchedThrough = undefined;
+            }
+          } catch (error) { controller.abort(error); }
+          await Promise.all(pending);
+          const engines = new Set([...completed.values()].map(value => value.engine));
+          if (engines.size > 1) {
+            saveCheckpoint(); input.onCheckpoint?.(structuredClone(checkpoint));
+            signal.throwIfAborted(); throw new Error("simulation_version_changed");
           }
-          for(const [index,result] of results.entries())if(result.status==='fulfilled') {
-            checkpoint.cache[batch[index].key]=result.value;measuredHere.add(batch[index].key);simulations++;
-            checkpoint.totalSimulations=Math.min(Number.MAX_SAFE_INTEGER,checkpoint.totalSimulations+1);
+          // Insert in traversal order even when the second native lane finishes
+          // first. Uncertified facts survive aborts without skipping the cursor.
+          for (const key of candidates.keys()) {
+            const value = completed.get(key);
+            if (!value) continue;
+            checkpoint.cache[key] = value;
+            measuredHere.add(key); simulations++;
+            checkpoint.totalSimulations = Math.min(Number.MAX_SAFE_INTEGER, checkpoint.totalSimulations + 1);
           }
-          // Drain every sibling before publishing facts or returning control.
-          // Never move the cursor past a failed or aborted native measurement.
-          if(results.some(result=>result.status==='rejected') || signal.aborted) {
-            saveCheckpoint();input.onCheckpoint?.(structuredClone(checkpoint));
-            signal.throwIfAborted();throw failure;
+          if (batchSignal.aborted) {
+            saveCheckpoint(); input.onCheckpoint?.(structuredClone(checkpoint));
+            batchSignal.throwIfAborted();
           }
-          prefetchedThrough=nextPosition;
-          simulation=checkpoint.cache[config.key];measuredHere.delete(config.key);
+          simulation = checkpoint.cache[config.key]; measuredHere.delete(config.key);
         }
       } else { simulation = measurement(simulation); if(!measuredHere.delete(config.key))input.onCacheHit?.(); }
       try { assertFreshMarket({sourceUpdatedAt:input.prices.sourceUpdatedAt ?? ""}, input.now); }

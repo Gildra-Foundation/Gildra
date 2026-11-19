@@ -10,7 +10,7 @@ const expectedByVersion = new Map();
 for(let repeat=0;repeat<repeats;repeat++) for(const version of repeat%2?['current','baseline']:['baseline','current']) {
   const run=await exactPipeline({items:1,ref:version==='baseline'?baselineRef:undefined});
   assert.equal(run.final.status,'completed',run.summary.taskError);
-  const ordinary = run.requests.filter(request=>!request.precision).map(nativeKey);
+  const ordinary = run.requests.filter(request=>!request.precision || request.precision === "auction-candidate").map(nativeKey);
   if (expectedOrdinary) assert.deepEqual(ordinary,expectedOrdinary,'Both versions must evaluate the same ordinary measurement domain');
   else expectedOrdinary=ordinary;
   const facts={requests:run.requests.map(request=>[nativeKey(request),request.precision??'ordinary']),equipmentChecked:run.summary.equipmentChecked,
@@ -24,4 +24,4 @@ const summary=Object.fromEntries(['baseline','current'].map(version=>[version,{e
   searchWritesMs:median(rows.filter(row=>row.version===version).map(row=>row.times.searchWrites)),jobWritesMs:median(rows.filter(row=>row.version===version).map(row=>row.times.jobWrites)),
   counts:rows.find(row=>row.version===version).counts}]));
 console.log(JSON.stringify({summary}));
-if(process.env.AUCTION_EXACT_OUTPUT)await writeFile(process.env.AUCTION_EXACT_OUTPUT,JSON.stringify({baselineRef,scope:'Local synthetic transport; actual full-task/Runner/planners/Jobs/SearchStore and disk persistence; 750 ordinary iterations and 3000 for current close finalists, 95% confidence; no live latency claim',summary,rows},null,2));
+if(process.env.AUCTION_EXACT_OUTPUT)await writeFile(process.env.AUCTION_EXACT_OUTPUT,JSON.stringify({baselineRef,scope:'Local synthetic transport; actual full-task/Runner/planners/Jobs/SearchStore and disk persistence; 100 ordinary iterations and 750 for current close finalists, 95% confidence; no live latency claim',summary,rows},null,2));

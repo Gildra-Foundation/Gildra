@@ -103,6 +103,7 @@ type PlannerInput = {
   maxNewSimulations?: number;
   /** Independent candidate measurements only; each native run keeps its own RNG. */
   simulationConcurrency?: 1 | 2;
+  simulationBatchSize?: number;
   maxAssignments?: number;
   shouldYield?: () => boolean;
   baseline?: GearPlanSimulation;
@@ -193,47 +194,54 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
     if (compatible && checkpoint.simulationCache[key]) input.onCacheHit?.();
     if (compatible && !checkpoint.simulationCache[key]) {
       if (calls >= max) break;
-      const batch = [{ option, key }];
-      // Look ahead only within this turn's assignment budget. Equivalent lots
-      // share a measurement; incompatible single items remain for assembly.
-      if (input.simulationConcurrency === 2 && calls + 1 < max) {
-        const end = Math.min(options.length, checkpoint.nextOption + maxAssignments - assignments, checkpoint.nextOption + 256);
-        for (let index = checkpoint.nextOption + 1; index < end && !input.shouldYield?.(); index++) {
-          const next = evaluationOptions[index], nextKey = auctionSelectionEffectKey([next]);
-          if (nextKey === key || checkpoint.simulationCache[nextKey]) continue;
-          try { auctionPlanLoadout(input.loadout, [next], input.specId, slots); } catch { continue; }
-          batch.push({ option: next, key: nextKey });
-          break;
-        }
-      }
-      if (batch.length === 1) {
+      const window = input.simulationConcurrency === 2 ? 2 * (input.simulationBatchSize || 1) : 1;
+      if (window === 1 || calls + 1 === max) {
         checkpoint.simulationCache[key] = validSimulation(await input.simulate([option], input.signal), checkpoint.baseline.engine);
         checkpoint.simulations++;
         calls++;
       } else {
         const controller = new AbortController();
         const signal = AbortSignal.any([input.signal, controller.signal]);
-        let failure: unknown;
-        const measured = await Promise.allSettled(batch.map(async candidate => {
-          try {
+        const batch = new Map<string, Promise<PromiseSettledResult<GearPlanSimulation>>>();
+        const submit = (candidate: AuctionGearOption, effect: string) => {
+          const measure = async () => {
             signal.throwIfAborted();
-            const result = await input.simulate([candidate.option], signal);
+            const result = await input.simulate([candidate], signal);
             signal.throwIfAborted();
             return validSimulation(result, checkpoint.baseline.engine);
+          };
+          batch.set(effect, measure().then(value => ({ status: "fulfilled", value }),
+            reason => { controller.abort(reason); return { status: "rejected", reason }; }));
+        };
+        try {
+          // A batch-capable worker can start the first item while we validate
+          // further purchases. Legacy paired calls share the same admission turn.
+          const yieldingBeforePair = input.shouldYield?.();
+          submit(option, key);
+          const end = Math.min(options.length, checkpoint.nextOption + maxAssignments - assignments, checkpoint.nextOption + 256);
+          for (let index = checkpoint.nextOption + 1; index < end && batch.size < Math.min(window, max - calls); index++) {
+            if (signal.aborted || (window === 2 ? yieldingBeforePair : input.shouldYield?.())) break;
+            const next = evaluationOptions[index], nextKey = auctionSelectionEffectKey([next]);
+            if (batch.has(nextKey) || checkpoint.simulationCache[nextKey]) continue;
+            try { auctionPlanLoadout(input.loadout, [next], input.specId, slots); } catch { continue; }
+            submit(next, nextKey);
           }
-          catch (error) { failure ??= error; controller.abort(error); throw error; }
-        }));
-        for (let index = 0; index < measured.length; index++) {
-          const result = measured[index];
-          if (result.status !== "fulfilled") continue;
-          checkpoint.simulationCache[batch[index].key] = result.value;
-          checkpoint.simulations++;
-          calls++;
-        }
-        // Preserve completed measurements even if their sibling failed. The
-        // traversal cursor stays put, so resume cannot skip the failed item.
-        if (measured.some(result => result.status === "rejected") || input.signal.aborted) {
-          save(); input.signal.throwIfAborted(); throw failure;
+          const measured = await Promise.all(batch.values());
+          let index = 0;
+          for (const effect of batch.keys()) {
+            const result = measured[index++];
+            if (result.status !== "fulfilled") continue;
+            checkpoint.simulationCache[effect] = result.value;
+            checkpoint.simulations++;
+            calls++;
+          }
+          if (signal.aborted) {
+            save();
+            signal.throwIfAborted();
+          }
+        } finally {
+          controller.abort();
+          await Promise.all(batch.values());
         }
       }
       simulated = true;
@@ -317,15 +325,19 @@ export async function assembleAuctionGear(input: PlannerInput & {
       pairScores: flatGroups.map(group => cache[auctionSelectionEffectKey([group.options[0]])]?.dps ?? baseline.baseline.dps) };
   }
   const save = () => input.onCheckpoint?.(checkpoint);
-  const advance = (from = checkpoint.cursor.length - 1) => {
+  // The durable cursor describes only assignments whose measurements have been
+  // applied. Enumeration can prepare the next assignments while SimC runs.
+  const traversal = { cursor: [...checkpoint.cursor], exhausted: checkpoint.exhausted,
+    nextSeed: checkpoint.nextSeed, nextPair: checkpoint.nextPair, combinationsChecked: checkpoint.combinationsChecked };
+  const advance = (from = traversal.cursor.length - 1) => {
     for (let index = from; index >= 0; index--) {
-      if (++checkpoint.cursor[index] < radices[index]) {
-        checkpoint.cursor.fill(0, index + 1);
+      if (++traversal.cursor[index] < radices[index]) {
+        traversal.cursor.fill(0, index + 1);
         return;
       }
-      checkpoint.cursor[index] = 0;
+      traversal.cursor[index] = 0;
     }
-    checkpoint.exhausted = true;
+    traversal.exhausted = true;
   };
   const byId = new Map(options.map(option => [option.id, option]));
   const optionsFor = (best: typeof checkpoint.best) => best.optionIds.map(id => {
@@ -465,88 +477,123 @@ export async function assembleAuctionGear(input: PlannerInput & {
   pairs.length = Math.min(pairs.length, 256);
   if (!yieldBeforeEnumeration && (checkpoint.nextPair > pairs.length || checkpoint.exhausted && checkpoint.nextPair !== pairs.length)) throw new Error("invalid_search_checkpoint");
   const seededPairs = new Set(pairs.map(pair => `${pair.first}:${pair.second}`));
-  const evaluate = async (selection: AuctionGearOption[]) => {
-    try { auctionPlanLoadout(input.loadout, selection, input.specId, slots); }
-    catch { return { processed: true, simulated: false }; }
+  const window = input.simulationConcurrency === 2 && input.simulationBatchSize ? 2 * input.simulationBatchSize : 1;
+  const controller = new AbortController();
+  const signal = AbortSignal.any([input.signal, controller.signal]);
+  const pending = new Map<string, Promise<PromiseSettledResult<GearPlanSimulation>>>();
+  const selections: { selection: AuctionGearOption[]; key: string }[] = [];
+  const evaluate = (selection: AuctionGearOption[]) => {
+    if (!compatibleSelection(selection)) return true;
     const key = auctionSelectionEffectKey(selection);
-    let simulation = checkpoint.simulationCache[key], simulated = false;
-    if (simulation) input.onCacheHit?.();
-    if (!simulation) {
-      if (calls >= max) return { processed: false, simulated: false };
-      simulation = validSimulation(await input.simulate(selection, input.signal), checkpoint.baseline.engine);
-      checkpoint.simulationCache[key] = simulation;
-      checkpoint.simulations++;
-      calls++;
-      simulated = true;
-      input.onProgress?.({ phase: "simulating", completed: calls, total: max });
+    if (checkpoint.simulationCache[key] || pending.has(key)) input.onCacheHit?.();
+    else {
+      if (calls + pending.size >= max) return false;
+      // Attach both handlers immediately while enumeration continues. Failed
+      // batches are replayed from the last committed cursor.
+      const measurement = input.simulate(selection, signal).then(result => {
+        signal.throwIfAborted();
+        return validSimulation(result, checkpoint.baseline.engine);
+      });
+      pending.set(key, measurement.then(value => ({ status: "fulfilled", value }),
+        reason => { controller.abort(reason); return { status: "rejected", reason }; }));
     }
-    checkpoint.validCombinations++;
-    // DPS is a black box: no sum of individual gains is used to rank results.
-    consider(selection, simulation);
-    return { processed: true, simulated };
+    selections.push({ selection, key });
+    return true;
   };
-  let assignments = 0;
-  const seeds = checkpoint.seedSelections ?? [];
-  while (!yieldBeforeEnumeration && checkpoint.nextSeed < seeds.length && assignments < maxAssignments && !input.shouldYield?.()) {
-    input.signal.throwIfAborted();
-    const purchase = await cheapestAuctionEffectSelection(seeds[checkpoint.nextSeed].map(index => flatGroups[index]), input.budgetCopper, input.signal);
-    const checked = purchase ? await evaluate(purchase.options) : { processed: true, simulated: false };
-    if (!checked.processed) break;
-    checkpoint.nextSeed++;
-    checkpoint.combinationsChecked++;
-    assignments++;
-    if (checked.simulated) save();
-  }
-  const seededSelections = new Set(seeds.map(seed => seed.join(":")));
-  // Test compatible repair pairs and promising pairs before the long Cartesian traversal.
-  while (!yieldBeforeEnumeration && checkpoint.nextSeed === seeds.length && checkpoint.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
-    input.signal.throwIfAborted();
-    const pair = pairs[checkpoint.nextPair];
-    const purchase = await cheapestAuctionEffectSelection([flatGroups[pair.first], flatGroups[pair.second]], input.budgetCopper, input.signal);
-    const checked = purchase ? await evaluate(purchase.options) : { processed: true, simulated: false };
-    if (!checked.processed) break;
-    checkpoint.nextPair++;
-    checkpoint.combinationsChecked++;
-    assignments++;
-    if (checked.simulated) save();
-    if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
-  }
-  while (!yieldBeforeEnumeration && checkpoint.nextSeed === seeds.length && checkpoint.nextPair === pairs.length && !checkpoint.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
-    input.signal.throwIfAborted();
-    const chosenGroups = checkpoint.cursor.flatMap((choice, index) => choice ? [groups[index][choice - 1]] : []);
-    const chosenIndices = chosenGroups.map(group => groupIndex.get(group)!).sort((a, b) => a - b);
-    if (seededSelections.has(chosenIndices.join(":"))) {
-      advance(); assignments++;
-      if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
-      continue;
+  const commitWindow = async () => {
+    const measured = await Promise.all(pending.values());
+    let index = 0;
+    for (const key of pending.keys()) {
+      const result = measured[index++];
+      if (result.status === "fulfilled") {
+        checkpoint.simulationCache[key] = result.value;
+        checkpoint.simulations++;
+        calls++;
+      }
     }
-    if (chosenGroups.length === 2) {
-      if (seededPairs.has(`${chosenIndices[0]}:${chosenIndices[1]}`)) {
+    pending.clear();
+    const failed = measured.find(result => result.status === "rejected");
+    if (failed || input.signal.aborted) {
+      save();
+      input.signal.throwIfAborted();
+      throw failed!.reason;
+    }
+    for (const { selection, key } of selections) {
+      checkpoint.validCombinations++;
+      consider(selection, checkpoint.simulationCache[key]);
+    }
+    selections.length = 0;
+    Object.assign(checkpoint, traversal, { cursor: [...traversal.cursor] });
+    if (measured.length) {
+      input.onProgress?.({ phase: "simulating", completed: calls, total: max });
+      save();
+    }
+  };
+  try {
+    let assignments = 0;
+    const seeds = checkpoint.seedSelections ?? [];
+    while (!yieldBeforeEnumeration && traversal.nextSeed < seeds.length && assignments < maxAssignments && !input.shouldYield?.()) {
+      input.signal.throwIfAborted();
+      const purchase = await cheapestAuctionEffectSelection(seeds[traversal.nextSeed].map(index => flatGroups[index]), input.budgetCopper, input.signal);
+      if (purchase && !evaluate(purchase.options)) break;
+      traversal.nextSeed++;
+      traversal.combinationsChecked++;
+      assignments++;
+      if (pending.size >= window || selections.length >= 256) await commitWindow();
+    }
+    const seededSelections = new Set(seeds.map(seed => seed.join(":")));
+    // Test compatible repair pairs and promising pairs before the long Cartesian traversal.
+    while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
+      input.signal.throwIfAborted();
+      const pair = pairs[traversal.nextPair];
+      const purchase = await cheapestAuctionEffectSelection([flatGroups[pair.first], flatGroups[pair.second]], input.budgetCopper, input.signal);
+      if (purchase && !evaluate(purchase.options)) break;
+      traversal.nextPair++;
+      traversal.combinationsChecked++;
+      assignments++;
+      if (pending.size >= window || selections.length >= 256) await commitWindow();
+      if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+    }
+    while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair === pairs.length && !traversal.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
+      input.signal.throwIfAborted();
+      const chosenGroups = traversal.cursor.flatMap((choice, index) => choice ? [groups[index][choice - 1]] : []);
+      const chosenIndices = chosenGroups.map(group => groupIndex.get(group)!).sort((a, b) => a - b);
+      if (seededSelections.has(chosenIndices.join(":"))) {
         advance(); assignments++;
         if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
         continue;
       }
+      if (chosenGroups.length === 2) {
+        if (seededPairs.has(`${chosenIndices[0]}:${chosenIndices[1]}`)) {
+          advance(); assignments++;
+          if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+          continue;
+        }
+      }
+      const effectSelection: AuctionEffectGroup[] = [];
+      let selection: AuctionGearOption[] = [];
+      let invalidPrefix = -1;
+      // Only monotone financial/lot constraints can prune an incomplete state.
+      // Unique categories and hand compatibility are checked on the final loadout.
+      for (let index = 0; index < groups.length; index++) {
+        const choice = traversal.cursor[index];
+        if (choice) effectSelection.push(groups[index][choice - 1]);
+        const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
+        if (!purchase) invalidPrefix = index;
+        else selection = purchase.options;
+        if (invalidPrefix >= 0) break;
+      }
+      if (invalidPrefix < 0 && !evaluate(selection)) break;
+      traversal.combinationsChecked++;
+      assignments++;
+      advance(invalidPrefix >= 0 ? invalidPrefix : undefined);
+      if (pending.size >= window || selections.length >= 256) await commitWindow();
+      if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
     }
-    const effectSelection: AuctionEffectGroup[] = [];
-    let selection: AuctionGearOption[] = [];
-    let invalidPrefix = -1;
-    // Only monotone financial/lot constraints can prune an incomplete state.
-    // Unique categories and hand compatibility are checked on the final loadout.
-    for (let index = 0; index < groups.length; index++) {
-      const choice = checkpoint.cursor[index];
-      if (choice) effectSelection.push(groups[index][choice - 1]);
-      const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
-      if (!purchase) invalidPrefix = index;
-      else selection = purchase.options;
-      if (invalidPrefix >= 0) break;
-    }
-    const checked = invalidPrefix < 0 ? await evaluate(selection) : { processed: true, simulated: false };
-    if (!checked.processed) break;
-    checkpoint.combinationsChecked++;
-    assignments++;
-    advance(invalidPrefix >= 0 ? invalidPrefix : undefined);
-    if (checked.simulated) save();
-    if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+    await commitWindow();
+  } finally {
+    controller.abort();
+    await Promise.all(pending.values());
   }
   save();
   const selection = bestOptions(), spentCopper = auctionPlanCost(selection);

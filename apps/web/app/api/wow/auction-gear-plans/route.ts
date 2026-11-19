@@ -259,8 +259,8 @@ async function postPlan(request: Request) {
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, user.token, signal);
-          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token, hooks.publishResult)
-            : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token, hooks.publishResult);
+          return action === "resume" ? await continueAuctionGearSearch(entry, signal, progress, user.token, hooks.publishResult, execution.runMode === "full")
+            : await assembleAuctionGearSearch(entry, selection, signal, progress, user.token, hooks.publishResult, execution.runMode === "full");
         } finally { entry.busy = false; }
       };
       const job = enqueueAuctionGearJob(user.id, execution.runMode ? fullAuctionGearTask(task, user.id, user.token, action === "assemble" ? selection as Parameters<typeof fullAuctionGearTask>[3] : undefined) : task,
@@ -320,7 +320,7 @@ async function postPlan(request: Request) {
     request.signal.throwIfAborted();
     if (Date.now() > acceptBefore) throw new Error("plan_request_expired");
     const task: AuctionGearTask = (signal, progress, hooks) => startAuctionGearSearch(input,
-      user.id, user.token, signal, progress, hooks.searchCreated, hooks.publishResult);
+      user.id, user.token, signal, progress, hooks.searchCreated, hooks.publishResult, execution.runMode === "full");
     const job = enqueueAuctionGearJob(user.id, execution.runMode ? fullAuctionGearTask(task, user.id, user.token) : task, { scope: { characterSlug, locale: locale as "ru" | "en" },
       work: { ...execution, action: "search", input }, ...(clientRequestId ? { clientRequestId, requestFingerprint } : {}) });
     resumeOwnedAuctionGearWork(user.id, job.id, user.token);

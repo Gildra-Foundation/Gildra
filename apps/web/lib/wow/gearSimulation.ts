@@ -6,6 +6,7 @@ import type { GearCandidate, GearCandidateVariant } from "./gearCandidates";
 export type GearSimulationScenario = "single-target" | "aoe" | "execute";
 export const nativeGearSimulationContract = "native-apl-v1";
 export const nativeGearMeasurementContract = "native-dps-mean-v1";
+export const auctionMeasurementContract = `${nativeGearMeasurementContract}:auction-100-750`;
 
 /** Native gear ranking uses unrounded means/standard errors. An older worker
  * must fail closed instead of silently relabelling integer DPS as precise. */
