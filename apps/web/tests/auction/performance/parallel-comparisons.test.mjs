@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { searchAuctionGearOptions } from '../../../lib/wow/auctionGearPlanner.ts';
+import { assembleAuctionGear, searchAuctionGearOptions } from '../../../lib/wow/auctionGearPlanner.ts';
 
 const measurement = dps => ({ dps, dpsError: 1.125, confidence: 95, iterations: 750, engine: 'SimulationCraft parallel-fixture' });
 const baseline = measurement(1000.125);
@@ -17,7 +17,7 @@ const deferred = () => { let resolve; const promise = new Promise(done => { reso
 test('two independent comparisons overlap, remain bounded and preserve every serial result', async () => {
   let active = 0, peak = 0, calls = 0;
   const entered = deferred(), held = deferred();
-  const pending = searchAuctionGearOptions(input({ simulate: async selected => {
+  const pending = searchAuctionGearOptions(input({ simulationBatchSize: 0, simulate: async selected => {
     calls++; active++; peak = Math.max(peak, active); if (active === 2) entered.resolve();
     await held.promise; active--; return score(selected);
   } }));
@@ -85,4 +85,43 @@ test('cooperative deadline retains both completed measurements for continuation'
   const resumed = await searchAuctionGearOptions(input({ checkpoint: saved, simulate: async selected => { calls.push(selected[0].candidate.itemId); return score(selected); } }));
   assert.deepEqual(calls, [900002, 900003, 900004, 900005, 900006, 900007]);
   assert.equal(resumed.result.searchComplete, true);
+});
+
+test('full assembly prepares distinct effects during the first calculation and commits the serial ranking', async () => {
+  const held = deferred(), ready = deferred();
+  let outstanding = 0;
+  const base = input({simulationBatchSize: 3});
+  const pending = assembleAuctionGear({...base, simulate: async selected => {
+    if (++outstanding === 6) ready.resolve();
+    await held.promise;
+    return score(selected);
+  }});
+  await ready.promise;
+  assert.equal(outstanding, 6);
+  held.resolve();
+  const result = await pending;
+  const serial = await assembleAuctionGear({...base, simulationBatchSize: undefined, simulate: async selected => score(selected)});
+  assert.deepEqual(result, serial);
+});
+
+test('assembly batch failure preserves completed measurements without advancing past the failed assignment', async () => {
+  const base = input({simulationBatchSize: 3});
+  let saved;
+  await assert.rejects(assembleAuctionGear({...base, onCheckpoint: c => { saved = structuredClone(c); },
+    simulate: async selected => {
+      if (selected[0].candidate.itemId === 900002) {
+        await new Promise(resolve => setImmediate(resolve));
+        throw Error('interrupted calculation');
+      }
+      return score(selected);
+    }}), /interrupted calculation/);
+  const measured = saved.simulations;
+  assert(measured > 0);
+  let calls = 0;
+  const resumed = await assembleAuctionGear({...base, checkpoint: saved, simulate: async selected => {
+    calls++; return score(selected);
+  }});
+  const serial = await assembleAuctionGear({...base, simulationBatchSize: undefined, simulate: async selected => score(selected)});
+  assert.equal(calls + measured, serial.checkpoint.simulations);
+  assert.deepEqual(resumed, serial);
 });

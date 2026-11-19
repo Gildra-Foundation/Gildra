@@ -216,6 +216,13 @@ func admissionEntryPoints() map[string]func(context.Context, *SimCEngine) error 
 				Armory: &ArmorySnapshot{Profile: json.RawMessage(`{"name":"Admission probe"}`), Specializations: json.RawMessage(`{}`), Equipment: json.RawMessage(`{"equipped_items":[]}`)}})
 			return err
 		},
+		"batch": func(ctx context.Context, engine *SimCEngine) error {
+			input := SimulationInput{Spec: "fury-warrior", Scenario: "single-target", FightLengthSeconds: 30, Targets: 1,
+				ActionListMode: ActionListModeNative, TalentLoadout: strings.Repeat("A", 30), Precision: auctionCandidatePrecision,
+				Armory: &ArmorySnapshot{Profile: json.RawMessage(`{}`), Specializations: json.RawMessage(`{}`), Equipment: json.RawMessage(`{}`)}}
+			_, err := engine.SimulateBatch(ctx, simulationBatch{Base: input, Candidates: []batchCandidate{{GearChanges: []GearChange{{Slot: "head", ItemID: 123}}}}})
+			return err
+		},
 		"metadata": func(ctx context.Context, engine *SimCEngine) error {
 			_, err := engine.ResolveGearVariants(ctx, GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81,
 				Variants: []GearVariantInput{{Key: "head:123", Change: GearChange{Slot: "head", ItemID: 123}}}})

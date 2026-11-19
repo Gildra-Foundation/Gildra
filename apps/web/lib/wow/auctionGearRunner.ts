@@ -270,7 +270,7 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
 }
 
 async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number) {
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2) {
   const context = entry.context;
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
@@ -281,13 +281,13 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   // Rendering a retained checkpoint or measuring one effect cannot overlap
   // native work, so neither operation needs a live capacity round trip.
   const simulationConcurrency = yielding || max <= 1 ? 1
-    : await diagnostics.measureStage("capacity", async () => await context.simulate.concurrency?.(signal) ?? 1);
+    : verifiedCapacity ?? await diagnostics.measureStage("capacity", async () => await context.simulate.concurrency?.(signal) ?? 1);
   const { result, checkpoint } = await diagnostics.measureStage("search", () => searchAuctionGearOptions({
     searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
     market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
     baseline: entry.retainedBaseline, simulationCache: cache,
-    simulationConcurrency,
+    simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
     // The initial response includes baseline plus two native comparisons.
     // Subsequent responses update the visible choices after eight new effects.
     maxNewSimulations: max,
@@ -308,25 +308,25 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   return entry.latestSearchResult;
 }
 export async function startAuctionGearSearch(input: AuctionGearRunInput, owner: string, token: string, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void, publishResult?: (result: AuctionGearRunResult) => void) {
+  progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void, publishResult?: (result: AuctionGearRunResult) => void, fullMarket = false) {
   progress({ phase: "market", completed: 0, total: 1 });
   const diagnostics = createAuctionGearDiagnostics();
   const character = await diagnostics.measureStage("ownership", () => getBattleNetCharacterBySlug(token, input.locale, input.characterSlug, signal));
   if (!character) throw new Error("character_not_found");
   const armory = await diagnostics.measureStage("armory", () => getBattleNetSimulationSnapshot(token, character, signal, { professions: true }));
   runDiagnostics.set(armory, diagnostics);
-  return startAuctionGearSearchFromSnapshot(input, character, armory, owner, token, signal, progress, searchCreated, publishResult);
+  return startAuctionGearSearchFromSnapshot(input, character, armory, owner, token, signal, progress, searchCreated, publishResult, fullMarket);
 }
 
 /** Trusted developer QA entry point. The HTTP route never accepts a snapshot. */
 export async function startAuctionGearSearchFromSnapshot(input: AuctionGearRunInput, character: BattleNetCharacter, armory: BattleNetSimulationSnapshot,
-  owner: string, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void, publishResult?: (result: AuctionGearRunResult) => void) {
+  owner: string, token: string, signal: AbortSignal, progress: (p: AuctionPlanProgress) => void, searchCreated?: (searchId: string) => void, publishResult?: (result: AuctionGearRunResult) => void, fullMarket = false) {
   const context = await createAuctionGearContextFromSnapshot(input, character, armory, token, signal, progress);
   signal.throwIfAborted();
   const entry = createAuctionGearSearch(owner, context);
   try {
     searchCreated?.(entry.id);
-    return await continueAuctionGearSearch(entry, signal, progress, token, publishResult);
+    return await continueAuctionGearSearch(entry, signal, progress, token, publishResult, fullMarket);
   } catch (error) {
     if (!entry.latestSearchResult) deleteAuctionGearSearch(owner, entry.id);
     throw error;
@@ -342,20 +342,25 @@ function setAuctionGearPhase(entry: AuctionGearSearchEntry, key: "nextSearchPhas
 
 export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, signal: AbortSignal,
   progress: (p: AuctionPlanProgress) => void, token?: string,
-  publishResult?: (result: AuctionGearRunResult) => void) {
+  publishResult?: (result: AuctionGearRunResult) => void, fullMarket = false) {
   const started = Date.now(), shouldYield = () => Date.now() - started >= 10_000;
   const diagnostics = metricsFor(entry.context.armory ?? entry.context);
   const finishStep = diagnostics.beginStep("search");
   const discoveryShouldYield = () => Date.now() - started >= 5_000;
   const advanceComparisons = async () => {
     let remaining = entry.latestSearchResult ? 8 : 3;
+    let verifiedCapacity: 1 | 2 | undefined;
+    if (fullMarket && entry.context.options.length > 1 && !shouldYield()) {
+      verifiedCapacity = await entry.context.simulate.concurrency?.(signal);
+      if (verifiedCapacity === 2 && entry.context.simulate.batchSize) remaining = 2 * entry.context.simulate.batchSize;
+    }
     let result;
     while (remaining > 0) {
       // Publish the first useful comparison promptly. Once it is visible, use
       // the rest of this turn's budget in one planner pass instead of rebuilding
       // and durably writing every lot after each individual simulation.
-      const batch = publishResult && !entry.latestSearchResult?.items.some(item => item.comparison) ? 1 : remaining;
-      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult ? batch : undefined);
+      const batch = publishResult && !(fullMarket && entry.context.simulate.batchSize) && !entry.latestSearchResult?.items.some(item => item.comparison) ? 1 : remaining;
+      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult || fullMarket ? batch : undefined, verifiedCapacity);
       remaining -= batch;
       if (publishResult) {
         // This comparison batch finishes before the deadline. Store the next
@@ -511,14 +516,14 @@ export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value:
 
 export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, selection: unknown, signal: AbortSignal,
   progress: (p: AuctionPlanProgress) => void, token?: string,
-  publishResult?: (result: AuctionGearRunResult) => void) {
+  publishResult?: (result: AuctionGearRunResult) => void, fullMarket = false) {
   // Publish a useful bounded step on both the first request and continuations.
   // Include discovery in the time budget; an in-flight upstream request may
   // finish after it, but no further native comparison starts after yielding.
   const context = entry.context, started = Date.now(), shouldYield = () => Date.now() - started >= 10_000;
   selectedAuctionGearAssemblyOptions(entry, selection);
   if (!entry.latestSearchResult || !(entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)) {
-    if (entry.metadataRebuildRequired) return continueAuctionGearSearch(entry, signal, progress, token, publishResult);
+    if (entry.metadataRebuildRequired) return continueAuctionGearSearch(entry, signal, progress, token, publishResult, fullMarket);
     throw new Error("search_not_ready");
   }
   const diagnostics = metricsFor(context.armory ?? context);
@@ -550,6 +555,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       entry.allowedKey = allowedKey;
       scheduleAuctionGearSearchSave(entry);
     }
+    const capacity = fullMarket && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
+    const assemblyBatchSize = capacity === 2 ? context.simulate.batchSize : undefined;
     const advanceAssembly = async () => {
       const { result, checkpoint } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
         searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
@@ -557,9 +564,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
         incumbents: entry.retainedIncumbents,
-        // Small continuations retain the full exhaustive cursor and incumbents.
-        // They must not hold the next visible result behind 48 serial native calls.
-        maxNewSimulations: publishResult ? 1 : 8,
+        simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
+        maxNewSimulations: assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
         shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
       }));
@@ -648,6 +654,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         signal.throwIfAborted();
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
           simulationConcurrency: enhancementConcurrency,
+          get simulationBatchSize() { return enhancementConcurrency === 2 ? context.simulate.batchSize : 0; },
+          get simulationOwnedBatch() { return context.simulate.ownedBatch; },
           recheck: (selected, configuration, simSignal) => context.simulate(
             customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
@@ -876,73 +884,210 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   let verified = freshMetadata;
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
+  const transport = createAuctionNativeTransport(metrics);
   const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], precision?: "finalist"): Promise<GearPlanSimulation> => {
-      assertFreshMarket(market);
-      const prepared = prepareGearLoadout({
-        selections,
-        equipment: armory.equipment,
-        loadout,
-        specId: specId
-      });
-      const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes,
-        ...(ownedChanges?.length ? {ownedChanges} : {}), ...(precision ? {precision} : {}) });
+    assertFreshMarket(market);
+    const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
+    const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes,
+      ...(ownedChanges?.length ? { ownedChanges } : {}), ...(precision ? { precision } : {}) });
+    simSignal.throwIfAborted();
+    const cached = verified ? auctionGearMechanicalCache.get(cacheKey, engine()) : undefined;
+    if (cached) { metrics.cacheHit(); return cached; }
+    metrics.simulation();
+    return metrics.measure("simulation", async () => {
+      const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
+      const base = { spec: specSlug, scenario, ...encounter, actionListMode: "native", talentLoadout: armory.activeTalentLoadout,
+        armory: { profile: armory.profile, specializations: armory.specializations, equipment },
+        precision: precision === "finalist" ? "auction-finalist" : "auction-candidate" };
+      const ownedBatch = transport.ownedBatch && ownedChanges?.length
+        ? { base: { ...base, armory: { ...base.armory, equipment: prepared.equipment } }, changes: ownedChanges }
+        : undefined;
+      // Profilesets inherit the first row's overrides. Each row in a group must
+      // replace the same slots against the same armory (including off-hand removal).
+      const batchEquipment = ownedBatch ? prepared.equipment : equipment;
+      const group = transport.batchSize && (prepared.changes.length || ownedBatch)
+        ? JSON.stringify([base.precision, batchEquipment === armory.equipment ? null : batchEquipment,
+          prepared.changes.map(change => change.slot).sort(), ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
+        : undefined;
+      const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
       simSignal.throwIfAborted();
-      const cached = verified ? auctionGearMechanicalCache.get(cacheKey, engine()) : undefined;
-      if (cached) { metrics.cacheHit(); return cached; }
-      metrics.simulation();
-      return metrics.measure("simulation", async () => {
-      const response = await fetch(`${(process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "")}/v1/wow/rotation/simulations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        cache: "no-store",
-        signal: AbortSignal.any([simSignal, AbortSignal.timeout(precision ? 190_000 : 50_000)]),
-        body: JSON.stringify({
-          spec: specSlug,
-          scenario: scenario,
-          ...encounter,
-          actionListMode: "native",
-          talentLoadout: armory.activeTalentLoadout,
-          armory: {
-            profile: armory.profile,
-            specializations: armory.specializations,
-            equipment: ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment
-          },
-          ...(precision ? {precision} : {}),
-          ...(prepared.changes.length ? {
-            gearChanges: prepared.changes
-          } : {})
-        })
-      });
-      metrics.workerTiming(response.headers.get("server-timing"));
-      if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error("simulation_unavailable");
-      const simulation = nativeGearSimulationMeasurement(await response.json());
+      const simulation = nativeGearSimulationMeasurement(result);
       if (engine() && simulation.engine !== engine()) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       verified = true;
       return simulation;
-      });
-    };
-  // Capacity is live process state, not part of a persisted character/engine
-  // identity. Recheck between turns so a worker rollback cannot leave a warm
-  // search repeatedly submitting pairs to a one-permit legacy worker.
-  return Object.assign(simulate, {
-    async concurrency(signal: AbortSignal): Promise<1 | 2> {
-      signal.throwIfAborted();
-      try {
-        const response = await fetch(`${(process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "")}/healthz`, {
-          cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(2_000)]),
-        });
-        const capacity = response.ok && response.headers.get("x-gildra-simulation-concurrency") === "2" ? 2 : 1;
-        await response.body?.cancel();
-        signal.throwIfAborted();
-        return capacity;
-      } catch {
-        signal.throwIfAborted();
-        return 1;
-      }
-    },
+    });
+  };
+  return Object.defineProperties(Object.assign(simulate, { concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
+    batchSize: { get: () => transport.batchSize },
+    ownedBatch: { get: () => transport.ownedBatch },
   });
+}
+
+type AuctionNativeBase = { precision: string; armory: object };
+type AuctionNativeChanges = ReturnType<typeof prepareGearLoadout>["changes"];
+type AuctionNativeJob = {
+  base: AuctionNativeBase; changes: AuctionNativeChanges; group?: string; signal: AbortSignal;
+  ownedBatch?: { base: AuctionNativeBase; changes: readonly OwnedAuctionGearChange[] };
+  resolve: (result: unknown) => void; reject: (error: unknown) => void; checkGroupAbort?: () => void;
+};
+
+function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
+  const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
+  const pending: AuctionNativeJob[] = [];
+  const subscribers = new Map<AbortSignal, { jobs: Set<AuctionNativeJob>; abort: () => void }>();
+  let ownedBatch = false;
+  let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
+
+  function schedule() {
+    if (scheduled || !pending.length || active >= capacity) return;
+    scheduled = true;
+    void Promise.resolve().then(() => {
+      scheduled = false;
+      while (active < capacity && pending.length) {
+        const first = pending.shift()!;
+        const jobs = [first];
+        if (batchSize && first.group && (!first.ownedBatch || ownedBatch)) {
+          const compatible = pending.filter(job => job.group === first.group);
+          // Leave work for the other native lane when both would draw from
+          // this group. An already busy lane contributes its outstanding rows.
+          const limit = compatible.length === pending.length
+            ? Math.ceil((1 + compatible.length + activeCandidates) / capacity) : batchSize;
+          for (const job of compatible.slice(0, Math.min(batchSize, limit) - 1)) {
+            jobs.push(job);
+            pending.splice(pending.indexOf(job), 1);
+          }
+        }
+        dispatch(jobs);
+      }
+    });
+  }
+
+  function dispatch(jobs: AuctionNativeJob[]) {
+    active++;
+    activeCandidates += jobs.length;
+    void send(jobs).catch(error => {
+      for (const job of jobs) job.reject(error);
+    }).finally(() => {
+      active--;
+      activeCandidates -= jobs.length;
+      schedule();
+    });
+  }
+
+  async function send(jobs: AuctionNativeJob[]) {
+    const first = jobs[0], batch = jobs.length > 1;
+    let requestSignal = first.signal;
+    if (batch && jobs.some(job => job.signal !== first.signal)) {
+      const controller = new AbortController();
+      requestSignal = controller.signal;
+      for (const job of jobs) job.checkGroupAbort = () => {
+        if (jobs.every(entry => entry.signal.aborted)) controller.abort(job.signal.reason);
+      };
+    }
+    const singleTimeout = first.base.precision === "auction-finalist" ? 190_000 : 50_000;
+    const response = await fetch(worker() + "/v1/wow/rotation/simulations" + (batch ? "/batch" : ""), {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, cache: "no-store",
+      signal: AbortSignal.any([requestSignal, AbortSignal.timeout(batch ? Math.min(190_000, jobs.length * singleTimeout) : singleTimeout)]),
+      body: JSON.stringify(batch ? { base: first.ownedBatch?.base ?? first.base, candidates: jobs.map(job => ({
+        gearChanges: job.changes, ...(job.ownedBatch ? {ownedChanges: job.ownedBatch.changes} : {}) })) }
+        : { ...first.base, ...(first.changes.length ? { gearChanges: first.changes } : {}) }),
+    });
+    metrics.workerTiming(response.headers.get("server-timing"));
+    if (batch && [404, 405, 501].includes(response.status)) {
+      // The advertised worker may have been rolled back between health and POST.
+      capacity = 1;
+      batchSize = 0;
+      ownedBatch = false;
+      for (const job of jobs) job.checkGroupAbort = undefined;
+      pending.unshift(...jobs.filter(job => !job.signal.aborted));
+      await response.body?.cancel();
+      return;
+    }
+    if (batch && first.ownedBatch) {
+      // Exact singles carry the complete patched armory. A legacy worker can
+      // reject an unfamiliar field or silently ignore it, so require the echo
+      // before accepting a result from the extended contract.
+      const legacy = response.ok && response.headers.get("x-gildra-simulation-owned-batch") !== "1";
+      const code = [400, 422].includes(response.status) ? (await response.json().catch(() => null))?.code : undefined;
+      if (legacy || code === "invalid_request" || code === "unsupported_owned_batch") {
+        if (legacy || code === "invalid_request") ownedBatch = false;
+        for (const job of jobs) { job.group = undefined; job.checkGroupAbort = undefined; }
+        pending.unshift(...jobs.filter(job => !job.signal.aborted));
+        if (!response.bodyUsed) await response.body?.cancel();
+        return;
+      }
+    }
+    if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error("simulation_unavailable");
+    const payload = await response.json();
+    const results = batch ? payload?.results : [payload];
+    if (!Array.isArray(results) || results.length !== jobs.length) throw new Error("invalid_simulation_result");
+    jobs.forEach((job, index) => job.resolve(results[index]));
+  }
+
+  function subscribe(job: AuctionNativeJob) {
+    const signal = job.signal;
+    let subscription = subscribers.get(signal);
+    if (!subscription) {
+      const jobs = new Set<AuctionNativeJob>();
+      const abort = () => {
+        for (const entry of jobs) {
+          const index = pending.indexOf(entry);
+          if (index >= 0) pending.splice(index, 1);
+          entry.checkGroupAbort?.();
+          entry.reject(signal.reason);
+        }
+      };
+      subscription = { jobs, abort };
+      subscribers.set(signal, subscription);
+      signal.addEventListener("abort", abort, { once: true });
+    }
+    const { jobs, abort } = subscription;
+    jobs.add(job);
+    return () => {
+      jobs.delete(job);
+      if (!jobs.size) {
+        signal.removeEventListener("abort", abort);
+        subscribers.delete(signal);
+      }
+    };
+  }
+
+  function submit(input: Pick<AuctionNativeJob, "base" | "changes" | "group" | "signal" | "ownedBatch">) {
+    input.signal.throwIfAborted();
+    let unsubscribe: () => void;
+    return new Promise<unknown>((resolve, reject) => {
+      const job: AuctionNativeJob = { ...input, resolve, reject };
+      unsubscribe = subscribe(job);
+      if (!active && !pending.length) dispatch([job]);
+      else { pending.push(job); schedule(); }
+    }).finally(() => unsubscribe());
+  }
+
+  // Capacity belongs to the current worker process. Recheck between turns
+  // so a running search can survive a deployment or rollback.
+  async function concurrency(signal: AbortSignal): Promise<1 | 2> {
+    signal.throwIfAborted();
+    try {
+      const response = await fetch(worker() + "/healthz", {
+        cache: "no-store", signal: AbortSignal.any([signal, AbortSignal.timeout(2_000)]),
+      });
+      const permits = response.ok && response.headers.get("x-gildra-simulation-concurrency") === "2" ? 2 : 1;
+      const advertised = response.headers.get("x-gildra-simulation-batch") ?? "";
+      await response.body?.cancel();
+      signal.throwIfAborted();
+      capacity = permits;
+      batchSize = permits === 2 && /^\d+$/.test(advertised) && Number(advertised) >= 2 ? Math.min(25, Number(advertised)) : 0;
+      ownedBatch = batchSize > 0 && response.headers.get("x-gildra-simulation-owned-batch") === "1";
+      schedule();
+      return capacity;
+    } catch {
+      signal.throwIfAborted();
+      capacity = 1;
+      batchSize = 0;
+      ownedBatch = false;
+      return capacity;
+    }
+  }
+  return { submit, concurrency, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
 }

@@ -227,10 +227,13 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       catch { return false; }
     });
     if (fresh.length < all.length) throw new Error("market_stale");
+    // Local stage labels describe the slice where a candidate was first retained.
+    // Public labels follow objective order after every loadout and precision comparison.
+    const ranked = fresh.map((row, index) => ({ ...row, label: index ? `exhaustive:alternative-${index}` : "exhaustive" }));
     const reasons = [...state.reasons];
     return { state, result: { traversal: "exhaustive", includesOwnedEquipment:true, equipmentChecked: state.equipmentChecked, complete,
       status: !complete ? "pending" : fresh.length ? "ready" : state.unavailable ? "unavailable" : "no_affordable_configuration",
-      ...(finalistRecheck ? { finalistRecheck } : {}), searchLimited: true, reasons, recommendations: fresh, catalogRevision: auctionEnhancementCatalogInfo.revision } };
+      ...(finalistRecheck ? { finalistRecheck } : {}), searchLimited: true, reasons, recommendations: ranked, catalogRevision: auctionEnhancementCatalogInfo.revision } };
   };
   // An exhausted cursor may be reopened when authoritative prices change. A
   // timestamp refresh alone does not invalidate expensive native measurements.
@@ -243,8 +246,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (staleQuotes(state.stage.quotes)) throw new Error("market_stale");
   }
   let lastUpdate: ReturnType<typeof finish> | undefined;
-  // Reserve each slice's maximum native budget, including empty/cache slices.
-  // Confirmed capacity two must not double the per-turn work allowance.
+  // Reserve native lanes for each slice. A capable worker can coalesce
+  // multiple prepared configurations on a lane within the same turn deadline.
   const sliceBudget = input.simulationConcurrency === 2 ? 2 : 1;
   for (let turns = 0; turns < 8; turns += sliceBudget) {
     // Entering another slice may change the cursor or prices without producing

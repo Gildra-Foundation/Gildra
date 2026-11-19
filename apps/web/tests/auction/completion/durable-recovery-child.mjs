@@ -222,7 +222,7 @@ if (mode === "cancel-seed") {
   // The deployed legacy reader accepts exactly native-apl-v1 for every kind.
   assert.notEqual(record.header.simulationContract, "native-apl-v1", "An old web must reject new precision checkpoints on rollback");
   assert.equal(record.header.simulationContract, record.body.simulationContract);
-  record.header.simulationContract = record.body.simulationContract = "native-apl-v1"; rewrite(record);
+  record.header.simulationContract = record.body.simulationContract = "native-apl-v1:native-dps-mean-v1"; rewrite(record);
   const ack = jobs.cancelAuctionGearRequest(owner, nonce, scope);
   assert.equal(rawRecord("job", ack.id).header.simulationContract, "native-apl-v1", "Cancellation barriers keep the legacy-compatible job envelope");
   output = { searchId: entry.id, ackId: ack.id };
@@ -262,7 +262,7 @@ if (mode === "cancel-seed") {
   assert.equal((await send("GET")).status, 200); await tick(); await tick();
   const job = jobs.getAuctionGearJob(owner, input.id); assert.equal(job.status, "completed"); assert.equal(tasks, 1);
   const record = rawRecord("job", job.id);
-  assert.equal(record.header.metadata.resultMeasurementContract, "native-dps-mean-v1");
-  assert.equal(record.body.data.resultMeasurementContract, "native-dps-mean-v1"); output = { tasks };
+  assert.equal(record.header.metadata.resultMeasurementContract, "native-dps-mean-v1:auction-100-750");
+  assert.equal(record.body.data.resultMeasurementContract, "native-dps-mean-v1:auction-100-750"); output = { tasks };
 } else throw Error("unknown_durable_recovery_fixture");
 console.log(JSON.stringify(output));

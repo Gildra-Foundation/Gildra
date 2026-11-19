@@ -93,7 +93,7 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, onEn
       assert.equal(request.actionListMode,'native');
       if(nativeMs)await new Promise(resolve=>setTimeout(resolve,nativeMs));options.signal?.throwIfAborted();
       const dps=1000+(request.gearChanges??[]).reduce((sum,row)=>sum+(row.itemId-89999)*10+(row.gemIds??[]).reduce((n,id)=>n+id%100,0),0);
-      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:request.precision==='finalist'?3000:750,engine:fixture.state.workerEngine},{headers:{'x-gildra-engine':'simulationcraft'}});
+      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:({'auction-candidate':100,'auction-finalist':750,finalist:3000})[request.precision] ?? 750,engine:fixture.state.workerEngine},{headers:{'x-gildra-engine':'simulationcraft'}});
     }});
   const background=evaluate(sources.auctionGearBackground,{...globals,...policy,...store,...runner,
     verifyAuctionGearSearch:async(...args)=>{await beforeTurn?.({entry:args[0],fixture,counts,jobs});return runner.verifyAuctionGearSearch(...args);}});

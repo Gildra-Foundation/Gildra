@@ -16,7 +16,7 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
     const searchId = work.action === "search" ? job.searchId : work.searchId;
     if (!searchId && work.action === "search") {
       if (work.input.characterSlug !== job.scope?.characterSlug || work.input.locale !== job.scope.locale) throw new Error("invalid_auction_checkpoint");
-      task = (signal, progress, hooks) => startAuctionGearSearch(work.input, owner, token, signal, progress, hooks.searchCreated, hooks.publishResult);
+      task = (signal, progress, hooks) => startAuctionGearSearch(work.input, owner, token, signal, progress, hooks.searchCreated, hooks.publishResult, work.runMode === "full");
     } else {
       const entry = getAuctionGearSearch(owner, searchId ?? "");
       if (!entry || entry.context.input.characterSlug !== job.scope?.characterSlug || entry.context.input.locale !== job.scope.locale) throw new Error("search_expired");
@@ -37,8 +37,8 @@ export function resumeOwnedAuctionGearWork(owner: string, id: string, token: str
         entry.busy = true;
         try {
           await verifyAuctionGearSearch(entry, token, signal);
-          const result = work.action === "assemble" ? await assembleAuctionGearSearch(entry, selection, signal, progress, token, hooks.publishResult)
-            : await continueAuctionGearSearch(entry, signal, progress, token, hooks.publishResult);
+          const result = work.action === "assemble" ? await assembleAuctionGearSearch(entry, selection, signal, progress, token, hooks.publishResult, work.runMode === "full")
+            : await continueAuctionGearSearch(entry, signal, progress, token, hooks.publishResult, work.runMode === "full");
           // A parked manual assembly owns its original selected/excluded IDs.
           // Yield the bootstrap turn fairly, then finish that same assembly.
           // Full jobs already requeue through fullAuctionGearTask.

@@ -168,6 +168,18 @@ test('a competitive third is rechecked and retained when it confirms a larger DP
   assert.equal(result.finalistRecheck.preferredKey,'option-1');
   assert.equal(result.recommendations[0].configuration.key,'option-1');
   assert.equal(result.recommendations[0].simulation.iterations,3000);
+  assert.deepEqual(Array.from(result.recommendations, row => row.label),
+    ['exhaustive', 'exhaustive:alternative-1', 'exhaustive:alternative-2']);
+
+  h.state = JSON.parse(JSON.stringify(h.state));
+  for (const leader of [h.state.measured, h.state.runnerUp, h.state.nextMeasured, h.state.value, h.state.dps]) {
+    if (leader) leader.recommendation.label = 'exhaustive:alternative-17';
+  }
+  const priorCalls = h.stageCalls.length;
+  const restored = await h.run();
+  assert.deepEqual(JSON.parse(JSON.stringify(restored.result)), JSON.parse(JSON.stringify(result)));
+  assert.equal(h.stageCalls.length, priorCalls);
+  assert.equal(calls.length, 3);
 });
 
 test('100 gold: a competing 87.15 gold third requires precision before selecting among three directly checked prices',async()=>{

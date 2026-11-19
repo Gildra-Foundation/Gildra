@@ -380,7 +380,7 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
         const both=changes.some(c=>c.itemId===960010&&c.gemIds?.some(Boolean))&&changes.some(c=>c.itemId===960020&&c.gemIds?.some(Boolean));
         dps=(1000+changes.reduce((sum,c)=>sum+(bare[c.itemId]??0)+(c.gemIds?.some(Boolean)?10:0),0)+(both?600:0))*request.targets;
       }
-      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:request.precision==='finalist'?3000:750,engine:nativeEngine},
+      return Response.json({dps,dpsMean:dps,dpsError:1,confidence:95,iterations:request.precision==='auction-finalist'?750:100,engine:nativeEngine},
         {headers:{'x-gildra-engine':'simulationcraft'}});
     },
   });
@@ -455,11 +455,11 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
   const nativeKeys=requests.map(request=>JSON.stringify([request.scenario,request.fightLengthSeconds,request.targets,request.gearChanges??[],request.precision??"ordinary"]));
   assert.equal(new Set(nativeKeys).size,nativeKeys.length,'Continuation must never duplicate a measurement at the same precision');
   if (socketLoser && !synergy) {
-    const rechecked=requests.filter(request=>request.precision==='finalist');
+    const rechecked=requests.filter(request=>request.precision==='auction-finalist');
     assert.equal(rechecked.length,3,'All three competitive loadouts receive higher precision');
     assert.equal(result.enhancementOptimization.finalistRecheck.significant,false);
     for (const key of result.enhancementOptimization.finalistRecheck.keys) {
-      assert.equal(result.enhancementOptimization.recommendations.find(row=>row.configuration.key===key).simulation.iterations,3000);
+      assert.equal(result.enhancementOptimization.recommendations.find(row=>row.configuration.key===key).simulation.iterations,750);
     }
   }
   assert(publications.some(result=>result.enhancementOptimization?.status==='pending'));

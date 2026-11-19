@@ -35,7 +35,13 @@ func ValidateInput(input SimulationInput) error {
 	if input.ActionListMode != "" && input.ActionListMode != ActionListModeCustom && input.ActionListMode != ActionListModeNative {
 		return errors.New("invalid action list mode")
 	}
-	if input.Precision != "" && (input.Precision != "finalist" || input.ActionListMode != ActionListModeNative) {
+	switch input.Precision {
+	case "":
+	case "finalist", auctionCandidatePrecision, auctionFinalistPrecision:
+		if input.ActionListMode != ActionListModeNative {
+			return errors.New("invalid native simulation precision")
+		}
+	default:
 		return errors.New("invalid native simulation precision")
 	}
 	if input.ActionListMode == ActionListModeNative {
@@ -97,13 +103,17 @@ func ValidateInput(input SimulationInput) error {
 	if input.GearChange != nil {
 		changes = append(changes, *input.GearChange)
 	}
+	return validateGearChanges(changes, input.Armory != nil)
+}
+
+func validateGearChanges(changes []GearChange, hasArmory bool) error {
 	seenSlots := map[string]bool{}
 	for _, change := range changes {
 		if seenSlots[change.Slot] {
 			return errors.New("duplicate gear slot")
 		}
 		seenSlots[change.Slot] = true
-		if input.Armory == nil {
+		if !hasArmory {
 			return errors.New("gear replacement requires an armory snapshot")
 		}
 		if !simCGearSlots[change.Slot] || change.ItemID <= 0 || change.ItemID > 10_000_000 {

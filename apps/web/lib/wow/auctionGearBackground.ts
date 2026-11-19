@@ -25,8 +25,8 @@ export function fullAuctionGearTask(turn: AuctionGearTask, owner: string, token:
       await verifyAuctionGearSearch(entry, token, nextSignal);
       nextSignal.throwIfAborted();
       return result.kind === "search" && !result.searchComplete
-        ? continueAuctionGearSearch(entry, nextSignal, nextProgress, token, nextHooks.publishResult)
-        : assembleAuctionGearSearch(entry, acceptedSelection, nextSignal, nextProgress, token, nextHooks.publishResult);
+        ? continueAuctionGearSearch(entry, nextSignal, nextProgress, token, nextHooks.publishResult, true)
+        : assembleAuctionGearSearch(entry, acceptedSelection, nextSignal, nextProgress, token, nextHooks.publishResult, true);
     };
     hooks.continueWith(fullAuctionGearTask(next, owner, token, acceptedSelection));
     return result;
