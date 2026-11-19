@@ -94,3 +94,8 @@ test("a persisted static rejection reopens for an exact equipped control with ex
   const seed = await run(directory, "legacy-equipped-reference-seed");
   assert.equal((await run(directory, "legacy-socket-read", seed)).reset, true);
 }));
+
+test("stat-only native results and all their aliases replay after restart with player exclusions retained", () => isolated(async directory => {
+  const seed = await run(directory, "stat-only-cache-seed");
+  assert.equal((await run(directory, "stat-only-cache-read", seed)).reset, true);
+}));

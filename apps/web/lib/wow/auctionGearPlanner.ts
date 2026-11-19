@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
 import { candidateLoadoutItem, compareGearSimulationResults } from "./gearSimulation";
 import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "./gearCompatibility";
-import { auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionDominatedArmorOptions, auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
 export { auctionSelectionEffectKey } from "./auctionGearEffects";
 import type {
   AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearOption, AuctionGearPlan,
@@ -279,6 +279,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
 
 /** Complete effect enumeration with exact procurement, yielding at a persisted assignment. */
 export async function assembleAuctionGear(input: PlannerInput & {
+  reuseAppliedStats?: boolean;
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
 }): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint }> {
@@ -317,7 +318,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       checkpoint.bestValueConfirmed = null; checkpoint.bestDpsConfirmed = null;
       checkpoint.cursor.fill(0); checkpoint.exhausted = false;
       checkpoint.nextPair = 0; checkpoint.nextSeed = 0;
-      checkpoint.combinationsChecked = 0; checkpoint.validCombinations = 0;
+      checkpoint.combinationsChecked = 0; checkpoint.validCombinations = 0; delete checkpoint.proofPrunedAssignments;
     }
   } else {
     const cache = cloneCache(input.simulationCache);
@@ -329,11 +330,20 @@ export async function assembleAuctionGear(input: PlannerInput & {
       simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,
       pairScores: flatGroups.map(group => cache[auctionSelectionEffectKey([group.options[0]])]?.dps ?? baseline.baseline.dps) };
   }
+  const reuseAppliedStats = input.reuseAppliedStats && options.some(option =>
+    option.candidate.variants.some(variant => variant.resolution?.appliedStatsV1));
+  const dominated = reuseAppliedStats
+    ? auctionDominatedArmorOptions(options, input.loadout, input.specId, checkpoint.baseline.engine) : new Set<string>();
+  const dominatedGroups = new Set(flatGroups.filter(group => group.options.every(option => dominated.has(option.id))));
   const save = () => input.onCheckpoint?.(checkpoint);
   // The durable cursor describes only assignments whose measurements have been
   // applied. Enumeration can prepare the next assignments while SimC runs.
   const traversal = { cursor: [...checkpoint.cursor], exhausted: checkpoint.exhausted,
     nextSeed: checkpoint.nextSeed, nextPair: checkpoint.nextPair, combinationsChecked: checkpoint.combinationsChecked };
+  const savedPruned = checkpoint.proofPrunedAssignments ?? "0";
+  if (typeof savedPruned !== "string" || savedPruned.length > combinationCount.length || !/^(0|[1-9]\d*)$/.test(savedPruned) ||
+      BigInt(savedPruned) > BigInt(combinationCount)) throw new Error("invalid_search_checkpoint");
+  let proofPruned = BigInt(savedPruned);
   const advance = (from = traversal.cursor.length - 1) => {
     for (let index = from; index >= 0; index--) {
       if (++traversal.cursor[index] < radices[index]) {
@@ -489,16 +499,20 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const selections: { selection: AuctionGearOption[]; key: string }[] = [];
   const evaluate = (selection: AuctionGearOption[]) => {
     if (!compatibleSelection(selection)) return true;
-    const key = auctionSelectionEffectKey(selection);
+    const exact = auctionSelectionEffectKey(selection);
+    const equivalent = reuseAppliedStats && auctionAppliedStatsKey(selection, checkpoint.baseline.engine);
+    const cachedExact = checkpoint.simulationCache[exact];
+    const key = equivalent && !cachedExact ? equivalent : exact;
+    // Keep previously measured receipts and use their result to seed the new cache.
+    if (cachedExact && cachedExact.iterations === checkpoint.baseline.iterations && equivalent &&
+        !checkpoint.simulationCache[equivalent] && !pending.has(equivalent))
+      checkpoint.simulationCache[equivalent] = cachedExact;
     if (checkpoint.simulationCache[key] || pending.has(key)) input.onCacheHit?.();
     else {
       if (calls + pending.size >= max) return false;
       // Attach both handlers immediately while enumeration continues. Failed
       // batches are replayed from the last committed cursor.
-      const measurement = input.simulate(selection, signal).then(result => {
-        signal.throwIfAborted();
-        return validSimulation(result, checkpoint.baseline.engine);
-      });
+      const measurement = input.simulate(selection, signal).then(result => validSimulation(result, checkpoint.baseline.engine));
       pending.set(key, measurement.then(value => ({ status: "fulfilled", value }),
         reason => { controller.abort(reason); return { status: "rejected", reason }; }));
     }
@@ -518,28 +532,44 @@ export async function assembleAuctionGear(input: PlannerInput & {
     }
     pending.clear();
     const failed = measured.find(result => result.status === "rejected");
-    if (failed || input.signal.aborted) {
+    if (failed) {
       save();
       input.signal.throwIfAborted();
-      throw failed!.reason;
+      throw failed.reason;
     }
     for (const { selection, key } of selections) {
+      // Discovery and warm-start scoring look up individual items by their original identity.
+      if (selection.length === 1 && key.startsWith("applied-v2:"))
+        checkpoint.simulationCache[auctionSelectionEffectKey(selection)] = checkpoint.simulationCache[key];
       checkpoint.validCombinations++;
       consider(selection, checkpoint.simulationCache[key]);
     }
     selections.length = 0;
     Object.assign(checkpoint, traversal, { cursor: [...traversal.cursor] });
+    if (proofPruned > 0n) checkpoint.proofPrunedAssignments = proofPruned.toString();
     if (measured.length) {
       input.onProgress?.({ phase: "simulating", completed: calls, total: max });
       save();
     }
+    // A cancellation can arrive after every measurement in this window has
+    // completed. Persist the valid window, then stop before starting more work.
+    input.signal.throwIfAborted();
+  };
+  const yieldTraversal = async () => {
+    // Completed cache hits and proven skips are durable progress too.
+    if (!pending.size) {
+      await commitWindow();
+      save();
+    }
+    await new Promise<void>(resolve => setImmediate(resolve));
   };
   try {
     let assignments = 0;
     const seeds = checkpoint.seedSelections ?? [];
     while (!yieldBeforeEnumeration && traversal.nextSeed < seeds.length && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
-      const purchase = await cheapestAuctionEffectSelection(seeds[traversal.nextSeed].map(index => flatGroups[index]), input.budgetCopper, input.signal);
+      const seed = seeds[traversal.nextSeed].map(index => flatGroups[index]);
+      const purchase = seed.some(group => dominatedGroups.has(group)) ? null : await cheapestAuctionEffectSelection(seed, input.budgetCopper, input.signal);
       if (purchase && !evaluate(purchase.options)) break;
       traversal.nextSeed++;
       traversal.combinationsChecked++;
@@ -551,13 +581,15 @@ export async function assembleAuctionGear(input: PlannerInput & {
     while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
       const pair = pairs[traversal.nextPair];
-      const purchase = await cheapestAuctionEffectSelection([flatGroups[pair.first], flatGroups[pair.second]], input.budgetCopper, input.signal);
+      const first = flatGroups[pair.first], second = flatGroups[pair.second];
+      const purchase = dominatedGroups.has(first) || dominatedGroups.has(second) ? null :
+        await cheapestAuctionEffectSelection([first, second], input.budgetCopper, input.signal);
       if (purchase && !evaluate(purchase.options)) break;
       traversal.nextPair++;
       traversal.combinationsChecked++;
       assignments++;
       if (pending.size >= window || selections.length >= 256) await commitWindow();
-      if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+      if (assignments % 256 === 0) await yieldTraversal();
     }
     // Adjacent cursor positions share their leading choices. Reuse only the
     // exact receipt for an unchanged prefix in this immutable offer pool.
@@ -565,17 +597,31 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const prefixReceipts: AuctionGearOption[][] = [[]];
     while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair === pairs.length && !traversal.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
+      const dominatedAxis = dominatedGroups.size ? traversal.cursor.findIndex((choice, axis) =>
+        choice > 0 && dominatedGroups.has(groups[axis][choice - 1])) : -1;
+      if (dominatedAxis >= 0) {
+        // A resume may already be partway through this suffix. Count only its
+        // remaining cursor positions, regardless of warmup order or budget.
+        let remaining = 1n;
+        for (let axis = dominatedAxis + 1; axis < radices.length; axis++)
+          remaining = remaining * BigInt(radices[axis]) - BigInt(traversal.cursor[axis]);
+        proofPruned += remaining;
+        advance(dominatedAxis);
+        assignments++;
+        if (assignments % 256 === 0) await yieldTraversal();
+        continue;
+      }
       const chosenGroups = traversal.cursor.flatMap((choice, index) => choice ? [groups[index][choice - 1]] : []);
       const chosenIndices = chosenGroups.map(group => groupIndex.get(group)!).sort((a, b) => a - b);
       if (seededSelections.has(chosenIndices.join(":"))) {
         advance(); assignments++;
-        if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+        if (assignments % 256 === 0) await yieldTraversal();
         continue;
       }
       if (chosenGroups.length === 2) {
         if (seededPairs.has(`${chosenIndices[0]}:${chosenIndices[1]}`)) {
           advance(); assignments++;
-          if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+          if (assignments % 256 === 0) await yieldTraversal();
           continue;
         }
       }
@@ -608,7 +654,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       assignments++;
       advance(invalidPrefix >= 0 ? invalidPrefix : undefined);
       if (pending.size >= window || selections.length >= 256) await commitWindow();
-      if (assignments % 256 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+      if (assignments % 256 === 0) await yieldTraversal();
     }
     await commitWindow();
   } finally {
@@ -638,6 +684,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     bestValueConfirmed: presentConfirmed(checkpoint.bestValueConfirmed), bestDpsConfirmed: presentConfirmed(checkpoint.bestDpsConfirmed),
     simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !checkpoint.exhausted,
     exhaustiveComplete: checkpoint.exhausted, combinationsChecked: checkpoint.combinationsChecked,
+    ...(checkpoint.proofPrunedAssignments ? { proofPrunedAssignments: checkpoint.proofPrunedAssignments } : {}),
     validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };
 }
 

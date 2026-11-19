@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
+import { quickAuctionStatChoices } from '../../../lib/wow/auctionGearStatChoices.ts';
 import { parseAuctionGearEnhancementMode, auctionGearAssemblyGoalComplete } from '../../../lib/wow/auctionGearEnhancementMode.ts';
 import { advanceAuctionGearRunPolicy, createAuctionGearRunPolicy } from '../../../lib/wow/auctionGearRunPolicy.ts';
 import { auctionGearResultMatchesIntent } from '../../../lib/wow/auctionGearResult.ts';
@@ -57,7 +58,7 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
   const checkpoint = { best: { optionIds: ['fixture-option'] }, bestConfirmed: null, baseline: { engine: 'fixture', iterations: 750, confidence: 95 }, simulationCache: {} };
   const flush = async () => { calls.saved++; if (failSave && entry.latestAssemblyResult?.enhancementOptimization) throw Error('auction_storage_unavailable'); };
   const run = vm.runInNewContext(stripTypeScriptTypes(phase + source.slice(start, end)).replace('export ', '') + ';assembleAuctionGearSearch', {
-    Date, Map, Set, logAuctionGearDiagnostics, metricsFor: () => createAuctionGearDiagnostics(),
+    Date, Map, Set, quickAuctionStatChoices, logAuctionGearDiagnostics, metricsFor: () => createAuctionGearDiagnostics(),
     selectedAuctionGearAssemblyOptions: () => [option], auctionFactsKey: () => 'same',
     publicAuctionResult: (_context, value) => ({ ...value, ...input }),
     discoverAuctionOptions: async () => {}, retainAuctionSimulations: () => ({}),
@@ -76,7 +77,7 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
     },
     evaluateAuctionGearScenarios: async () => { calls.scenarios++; return []; }, withFreshEnhancementQuotes: value => value,
   });
-  return { entry, calls, publications, execute: () => run(entry, undefined, controller.signal, () => {}, 'fixture-token', value => publications.push(value)) };
+  return { entry, calls, publications, execute: (full = false) => run(entry, undefined, controller.signal, () => {}, 'fixture-token', value => publications.push(value), full) };
 }
 
 test('actual Runner equipment mode skips all enhancement calls/state and keeps native equipment parameters', async () => {
@@ -123,4 +124,12 @@ test('actual Runner abort and failed durable stage publication cannot acknowledg
   const unavailable = await runner('enhanced', { verified: false, failSave: true });
   await assert.rejects(unavailable.execute(), /auction_storage_unavailable/);
   assert(unavailable.publications.every(result => !result.enhancementOptimization));
+});
+
+test('only full assembly enables equivalent bare armor measurements', async () => {
+  for (const full of [false, true]) {
+    const h = await runner('equipment');
+    await h.execute(full);
+    assert.equal(h.calls.equipment[0].reuseAppliedStats, full);
+  }
 });

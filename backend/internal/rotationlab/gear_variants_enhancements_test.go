@@ -137,3 +137,72 @@ func TestNativeNoItemEffectsRequiresPositiveProof(t *testing.T) {
 		}
 	}
 }
+
+func TestAppliedStatsRequireCompleteNativeVector(t *testing.T) {
+	values := make([]any, 46)
+	for i := range values {
+		values[i] = float64(i)
+	}
+	row := enhancementReport(t, func(item map[string]any) { item["gildra_applied_stats_v1"] = values })
+	if len(row.AppliedStatsV1) != len(values) || row.AppliedStatsV1[39] != 39 {
+		t.Fatal("lost native stat coordinates")
+	}
+	values[39] = nil
+	for _, invalid := range []any{nil, values, values[:45]} {
+		row := enhancementReport(t, func(item map[string]any) { item["gildra_applied_stats_v1"] = invalid })
+		if row.AppliedStatsV1 != nil {
+			t.Fatal("partial vector qualified for simulation reuse")
+		}
+	}
+}
+
+func TestNativeScalingInputsRequireCompleteAuditedEvidence(t *testing.T) {
+	for _, raw := range []string{"", "null", "[]", "[0,0,0]", "[0,0,0,0,0]", "[0,null,0,0]", "[0,-1,0,0]", "[0,1.5,0,0]", "[0,2147483648,0,0]"} {
+		if nativeScalingInputsV1("18428cd", json.RawMessage(raw)) != nil {
+			t.Fatalf("accepted invalid scaling inputs %q", raw)
+		}
+	}
+	for _, rev := range []string{"", "18428c", "18428cd0", "abcdef0"} {
+		if nativeScalingInputsV1(rev, json.RawMessage("[0,0,0,0]")) != nil {
+			t.Fatalf("accepted unaudited revision %q", rev)
+		}
+	}
+	for _, want := range [][4]int{{}, {67, 67, 82, 67}} {
+		row := enhancementReport(t, func(item map[string]any) { item["gildra_scaling_inputs_v1"] = want })
+		if row.NativeScalingInputsV1 == nil || *row.NativeScalingInputsV1 != want {
+			t.Fatalf("lost verified native scaling inputs %v", want)
+		}
+	}
+}
+
+func TestNativeSuffixProgramBindsOrderedOperandsAndSingleBonus(t *testing.T) {
+	// Real pinned report for Smoldering Breastplate (116427), bonus 47.
+	fields := []int{47, 2, 32, 2827, 0, 0, 0, 2, 49, 3905, 0, 0, 1, 5, 13151, 0, 0, 0, 2}
+	encode := func() json.RawMessage { raw, _ := json.Marshal(fields); return raw }
+	const digest = "2ec7af8595b4e939e9342dc33cde19cbb2741a404c5741e491f595ed72e791dd"
+	if got := nativeSuffixProgramV1([]int{47}, encode()); got != digest {
+		t.Fatalf("unexpected suffix program: %q", got)
+	}
+	for _, ids := range [][]int{nil, {}, {47, 13708}, {68}, {501}} {
+		if nativeSuffixProgramV1(ids, encode()) != "" {
+			t.Fatalf("accepted suffix program for native request %v", ids)
+		}
+	}
+	fields[0] = 68 // This bonus carries identical unrounded DBC operations.
+	if got := nativeSuffixProgramV1([]int{68}, encode()); got != digest {
+		t.Fatal("lost exact DBC alias")
+	}
+	fields[3]++
+	if got := nativeSuffixProgramV1([]int{68}, encode()); got == "" || got == digest {
+		t.Fatal("conflated different stat allocations")
+	}
+	fields[13] = 4 // Description tags can alter the effects of other gear.
+	if nativeSuffixProgramV1([]int{68}, encode()) != "" {
+		t.Fatal("accepted cross-item description tag")
+	}
+	for _, invalid := range []json.RawMessage{nil, json.RawMessage("[]"), json.RawMessage("[68,2,null]")} {
+		if nativeSuffixProgramV1([]int{68}, invalid) != "" {
+			t.Fatalf("accepted partial native suffix program: %s", invalid)
+		}
+	}
+}

@@ -129,6 +129,8 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   bestDpsConfirmed?: AuctionGearConfirmed | null;
   exhaustiveComplete: boolean;
   combinationsChecked: number;
+  /** Cartesian assignments skipped by a certified substitution, before budget/equip checks. */
+  proofPrunedAssignments?: string;
   validCombinations: number;
   combinationKind: "effects";
   /** Exact effect-choice Cartesian upper bound, including incompatible and over-budget states. */
@@ -179,5 +181,7 @@ export type AuctionGearAssemblyCheckpoint = {
   simulationCache: AuctionGearSimulationCache;
   simulations: number;
   combinationsChecked: number;
+  /** Cartesian assignments skipped by a certified substitution, before budget/equip checks. */
+  proofPrunedAssignments?: string;
   validCombinations: number;
 };

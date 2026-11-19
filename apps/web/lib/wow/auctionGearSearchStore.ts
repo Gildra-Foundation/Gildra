@@ -94,7 +94,11 @@ function load(id: string) {
         data.recency > record.metadata.recency || data.createdAt !== record.metadata.createdAt ||
         !(data.knownOptionIds instanceof Set)) throw new Error();
     const context = restoreAuctionGearContext(data.context);
-    const reset = context.discovery !== data.context.discovery || (data.context.discovery?.socketMetadataRevision !== 3 && context.discovery?.socketMetadataRevision === 3) ||
+    // Early stat-only caches could copy a DPS measurement to an item with a
+    // different observable ID or bonus. Its aliases and winners must replay together.
+    const hadStatOnlyResults = [data.assemblyCheckpoint?.simulationCache, data.searchCheckpoint?.simulationCache,
+      data.retainedSimulationCache].some(cache => cache && Object.keys(cache).some(key => key.startsWith("applied-v1:")));
+    const reset = hadStatOnlyResults || context.discovery !== data.context.discovery || (data.context.discovery?.socketMetadataRevision !== 3 && context.discovery?.socketMetadataRevision === 3) ||
       (data.context.discovery?.equippedReferenceRevision !== 1 && context.discovery?.equippedReferenceRevision === 1);
     // Preserve the user's selection, including formerly available lots. Rebuild
     // all results and cursors together when the underlying variant proof changed.

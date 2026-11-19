@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {assembleAuctionGear,captureAuctionGearIncumbents} from '../../../lib/wow/auctionGearPlanner.ts';
+import {auctionAppliedStatsKey,auctionDominatedArmorOptions} from '../../../lib/wow/auctionGearEffects.ts';
 import {auctionGearResults,auctionGearLoadoutComparison} from '../../../lib/wow/auctionGearResult.ts';
 const measurement=(dps,dpsError=1)=>({dps,dpsError,confidence:95,iterations:750,engine:'SimulationCraft dual-objective fixture'});
 const option=(id,slot,cost)=>({id:String(id),auctionId:id,quantity:1,costCopper:cost,variantKey:'exact',candidate:{entityId:`fixture-${id}`,itemId:id,name:`Synthetic ${id}`,slotType:slot,itemLevel:100,inventoryType:slot==='HEAD'?1:5,itemClassId:4,itemSubclassId:4,eligible:true,rejectionReasons:[],season:{id:'s',patch:'p',expansionId:11,activityNames:[]},source:{type:'auction',evidence:'fixture'},constraints:{uniqueEquipped:false,crafted:false,allowableClassMask:'0',requiredLevel:1},compatibility:{specId:72,method:'specialization',itemClassId:4,itemSubclassId:4},variants:[{key:'exact',itemLevel:100,contextId:0,bonusIds:[]}]}});
@@ -41,4 +42,172 @@ test('comparison requires two distinct significant priced configurations with a 
  assert.equal(auctionGearLoadoutComparison([pair.value,{...pair.dps,totalCopper:null}]),null);
  assert.equal(auctionGearLoadoutComparison([pair.value,{...pair.dps,comparison:pair.value.comparison}]),null,'equal gains do not imply a second DPS improvement');
  const alias={...pair.dps,purchases:pair.value.purchases.map(p=>({...p,auctionId:p.auctionId+100}))};assert.equal(auctionGearLoadoutComparison([pair.value,alias]),null,'another physical copy is not another loadout');
+});
+
+test('full assembly shares native armor measurements across receipts and resumed batches', async () => {
+ const engine = measurement(1).engine;
+ const makeOption = (id, cost, dodge, level = 14) => {
+   const row = option(id, 'HEAD', cost);
+   if (id <= 2) row.candidate.itemId = 11;
+   row.candidate.variants[0].modifiers = [{type: 38, value: id}];
+   const stats = Array(46).fill(0);
+   stats[39] = dodge;
+   Object.assign(row.candidate.variants[0], { itemLevel: level, resolution: { engine, appliedStatsV1: stats,
+     nativeNoItemEffects: true, enhancements: { status: 'verified', socketCount: 0, socketBonusId: 0, requiredProfessionId: 0 } } });
+   return row;
+ };
+ const domain = [makeOption(1, 30, 7), makeOption(2, 5, 7), makeOption(3, 4, 8), makeOption(4, 3, 7, 15), makeOption(5, 2, 7)];
+ delete domain[4].candidate.variants[0].resolution.appliedStatsV1;
+ for (const batch of [1, 25]) {
+   const measured = [];
+   const h = fixture();
+   Object.assign(h.input, { options: domain, selectedSlots: ['HEAD'], reuseAppliedStats: true,
+     simulationConcurrency: 2, simulationBatchSize: batch, simulate: async selection => {
+       if (selection.length) measured.push(selection[0].auctionId);
+       return measurement(!selection.length ? 1000 : selection[0].auctionId <= 2 ? 1500 : 1100);
+     } });
+   const step = await finish(h, undefined, batch);
+   assert.equal(measured.length, 4);
+   assert.equal(measured.filter(id => id <= 2).length, 1);
+   assert.deepEqual(ids(step.result.bestDpsConfirmed), [2]);
+ }
+});
+
+test('armor equivalence preserves slot levels, other items, enhancements and incomplete metadata', () => {
+ const engine = 'SimulationCraft test';
+ const armor = (id, slot, strength) => {
+   const row = option(id, slot, 1);
+   const values = Array(46).fill(0);
+   values[0] = strength;
+   Object.assign(row.candidate.variants[0], { resolution: { engine, nativeNoItemEffects: true, appliedStatsV1: values,
+     enhancements: { status: 'verified', socketCount: 0, socketBonusId: 0, requiredProfessionId: 0 } } });
+   return row;
+ };
+ const a = [armor(1, 'HEAD', 10), armor(2, 'CHEST', 20)];
+ const b = [armor(2, 'CHEST', 20), armor(1, 'HEAD', 10)];
+ b[0].candidate.variants[0].modifiers = [{type: 40, value: 123}];
+ const key = auctionAppliedStatsKey(a, engine);
+ assert.ok(key);
+ assert.equal(key, auctionAppliedStatsKey(b, engine));
+ for (const alter of [
+   row => row.candidate.itemId++,
+   row => row.candidate.variants[0].bonusIds = [14447],
+   row => row.candidate.variants[0].modifiers = [{type: 9, value: 10}],
+   row => row.candidate.variants[0].contextId = 13,
+   row => row.candidate.variants[0].itemLevel++,
+   row => row.candidate.constraints.setId = 23,
+   row => row.candidate.constraints.crafted = true,
+   row => row.candidate.variants[0].resolution.nativeNoItemEffects = false,
+   row => row.candidate.variants[0].resolution.appliedStatsV1.pop(),
+   row => row.candidate.variants[0].resolution.appliedStatsV1[40]++,
+   row => row.candidate.variants[0].resolution.enhancements.socketCount++,
+   row => row.candidate.variants[0].resolution.engine = 'older engine',
+   row => row.customization = { enchantId: 22 },
+ ]) {
+   const altered = structuredClone(b);
+   alter(altered[0]);
+   assert.notEqual(key, auctionAppliedStatsKey(altered, engine));
+ }
+ assert.notEqual(auctionAppliedStatsKey([...a, option(7, 'TRINKET_1', 10)], engine),
+   auctionAppliedStatsKey([...b, option(8, 'TRINKET_1', 10)], engine));
+});
+
+function plainOffer(id, item, slot, cost, reagent, extra = {}) {
+  const row = option(id, slot, cost);
+  row.id = 'lot-' + String(id).padStart(2, '0');
+  row.candidate.itemId = item;
+  row.candidate.variants[0].modifiers = [{type: 38, value: reagent}];
+  row.candidate.variants[0].resolution = {engine: measurement(1).engine, nativeNoItemEffects: true,
+    appliedStatsV1: Array(46).fill(1), enhancements: {status: 'verified', socketCount: 0, socketBonusId: 0, requiredProfessionId: 0},
+    ...extra};
+  return row;
+}
+
+test('equivalent purchases prune complete continuations with the same winners, including after resuming', async () => {
+  const offers = [plainOffer(1, 101, 'BACK', 1, 4), plainOffer(2, 101, 'BACK', 40, 7),
+    plainOffer(3, 101, 'BACK', 1, 8), plainOffer(4, 104, 'CHEST', 5, 0), plainOffer(5, 105, 'HEAD', 6, 0),
+    plainOffer(6, 106, 'WAIST', 7, 0)];
+  const run = async (prune, smallBatch, initial) => {
+    const measured = [], h = fixture();
+    Object.assign(h.input, {options: offers, selectedSlots: ['BACK','CHEST','HEAD','WAIST'], reuseAppliedStats: prune,
+      maxAssignments: smallBatch ? 3 : 100, simulate: async selection => {
+        measured.push(selection.map(row => row.auctionId));
+        return measurement(1000 + selection.reduce((sum,row) => sum + row.candidate.itemId, 0));
+      }});
+    return {step: await finish(h, initial, smallBatch ? 2 : 100), measured};
+  };
+  const control = await run(false, false);
+  for (const smallBatch of [false, true]) {
+    const {step, measured} = await run(true, smallBatch);
+    assert.deepEqual(ids(step.result), ids(control.step.result));
+    assert.deepEqual(step.result.bestValueConfirmed, control.step.result.bestValueConfirmed);
+    assert.deepEqual(step.result.bestDpsConfirmed, control.step.result.bestDpsConfirmed);
+    assert.equal(step.result.combinationCount, '32');
+    assert.equal(step.result.validCombinations, 16);
+    assert.equal(step.result.proofPrunedAssignments, '16');
+    assert.equal(control.step.result.validCombinations, 32);
+    assert(measured.every(selection => !selection.includes(2) && !selection.includes(3)));
+  }
+  const h = fixture();
+  const partial = await assembleAuctionGear({...h.input, options: offers, selectedSlots: ['BACK','CHEST','HEAD','WAIST'],
+    maxAssignments: 1, simulate: async selection => measurement(1000 + selection.reduce((sum,row) => sum+row.candidate.itemId, 0))});
+  const resumed = await run(true, true, structuredClone(partial.checkpoint));
+  assert.deepEqual(resumed.step.result.bestDpsConfirmed, control.step.result.bestDpsConfirmed);
+});
+
+test('a witness may not reuse a shared lot, conflict with another slot, or use a different spec', () => {
+  const engine = measurement(1).engine;
+  const cheap = plainOffer(1, 100, 'HEAD', 5, 1), expensive = plainOffer(2, 100, 'HEAD', 10, 2);
+  const proof = (others = [], loadout = []) => auctionDominatedArmorOptions([cheap, expensive, ...others], loadout, 72, engine);
+  assert.deepEqual([...proof()], [expensive.id]);
+  assert.deepEqual([...proof([], [{slotType:'CHEST',itemId:100}])], []);
+  assert.deepEqual([...proof([plainOffer(1, 101, 'CHEST', 5, 1)])], []);
+  assert.deepEqual([...proof([plainOffer(3, 100, 'CHEST', 5, 1)])], []);
+  cheap.candidate.compatibility.specId = 71;
+  assert.deepEqual([...proof()], []);
+  cheap.candidate.compatibility.specId = 72;
+  cheap.costCopper = expensive.costCopper;
+  assert.deepEqual([...proof()], [expensive.id]);
+  cheap.id = 'A'; expensive.id = 'AB';
+  assert.deepEqual([...proof()], []);
+});
+
+test('raw bonuses stay ordered and only positively certified scaling inputs may replace 9 and 28', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const one = plainOffer(1,101,'BACK',3,1,{engine}), two = structuredClone(one);
+  const a = one.candidate.variants[0], b = two.candidate.variants[0];
+  a.bonusIds = [2,1]; b.bonusIds = [1,2];
+  const key = row => auctionAppliedStatsKey([row],engine);
+  assert.notEqual(key(one), key(two));
+  b.bonusIds = [...a.bonusIds]; b.contextId = 50;
+  assert.equal(key(one),key(two));
+  a.modifiers = [{type:28,value:103}]; b.modifiers = [{type:28,value:500}];
+  assert.notEqual(key(one),key(two));
+  a.resolution.nativeScalingInputsV1 = [0,0,0,0];
+  assert.notEqual(key(one),key(two));
+  b.resolution.nativeScalingInputsV1 = [0,0,0,0];
+  assert.equal(key(one),key(two));
+  b.resolution.nativeScalingInputsV1[2] = 1;
+  assert.notEqual(key(one),key(two));
+});
+
+test('only the same positively certified standalone suffix program substitutes for a raw bonus', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd', digest = 'a'.repeat(64);
+  const first = plainOffer(1,116427,'CHEST',30,1,{engine,nativeScalingInputsV1:[0,0,0,0], nativeSuffixProgramV1:digest});
+  const second = structuredClone(first);
+  const a = first.candidate.variants[0], b = second.candidate.variants[0];
+  a.bonusIds = [47]; b.bonusIds = [68];
+  const key = row => auctionAppliedStatsKey([row],engine);
+  assert.equal(key(first),key(second));
+  for (const change of [
+    variant => { variant.resolution.nativeSuffixProgramV1 = 'b'.repeat(64); },
+    variant => { variant.bonusIds.push(13708); },
+    variant => { variant.bonusIds = [13708]; },
+    variant => { delete variant.resolution.nativeScalingInputsV1; },
+    variant => { delete variant.resolution.nativeSuffixProgramV1; },
+  ]) {
+    const different = structuredClone(second);
+    change(different.candidate.variants[0]);
+    assert.notEqual(key(first),key(different));
+  }
 });

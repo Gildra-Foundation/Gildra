@@ -5,6 +5,7 @@ import { stripTypeScriptTypes } from 'node:module';
 import test from 'node:test';
 import vm from 'node:vm';
 import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagnostics.ts';
+import { auctionAppliedStatsKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
 import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
@@ -23,7 +24,7 @@ function option(itemId, slotType = 'WRIST') {
     variants: [{ key: 'base', bonusIds: [] }] }, variantKey: 'base' };
 }
 
-function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false,
+function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine,
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
   const state = { capacity: '2', batch: '25', ownedBatch, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
@@ -34,7 +35,7 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
     const ids = rows.map(row => row.gearChanges?.[0]?.itemId ?? row.ownedChanges?.[0].gems[0]?.itemId
       ?? row.ownedChanges?.[0].enchantId ?? base.armory.equipment.equipped_items[0]?.sockets?.[1]?.item?.id
       ?? base.armory.equipment.equipped_items[0]?.enchantments?.find(entry=>entry.enchantment_slot?.id===0)?.enchantment_id ?? 1);
-    const results = ids.map(id => ({ dps: id, dpsMean: id + 0.25, dpsError: 0.12, confidence: 95, iterations: base.precision === 'auction-finalist' ? 750 : 100, engine }));
+    const results = ids.map(id => ({ dps: id, dpsMean: id + 0.25, dpsError: 0.12, confidence: 95, iterations: base.precision === 'auction-finalist' ? 750 : 100, engine: workerEngine }));
     state.active++;
     state.peak = Math.max(state.active, state.peak);
     try {
@@ -48,16 +49,137 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
     } finally { state.active--; }
   };
   const create = vm.runInNewContext(code, { fetch, process, AbortSignal, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
-    assertFreshMarket, auctionGearMechanicalKey, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
+    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => createAuctionGearDiagnostics() });
   const armory = { profile: {}, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
-    encounter: {fightLengthSeconds: 120, targets: 1}, engine: () => engine });
+    encounter: {fightLengthSeconds: 120, targets: 1}, engine: () => workerEngine });
   async function finishFrom(start) {
     for (let i = start; i < state.requests.length; i++) { state.requests[i].finish(); await tick(); }
   }
   return { state, run, finishFrom };
 }
+
+function armor(reagent, enchantId = 5250, workerEngine = engine) {
+  const row = option(120);
+  row.id = `lot-${reagent}`;
+  row.variantKey = `variant-${reagent}`;
+  row.customization = { enchantId };
+  row.candidate.constraints = { uniqueEquipped: false, crafted: false };
+  Object.assign(row.candidate.variants[0], { key: row.variantKey, itemLevel: 100,
+    modifiers: [{ type: 39, value: reagent }], resolution: { engine: workerEngine, metadataVersion: 3,
+      nativeNoItemEffects: true, effectsVerified: true, effects: [], appliedStatsV1: Array(46).fill(2),
+      enhancements: { status: 'verified', socketCount: 0, socketColors: [0, 0, 0],
+        socketBonusId: 0, requiredProfessionId: 0, requiredProfessionRank: 0 } } });
+  return row;
+}
+
+test('full enhanced candidates share certified native measurements and keep changed enhancements and finalist precision separate', async () => {
+  const { state, run } = fixture();
+  async function measure(row, { precision, owned = [], native }) {
+    const before = state.requests.length;
+    const result = run([row], signal(), owned, precision);
+    await tick();
+    assert.equal(state.requests.length - before, Number(native));
+    if (native) state.requests.at(-1).finish();
+    return result;
+  }
+  const full = 'certified-candidate';
+  const first = armor(1), second = armor(2);
+  assert.deepEqual(await measure(first, { precision: full, native: true }), await measure(second, { precision: full, native: false }));
+  await measure(armor(2, 5251), { precision: full, native: true });
+  const owned = [{ slotType: 'HEAD', itemId: 10, enchantId: 5250, gems: [] }];
+  await measure(first, { precision: full, native: true, owned });
+  await measure(second, { precision: full, native: false, owned });
+  await measure(second, { native: true });
+  assert.equal((await measure(first, { precision: 'finalist', native: true })).iterations, 750);
+  assert.equal((await measure(second, { precision: 'finalist', native: true })).iterations, 750);
+  const missing = armor(4);
+  delete missing.candidate.variants[0].resolution.nativeNoItemEffects;
+  await measure(missing, { precision: full, native: true });
+  const invalid = armor(5);
+  invalid.candidate.variants[0].modifiers[0].value = -1;
+  await assert.rejects(run([invalid], signal(), [], full), /unsupported_item_modifiers/);
+});
+
+test('concurrent certified candidates share one successful measurement in either order while the finalist runs independently', async () => {
+  for (const order of [[1, 2], [2, 1]]) {
+    const { state, run, finishFrom } = fixture(), shared = signal();
+    await run.concurrency(shared);
+    const [first, second] = order.map(reagent => armor(reagent));
+    const results = Promise.all([run([first], shared, [], 'certified-candidate'),
+      run([second], shared, [], 'certified-candidate'), run([second], shared, [], 'finalist')]);
+    await tick();
+    assert.deepEqual(state.requests.map(r => r.base.precision), ['auction-candidate', 'auction-finalist']);
+    await finishFrom(0);
+    const [a, b, finalist] = await results;
+    assert.deepEqual({ ...a }, { ...b });
+    assert.notEqual(a, b);
+    assert.equal(a.iterations, 100);
+    assert.equal(finalist.iterations, 750);
+    assert.deepEqual(await run([armor(3)], shared, [], 'certified-candidate'), a);
+    assert.equal(state.requests.length, 2);
+  }
+});
+
+test('failed shared measurements reach both callers and retry with one new request', async () => {
+  const { state, run } = fixture(), shared = signal();
+  const submit = () => [1, 2].map(reagent => run([armor(reagent)], shared, [], 'certified-candidate'));
+  const failed = Promise.allSettled(submit());
+  await tick();
+  assert.equal(state.requests.length, 1);
+  state.requests[0].finish({}, 503);
+  assert.deepEqual((await failed).map(row => row.reason.message), ['simulation_unavailable', 'simulation_unavailable']);
+  const retried = Promise.all(submit());
+  await tick();
+  assert.equal(state.requests.length, 2);
+  state.requests[1].finish();
+  const [a, b] = await retried;
+  assert.deepEqual({ ...a }, { ...b });
+});
+
+test('separate cancellation scopes run equivalent candidates independently, and historical metadata cannot authorize sharing', async () => {
+  const { state, run } = fixture(), first = new AbortController(), second = signal();
+  await run.concurrency(second);
+  const results = Promise.allSettled([run([armor(1)], first.signal, [], 'certified-candidate'),
+    run([armor(2)], second, [], 'certified-candidate')]);
+  await tick();
+  assert.equal(state.requests.length, 2);
+  first.abort();
+  assert.equal(state.requests[1].signal.aborted, false);
+  state.requests[1].finish();
+  const [cancelled, finished] = await results;
+  assert.equal(cancelled.reason.name, 'AbortError');
+  assert.equal(finished.value.iterations, 100);
+
+  const restored = fixture({ freshMetadata: false });
+  await restored.run.concurrency(second);
+  const measurements = Promise.all([1, 2].map(id => restored.run([armor(id)], second, [], 'certified-candidate')));
+  await tick();
+  assert.equal(restored.state.requests.length, 2);
+  await restored.finishFrom(0);
+  await measurements;
+});
+
+test('an enchanted piece shares item context only when the engine ignores it and preserves its raw scaling modifiers', async () => {
+  for (const pinned of [false, true]) {
+    const workerEngine = pinned ? 'SimulationCraft batch transport fixture · 18428cd' : engine;
+    const { state, run } = fixture({ workerEngine });
+    for (const [contextId, drop, expectedCalls] of [[13, 80, 1], [17, 80, pinned ? 1 : 2], [17, 81, pinned ? 2 : 3]]) {
+      const row = armor(1, 5250, workerEngine);
+      const variant = row.candidate.variants[0];
+      variant.contextId = contextId;
+      variant.modifiers.push({type: 9, value: drop});
+      variant.resolution.nativeScalingInputsV1 = [0, 0, 0, 0];
+      const before = state.requests.length;
+      const result = run([row], signal(), [], 'certified-candidate');
+      await tick();
+      assert.equal(state.requests.length, expectedCalls);
+      if (state.requests.length > before) state.requests.at(-1).finish();
+      assert.equal((await result).engine, workerEngine);
+    }
+  }
+});
 
 test('first native candidate starts immediately, then two lanes share profilesets and return exact cached rows', async () => {
   const { state, run, finishFrom } = fixture();

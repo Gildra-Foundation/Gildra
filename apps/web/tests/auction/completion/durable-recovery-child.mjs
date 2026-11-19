@@ -103,6 +103,20 @@ if (mode === "cancel-seed") {
   assert.equal(recovered.status, 200); assert.equal(recovered.body.id, input.id); assert.equal(recovered.body.status, "cancelled");
   assert.equal(tasks, 0, "A previously acknowledged cancellation must not execute after restart");
   output = { status: recovered.body.status, tasks };
+} else if (mode === "stat-only-cache-seed") {
+  const entry = store.createAuctionGearSearch(owner, context());
+  entry.retainedSimulationCache = { "applied-v1:prior-key": {}, alias: {} };
+  entry.assemblyCheckpoint = { best: { optionIds: ["older-winner"] } };
+  entry.excludedOptionIds = ["player-exclusion"];
+  store.saveAuctionGearSearch(entry);
+  output = { searchId: entry.id };
+} else if (mode === "stat-only-cache-read") {
+  const entry = store.getAuctionGearSearch(owner, input.searchId);
+  assert(entry);
+  assert.equal(entry.retainedSimulationCache, undefined);
+  assert.equal(entry.assemblyCheckpoint, undefined);
+  assert.deepEqual(entry.excludedOptionIds, ["player-exclusion"]);
+  output = { reset: entry.metadataRebuildRequired };
 } else if (mode === "legacy-socket-seed" || mode === "legacy-equipped-reference-seed") {
   const saved = context();
   const offer = { itemId: 501, auctionId: 9999, buyoutCopper: 1, quantity: 1, contextId: 0, bonusIds: [], modifiers: [] };

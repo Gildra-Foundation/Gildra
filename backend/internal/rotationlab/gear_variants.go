@@ -3,6 +3,7 @@ package rotationlab
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,22 +42,25 @@ type GearVariantEnhancements struct {
 }
 
 type GearVariantMetadata struct {
-	MetadataVersion     int                     `json:"metadataVersion"`
-	Enhancements        GearVariantEnhancements `json:"enhancements"`
-	Key                 string                  `json:"key"`
-	ItemID              int                     `json:"itemId"`
-	ItemLevel           int                     `json:"itemLevel"`
-	RequiredLevel       int                     `json:"requiredLevel"`
-	InventoryType       int                     `json:"inventoryType"`
-	ItemClassID         int                     `json:"itemClassId"`
-	ItemSubclassID      int                     `json:"itemSubclassId"`
-	Quality             int                     `json:"quality"`
-	UniqueEquipped      bool                    `json:"uniqueEquipped"`
-	SetID               int                     `json:"setId"`
-	NativeNoItemEffects bool                    `json:"nativeNoItemEffects,omitempty"`
-	Stats               map[string]float64      `json:"stats"`
-	Weapon              *GearVariantWeapon      `json:"weapon,omitempty"`
-	Error               string                  `json:"error,omitempty"`
+	MetadataVersion       int                     `json:"metadataVersion"`
+	Enhancements          GearVariantEnhancements `json:"enhancements"`
+	Key                   string                  `json:"key"`
+	ItemID                int                     `json:"itemId"`
+	ItemLevel             int                     `json:"itemLevel"`
+	RequiredLevel         int                     `json:"requiredLevel"`
+	InventoryType         int                     `json:"inventoryType"`
+	ItemClassID           int                     `json:"itemClassId"`
+	ItemSubclassID        int                     `json:"itemSubclassId"`
+	Quality               int                     `json:"quality"`
+	UniqueEquipped        bool                    `json:"uniqueEquipped"`
+	SetID                 int                     `json:"setId"`
+	NativeSuffixProgramV1 string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeScalingInputsV1 *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
+	AppliedStatsV1        []float64               `json:"appliedStatsV1,omitempty"`
+	NativeNoItemEffects   bool                    `json:"nativeNoItemEffects,omitempty"`
+	Stats                 map[string]float64      `json:"stats"`
+	Weapon                *GearVariantWeapon      `json:"weapon,omitempty"`
+	Error                 string                  `json:"error,omitempty"`
 }
 type GearVariantWeapon struct {
 	MinDamage    float64 `json:"minDamage"`
@@ -241,6 +245,21 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		if reportVersion == 2 {
 			result.MetadataVersion = 3
 			result.NativeNoItemEffects = string(item["gildra_no_item_effects"]) == "true"
+			result.NativeScalingInputsV1 = nativeScalingInputsV1(r.Git, item["gildra_scaling_inputs_v1"])
+			if result.NativeScalingInputsV1 != nil {
+				result.NativeSuffixProgramV1 = nativeSuffixProgramV1(v.Change.BonusIDs, item["gildra_suffix_program_v1"])
+			}
+			// A missing proof on older binaries leaves exact item identity in force.
+			var applied []*float64
+			if json.Unmarshal(item["gildra_applied_stats_v1"], &applied) == nil && len(applied) == 46 {
+				for _, value := range applied {
+					if value == nil {
+						result.AppliedStatsV1 = nil
+						break
+					}
+					result.AppliedStatsV1 = append(result.AppliedStatsV1, *value)
+				}
+			}
 		}
 		var tuningKnown bool
 		_ = json.Unmarshal(item["content_tuning_known"], &tuningKnown)
@@ -292,6 +311,57 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		response.Variants = append(response.Variants, result)
 	}
 	return response, nil
+}
+
+// SimC reports an abbreviated revision. Only this revision's local item parser
+// was audited for context, drop_level and content_tuning consumers.
+func nativeScalingInputsV1(revision string, raw json.RawMessage) *[4]int {
+	const audited = "18428cd3902412abc8ee274d19567d603e674e66"
+	if len(revision) < 7 || !strings.HasPrefix(audited, revision) {
+		return nil
+	}
+	var inputs []*int
+	if json.Unmarshal(raw, &inputs) != nil || len(inputs) != 4 {
+		return nil
+	}
+	var verified [4]int
+	for i, n := range inputs {
+		if n == nil || *n < 0 || *n > 2147483647 {
+			return nil
+		}
+		verified[i] = *n
+	}
+	return &verified
+}
+
+// The program is exactly three ordered DBC rows (MOD, MOD, SUFFIX). Require
+// the resolver to have seen the same standalone bonus the worker serialized.
+func nativeSuffixProgramV1(bonusIDs []int, raw json.RawMessage) string {
+	if len(bonusIDs) != 1 || bonusIDs[0] < 1 || bonusIDs[0] > 500 {
+		return ""
+	}
+	var fields []*int32
+	if json.Unmarshal(raw, &fields) != nil || len(fields) != 19 {
+		return ""
+	}
+	var program [18]int32
+	for i, field := range fields {
+		if field == nil {
+			return ""
+		}
+		if i == 0 {
+			if int(*field) != bonusIDs[0] {
+				return ""
+			}
+		} else {
+			program[i-1] = *field
+		}
+	}
+	if program[0] != 2 || program[6] != 2 || program[12] != 5 {
+		return ""
+	}
+	encoded, _ := json.Marshal(program)
+	return fmt.Sprintf("%x", sha256.Sum256(encoded))
 }
 
 // Strictly decode raw report v2 fields, normalizing SocketType only once at

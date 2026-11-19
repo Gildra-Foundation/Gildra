@@ -16,7 +16,7 @@ import { evaluateAuctionGearScenarios } from "./auctionGearScenarioExecution";
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from "./auctionGearEnhancementStage";
 import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiveEnhancements";
 import { quickAuctionStatChoices } from "./auctionGearStatChoices";
-import { auctionSelectionEffectKey } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import { applyOwnedAuctionGearChanges, ownedAuctionGearChanges, customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
@@ -272,7 +272,7 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
 }
 
 async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2) {
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2, fullMarket = false) {
   const context = entry.context;
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
@@ -287,7 +287,9 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   const { result, checkpoint } = await diagnostics.measureStage("search", () => searchAuctionGearOptions({
     searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
-    market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
+    market: context.market, signal, simulate: fullMarket
+      ? (selection, requestSignal) => context.simulate(selection, requestSignal, undefined, "certified-candidate")
+      : context.simulate, checkpoint: entry.searchCheckpoint,
     statPriority: context.input.enhancementMode === "equipment",
     baseline: entry.retainedBaseline, simulationCache: cache,
     simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
@@ -363,7 +365,7 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // the rest of this turn's budget in one planner pass instead of rebuilding
       // and durably writing every lot after each individual simulation.
       const batch = publishResult && !(fullMarket && entry.context.simulate.batchSize) && !entry.latestSearchResult?.items.some(item => item.comparison) ? 1 : remaining;
-      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult || fullMarket ? batch : undefined, verifiedCapacity);
+      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult || fullMarket ? batch : undefined, verifiedCapacity, fullMarket);
       remaining -= batch;
       if (publishResult) {
         // This comparison batch finishes before the deadline. Store the next
@@ -625,6 +627,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
         incumbents: entry.retainedIncumbents,
+        reuseAppliedStats: fullMarket,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
         maxNewSimulations: assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
         shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
@@ -744,13 +747,15 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             // replacement. Keep its native precision/engine checks on reuse.
             if (!ownedChanges?.length && selected.every(option => !option.customization?.enchantId && !option.customization?.gemIds?.some(id => id !== 0))) {
               const bare = selected.map(option => { const copy = { ...option }; delete copy.customization; return copy; });
-              const cached = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
+              const exact = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
+              const equivalent = fullMarket && !exact ? auctionAppliedStatsKey(bare, checkpoint.baseline.engine) : undefined;
+              const cached = exact ?? (equivalent ? checkpoint.simulationCache[equivalent] : undefined);
               if (cached && cached.engine === checkpoint.baseline.engine && Number.isFinite(cached.dps) && cached.dps >= 0 &&
                   Number.isFinite(cached.dpsError) && cached.dpsError >= 0 && cached.confidence === 95 && Number.isSafeInteger(cached.iterations) && cached.iterations > 0) {
                 metricsFor(context.armory ?? context).cacheHit(); return { ...cached };
               }
             }
-            return context.simulate(selected, simSignal, ownedChanges);
+            return context.simulate(selected, simSignal, ownedChanges, fullMarket ? "certified-candidate" : undefined);
           },
           signal, shouldYield, state: entry.exhaustiveEnhancementState,
           onState: state => { entry.exhaustiveEnhancementState = state; scheduleAuctionGearSearchSave(entry); },
@@ -960,20 +965,47 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], precision?: "finalist"): Promise<GearPlanSimulation> => {
+  const pending = new Set<{ engine: string; key: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
-    const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes,
-      ...(ownedChanges?.length ? { ownedChanges } : {}), ...(precision ? { precision } : {}) });
+    const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
+    const request = { spec: specSlug, scenario, ...encounter, ...(ownedChanges?.length ? { ownedChanges } : {}),
+      ...(mode === "finalist" ? { precision: mode } : {}) };
+    const cacheKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: prepared.changes });
     simSignal.throwIfAborted();
-    const cached = verified ? auctionGearMechanicalCache.get(cacheKey, engine()) : undefined;
+    const verifiedEngine = engine();
+    const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
+    let equivalentKey: string | undefined;
+    if (mode === "certified-candidate" && selections.length) {
+      const bare = selections.map(({ customization, ...option }) => option);
+      const proof = auctionAppliedStatsKey(bare, verifiedEngine);
+      if (proof) {
+        // The proof checks item context against this engine. Keep the actual
+        // enchant/gems and raw scaling modifiers on every enhanced piece.
+        // serializeGearItem omits the validated reagent identifiers (38–51).
+        const customized = prepared.changes.filter(change => change.enchantId || change.gemIds?.length)
+          .map(change => [change.slot, change.itemId, change.bonusIds, change.enchantId, change.gemIds,
+            change.modifiers?.filter(m => m.type < 38 || m.type > 51) ?? []]);
+        equivalentKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: [{ appliedStats: proof }, ...customized] });
+      }
+    }
+    if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
+    const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
+    const shareKey = verified && verifiedEngine.startsWith("SimulationCraft") ? equivalentKey : undefined;
+    if (shareKey) for (const entry of pending) {
+      if (entry.key !== shareKey || entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
+      const measured = await entry.result;
+      simSignal.throwIfAborted();
+      metrics.cacheHit();
+      return { ...measured };
+    }
     metrics.simulation();
-    return metrics.measure("simulation", async () => {
-      const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
+    const measurement = metrics.measure("simulation", async () => {
       const base = { spec: specSlug, scenario, ...encounter, actionListMode: "native", talentLoadout: armory.activeTalentLoadout,
         armory: { profile: armory.profile, specializations: armory.specializations, equipment },
-        precision: precision === "finalist" ? "auction-finalist" : "auction-candidate" };
+        precision: mode === "finalist" ? "auction-finalist" : "auction-candidate" };
       const ownedBatch = transport.ownedBatch && ownedChanges?.length
         ? { base: { ...base, armory: { ...base.armory, equipment: prepared.equipment } }, changes: ownedChanges }
         : undefined;
@@ -987,11 +1019,20 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
-      if (engine() && simulation.engine !== engine()) throw new Error("simulation_version_changed");
+      if (engine() && simulation.engine !== engine() || shareKey && simulation.engine !== verifiedEngine)
+        throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
+      if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
       verified = true;
       return simulation;
     });
+    // Start the native request immediately. Track at most one full two-lane
+    // window, and only share work whose callers cancel together.
+    if (!shareKey || pending.size >= 2 * Math.max(1, transport.batchSize)) return measurement;
+    const entry = { engine: verifiedEngine, key: shareKey, signal: simSignal, result: measurement };
+    pending.add(entry);
+    try { return await measurement; }
+    finally { pending.delete(entry); }
   };
   return Object.defineProperties(Object.assign(simulate, { concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
     batchSize: { get: () => transport.batchSize },

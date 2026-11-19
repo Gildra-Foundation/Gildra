@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { candidateLoadoutItem } from "./gearSimulation";
+import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
+import type { GearLoadoutItem } from "./gearCompatibility";
+import { supportedAuctionModifiers } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
@@ -7,10 +9,95 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
-    return [option.candidate.slotType, option.candidate.itemId, [...variant.bonusIds].sort((a, b) => a - b),
+    return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
       variant.contextId ?? 0, [...(variant.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value),
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
+}
+
+const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
+
+// This revision of SimC parses context into DUMMY_CONTEXT. Other builds keep it.
+const ignoresItemContext = (engine: string) => / · 18428cd(?:3902412abc8ee274d19567d603e674e66)?$/.test(engine);
+
+/** A certified substitution must preserve the item identity observable to APLs
+ * and the ordered bonus IDs observable to other equipped items' effects. */
+export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: string): string | undefined {
+  const pieces: Array<[string, unknown]> = [];
+  let certified = false;
+  const pinned = ignoresItemContext(engine);
+  for (const option of options) {
+    if (option.customization) return;
+    const c = option.candidate, t = c.constraints;
+    const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
+    if (!v) return;
+    const e = r?.enhancements, stats = r?.appliedStatsV1;
+    if (plainArmorSlots.has(c.slotType) && c.itemClassId === 4 && Number.isSafeInteger(v.itemLevel) && v.itemLevel > 0 &&
+        r?.engine === engine && r.nativeNoItemEffects === true && !r.effects?.length && !r.weapon &&
+        !t.setId && !t.setName && !t.crafted && !t.uniqueEquipped && !t.limitCategoryId &&
+        e?.status === "verified" && e.socketCount === 0 && e.socketBonusId === 0 && e.requiredProfessionId === 0 &&
+        stats?.length === 46 && stats.every(Number.isSafeInteger) && supportedAuctionModifiers(v.modifiers ?? [])) {
+      // The worker never emits reagent IDs (38–51). Drop level and content
+      // tuning can be ignored only with positive evidence from the native resolver.
+      const scaling = r.nativeScalingInputsV1;
+      const certifiedScaling = pinned && scaling?.length === 4 &&
+        scaling.every(value => Number.isSafeInteger(value) && value >= 0 && value <= 2147483647);
+      // A legacy stat suffix can carry a different list ID for the exact same
+      // ordered DBC operations. Every other bonus keeps its original identity.
+      const suffix = r.nativeSuffixProgramV1;
+      const bonuses = certifiedScaling && v.bonusIds.length === 1 && Number.isSafeInteger(v.bonusIds[0]) &&
+        v.bonusIds[0] >= 1 && v.bonusIds[0] <= 500 && typeof suffix === "string" && /^[a-f0-9]{64}$/.test(suffix)
+        ? suffix : v.bonusIds;
+      const modifiers = (v.modifiers ?? []).filter(m => (m.type < 38 || m.type > 51) &&
+        !(certifiedScaling && (m.type === 9 || m.type === 28))).sort((a, b) => a.type - b.type);
+      pieces.push([c.slotType, [c.itemId, c.inventoryType, c.itemSubclassId, v.itemLevel, bonuses,
+        pinned ? 0 : v.contextId ?? 0, modifiers, certifiedScaling ? scaling : null, stats]]);
+      certified = true;
+    } else {
+      pieces.push([c.slotType, [auctionSelectionEffectKey([option]), v.bonusIds]]);
+    }
+  }
+  if (!certified) return;
+  pieces.sort(([a], [b]) => a.localeCompare(b));
+  return "applied-v2:" + createHash("sha256").update(JSON.stringify([auctionMeasurementContract, engine, pieces])).digest("hex");
+}
+
+/** For every marked offer any legal completion can buy the cheaper equivalent
+ * in the same slot. A shared lot or item identity could invalidate that receipt. */
+export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
+  specId: number, engine: string): Set<string> {
+  const itemSlots = new Map<number, string>(), lotSlots = new Map<number, string>();
+  const recordSlot = (map: Map<number, string>, id: number, slot: string) => {
+    const seen = map.get(id);
+    map.set(id, seen === undefined || seen === slot ? slot : "multiple");
+  };
+  for (const item of loadout) recordSlot(itemSlots, item.itemId, item.slotType);
+  for (const { candidate, auctionId } of options) {
+    recordSlot(itemSlots, candidate.itemId, candidate.slotType);
+    recordSlot(lotSlots, auctionId, candidate.slotType);
+  }
+  // The final tie-break compares sorted option IDs joined by "|". For
+  // prefix-free IDs, inserting the same suffix purchases preserves that order.
+  const ids = options.map(option => option.id).sort();
+  const stableTies = ids.every((id, index) => !id.includes("|") && (!index || !id.startsWith(ids[index - 1])));
+  const keyed: Array<[AuctionGearOption, string]> = [], cheapest = new Map<string, AuctionGearOption>();
+  for (const option of options) {
+    const { candidate, auctionId } = option;
+    if (!candidate.eligible || candidate.compatibility.specId !== specId ||
+        lotSlots.get(auctionId) !== candidate.slotType || itemSlots.get(candidate.itemId) !== candidate.slotType) continue;
+    const key = auctionAppliedStatsKey([option], engine);
+    if (!key) continue;
+    keyed.push([option, key]);
+    const best = cheapest.get(key);
+    if (!best || option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id)
+      cheapest.set(key, option);
+  }
+  const dominated = new Set<string>();
+  for (const [option, key] of keyed) {
+    const best = cheapest.get(key)!;
+    if (option.costCopper > best.costCopper || stableTies && option.id !== best.id) dominated.add(option.id);
+  }
+  return dominated;
 }
 
 export type AuctionEffectGroup = { options: AuctionGearOption[] };

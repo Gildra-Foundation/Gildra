@@ -22,6 +22,9 @@ export function auctionVariantChange(offer: AuctionOffer, slot: string) {
   };
 }
 export type ResolvedAuctionVariant = {
+  nativeSuffixProgramV1?: string;
+  nativeScalingInputsV1?: number[];
+  appliedStatsV1?: number[];
   nativeNoItemEffects?: boolean;
   metadataVersion?: number;
   enhancements?: GearEnhancementMetadata;
@@ -54,6 +57,13 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
       engine,
       requiredLevel: resolved.requiredLevel,
       stats: resolved.stats,
+      ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
+        ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
+      ...(Array.isArray(resolved.nativeScalingInputsV1) && resolved.nativeScalingInputsV1.length === 4 &&
+        resolved.nativeScalingInputsV1.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 2147483647)
+        ? { nativeScalingInputsV1: [...resolved.nativeScalingInputsV1] } : {}),
+      ...(Array.isArray(resolved.appliedStatsV1) && resolved.appliedStatsV1.length === 46 && resolved.appliedStatsV1.every(Number.isFinite)
+        ? { appliedStatsV1: [...resolved.appliedStatsV1] } : {}),
       ...(resolved.nativeNoItemEffects === true ? { nativeNoItemEffects: true } : {}),
       ...(resolved.metadataVersion !== undefined ? { metadataVersion: resolved.metadataVersion, enhancements } : {}),
       ...(validAuctionWeapon(resolved.weapon) ? { weapon: { ...resolved.weapon } } : {}),
