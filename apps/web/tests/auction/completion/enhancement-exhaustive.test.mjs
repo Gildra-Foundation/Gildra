@@ -428,3 +428,58 @@ test('strictly cheaper certified ring gems prune whole branches only when substi
     assert.notEqual((await run(flags)).checkpoint.pricedAxes,'equivalent_gems',JSON.stringify(flags));
   }
 });
+
+test('whole ring upgrades use exact aggregate ratings and conservative shared commodity prices', async () => {
+  const hasteGem = { key:'haste-gem', kind:'gem', simulationId:115804, consumableItemId:115804 };
+  const weak = { key:'weak-scroll', kind:'enchant', simulationId:8020, consumableItemId:244010 };
+  const strong = { key:'strong-scroll', kind:'enchant', simulationId:8021, consumableItemId:244011 };
+  const extra = { ...strong, key:'another-scroll', consumableItemId:9777 };
+  const quotedAt = new Date().toISOString();
+  async function run({ rings = 1, enabled = true, strongPrice = [[4,4]], alternative = false, uniqueStrong = false } = {}) {
+    const h = fixture({ choices:[hasteGem], slots:rings });
+    h.input.prices.sourceUpdatedAt = quotedAt;
+    const names = Array.from({ length:rings }, (_, i) => 'FINGER_' + (i + 1));
+    names.forEach((name, i) => { h.input.slots[i].slotType = name; });
+    h.input.ratingRingSlots = enabled ? new Set(names) : undefined;
+    h.input.catalog.resolve = () => ({ verified:true, enchantApplicable:true, gemChoices:{'0':[hasteGem]},
+      enchantChoices:[weak, { ...strong, uniqueEquipped:uniqueStrong }, ...(alternative ? [extra] : [])] });
+    h.input.prices.prices = {115804:{ladder:[[3,4]]},244010:{ladder:[[2,4]]},244011:{ladder:strongPrice},9777:{ladder:[[8,4]]}};
+    h.input.simulate = async config => {
+      h.calls.push(config);
+      const haste = config.slots.reduce((sum, s) => sum + (s.gemIds[0] ? 2 : 0) +
+        (s.enchantId === 8020 ? 22 : s.enchantId === 8021 ? 24 : 0), 0);
+      return measurement(1000 + haste * 10);
+    };
+    const receipts = [];
+    h.input.onMeasured = configuration => receipts.push(configuration);
+    const result = await complete(h);
+    return { result:result.checkpoint, evaluated:h.calls, receipts };
+  }
+  const paired = config => config.slots.some(s => s.enchantId === 8020 && s.gemIds[0] === 115804);
+  for (const rings of [1,2]) {
+    const original = await run({ rings, enabled:false }), pruned = await run({ rings });
+    assert.equal(pruned.result.pricedAxes, 'combined_ring_cost');
+    assert.equal(original.evaluated.length, 6 ** rings);
+    assert.equal(pruned.evaluated.length, 5 ** rings);
+    assert.deepEqual(pruned.result.ringPricePruning, { branches:rings === 1 ? "1" : "6", configurations:String(6 ** rings - 5 ** rings) });
+    assert(!pruned.evaluated.some(paired));
+    for (const objective of ['bestValueConfirmed','bestDpsConfirmed']) {
+      assert.deepEqual(pruned.result[objective], original.result[objective]);
+    }
+  }
+  for (const options of [{rings:2,strongPrice:[[4,1]]}, {rings:2,strongPrice:[[4,1],[7,1]]},
+    {strongPrice:[[5,4]]}, {uniqueStrong:true}]) {
+    const result = await run(options);
+    assert(result.evaluated.some(paired), JSON.stringify(options));
+  }
+  // Two scroll SKUs apply the same enchant. The cheap one has only one copy.
+  // A cost guard for the expensive scroll must keep its cheaper sibling.
+  const twoSkus = await run({rings:2, strongPrice:[[4,1]], alternative:true});
+  const bareStrong = twoSkus.receipts.filter(c => c.slots.every(s => !s.gemIds[0]) &&
+    c.slots.some(s => s.enchantId === 8021));
+  assert(bareStrong.some(c => c.consumables.some(p => p.itemId === 244011)));
+  assert(bareStrong.every(c => c.consumables.every(p => p.itemId !== 9777)));
+  const reverse = await run({strongPrice:[[7,4]]});
+  assert(reverse.evaluated.some(paired));
+  assert(!reverse.evaluated.some(c => c.slots[0].enchantId === 8021 && !c.slots[0].gemIds[0]));
+});

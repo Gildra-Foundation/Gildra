@@ -75,6 +75,8 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
   rangeCount?: number;
   replay?: OrdinalRange[];
   currentOrdinal?: string;
+  /** Completed layout cuts by pass. Peak and tie ranking may traverse the same layouts. */
+  ringPricePruning?: Partial<Record<"screen" | "peak" | "rank", { branches: string; configurations: string }>>;
   recentMeasurements?: SavedMeasurements[];
   precise?: Record<string, GearPlanSimulation>;
   preciseBaseline?: GearPlanSimulation;
@@ -620,7 +622,15 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           delete state.rangeCount;
         }
       }
-      const cache = Object.values(state.stage.checkpoints)[0]?.cache;
+      const layout = Object.values(state.stage.checkpoints)[0];
+      if (layout?.ringPricePruning && pass?.phase !== "done") {
+        const phase = pass?.phase ?? "screen";
+        const totals = state.ringPricePruning ??= {};
+        const counts = totals[phase] ??= { branches: "0", configurations: "0" };
+        counts.branches = (BigInt(counts.branches) + BigInt(layout.ringPricePruning.branches)).toString();
+        counts.configurations = (BigInt(counts.configurations) + BigInt(layout.ringPricePruning.configurations)).toString();
+      }
+      const cache = layout?.cache;
       if (ordinal !== undefined && cache && Object.keys(cache).length) {
         const recent = (state.recentMeasurements ?? []).filter(row => row.ordinal !== ordinal);
         recent.push({ ordinal, cache });

@@ -105,6 +105,12 @@ function plainPrismaticHost(change: Pick<SimcGearChange, "slot" | "itemId">, opt
   return true;
 }
 
+export function hasLevel90RingRatings(option: AuctionGearOption, engine: string, playerLevel?: number) {
+  const { slotType, itemId } = option.candidate;
+  return playerLevel === 90 && ignoresItemContext(engine) && (slotType === "FINGER_1" || slotType === "FINGER_2") &&
+    plainPrismaticHost({ slot: slotType === "FINGER_1" ? "finger1" : "finger2", itemId }, option, engine, 120);
+}
+
 /** Certify one ring, gem and enchant using the same host checks as the
  * independent finalist key. Other enchants keep their original native inputs. */
 export function purchasedRingGemEffect(option: AuctionGearOption, engine: string, gemId: number, enchantId: number, nativePlayerLevel?: number) {

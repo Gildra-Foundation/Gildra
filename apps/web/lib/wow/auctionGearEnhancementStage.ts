@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { neutralProfessionGloveEnchant, purchasedRingGemEffect } from './auctionGearMechanicalCache';
+import { neutralProfessionGloveEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -230,6 +230,9 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
+      ratingRingSlots: input.pruneEquivalentRingGems && input.nativePlayerLevel === 90
+        ? new Set(finalist.options.filter(o => hasLevel90RingRatings(o, input.engine, input.nativePlayerLevel)).map(o => o.candidate.slotType))
+        : undefined,
       purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
         const host = finalist.options.find(option => option.candidate.slotType === slot);
         return host && purchasedRingGemEffect(host, input.engine, id, enchantId, input.nativePlayerLevel);
