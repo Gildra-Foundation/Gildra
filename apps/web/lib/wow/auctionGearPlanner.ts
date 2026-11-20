@@ -755,22 +755,28 @@ export async function assembleAuctionGear(input: PlannerInput & {
     }
     const measurements = checkpoint.equipmentFinalistMeasurements ??= {};
     const verified = new Map<string, GearPlanSimulation>();
-    for (const [key, selected] of sets) {
-      input.signal.throwIfAborted();
-      let measured = measurements[key];
-      if (!measured) {
-        if (input.shouldYield?.()) { complete = false; break; }
-        measured = await input.recheckEquipment(selected, input.signal);
-      }
-      const result = validSimulation(measured, checkpoint.baseline.engine);
-      if (result.iterations !== 750) throw new Error("invalid_finalist_precision");
-      verified.set(key, result);
-      if (!measurements[key]) {
-        measurements[key] = result;
-        checkpoint.simulations++;
-        save();
-        input.onProgress?.({ phase: "simulating", completed: verified.size, total: sets.size });
-      }
+    const finalists = [...sets];
+    const concurrency = input.simulationConcurrency === 2 ? 2 : 1;
+    const recheck = input.recheckEquipment;
+    for (let offset = 0; offset < finalists.length; offset += concurrency) {
+      const window = finalists.slice(offset, offset + concurrency);
+      const results = await Promise.allSettled(window.map(async ([key, selected]) => {
+        input.signal.throwIfAborted();
+        const cached = measurements[key];
+        if (!cached && input.shouldYield?.()) return;
+        const result = validSimulation(cached ?? await recheck(selected, input.signal), checkpoint.baseline.engine);
+        if (result.iterations !== 750) throw new Error("invalid_finalist_precision");
+        verified.set(key, result);
+        if (!cached) {
+          measurements[key] = result;
+          checkpoint.simulations++;
+          save();
+          input.onProgress?.({ phase: "simulating", completed: verified.size, total: sets.size });
+        }
+      }));
+      const failed = results.find(result => result.status === "rejected");
+      if (failed) throw failed.reason;
+      if (window.some(([key]) => !verified.has(key))) { complete = false; break; }
     }
     if (complete) {
       const baseline = verified.get("[]")!;

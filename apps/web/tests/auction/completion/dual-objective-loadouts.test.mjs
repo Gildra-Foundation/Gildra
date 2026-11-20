@@ -300,6 +300,33 @@ test('equipment finalists resume at 750 iterations and rank both objectives agai
   assert.deepEqual(resumed.result, done.result);
 });
 
+test('two finalist lanes keep a successful sibling for retry after a failed measurement', async () => {
+  const h = fixture(), initial = await finish(h);
+  let saved, active = 0, peak = 0;
+  const calls = [];
+  const input = { ...h.input, simulationConcurrency: 2, checkpoint: initial.checkpoint,
+    onCheckpoint: state => { saved = structuredClone(state); } };
+  const recheck = async selected => {
+    const key = selected.map(o => o.id).sort().join(',');
+    calls.push(key);
+    peak = Math.max(peak, ++active);
+    await new Promise(resolve => setImmediate(resolve));
+    active--;
+    if (!key && calls.length === 2) throw Error('failed baseline');
+    return measurement(key ? 1200 : 1000);
+  };
+  await assert.rejects(assembleAuctionGear({ ...input, recheckEquipment: recheck }), /failed baseline/);
+  assert.equal(peak, 2);
+  assert.equal(active, 0);
+  assert.equal(Object.keys(saved.equipmentFinalistMeasurements).length, 1);
+  const sibling = calls[1];
+  const done = await assembleAuctionGear({ ...input, checkpoint: saved, recheckEquipment: recheck });
+  assert(done.result.exhaustiveComplete);
+  assert.equal(calls.filter(key => key === sibling).length, 1);
+  assert.equal(calls.filter(key => !key).length, 2);
+  assert.equal(peak, 2);
+});
+
 test('a short or mismatched final simulation cannot complete the equipment search', async () => {
   const h = fixture(), initial = await finish(h);
   for (const [row, reason] of [[{ ...measurement(1000), iterations: 100 }, /invalid_finalist_precision/],
