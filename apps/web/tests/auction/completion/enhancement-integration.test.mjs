@@ -136,6 +136,22 @@ test('actual mechanical cache separates paid customization and encounter identit
   assert.equal(cache.get(key,'SimulationCraft synthetic-enhancements').dps,1234);
 });
 
+test('candidate cache reuses verified neck gem fights while purchases and finalists keep their actual IDs',()=>{
+  const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const nativeKey=(gemIds,slot='neck',version=engine,precision)=>auctionGearMechanicalKey('profile',
+    {...request,precision},{engine:version,changes:[{slot,itemId:240948,bonusIds:[],gemIds}]});
+  const purchased=[0,153712];
+  assert.equal(nativeKey(purchased),nativeKey([0,130217]));
+  assert.deepEqual(purchased,[0,153712]);
+  assert.notEqual(nativeKey(purchased),nativeKey([130217,0]));
+  for(const [slot,version,precision] of [['finger1',engine],['neck','SimulationCraft other'],['neck',engine,'finalist']]) {
+    assert.notEqual(nativeKey(purchased,slot,version,precision),nativeKey([0,130217],slot,version,precision));
+  }
+  assert.notEqual(nativeKey([192906]),nativeKey([192907])); // agreement depends on character level
+  assert.notEqual(nativeKey([192953]),nativeKey([130217])); // Ysemerald name is observable by equipped items
+});
+
 test('serialized continuation retains priced finalists and never repeats already simulated configurations',async()=>{
   const second={...gem,key:'synthetic-second-gem',consumableItemId:950003,simulationId:950003};
   const {input,calls}=fixture({slots:[newSlot()],budgetCopper:1000,limits:{configurations:128,simulations:1,finalists:3},
