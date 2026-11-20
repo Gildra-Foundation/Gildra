@@ -122,6 +122,25 @@ test('concurrent certified candidates share one successful measurement in either
   }
 });
 
+test('concurrent worn ring permutations reuse a fight when a purchased armor proof has a different key', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  const rings = ['FINGER_1','FINGER_2'].map((slot, i) => ({
+    slot: {type:slot}, item: {id:500+i}, inventory_type: {type:'FINGER'}, level: {value:150},
+  }));
+  const { run, state, finishFrom } = fixture({workerEngine:pinned, equipment:{equipped_items:rings}, ownedBatch:true});
+  const shared = signal();
+  await run.concurrency(shared);
+  const submit = (enchants, mode='certified-candidate') => run([armor(1,5250,pinned)], shared,
+    rings.map((r,i) => ({slotType:r.slot.type,itemId:r.item.id,enchantId:enchants[i],gems:[]})), mode);
+  const results = Promise.all([submit([8022,7964]),submit([7964,8022]),submit([7965,8022]),submit([7964,8022],'finalist')]);
+  await tick();
+  await finishFrom(0);
+  const [a,b,,precise] = await results;
+  assert.deepEqual({...a},{...b});
+  assert.equal(precise.iterations,750);
+  assert.equal(state.requests.flatMap(request => request.rows).length,3);
+});
+
 test('ordinary discovery candidates with the same mechanical key share a pending fight', async () => {
   const { state, run, finishFrom } = fixture(), shared = signal();
   await run.concurrency(shared);
@@ -235,6 +254,22 @@ test('one idle lane starts a sparse tail without a fill timer and a small backlo
   assert.deepEqual(state.requests.map(request => request.ids.length), [1, 1, 5, 3]);
   await finishFrom(2);
   await Promise.all([one, two, ...later]);
+});
+
+test('one incompatible row cannot put the whole compatible group on one core',async()=>{
+  const {state,run,finishFrom}=fixture(), shared=signal();
+  await run.concurrency(shared);
+  const rows=Array.from({length:10},(_,i)=>option(300+i));
+  rows.push(option(310,'WAIST'));
+  const all=Promise.all(rows.map(row=>run([row],shared)));
+  await tick();
+  assert.deepEqual(state.requests.map(req=>req.ids.length),[1,6]);
+  state.requests[0].finish();
+  await tick();
+  assert(state.requests[2].ids.length<=4);
+  await finishFrom(1);
+  assert.equal((await all).length,11);
+  assert.equal(state.requests.flatMap(req=>req.ids).length,11);
 });
 
 test('distinct signals cancel queued and running callers independently and abort the request when its last caller cancels', async () => {

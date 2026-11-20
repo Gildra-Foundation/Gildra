@@ -1011,7 +1011,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
-  const pending = new Set<{ engine: string; key: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
+  const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
   const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
@@ -1046,10 +1046,11 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
     const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
-    const shareKey = verified && verifiedEngine.startsWith("SimulationCraft") && mode !== "finalist"
-      ? equivalentKey ?? cacheKey : undefined;
-    if (shareKey) for (const entry of pending) {
-      if (entry.key !== shareKey || entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
+    const share = verified && verifiedEngine.startsWith("SimulationCraft") && mode !== "finalist";
+    if (share) for (const entry of pending) {
+      if (entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
+      // Either proof used by the completed cache also suffices in flight.
+      if (entry.cacheKey !== cacheKey && (!equivalentKey || entry.equivalentKey !== equivalentKey)) continue;
       const measured = await entry.result;
       simSignal.throwIfAborted();
       metrics.cacheHit();
@@ -1078,7 +1079,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const catalogEngine = engine();
       if ((catalogEngine && simulation.engine !== catalogEngine) ||
           (measuredEngine && simulation.engine !== measuredEngine) ||
-          (shareKey && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
+          (share && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
       measuredEngine = simulation.engine;
@@ -1087,8 +1088,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     });
     // Start the native request immediately. Track at most one full two-lane
     // window, and only share work whose callers cancel together.
-    if (!shareKey || pending.size >= 2 * Math.max(1, transport.batchSize)) return measurement;
-    const entry = { engine: verifiedEngine, key: shareKey, signal: simSignal, result: measurement };
+    if (!share || pending.size >= 2 * Math.max(1, transport.batchSize)) return measurement;
+    const entry = { engine: verifiedEngine, cacheKey, equivalentKey, signal: simSignal, result: measurement };
     pending.add(entry);
     try { return await measurement; }
     finally { pending.delete(entry); }
@@ -1124,10 +1125,12 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
         const jobs = [first];
         if (batchSize && first.group && (!first.ownedBatch || ownedBatch)) {
           const compatible = pending.filter(job => job.group === first.group);
-          // Leave work for the other native lane when both would draw from
-          // this group. An already busy lane contributes its outstanding rows.
-          const limit = compatible.length === pending.length
-            ? Math.ceil((1 + compatible.length + activeCandidates) / capacity) : batchSize;
+          // Other groups may contain just one job. Count their rows when
+          // splitting the backlog so that both native lanes can finish together.
+          // Finalists use more iterations, so a mixed-precision queue cannot
+          // use candidate counts as comparable units of work.
+          const limit = pending.every(job => job.base.precision === first.base.precision)
+            ? Math.ceil((1 + pending.length + activeCandidates) / capacity) : batchSize;
           for (const job of compatible.slice(0, Math.min(batchSize, limit) - 1)) {
             jobs.push(job);
             pending.splice(pending.indexOf(job), 1);

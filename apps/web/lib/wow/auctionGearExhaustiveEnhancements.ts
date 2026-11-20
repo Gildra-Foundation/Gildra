@@ -295,32 +295,43 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       input.onState(state);
     }
     if (state.currentOptionIds === undefined) {
-      if (state.cursor.exhausted && !state.replay?.length && needsBaseline() && input.recheckBaseline) {
-        if (input.shouldYield()) break;
-        const result = await input.recheckBaseline(input.signal);
+      if (input.shouldYield()) break;
+      const jobs: (() => Promise<void>)[] = [];
+      const recheckBaseline = input.recheckBaseline, recheck = input.recheck;
+      const measureBaseline = state.cursor.exhausted && !state.replay?.length && needsBaseline() && recheckBaseline;
+      if (measureBaseline) jobs.push(async () => {
+        const result = await measureBaseline(input.signal);
         input.signal.throwIfAborted();
         if (!validRecheck(result, input.baseline)) throw new Error("invalid_simulation_result");
         state.preciseBaseline = result;
         input.onState(state);
-        continue;
+      });
+      for (const leader of contenders()) {
+        if (!recheck || jobs.length >= sliceBudget) break;
+        const row = leader.recommendation, key = row.configuration.key;
+        const original = !leader.options.length && !row.configuration.ownedChanges?.length;
+        if (state.precise?.[key] || (original && measureBaseline)) continue;
+        jobs.push(async () => {
+          const simulation = original && state.preciseBaseline ? state.preciseBaseline :
+            await recheck(leader.options, row.configuration, input.signal);
+          input.signal.throwIfAborted();
+          if (simulation.engine !== row.simulation.engine) throw new Error("simulation_version_changed");
+          if (!validRecheck(simulation, row.simulation)) throw new Error("invalid_simulation_result");
+          const precise = state.precise ??= {};
+          precise[key] = simulation;
+          if (Object.keys(precise).length > 16) {
+            const active = new Set(contenders().map(other => other.recommendation.configuration.key));
+            const oldest = Object.keys(precise).find(k => !active.has(k));
+            if (oldest) delete precise[oldest];
+          }
+          input.onState(state);
+        });
       }
-      const next = contenders().find(row => !state.precise?.[row.recommendation.configuration.key]);
-      if (!next || !input.recheck || input.shouldYield()) break;
-      const row = next.recommendation;
-      const originalEquipment = !next.options.length && !row.configuration.ownedChanges?.length;
-      const simulation = originalEquipment && state.preciseBaseline ? state.preciseBaseline :
-        await input.recheck(next.options, row.configuration, input.signal);
-      input.signal.throwIfAborted();
-      if (simulation.engine !== row.simulation.engine) throw new Error("simulation_version_changed");
-      if (!validRecheck(simulation, row.simulation)) throw new Error("invalid_simulation_result");
-      const precise = state.precise ??= {};
-      precise[row.configuration.key] = simulation;
-      if (Object.keys(precise).length > 16) {
-        const active = new Set(contenders().map(leader => leader.recommendation.configuration.key));
-        const oldest = Object.keys(precise).find(key => !active.has(key));
-        if (oldest) delete precise[oldest];
-      }
-      input.onState(state);
+      if (!jobs.length) break;
+      // A successful sibling stays resumable even when another native call fails.
+      const results = await Promise.allSettled(jobs.map(run => run()));
+      const failed = results.find(result => result.status === "rejected");
+      if (failed) throw failed.reason;
       lastUpdate = finish();
       await input.onUpdate?.(lastUpdate.result);
       input.signal.throwIfAborted();

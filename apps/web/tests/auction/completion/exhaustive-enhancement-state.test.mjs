@@ -334,3 +334,30 @@ test('a sole unchanged finalist shares one independently verified baseline fight
   assert.equal(result.recommendations[0].comparison.deltaDps,0);
   assert.equal(result.finalistRecheck,undefined);
 });
+
+test('two enhanced finalist lanes preserve a successful sibling across retry',async()=>{
+  const h=fixture(), calls=[];
+  let active=0, peak=0, fail=true;
+  h.iterations=100;
+  h.input.baseline={...simulation(1000),iterations:100};
+  h.input.simulationConcurrency=2;
+  h.scores={baseline:1000,'option-1':1100,'option-2':1200,'option-3':1300};
+  async function measure(key){
+    calls.push(key);active++;peak=Math.max(peak,active);
+    try{
+      await new Promise(resolve=>setImmediate(resolve));
+      if(key==='option-3' && fail)throw Error('worker busy');
+      return simulation(h.scores[key]);
+    }finally{active--;}
+  }
+  h.input.recheckBaseline=()=>measure('baseline');
+  h.input.recheck=options=>measure(options[0].id);
+  await assert.rejects(finish(h),/worker busy/);
+  assert.equal(peak,2);assert.equal(active,0);
+  assert.equal(h.state.preciseBaseline.dps,1000);assert.equal(h.state.precise?.['option-3'],undefined);
+  h.state=structuredClone(h.state);fail=false;
+  const result=await finish(h);
+  assert.equal(result.complete,true);
+  assert.deepEqual(calls,['baseline','option-3','option-3']);
+  assert.equal(result.recommendations[0].simulation.iterations,750);
+});
