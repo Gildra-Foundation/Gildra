@@ -94,23 +94,28 @@ function queueVariants(state: AuctionGearDiscovery, itemId: number) {
   }
 }
 
-/** A new snapshot changes prices/availability immediately; only new effects need native work. */
-export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market: AuctionSnapshot,
-  { retryCatalog = true }: { retryCatalog?: boolean } = {}) {
+// A 304 reuses the provider's offers array; its snapshot ID hashes all lot fields.
+// Key the derived IDs by the specific index so restored or replaced maps rebuild.
+const indexedMarkets = new WeakMap<AuctionGearDiscovery["offers"], {
+  source: WeakRef<AuctionOffer[]>; snapshotId: string; budgetCopper: number; ids: number[];
+}>();
+
+function indexMarketOffers(state: AuctionGearDiscovery, market: AuctionSnapshot) {
+  const saved = indexedMarkets.get(state.offers);
+  if (saved?.snapshotId === market.id && saved.budgetCopper === state.budgetCopper && saved.source.deref() === market.offers &&
+      state.catalogItemClasses && state.supportedSummaryItems && state.unsupportedLotsByItem) return saved.ids;
   const affordable = market.offers.filter(offer => offer.buyoutCopper <= state.budgetCopper);
-  const supported = affordable.filter(offer => supportedAuctionModifiers(offer.modifiers));
   const legacyClasses = !state.catalogItemClasses;
   state.catalogItemClasses ??= new Map();
   state.supportedSummaryItems ??= new Set();
   state.unsupportedLotsByItem = new Map();
-  for (const offer of affordable) if (!supportedAuctionModifiers(offer.modifiers)) {
-    state.unsupportedLotsByItem.set(offer.itemId, (state.unsupportedLotsByItem.get(offer.itemId) ?? 0) + 1);
-    // Older checkpoints may have already visited the same ID through a
-    // supported lot without retaining its authoritative noncombat class.
-    if (legacyClasses && state.queuedItems.has(offer.itemId)) state.catalogRetryAt.set(offer.itemId, 0);
-  }
   const offers = new Map<string, AuctionOffer[]>();
-  for (const offer of supported) {
+  for (const offer of affordable) {
+    if (!supportedAuctionModifiers(offer.modifiers)) {
+      state.unsupportedLotsByItem.set(offer.itemId, (state.unsupportedLotsByItem.get(offer.itemId) ?? 0) + 1);
+      if (legacyClasses && state.queuedItems.has(offer.itemId)) state.catalogRetryAt.set(offer.itemId, 0);
+      continue;
+    }
     const key = auctionVariantKey(offer), list = offers.get(key) ?? [];
     list.push(offer);
     offers.set(key, list);
@@ -122,25 +127,31 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
     variants.push(key);
     state.itemVariants.set(list[0].itemId, variants);
   }
-  state.marketId = market.id;
   state.affordableLots = affordable.length;
-  updateUnsupportedCoverage(state);
-  // Unsupported variants never enter native work, but their cheap summaries
-  // can establish that profession equipment/recipes are outside combat gear.
   const ids = [...new Set(affordable.map(offer => offer.itemId))].sort((a, b) => a - b);
+  indexedMarkets.set(offers, { source: new WeakRef(market.offers), snapshotId: market.id, budgetCopper: state.budgetCopper, ids });
+  return ids;
+}
+
+/** A new snapshot changes prices/availability immediately; only new effects need native work. */
+export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market: AuctionSnapshot,
+  { retryCatalog = true }: { retryCatalog?: boolean } = {}) {
+  const ids = indexMarketOffers(state, market);
+  state.marketId = market.id;
+  updateUnsupportedCoverage(state);
   const now = Date.now();
   // A long active traversal must finish before missing IDs can cycle again.
   const retry = new Set(retryCatalog && auctionGearDiscoveryComplete(state)
     ? ids.filter(id => (state.catalogRetryAt.get(id) ?? Infinity) <= now) : []);
   for (const id of ids) {
-    const itemClass = state.catalogItemClasses.get(id);
+    const itemClass = state.catalogItemClasses?.get(id);
     // An unsupported-only combat item had its cheap summary classified but
     // never needed details. Its first supported offer needs that first pass,
     // even during another traversal or when timed catalog retries are disabled.
     // Legacy checkpoints get one bounded pass, including ones saved after the
     // old refresh had populated supported maps without opening details.
     // A recorded null entity is a previous attempt and keeps its retry policy.
-    if ((itemClass === 2 || itemClass === 4) && state.itemVariants.has(id) && !state.supportedSummaryItems.has(id) &&
+    if ((itemClass === 2 || itemClass === 4) && state.itemVariants.has(id) && !state.supportedSummaryItems?.has(id) &&
         state.queuedItems.has(id) && !state.entities.has(id)) retry.add(id);
   }
   if (retry.size) {

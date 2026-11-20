@@ -38,6 +38,28 @@ test('market: relisted item with missing registry keeps data coverage incomplete
   assert.equal(h.state.variantCalls, 0);
 });
 
+test('unchanged offers reuse the index while expired references and updated purchases stay visible', async () => {
+  const h = await harness({availableReference:false});
+  const snapshot = h.state.market;
+  const state = h.discovery.createAuctionGearDiscovery(snapshot, 1000);
+  await h.discovery.advanceAuctionGearDiscovery(state, h.discoveryInput);
+  const index = state.offers;
+  h.state.availableReference = true;
+  state.referenceRetryAt.set(1, 0);
+  h.discovery.refreshAuctionGearDiscovery(state, snapshot);
+  assert.equal(state.offers, index);
+  await h.discovery.advanceAuctionGearDiscovery(state, h.discoveryInput);
+  assert.equal(h.state.referenceCalls, 2);
+  const changed = market([{...offer(1, 43), buyoutCopper:77, quantity:2}]);
+  h.discovery.refreshAuctionGearDiscovery(state, changed);
+  assert.notEqual(state.offers, index);
+  const purchases = h.discovery.auctionGearDiscoveryOptions(state);
+  assert.deepEqual(Array.from(purchases, o => [o.auctionId, o.costCopper, o.quantity]), [[43,77,2]]);
+  state.budgetCopper = 76;
+  h.discovery.refreshAuctionGearDiscovery(state, changed);
+  assert.equal(h.discovery.auctionGearDiscoveryOptions(state).length, 0);
+});
+
 test('market: negative reference recovers after TTL for existing and new exact variants', async () => {
   const h = await harness({ availableReference: false });
   const d = h.discovery.createAuctionGearDiscovery(h.state.market, 1000);
