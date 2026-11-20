@@ -136,16 +136,19 @@ test('actual mechanical cache separates paid customization and encounter identit
   assert.equal(cache.get(key,'SimulationCraft synthetic-enhancements').dps,1234);
 });
 
-test('candidate cache reuses verified neck gem fights while purchases and finalists keep their actual IDs',()=>{
+test('candidate cache reuses verified armor and jewelry gem fights while purchases and finalists keep their actual IDs',()=>{
   const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
   const engine='SimulationCraft 1210-01 · 18428cd';
   const nativeKey=(gemIds,slot='neck',version=engine,precision)=>auctionGearMechanicalKey('profile',
     {...request,precision},{engine:version,changes:[{slot,itemId:240948,bonusIds:[],gemIds}]});
   const purchased=[0,153712];
-  assert.equal(nativeKey(purchased),nativeKey([0,130217]));
+  for(const slot of ['head','neck','shoulder','back','chest','wrist','hands','waist','legs','feet','finger1','finger2']) {
+    assert.equal(nativeKey(purchased,slot),nativeKey([0,130217],slot));
+  }
+  assert.notEqual(nativeKey(purchased,'finger1'),nativeKey(purchased,'finger2'));
   assert.deepEqual(purchased,[0,153712]);
   assert.notEqual(nativeKey(purchased),nativeKey([130217,0]));
-  for(const [slot,version,precision] of [['finger1',engine],['neck','SimulationCraft other'],['neck',engine,'finalist']]) {
+  for(const [slot,version,precision] of [['trinket1',engine],['off_hand',engine],['main_hand',engine],['neck','SimulationCraft other'],['neck',engine,'finalist']]) {
     assert.notEqual(nativeKey(purchased,slot,version,precision),nativeKey([0,130217],slot,version,precision));
   }
   assert.notEqual(nativeKey([192906]),nativeKey([192907])); // agreement depends on character level

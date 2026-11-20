@@ -1,4 +1,4 @@
-"""Verify the cache's purchased neck gem pairs against a local pinned SimC engine/dbc/generated directory."""
+"""Verify the cache's purchased gem pairs against a local pinned SimC engine/dbc/generated directory."""
 import hashlib
 import math
 from pathlib import Path
@@ -8,7 +8,7 @@ import sys
 
 root = Path(sys.argv[1])
 proof = Path(__file__).resolve().parents[3] / "lib/wow/auctionGearMechanicalCache.ts"
-pairs = re.findall(r"\[(\d+), (\d+)\]", proof.read_text().split("const equivalentNeckGems =", 1)[1].split("]);", 1)[0])
+pairs = re.findall(r"\[(\d+), (\d+)\]", proof.read_text().split("const equivalentGems =", 1)[1].split("]);", 1)[0])
 assert pairs and len({a for a, _ in pairs}) == len(pairs)
 ids = {int(item) for pair in pairs for item in pair}
 digests = {

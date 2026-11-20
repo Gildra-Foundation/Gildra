@@ -12,26 +12,30 @@ function canonical(value: unknown): unknown {
     .sort(([left], [right]) => left.localeCompare(right)).map(([key, entry]) => [key, canonical(entry)]));
 }
 
-// Pinned SimC neck gems with identical ordered direct stats at every level
+// Pinned SimC gems with identical ordered direct stats at every level
 // from 1 to 90, socket color, description ID and item-level requirements.
 // These IDs have no spell, profession, relic, punchcard or gem-name proc.
 // Verify the pairs with tests/auction/item-effects/verify-gem-pairs.py.
 // Keep other ranks distinct: matching at level 90 alone is insufficient.
-const equivalentNeckGems = new Map<number, number>([
+const equivalentGems = new Map<number, number>([
   [22460, 22459], [153710, 130215], [153711, 130216], [153712, 130217],
   [153713, 130218], [154126, 130219], [154127, 130220], [154128, 130221],
   [168639, 151580], [168641, 151583],
+]);
+
+const verifiedGemSlots = new Set([
+  "head", "neck", "shoulder", "back", "chest", "wrist", "hands", "waist", "legs", "feet", "finger1", "finger2",
 ]);
 
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly unknown[]; precision?: "finalist";
 }, native?: { changes: SimcGearChange[]; engine: string }) {
-  const reuseNeckGems = native && !request.precision && ignoresItemContext(native.engine);
+  const reuseGems = native && !request.precision && ignoresItemContext(native.engine);
   const gear = native ? native.changes.map(change => ({
     ...change, ...auctionNativeItemOptions(change, native.engine),
-    ...(reuseNeckGems && change.slot === "neck" && change.gemIds?.length
-      ? { gemIds: change.gemIds.map(id => equivalentNeckGems.get(id) ?? id) } : {}),
+    ...(reuseGems && change.gemIds?.length && verifiedGemSlots.has(change.slot)
+      ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
   })) : request.gearChanges ?? [];
   const changes = gear.map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, gearChanges: changes,
