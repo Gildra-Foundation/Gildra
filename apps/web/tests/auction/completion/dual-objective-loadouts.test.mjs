@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {assembleAuctionGear,captureAuctionGearIncumbents,searchAuctionGearOptions} from '../../../lib/wow/auctionGearPlanner.ts';
 import {auctionAppliedStatsKey,auctionDominatedArmorOptions} from '../../../lib/wow/auctionGearEffects.ts';
+import {createAuctionGearEnhancedLoadoutIterator} from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import {auctionGearResults,auctionGearLoadoutComparison} from '../../../lib/wow/auctionGearResult.ts';
 const measurement=(dps,dpsError=1)=>({dps,dpsError,confidence:95,iterations:750,engine:'SimulationCraft dual-objective fixture'});
 const option=(id,slot,cost)=>({id:String(id),auctionId:id,quantity:1,costCopper:cost,variantKey:'exact',candidate:{entityId:`fixture-${id}`,itemId:id,name:`Synthetic ${id}`,slotType:slot,itemLevel:100,inventoryType:slot==='HEAD'?1:5,itemClassId:4,itemSubclassId:4,eligible:true,rejectionReasons:[],season:{id:'s',patch:'p',expansionId:11,activityNames:[]},source:{type:'auction',evidence:'fixture'},constraints:{uniqueEquipped:false,crafted:false,allowableClassMask:'0',requiredLevel:1},compatibility:{specId:72,method:'specialization',itemClassId:4,itemSubclassId:4},variants:[{key:'exact',itemLevel:100,contextId:0,bonusIds:[]}]}});
@@ -480,4 +481,12 @@ test('bare waist socket substitutes only at equal native inputs and preserves ge
   assert.deepEqual(ids(reduced.bestValueConfirmed),[1]);
   assert.deepEqual(reduced.bestDpsConfirmed,reference.bestDpsConfirmed);
   assert.deepEqual(reduced.bestValueConfirmed,reference.bestValueConfirmed);
+
+  const enhanced = createAuctionGearEnhancedLoadoutIterator({engine, specId:72, options:[cheaper,socketed,shoulder],
+    equipment:{equipped_items:[]}, loadout:[], selectedSlots:['WAIST','SHOULDER'], budgetCopper:100});
+  const batch = await enhanced.nextBatch(enhanced.initialState(), {maxAssignments:20,maxResults:20,signal:new AbortController().signal});
+  assert.equal(batch.complete,true);
+  const withSocket = batch.loadouts.filter(row => row.options.includes(socketed));
+  assert.deepEqual(withSocket.map(row => row.options.map(o=>o.auctionId).sort().join(',')).sort(), ['2','2,3']);
+  assert(withSocket.every(row => row.remainingCopper === 100-row.options.reduce((sum,o)=>sum+o.costCopper,0)));
 });

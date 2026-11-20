@@ -641,7 +641,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         // This pass measures bare gear. The enhancement iterator below receives
         // every original option and proves its own groups after accounting for sockets.
         groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
-        bareEquipmentProofs: fullMarket && context.input.enhancementMode === "equipment",
+        bareEquipmentProofs: fullMarket && context.input.enhancementMode !== undefined,
         recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" && (!context.discovery || context.coverage.discoveryComplete)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
@@ -764,7 +764,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             if (!ownedChanges?.length && selected.every(option => !option.customization?.enchantId && !option.customization?.gemIds?.some(id => id !== 0))) {
               const bare = selected.map(option => { const copy = { ...option }; delete copy.customization; return copy; });
               const exact = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
-              const equivalent = fullMarket && !exact ? auctionAppliedStatsKey(bare, checkpoint.baseline.engine) : undefined;
+              const equivalent = fullMarket && !exact ? auctionAppliedStatsKey(bare, checkpoint.baseline.engine, true) : undefined;
               const cached = exact ?? (equivalent ? checkpoint.simulationCache[equivalent] : undefined);
               if (cached && cached.engine === checkpoint.baseline.engine && Number.isFinite(cached.dps) && cached.dps >= 0 &&
                   Number.isFinite(cached.dpsError) && cached.dpsError >= 0 && cached.confidence === 95 && Number.isSafeInteger(cached.iterations) && cached.iterations > 0) {

@@ -557,7 +557,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const selections: { selection: AuctionGearOption[]; key: string }[] = [];
   const evaluate = (selection: AuctionGearOption[]) => {
     const exact = auctionSelectionEffectKey(selection);
-    const equivalent = reuseAppliedStats && auctionAppliedStatsKey(selection, checkpoint.baseline.engine);
+    const equivalent = reuseAppliedStats && auctionAppliedStatsKey(selection, checkpoint.baseline.engine, input.bareEquipmentProofs);
     const cachedExact = checkpoint.simulationCache[exact];
     const key = equivalent && !cachedExact ? equivalent : exact;
     // Keep previously measured receipts and use their result to seed the new cache.
