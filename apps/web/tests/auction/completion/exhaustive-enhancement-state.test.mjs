@@ -491,6 +491,54 @@ test('a batch-capable worker receives the ready finalists together and returns i
   assert.equal(result.recommendations[0].simulation.iterations, 750);
 });
 
+test('joint precision ranks affordable native classes once, resumes and reprices both objectives', async () => {
+  const h = fixture();
+  const [one, two, three] = h.input.options;
+  const four = {...one, id:'option-4', auctionId:4, candidate:{...one.candidate, itemId:4}};
+  h.input.options.push(four);
+  one.costCopper=400; two.costCopper=100; three.costCopper=250; four.costCopper=1;
+  h.input.baseline = {...simulation(1000), iterations:100};
+  h.input.trackBareEquipment = true;
+  h.input.finalistKey = options => [one.id,two.id].includes(options[0]?.id) ? 'paired' : options[0]?.id ?? 'baseline';
+  let baselines=0;
+  h.input.recheckBaseline = async () => { baselines++; return simulation(1000); };
+  const calls=[];
+  h.input.recheck = async options => {
+    const id=options[0].id;
+    calls.push(id);
+    return simulation(id===three.id ? 1051 : id===four.id ? 1020 : 1049);
+  };
+  h.dependencies={baseline:[],[one.id]:[],[two.id]:[],[three.id]:[],[four.id]:[1]};
+  h.prices={'1':{ladder:[[0,100]]}};
+  const run = async () => {
+    for(let turn=0;turn<24;turn++){
+      const {result}=await h.run();
+      h.state=structuredClone(h.state);
+      if(result.complete)return result;
+    }
+    assert.fail('joint market did not complete');
+  };
+  const result=await run();
+  assert.equal(baselines,1);
+  assert.deepEqual(h.screenCalls,[]);
+  assert.deepEqual(calls.sort(),[one.id,two.id,three.id,four.id]);
+  assert.equal(h.state.precisionPass.rankedFromReceipts,4);
+  assert.equal(h.state.precisionPass.rankReceipts,undefined);
+  assert.equal(h.state.bareEquipment.layouts,5);
+  assert.equal(h.state.bareEquipment.covered,true);
+  assert.equal(h.state.bareEquipment.missing,undefined);
+  assert.deepEqual({...result.verifiedObjectives},{dps:two.id,value:four.id});
+  assert.equal(result.finalistRecheck.leaderKey,three.id);
+  assert.equal(result.finalistRecheck.significant,false);
+  h.prices={'1':{ladder:[[500,100]]}};
+  h.state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
+  const repriced=await run();
+  assert.deepEqual({...repriced.verifiedObjectives},{dps:two.id,value:two.id});
+  assert.equal(h.state.bareEquipment.missing,true);
+  assert.equal(baselines,1);
+  assert.equal(h.screenCalls.length,0);
+});
+
 test('an older saved search finishes on its original glove axes', async () => {
   const h = fixture();
   await h.run();

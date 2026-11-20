@@ -16,6 +16,9 @@ type Receipt = AuctionEnhancedRecommendation;
 type PrecisionPass = {
   phase: "peak" | "rank" | "done";
   replayThrough?: string;
+  /** Cheapest physical receipt per native input, while the whole market fits. */
+  rankReceipts?: Record<string, Receipt>;
+  rankedFromReceipts?: number;
   /** Completed gear layouts on a precise pass started before screening finished. */
   checkedEquipment?: number;
   peak?: Receipt; second?: Receipt; preferred?: Receipt; outsideValue?: Receipt; confirmedDps?: Receipt; tiedAlternative?: Receipt;
@@ -74,6 +77,7 @@ function bareEquipmentCoverage(baseline: GearPlanSimulation, totalAssignments: s
 export type AuctionGearExhaustiveEnhancementState = Ranking & {
   version: 1; inputKey: string; cursor: AuctionGearEnhancedLoadoutState;
   bareEquipment?: BareEquipmentCoverage;
+  directPrecision?: true;
   currentOptionIds?: string[]; stage: AuctionEnhancementStageState;
   /** Price basis of global ranking, independent of an in-flight stage refresh. */
   quoteSignatures?: Record<string, string>;
@@ -214,6 +218,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const valueBaseline = input.recheck && input.baseline.iterations === 100 ? input.baseline : undefined;
   const omitNeutralGloveEnchants = !input.state || input.state.omitNeutralGloveEnchants === true;
   const collectReceipts = Boolean(input.finalistKey && input.recheck && input.recheckBaseline && valueBaseline);
+  // In a new joint traversal every affordable input needs independent precision,
+  // even when it fits in the 64-receipt index. Its screening score cannot exclude it.
+  const directPrecision = collectReceipts && input.trackBareEquipment && (!input.state || input.state.directPrecision === true);
   // Older checkpoints ranked these chests as different finalists. Rebuild the
   // receipt index and the precise tie classification only on affected markets.
   const chestSuffixFinalists = collectReceipts && input.options.some(option => option.candidate.slotType === "CHEST" &&
@@ -221,9 +228,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const ringRatings = collectReceipts && input.nativePlayerLevel === 90 &&
     input.options.some(option => option.candidate.slotType === "FINGER_1" || option.candidate.slotType === "FINGER_2");
   const byId = new Map(input.options.map(option => [option.id, option]));
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), ...(directPrecision ? ["direct-independent-joint-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
-    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
+    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(directPrecision ? {directPrecision:true} : collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
   // Validate even an exhausted restored cursor without advancing it. Completed
@@ -315,7 +322,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const finish = (): { state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult } => {
     if (state.bareEquipment && (!state.precisionPass || state.precisionPass.phase === "peak") &&
         state.cursor.exhausted && state.currentOptionIds === undefined && !state.replay?.length) state.bareEquipment.covered = true;
-    if (state.precisionPass || state.finalistReceipts === "overflow") {
+    if (state.precisionPass || state.directPrecision || state.finalistReceipts === "overflow") {
       const pass = state.precisionPass;
       const complete = pass?.phase === "done";
       const peak = pass?.peak, preferred = pass?.preferred;
@@ -435,8 +442,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     input.onState(state);
     if (staleQuotes(state.stage.quotes)) throw new Error("market_stale");
   }
+  const identity = (row: Receipt) => input.finalistKey!(row.optionIds.map(id => byId.get(id)!), row.configuration);
+  const sameClass = (a: Receipt, b: Receipt) => identity(a) === identity(b);
   const completePrecision = async () => {
     state.precisionPass!.phase = "done";
+    delete state.precisionPass!.rankReceipts;
     input.onState(state);
     const update = finish();
     await input.onUpdate?.(update.result);
@@ -454,13 +464,13 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     // Once the receipt index overflows, only the full independent traversal
     // can establish the winners. Further screening cannot remove a single
     // precise fight. Restart from ordinal zero, including the partial layout.
-    if (state.finalistReceipts === "overflow" && !state.precisionPass) {
+    if ((state.directPrecision || state.finalistReceipts === "overflow") && !state.precisionPass) {
       if (input.shouldYield()) break;
       const baseline = state.preciseBaseline ?? await input.recheckBaseline!(input.signal);
       input.signal.throwIfAborted();
       if (!validRecheck(baseline, input.baseline)) throw new Error("invalid_simulation_result");
       state.preciseBaseline = baseline;
-      state.precisionPass = { phase: "peak", checkedEquipment: 0 };
+      state.precisionPass = { phase: "peak", checkedEquipment: 0, ...(state.directPrecision ? {rankReceipts:{}} : {}) };
       if (state.bareEquipment) state.bareEquipment = bareEquipmentCoverage(baseline, iterator.totalAssignments);
       state.cursor = iterator.initialState();
       delete state.currentOptionIds;
@@ -508,6 +518,15 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           return completePrecision();
         }
         state.precisionPass.phase = "rank";
+        if (state.precisionPass.rankReceipts) {
+          // With the peak fixed, all receipts for one native input have the same
+          // gain, uncertainty and tie membership. Its cheapest receipt wins
+          // every price tie and every confirmed gain-per-gold comparison.
+          const rows = Object.values(state.precisionPass.rankReceipts);
+          for (const row of rows) observePrecision(state.precisionPass, row, "0", sameClass);
+          state.precisionPass.rankedFromReceipts = rows.length;
+          return completePrecision();
+        }
         state.cursor = iterator.initialState();
         state.stage.checkpoints = {};
         // Both traversals use the same independent baseline and precision.
@@ -568,10 +587,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     let dependencies: number[] = [];
     const pass = state.precisionPass, preciseBaseline = state.preciseBaseline, receipts = state.finalistReceipts;
     const newScreenKeys = new Set<string>();
-    const sameClass = (a: Receipt, b: Receipt) => {
-      const identity = (row: Receipt) => input.finalistKey!(row.optionIds.map(id => byId.get(id)!), row.configuration);
-      return identity(a) === identity(b);
-    };
+
     const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, pruneEquivalentRingGems: collectReceipts, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
       shouldYield: () => input.shouldYield() || (!pass && state.finalistReceipts === "overflow"),
@@ -594,17 +610,31 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         },
       } : {}),
       onMeasured: pass || state.bareEquipment || state.finalistReceipts && state.finalistReceipts !== "overflow" ? (configuration, describe) => {
+        let row: Receipt | undefined;
+        const measured = () => row ??= describe();
         const bare = state.bareEquipment;
         if (bare && (!pass || pass.phase === "peak") && configuration.status === "priced" && configuration.totalCopper === configuration.itemsCopper &&
             !configuration.consumables.length && !configuration.ownedChanges?.length) {
-          const { simulation } = describe();
+          const { simulation } = measured();
           if (simulation.iterations !== bare.leaders.baseline.iterations || simulation.engine !== bare.leaders.baseline.engine)
             throw new Error("invalid_simulation_result");
           observeAuctionEquipment(bare.leaders, selected, simulation, best => best.optionIds.map(id => byId.get(id)!), input.objective);
           if (selected.length === 1) for (const option of iterator.equivalentSingles(selected[0].id)) bare.singles[option.id] = simulation;
           bare.observedOrdinal = state.currentOrdinal;
         }
-        if (pass) { observePrecision(pass, describe(), state.currentOrdinal!, sameClass); return; }
+        if (pass) {
+          const receipt = measured();
+          observePrecision(pass, receipt, state.currentOrdinal!, sameClass);
+          if (pass.phase === "peak" && pass.rankReceipts) {
+            const key = input.finalistKey!(selected, configuration);
+            const prior = pass.rankReceipts[key];
+            if (prior && (prior.simulation.dps !== receipt.simulation.dps || prior.simulation.dpsError !== receipt.simulation.dpsError) ||
+                !prior && Object.keys(pass.rankReceipts).length >= maxFinalistReceipts) {
+              delete pass.rankReceipts;
+            } else if (!prior || rankMeasured(receipt, prior) < 0) pass.rankReceipts[key] = receipt;
+          }
+          return;
+        }
         const receipts = state.finalistReceipts;
         if (!receipts || receipts === "overflow") return;
         const key = input.finalistKey!(selected, configuration);
@@ -615,7 +645,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           state.finalistReceipts = "overflow";
           return;
         }
-        receipts[key] = describe();
+        receipts[key] = measured();
       } : undefined,
       onPriceDependencies: itemIds => { dependencies = itemIds; },
       priorSimulations: state.recentMeasurements?.find(entry => entry.ordinal === state.currentOrdinal)?.cache });
