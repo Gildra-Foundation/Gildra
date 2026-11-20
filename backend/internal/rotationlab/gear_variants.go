@@ -231,11 +231,13 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	}
 	defer os.RemoveAll(dir)
 	ref := supportedSpecs[input.Spec]
+	// Probe the actual auction item. Class-default weapon oils are a combat
+	// profile choice and would add their ratings to the resolved item vector.
 	var profile strings.Builder
 	slots := make([]string, len(input.Variants))
 	for i, v := range input.Variants {
 		slots[i] = variantReportSlot(v.Change.Slot)
-		fmt.Fprintf(&profile, "%s=gildra_variant_%d\nspec=%s\nlevel=%d\nrace=%s\nrole=attack\nload_default_gear=1\nactions=wait,sec=1\n%s\n", ref.Class, i, ref.Spec, input.CharacterLevel, ref.Race, serializeGearChange(v.Change))
+		fmt.Fprintf(&profile, "%s=gildra_variant_%d\nspec=%s\nlevel=%d\nrace=%s\nrole=attack\nload_default_gear=1\ntemporary_enchant=disabled\nactions=wait,sec=1\n%s\n", ref.Class, i, ref.Spec, input.CharacterLevel, ref.Race, serializeGearChange(v.Change))
 	}
 	path := filepath.Join(dir, "items.simc")
 	report := filepath.Join(dir, "items.json")
