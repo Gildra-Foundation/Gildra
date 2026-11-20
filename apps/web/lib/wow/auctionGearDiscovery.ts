@@ -373,7 +373,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
       state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
       // Each candidate may also need an exact reference control.
-      const size = input.stopAfterNewCandidates ? initialVariantBatch : paired ? detailBatch / 2 : batchLimit / 2;
+      const size = input.stopAfterNewCandidates ? initialVariantBatch : paired ? detailBatch : batchLimit / 2;
       const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + size);
       const probes = keys.flatMap(key => {
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
@@ -402,8 +402,28 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         ? new Map(equippedAuctionReferences(input.equipment).map(reference => [auctionVariantKey(reference.offer), reference])) : undefined;
       const nativeProbes = probes.filter(({ offer }) => state.verifiedReferences.has(offer.itemId) ||
         (!state.rejectedReferences.has(offer.itemId) && state.references.get(offer.itemId)) || equipped?.has(auctionVariantKey(offer)));
-      const resolution = nativeProbes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...nativeProbes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
-        batchLimit, parallelBatches: paired, spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
+      const resolve = (rows: Array<{ offer: AuctionOffer; slot: string }>, limit = batchLimit) =>
+        measure("variants", () => resolveAuctionVariants({ offers: rows.map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
+          batchLimit: limit, parallelBatches: paired, spec: input.spec, characterLevel: input.characterLevel, signal: input.signal }));
+      // Resolve unknown base references first. Exact equipped instances and
+      // already verified item IDs can share that first wave unconditionally.
+      const staged = paired && references.length > 0;
+      const first = staged ? [...references, ...nativeProbes.filter(({ offer }) =>
+        state.verifiedReferences.has(offer.itemId) || equipped?.has(auctionVariantKey(offer)))] : [...references, ...nativeProbes];
+      const resolution = nativeProbes.length ? await resolve(first) : null;
+      if (staged && resolution) {
+        input.signal.throwIfAborted();
+        const passed = new Set(references.filter(({ offer }) => nativeMatchesItemReference(
+          state.references.get(offer.itemId)!, resolution.variants.get(auctionVariantKey(offer)))).map(({ offer }) => offer.itemId));
+        const pending = nativeProbes.filter(({ offer }) => passed.has(offer.itemId) && !resolution.variants.has(auctionVariantKey(offer)));
+        if (pending.length) {
+          const next = await resolve(pending, resolution.batchLimit);
+          if (resolution.engine && next.engine && resolution.engine !== next.engine) throw new Error("simulation_version_changed");
+          resolution.engine ||= next.engine;
+          resolution.batchLimit = next.batchLimit;
+          for (const [key, row] of next.variants) resolution.variants.set(key, row);
+        }
+      }
       input.signal.throwIfAborted();
       if (resolution) state.variantBatchLimit = resolution.batchLimit;
       if (resolution?.engine) {

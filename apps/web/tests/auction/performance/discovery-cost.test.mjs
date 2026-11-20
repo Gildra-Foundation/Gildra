@@ -29,7 +29,7 @@ const context = slotType => ({ classId: 1, specId: 72, characterLevel: 81, raceI
   currentItemLevel: 0, anchorItemClassId: -1, anchorItemSubclassId: -1, season: { id: 'synthetic', patch: 'synthetic', expansionId: 11, activityNames: [] },
   acquisition: { type: 'auction', evidence: 'auction' } });
 function fixture(source, items = 376, lotsPerItem = 2) {
-  const counts = { native: 0, probes: [], abortNative: null };
+  const counts = { native: 0, probes: [], onNative: null, engine: 'SimulationCraft synthetic-cost' };
   const api = new vm.Script(strip(source) + '\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})').runInNewContext({
     Date, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
     supportedAuctionModifiers, AUCTION_ITEM_REFERENCE_TTL_MS, equippedAuctionReferences, nativeMatchesItemReference,
@@ -38,9 +38,9 @@ function fixture(source, items = 376, lotsPerItem = 2) {
     getAuctionItemReferences: async ids => new Map(ids.map(id => [id, { offer: offer(id, id, 2), requiredLevel: 1, itemLevel: 100, stats: [] }])),
     resolveAuctionVariants: async ({ offers, signal }) => {
       counts.native++; counts.probes.push(offers.length);
-      counts.abortNative?.();
+      counts.onNative?.();
       // Deliberately return after abort to exercise the caller's commit fence.
-      return { engine: 'SimulationCraft synthetic-cost', variants: new Map(offers.map(({ offer: row }) => [auctionVariantKey(row), {
+      return { engine: counts.engine, variants: new Map(offers.map(({ offer: row }) => [auctionVariantKey(row), {
         key: auctionVariantKey(row), itemId: row.itemId, itemLevel: 100, requiredLevel: 1, inventoryType: 9,
         itemClassId: 4, itemSubclassId: 4, quality: 3, uniqueEquipped: false, setId: 0, stats: {},
       }])) };
@@ -66,6 +66,37 @@ test('failed and absent references preserve coverage while only eligible native 
   assert.equal(h.state.referenceRejectedVariants.size, 2);
   assert.equal(h.api.auctionGearDiscoveryCoverage(h.state).dataComplete, false);
   assert.deepEqual(Array.from(h.api.auctionGearDiscoveryOptions(h.state), o => o.candidate.itemId), [3]);
+});
+
+test('full bulk discovery verifies references before resolving their auction variants', async () => {
+  const h = fixture(current, 3, 1);
+  h.state.variantBatchLimit = 64;
+  h.input.fullMarket = true;
+  h.state.references.set(2, { offer: offer(2, 2, 2), requiredLevel: 1, itemLevel: 101, stats: [] });
+  await h.finish();
+  assert.deepEqual(h.counts.probes, [3, 2]);
+  assert.deepEqual([...h.state.verifiedReferences], [1, 3]);
+  assert.deepEqual([...h.state.rejectedReferences], [2]);
+  assert.equal(h.state.referenceRejectedVariants.get(2).size, 1);
+  assert.deepEqual(Array.from(h.api.auctionGearDiscoveryOptions(h.state), o => o.candidate.itemId), [1, 3]);
+});
+
+test('a worker change between reference and variant resolution leaves the batch retryable', async () => {
+  const h = fixture(current, 3, 1);
+  h.state.variantBatchLimit = 64;
+  h.input.fullMarket = true;
+  h.counts.onNative = () => {
+    if (h.counts.native === 2) h.counts.engine = 'SimulationCraft changed';
+  };
+  await assert.rejects(h.finish(), /simulation_version_changed/);
+  assert.equal(h.state.variantCursor, 0);
+  assert.equal(h.state.verifiedReferences.size, 0);
+  assert.equal(h.state.rejectedReferences.size, 0);
+  assert.equal(h.state.candidates.size, 0);
+  h.counts.onNative = null;
+  await h.finish();
+  assert.equal(h.state.verifiedReferences.size, 3);
+  assert.equal(h.api.auctionGearDiscoveryOptions(h.state).length, 3);
 });
 
 test('larger continuation batches preserve every lot and exact-reference verification', async () => {
@@ -132,10 +163,10 @@ test('first-use batches remain small and cancellation cannot commit native candi
   assert.equal(h.state.candidates.size, 4);
   assert.equal(h.counts.probes[0], 8);
   const cursor = h.state.variantCursor, candidates = h.state.candidates.size;
-  const controller = new AbortController(); h.counts.abortNative = () => controller.abort();
+  const controller = new AbortController(); h.counts.onNative = () => controller.abort();
   await assert.rejects(h.api.advanceAuctionGearDiscovery(h.state, { ...h.input, signal: controller.signal }), /abort/i);
   assert.equal(h.state.variantCursor, cursor); assert.equal(h.state.candidates.size, candidates);
-  h.counts.abortNative = null; await h.finish();
+  h.counts.onNative = null; await h.finish();
   assert.equal(h.state.candidates.size, 16);
   assert.equal(h.api.auctionGearDiscoveryOptions(h.state).length, 32);
 });

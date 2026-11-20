@@ -201,8 +201,7 @@ export function normalizeGearCandidate(entity: CatalogGearEntity, context: GearC
   const allowableClassMask = String(requirements.class_mask ?? payloadValue(entity, "AllowableClass") ?? "0") || "0";
   const expansionId = number(payloadValue(entity, "ExpansionID"), -1);
   const location = normalize(source.location ?? "");
-  const currentLocations = new Set(context.season.activityNames.map(normalize));
-  const currentSource = Boolean(location && currentLocations.has(location));
+  const currentSource = Boolean(location && context.season.activityNames.some(name => normalize(name) === location));
   const crafted = source.type === "crafting_recipe";
   const seasonStatus = expansionId === context.season.expansionId && (currentSource || crafted || source.type === "auction") ? "current"
     : expansionId >= 0 && expansionId !== context.season.expansionId ? "legacy" : "unknown";

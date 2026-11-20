@@ -118,8 +118,11 @@ test("a failed metadata page cancels its sibling without publishing partial prog
     auctionId: i + 1, itemId: i + 1, bonusIds: [], modifiers: [], contextId: 0, quantity: 1, buyoutCopper: 1
   }}));
   let pendingSignal;
+  const sizes = [];
   t.mock.method(globalThis, "fetch", async (_url, init) => {
-    if (JSON.parse(init.body).variants.length === 64) {
+    const { variants } = JSON.parse(init.body);
+    sizes.push(variants.length);
+    if (variants[0].change.itemId === 1) {
       pendingSignal = init.signal;
       await new Promise((_, reject) => init.signal.addEventListener("abort", () => reject(init.signal.reason), { once: true }));
     }
@@ -129,4 +132,5 @@ test("a failed metadata page cancels its sibling without publishing partial prog
     batchLimit: 64, parallelBatches: true, signal: new AbortController().signal, onProgress: () => assert.fail("partial progress") }),
     /invalid_variant_resolution/);
   assert.equal(pendingSignal.aborted, true);
+  assert.deepEqual(sizes.sort((a,b) => a-b), [32, 33]);
 });

@@ -14,9 +14,12 @@ type VariantResolutionInput = {
   onProgress?: (completed: number, total: number) => void;
 };
 
+// Keep small metadata lookups in one process and balance larger waves over two workers.
+const parallelPageThreshold = 24;
+
 export async function resolveAuctionVariants(input: VariantResolutionInput) {
   const unique = [...new Map(input.offers.map(v => [auctionVariantKey(v.offer), v])).values()];
-  if (!input.parallelBatches || input.batchLimit !== 64 || unique.length <= 64) return resolveVariantPages(input, unique);
+  if (!input.parallelBatches || input.batchLimit !== 64 || unique.length <= parallelPageThreshold) return resolveVariantPages(input, unique);
   // Each worker request owns its own response validation and legacy fallback.
   // Publish progress only after both pages agree on the native engine.
   const controller = new AbortController();
@@ -26,7 +29,9 @@ export async function resolveAuctionVariants(input: VariantResolutionInput) {
   let batchLimit: 16 | 64 = 64;
   try {
     for (let offset = 0; offset < unique.length; offset += 128) {
-      const pages = [unique.slice(offset, offset + 64), unique.slice(offset + 64, offset + 128)].filter(page => page.length);
+      const wave = unique.slice(offset, offset + 128);
+      const split = wave.length <= parallelPageThreshold ? wave.length : Math.ceil(wave.length / 2);
+      const pages = [wave.slice(0, split), wave.slice(split)].filter(page => page.length);
       const requests = pages.map(page => resolveVariantPages({ ...input, signal, batchLimit, onProgress: undefined }, page));
       const results = await Promise.all(requests);
       for (const result of results) {
