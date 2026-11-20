@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { neutralProfessionGloveEnchant, neutralShoulderIllusion, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
 import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
@@ -66,6 +66,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   exhaustive?: boolean;
   omitNeutralGloveEnchants?: boolean;
   omitShoulderIllusions?: boolean;
+  omitWristHearthEnchants?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -138,8 +139,12 @@ export async function evaluateAuctionEnhancementStage(input: {
       slots.push(slot);
       const bareShoulder = input.exhaustive && input.omitShoulderIllusions && slot.slotType === 'SHOULDER' &&
         target.inventoryType === 3 && !option.customization;
+      const bareWrist = input.exhaustive && input.omitWristHearthEnchants && slot.slotType === 'WRIST' &&
+        target.inventoryType === 9 && !option.customization;
       resolutions.set(slot.slotType,{...resolved,
-        enchantChoices:resolved.enchantChoices.filter(e => !bareShoulder || !neutralShoulderIllusion(e.simulationId, input.engine)).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
+        enchantChoices:resolved.enchantChoices.filter(e =>
+          !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
+          !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine))).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
     }
     if (unsupported) continue;
     // Retained equipment is not bought again, but its enhancements consume uniqueness limits.
@@ -182,6 +187,8 @@ export async function evaluateAuctionEnhancementStage(input: {
             slotType === 'HANDS' && obj(item.inventory_type).type === 'HAND';
           const bareShoulder = unenchanted && input.exhaustive && input.omitShoulderIllusions &&
             slotType === 'SHOULDER' && obj(item.inventory_type).type === 'SHOULDER' && target.inventoryType === 3;
+          const bareWrist = unenchanted && input.exhaustive && input.omitWristHearthEnchants &&
+            slotType === 'WRIST' && obj(item.inventory_type).type === 'WRIST' && target.inventoryType === 9;
           // Both paid edits replace this exact socket with a bare gem ID. They
           // preserve every other socket, item bonus and installed enhancement.
           const neck = slotType === 'NECK' && target.inventoryType === 2 && obj(item.inventory_type).type === 'NECK';
@@ -195,7 +202,8 @@ export async function evaluateAuctionEnhancementStage(input: {
           resolution = {...resolved,enchantApplicable:resolved.enchantApplicable || Boolean(enchant),
             enchantChoices:resolved.enchantChoices.filter(e =>
               !(bareGloves && neutralProfessionGloveEnchant(e.simulationId, input.engine)) &&
-              !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine))).map(normalized),
+              !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
+              !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine))).map(normalized),
             gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))};
         } else {
           // Preserve unknown instances and their installed unique limits while

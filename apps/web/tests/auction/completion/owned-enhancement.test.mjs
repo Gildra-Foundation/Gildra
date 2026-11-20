@@ -203,3 +203,42 @@ test('owned jewelry gem substitutions preserve scarce stock, installed gems, and
   const proc=await market({ringEnchant:7967});
   assert(proc.some(r=>r.edits.some(([slot,id])=>slot==='FINGER_1' && id===dear)));
 });
+
+test('hearthstone scrolls can be omitted only when the unchanged wrist is available', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const slotType = 'WRIST', inventoryType = 9, itemId = 1234;
+  const item = {item:{id:itemId}, slot:{type:slotType}, inventory_type:{type:'WRIST'}, level:{value:270},
+    item_class:{id:4}, item_subclass:{id:4}, spells:[], sockets:[]};
+  const candidate = {itemId:5000, name:'Bracers', slotType, inventoryType, itemClassId:4, itemSubclassId:4, eligible:true,
+    compatibility:{specId:72}, constraints:{requiredLevel:1}, variants:[{key:'wrist', itemLevel:270, contextId:0, bonusIds:[],
+      resolution:{effectsVerified:true, effects:[], metadataVersion:3, enhancements:{status:'verified', socketColors:[0,0,0],
+        socketCount:0, socketBonusId:0, requiredProfessionId:0, requiredProfessionRank:0}}}]};
+  const option = {id:'wrist', auctionId:20, costCopper:200, quantity:1, variantKey:'wrist', candidate};
+  const prices = {160328:{ladder:[[10,1]]},172416:{ladder:[[20,1]]}};
+  async function measured({owned=true, equipped=item, enabled=true, revision=engine} = {}) {
+    const state = {checkpoints:{}}, ids = new Set();
+    const baseline = {dps:1000, dpsError:1, confidence:95, iterations:100, engine:revision};
+    for (let step=0; step<12; step++) {
+      const stage = await evaluateAuctionEnhancementStage({exhaustive:true, omitWristHearthEnchants:enabled,
+        finalists:[{label:'exhaustive', options:owned?[]:[option]}], equipment:{equipped_items:[equipped]},
+        loadout:[{slotType,itemId,inventoryType,itemSubclassId:4}],selectedSlots:[slotType],specId:72,level:90,
+        region:'eu',engine:revision,profileFingerprint:'hearth',encounter:{},budgetCopper:1000,baseline,state,
+        signal:new AbortController().signal, shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async(options,_signal,edits)=>{
+          ids.add(options[0]?.customization?.enchantId ?? edits?.[0]?.enchantId ?? 0);
+          return baseline;
+        }});
+      if (stage.complete) return ids;
+    }
+    assert.fail('wrist fixture did not exhaust');
+  }
+  const all = new Set([0,5970,6222]);
+  for (const owned of [true,false]) {
+    assert.deepEqual(await measured({owned}), new Set([0]));
+    assert.deepEqual(await measured({owned,enabled:false}), all);
+    assert.deepEqual(await measured({owned,revision:'SimulationCraft 18428cd unknown'}), all);
+  }
+  assert.deepEqual(await measured({equipped:{...item,enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]}}), all);
+  assert.deepEqual(await measured({equipped:{...item,enchantments:[{enchantment_slot:{id:0},enchantment_id:369}]}}), all);
+});

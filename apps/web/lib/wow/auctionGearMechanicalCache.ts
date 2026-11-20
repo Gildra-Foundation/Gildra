@@ -47,6 +47,12 @@ export function neutralShoulderIllusion(id: number, engine: string) {
   return ignoresItemContext(engine) && shoulderIllusions.has(id);
 }
 
+// Both hearthstone enchants have equip spells only. The pinned engine creates
+// no stat, buff, action or proc for their drivers (see verify-wrist-enchants.py).
+export function neutralWristHearthEnchant(id: number, engine: string) {
+  return (id === 5970 || id === 6222) && ignoresItemContext(engine);
+}
+
 const verifiedGemSlots = new Set([
   "head", "neck", "shoulder", "back", "chest", "wrist", "hands", "waist", "legs", "feet", "finger1", "finger2",
 ]);
