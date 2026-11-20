@@ -23,6 +23,8 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
   equipmentChecked: number; reasons: string[]; unavailable: boolean;
   /** Missing on older checkpoints and when indexing would exceed the private checkpoint budget. */
   priceGroups?: Record<string, PriceGroup>;
+  /** Older cursors retain every original enhancement axis. */
+  omitNeutralGloveEnchants?: true;
   rangeCount?: number;
   replay?: OrdinalRange[];
   currentOrdinal?: string;
@@ -146,9 +148,10 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     loadout: input.loadout, equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper });
   const aliases = input.recheck ? finalistAliases(input.options, input.engine) : undefined;
   const valueBaseline = input.recheck && input.baseline.iterations === 100 ? input.baseline : undefined;
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const omitNeutralGloveEnchants = !input.state || input.state.omitNeutralGloveEnchants === true;
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
-    version: 1, inputKey, cursor: iterator.initialState(), stage, equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
+    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
   // Validate even an exhausted restored cursor without advancing it. Completed
@@ -386,7 +389,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const selected = state.currentOptionIds.map(id => byId.get(id));
     if (!selected.every((option): option is AuctionGearOption => Boolean(option))) throw new Error("invalid_enhancement_checkpoint");
     let dependencies: number[] = [];
-    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
+    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
       onPriceDependencies: itemIds => { dependencies = itemIds; },
       priorSimulations: state.recentMeasurements?.find(entry => entry.ordinal === state.currentOrdinal)?.cache });

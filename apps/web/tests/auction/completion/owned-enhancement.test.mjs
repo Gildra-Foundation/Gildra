@@ -85,3 +85,43 @@ test('exact assembly upgrades selected equipped gear with commodity-only checkou
     row.sockets[0].bonus_list?.[0]===999 && row.enchantments.some(e=>e.enchantment_id===enchant.simulationId)));
   assert.deepEqual(equipment,original);
 });
+
+test('bare worn gloves skip profession-only purchases and keep socket upgrades at exact pricing', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const glove = {item:{id:271457}, slot:{type:'HANDS'}, inventory_type:{type:'HAND'},
+    level:{value:270}, item_class:{id:4}, item_subclass:{id:4}, spells:[], sockets:[{socket_type:{type:'PRISMATIC'}}]};
+  const prices = {38960:{ladder:[[30,10]]}, 128558:{ladder:[[40,10]]}, 130215:{ladder:[[50,10]]}};
+  async function measured(item, enabled, revision = engine) {
+    const state = {checkpoints:{}}, calls = [];
+    const baseline = {dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for (let turn = 0; turn < 20; turn++) {
+      const result = await evaluateAuctionEnhancementStage({exhaustive:true,omitNeutralGloveEnchants:enabled,
+        finalists:[{label:'exhaustive',options:[]}], equipment:{equipped_items:[item]},
+        loadout:[{slotType:'HANDS',itemId:271457,inventoryType:10,itemSubclassId:4}], selectedSlots:['HANDS'],
+        specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'glove-facts',
+        encounter:{scenario:'single-target',fightLengthSeconds:120,targets:1},budgetCopper:100,objective:'dps',
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async() => ({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async(_options,_signal,edits) => {
+          calls.push(edits?.[0] ?? {});
+          return {...baseline,dps:edits?.[0]?.gems.length ? 1100 : 1000};
+        }});
+      if (result.complete) return calls;
+    }
+    assert.fail('glove fixture did not exhaust');
+  }
+  for (const item of [glove,{...glove,enchantments:[]}]) {
+    const calls = await measured(item,true);
+    assert.equal(calls.length,2);
+    assert(calls.every(row=>!row.enchantId));
+    assert(calls.some(row=>row.gems?.[0].itemId===130215));
+  }
+  for (const [item,enabled,revision] of [
+    [glove,false,engine], [glove,true,'SimulationCraft 18428cd fixture'],
+    [{...glove,enchantments:[{enchantment_slot:{id:0},enchantment_id:3238}]},true,engine],
+    [{...glove,enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]},true,engine],
+  ]) {
+    const calls=await measured(item,enabled,revision);
+    assert(calls.some(row=>row.enchantId===5444));
+  }
+});

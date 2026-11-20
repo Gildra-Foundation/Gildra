@@ -27,7 +27,7 @@ function fixture() {
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
-      h.stageCalls.push(key);h.slice++;
+      h.stageCalls.push(key);h.slice++;h.lastGloveRule=input.omitNeutralGloveEnchants;
       const ids=h.dependencies?.[key] ?? [1];
       input.onPriceDependencies(ids);
       input.state.quotes=await quote();input.state.quotedItemIds=[...new Set([...(input.state.quotedItemIds??[]),...ids])];
@@ -456,4 +456,21 @@ test('a batch-capable worker receives the ready finalists together and returns i
   assert(largest > 2);
   assert.deepEqual(submitted.sort(), ['baseline', 'option-1', 'option-2', 'option-3']);
   assert.equal(result.recommendations[0].simulation.iterations, 750);
+});
+
+test('an older saved search finishes on its original glove axes', async () => {
+  const h = fixture();
+  await h.run();
+  assert.equal(h.lastGloveRule, true);
+  const saved = structuredClone(h.state);
+  delete saved.omitNeutralGloveEnchants;
+  const legacyHash = vm.runInNewContext(code + ';hash', {createHash});
+  saved.inputKey = legacyHash(['owned-enhancements-partial-coverage-v1', saved.cursor.inputKey, h.input.profileFingerprint,
+    h.input.engine, h.input.encounter, h.input.objective, h.input.baseline, 'synthetic-state-v1']);
+  h.state = saved;
+  const result = await finish(h);
+  assert.equal(h.lastGloveRule, false);
+  assert.equal(h.state.inputKey, saved.inputKey);
+  assert.equal(h.stageCalls.filter(key=>key==='baseline').length, 1);
+  assert.equal(result.equipmentChecked, 4);
 });

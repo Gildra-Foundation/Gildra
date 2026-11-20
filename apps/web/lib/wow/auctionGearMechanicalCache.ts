@@ -27,7 +27,11 @@ const equivalentGems = new Map<number, number>([
 // Permanent glove enchants on the pinned engine. Gatherer has no native
 // driver. The crafting, gathering and surveying spells have no combat stat,
 // usable proc or custom initializer. Their purchase identities remain distinct.
-const professionGloveEnchants = new Set([3238, 5447, 5933, 5937, 6205]);
+const professionGloveEnchants = new Set([844, 845, 865, 906, 909, 2603, 3238, 4732, 5444, 5445, 5446, 5447, 5932, 5933, 5934, 5935, 5937, 6205]);
+
+export function neutralProfessionGloveEnchant(id: number, engine: string) {
+  return ignoresItemContext(engine) && professionGloveEnchants.has(id);
+}
 
 // Each verified rank adds one integer secondary rating based on player level.
 // Keep rank IDs distinct when assigning the same two bonuses to worn rings.

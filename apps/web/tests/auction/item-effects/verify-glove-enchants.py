@@ -17,7 +17,10 @@ for line in (generated / "spell_item_enchantment.inc").open():
     eid, *flags = map(int, m[1].split(","))
     if eid not in ids:
         continue
-    assert not any(flags)
+    # Fishing has a maximum scaling level, but none of its coefficients adds a stat.
+    assert flags == ([0, 0, 0, 50, 0, 0, 0, 0] if eid == 2603 else [0] * 8)
+    coeff = re.match(r",\s*\{([^}]+)\}", line[m.end():])
+    assert coeff and all(float(value.strip().removesuffix("f")) == 0 for value in coeff[1].split(","))
     found.add(eid)
     for kind, amount, spell in zip(*[map(int, col.split(",")) for col in m.group(2, 3, 4)], strict=True):
         assert amount == 0
@@ -41,7 +44,7 @@ for line in (generated / "sc_spell_data.inc").open():
         # subtype. Disallow other aura types if the engine data changes.
         assert int(aura[2]) == 6 and int(aura[3]) in (4, 219)
         effects.add(int(aura[1]))
-assert drivers - present == {44507} and effects == present
+assert drivers - present == {13611, 13614, 13697, 13838, 13839, 24303, 44507, 71691} and effects == present
 # These drivers have no explicit handler, hotfix or custom proc registration.
 pattern = re.compile(r"\b(?:" + "|".join(map(str, drivers)) + r")\b")
 for file in engine.rglob("*.cpp"):

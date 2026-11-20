@@ -9,6 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
+import { neutralProfessionGloveEnchant } from './auctionGearMechanicalCache';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -60,6 +61,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   quote?: typeof exactCommodityPrices;
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
+  omitNeutralGloveEnchants?: boolean;
   preview?: boolean;
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
@@ -159,11 +161,16 @@ export async function evaluateAuctionEnhancementStage(input: {
           build:info.build,revision:info.simcRevision,engine:input.engine};
         const resolved = resolveExactEnhancements(target,{level:input.level,faction:input.faction,professions:input.professions});
         if (resolved.verified) {
+          // Leaving an originally bare glove unchanged has the same native effect
+          // and costs zero. Every purchasable scroll costs strictly positive copper.
+          const bareGloves = input.exhaustive && input.omitNeutralGloveEnchants && slotType === 'HANDS' &&
+            obj(item.inventory_type).type === 'HAND' && (item.enchantments === undefined ||
+              Array.isArray(item.enchantments) && !item.enchantments.length);
           slot.ownedItemId = itemId;
           slot.allowOwnedChanges = true;
           slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
           resolution = {...resolved,enchantApplicable:resolved.enchantApplicable || Boolean(enchant),
-            enchantChoices:resolved.enchantChoices.map(normalized),
+            enchantChoices:resolved.enchantChoices.filter(e => !bareGloves || !neutralProfessionGloveEnchant(e.simulationId, input.engine)).map(normalized),
             gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))};
         } else {
           // Preserve unknown instances and their installed unique limits while
