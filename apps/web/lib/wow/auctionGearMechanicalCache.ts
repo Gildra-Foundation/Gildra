@@ -29,14 +29,43 @@ const equivalentGems = new Map<number, number>([
 // usable proc or custom initializer. Their purchase identities remain distinct.
 const professionGloveEnchants = new Set([3238, 5447, 5933, 5937, 6205]);
 
+// Each verified rank adds one integer secondary rating based on player level.
+// Keep rank IDs distinct when assigning the same two bonuses to worn rings.
+const ringStatEnchants = new Set([
+  7964, 7965, 7968, 7969, 7994, 7995, 7996, 7997,
+  8020, 8021, 8022, 8023, 8024, 8025, 8026, 8027,
+]);
+
 const verifiedGemSlots = new Set([
   "head", "neck", "shoulder", "back", "chest", "wrist", "hands", "waist", "legs", "feet", "finger1", "finger2",
 ]);
 
+type WornRing = { itemId: number; enchantId: number };
+
+function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: readonly [WornRing, WornRing]) {
+  const ids = rings.map(ring => ring.enchantId);
+  let changed = false;
+  for (const edit of edits) {
+    if (edit.slotType !== "FINGER_1" && edit.slotType !== "FINGER_2") continue;
+    const index = edit.slotType === "FINGER_1" ? 0 : 1;
+    if (edit.itemId !== rings[index].itemId) return;
+    if (edit.enchantId) {
+      ids[index] = edit.enchantId;
+      changed = true;
+    }
+  }
+  if (!changed || !ids.every(id => id === 0 || ringStatEnchants.has(id))) return;
+  // Both effective enchants are additive. If their multiset equals the
+  // original, the ordinary unchanged-ring score already covers the request.
+  const [a, b] = ids.sort((left, right) => left - right);
+  const first = rings[0].enchantId, second = rings[1].enchantId;
+  return a === Math.min(first, second) && b === Math.max(first, second) ? [] : [a, b];
+}
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; engine: string; unenchantedHandsId?: number }) {
+}, native?: { changes: SimcGearChange[]; engine: string; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing] }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
@@ -49,8 +78,13 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
   let ownedChanges = request.ownedChanges;
+  let ringEnchants: number[] | undefined;
   if (reuseCandidateInputs && ownedChanges?.length) {
+    if (native.wornRings && !native.changes.some(item => item.slot === "finger1" || item.slot === "finger2"))
+      ringEnchants = effectiveRingEnchants(ownedChanges, native.wornRings);
     const edits = ownedChanges.flatMap(change => {
+      if (ringEnchants && (change.slotType === "FINGER_1" || change.slotType === "FINGER_2"))
+        return change.gems.length ? [{ ...change, enchantId: undefined }] : [];
       if (change.slotType === "NECK") return [{ ...change, gems: change.gems.map(gem =>
         ({ ...gem, itemId: equivalentGems.get(gem.itemId) ?? gem.itemId })) }];
       if (change.slotType !== "HANDS" || !change.enchantId || !professionGloveEnchants.has(change.enchantId)) return [change];
@@ -63,7 +97,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     ownedChanges = edits.length ? edits : undefined;
   }
   const changes = gear.map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
-  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, gearChanges: changes,
+  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
     actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 

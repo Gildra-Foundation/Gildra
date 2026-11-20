@@ -186,6 +186,36 @@ test('owned neck candidate reuse preserves the edited socket, purchase and final
   assert.notEqual(key(edit,'SimulationCraft other'),key(other,'SimulationCraft other'));
 });
 
+test('swapped direct ring enchants share candidate scores and retain the actual socket changes', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const request = {spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const edit = (slot,id,enchantId,gems=[]) => ({slotType:slot,itemId:id,enchantId,gems});
+  const left = (enchant,gems) => edit('FINGER_1',41,enchant,gems);
+  const right = (enchant,gems) => edit('FINGER_2',42,enchant,gems);
+  const key = (ownedChanges, options={}) => auctionGearMechanicalKey('profile',
+    {...request,ownedChanges,precision:options.precision},
+    {engine,changes:[],wornRings:[{itemId:41,enchantId:0},{itemId:42,enchantId:0}],...options});
+  const a = [left(7964),right(8022)], b = [left(8022),right(7964)];
+  assert.equal(key(a),key(b));
+  assert.equal(key([left(7965)]),key([right(7965)]));
+  assert.notEqual(key(a),key([left(7965),right(8022)]));
+  const gem=[{index:0,itemId:240869}];
+  assert.equal(key([left(7964,gem),right(8022)]),key([left(8022,gem),right(7964)]));
+  assert.notEqual(key([left(7964,gem),right(8022)]),key([left(8022),right(7964,gem)]));
+  assert.notEqual(key([left(7966),right(8022)]),key([left(8022),right(7966)]));
+  for (const options of [{wornRings:undefined},{wornRings:[{itemId:41,enchantId:0},{itemId:43,enchantId:0}]},
+    {changes:[{slot:'finger2',itemId:51,bonusIds:[]}]},{precision:'finalist'},{engine:'other'}]) {
+    assert.notEqual(key(a,options),key(b,options));
+  }
+  const installed = {wornRings:[{itemId:41,enchantId:7964},{itemId:42,enchantId:8022}]};
+  assert.equal(key(undefined,installed),key(b,installed));
+  assert.notEqual(key([left(7994)],installed),key([right(7994)],installed));
+  const proc = {wornRings:[{itemId:41,enchantId:7966},{itemId:42,enchantId:0}]};
+  assert.notEqual(key([left(8022)],proc),key([right(8022)],proc));
+  assert.equal(key(a,proc),key(b,proc));
+  assert.equal(a[0].enchantId,7964);
+});
+
 test('candidate glove keys preserve combat enchant removal, gem edits and finalist identity', () => {
   const engine = 'SimulationCraft 1210-01 · 18428cd';
   const request = {spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};

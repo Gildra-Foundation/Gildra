@@ -985,12 +985,27 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   // A market containing only owned upgrades may have no native item metadata.
   // Trust a real measurement from this simulator instance before using its cache.
   let measuredEngine = "";
-  const hands = Array.isArray(armory.equipment.equipped_items)
-    ? armory.equipment.equipped_items.filter(item => item?.slot?.type === "HANDS") : [];
-  const originalGloves = hands.length === 1 ? hands[0] : undefined;
-  const unenchantedHandsId = originalGloves && (originalGloves.enchantments === undefined ||
-    Array.isArray(originalGloves.enchantments) && originalGloves.enchantments.length === 0)
-    ? originalGloves.item?.id : undefined;
+  const equipped = Array.isArray(armory.equipment.equipped_items) ? armory.equipment.equipped_items : [];
+  const itemInSlot = (slot: string) => {
+    const matches = equipped.filter(item => item?.slot?.type === slot);
+    return matches.length === 1 ? matches[0] : undefined;
+  };
+  const gloves = itemInSlot("HANDS");
+  const unenchantedHandsId = gloves && (gloves.enchantments === undefined ||
+    Array.isArray(gloves.enchantments) && !gloves.enchantments.length) ? gloves.item?.id : undefined;
+  const wornRing = (slot: string) => {
+    const ring = itemInSlot(slot);
+    if (ring?.inventory_type?.type !== "FINGER" || !Number.isSafeInteger(ring.item?.id) || ring.item.id <= 0 ||
+        !Number.isSafeInteger(ring.level?.value) || ring.level.value < 120) return;
+    const enchants: {enchantment_slot?:{id?:number}; enchantment_id?:number}[] = ring.enchantments === undefined ? [] : ring.enchantments;
+    if (!Array.isArray(enchants) || enchants.some(row => !Number.isSafeInteger(row?.enchantment_slot?.id))) return;
+    const permanent = enchants.filter(row => row.enchantment_slot?.id === 0);
+    const enchantId = permanent.length ? permanent[0].enchantment_id : 0;
+    if (permanent.length <= 1 && typeof enchantId === "number" && Number.isSafeInteger(enchantId) && enchantId >= 0)
+      return {itemId: Number(ring.item.id), enchantId};
+  };
+  const firstRing = wornRing("FINGER_1"), secondRing = wornRing("FINGER_2");
+  const wornRings = firstRing && secondRing ? [firstRing, secondRing] as const : undefined;
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
@@ -1003,7 +1018,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       ...(mode === "finalist" ? { precision: mode } : {}) };
     simSignal.throwIfAborted();
     const verifiedEngine = engine() || measuredEngine;
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: prepared.changes, engine: verifiedEngine, unenchantedHandsId });
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: prepared.changes, engine: verifiedEngine, unenchantedHandsId, wornRings });
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {
