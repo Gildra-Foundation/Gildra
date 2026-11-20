@@ -406,3 +406,48 @@ test('certified crafted equipment swaps share a group and retain the cheapest ph
  second.customization = {enchantId:123};
  assert.equal((await finish(h)).result.combinationCount,'3');
 });
+
+test('bare waist socket substitutes only at equal native inputs and preserves gem opportunities', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const belt = (id, socket) => {
+    const row = plainOffer(id, 258942, 'WAIST', id, 0, {engine});
+    row.candidate.inventoryType = 6;
+    const v = row.candidate.variants[0];
+    v.bonusIds = [6652,13663,socket ? 13695 : 13696,13901];
+    v.modifiers = [{type:9,value:90},{type:28,value:3321}];
+    if (!socket) v.resolution.nativeScalingInputsV1 = [0,0,0,90];
+    Object.assign(v.resolution.enhancements, {socketCount:Number(socket), socketColors:[socket ? 14 : 0,0,0]});
+    return row;
+  };
+  const cheaper = belt(1,false), socketed = belt(2,true);
+  const proof = (row, bare = true) => [...auctionDominatedArmorOptions([cheaper,row],[],72,engine,bare)];
+  assert.deepEqual(proof(socketed),[socketed.id]);
+  assert.deepEqual(proof(socketed,false),[]);
+  for (const alter of [
+    r => r.customization = {gemIds:[240869]},
+    r => r.candidate.variants[0].modifiers[0].value--,
+    r => r.candidate.variants[0].resolution.appliedStatsV1[2]++,
+    r => r.candidate.variants[0].bonusIds[0]++,
+    r => r.candidate.variants[0].resolution.enhancements.socketBonusId++,
+    r => r.candidate.variants[0].resolution.enhancements.socketColors[0] = 1,
+  ]) {
+    const changed = structuredClone(socketed);
+    alter(changed);
+    assert.deepEqual(proof(changed),[]);
+  }
+  const shoulder = option(3,'SHOULDER',5);
+  const simulate = async rows => ({...measurement(1000 + (rows.some(o=>o.candidate.slotType==='WAIST') ? 100 : 0)
+    + (rows.includes(shoulder) ? 50 : 0)),engine});
+  const run = async reuseAppliedStats => {
+    const h=fixture();
+    Object.assign(h.input,{options:[cheaper,socketed,shoulder],selectedSlots:['WAIST','SHOULDER'],
+      simulate,recheckEquipment:simulate,compareEmptySockets:true,reuseAppliedStats});
+    return (await finish(h)).result;
+  };
+  const reference = await run(false), reduced = await run(true);
+  assert.equal(reduced.proofPrunedAssignments,'2');
+  assert.deepEqual(ids(reduced.bestDpsConfirmed),[1,3]);
+  assert.deepEqual(ids(reduced.bestValueConfirmed),[1]);
+  assert.deepEqual(reduced.bestDpsConfirmed,reference.bestDpsConfirmed);
+  assert.deepEqual(reduced.bestValueConfirmed,reference.bestValueConfirmed);
+});

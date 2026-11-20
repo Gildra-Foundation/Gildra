@@ -35,7 +35,7 @@ const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "
 
 /** A certified substitution must preserve the item identity observable to APLs
  * and the ordered bonus IDs observable to other equipped items' effects. */
-export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: string): string | undefined {
+export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: string, compareEmptySockets = false): string | undefined {
   const pieces: Array<[string, unknown]> = [];
   let certified = false;
   const pinned = ignoresItemContext(engine);
@@ -45,22 +45,31 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
     const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
     if (!v || !validAuctionItemContext(v.contextId)) return;
     const e = r?.enhancements, stats = r?.appliedStatsV1;
+    // This pinned waist program has two alternatives. 13695 adds one
+    // prismatic socket, 13696 does nothing. Neither contributes a combat
+    // effect or a cross-item description tag. Without a gem or socket bonus
+    // their native stat vectors and all other inputs must still match.
+    const emptySocket = compareEmptySockets && pinned && c.slotType === "WAIST" && c.inventoryType === 6 &&
+      v.bonusIds.length === 4 && v.bonusIds[0] === 6652 && v.bonusIds[1] === 13663 && v.bonusIds[3] === 13901 &&
+      e?.status === "verified" && e.socketColors?.length === 3 && e.socketColors[1] === 0 && e.socketColors[2] === 0 &&
+      ((v.bonusIds[2] === 13695 && e.socketCount === 1 && e.socketColors[0] === 14) ||
+       (v.bonusIds[2] === 13696 && e.socketCount === 0 && e.socketColors[0] === 0));
     if (plainArmorSlots.has(c.slotType) && c.itemClassId === 4 && Number.isSafeInteger(v.itemLevel) && v.itemLevel > 0 &&
         r?.engine === engine && r.nativeNoItemEffects === true && !r.effects?.length && !r.weapon &&
         !t.setId && !t.setName && !t.crafted && !t.uniqueEquipped && !t.limitCategoryId &&
-        e?.status === "verified" && e.socketCount === 0 && e.socketBonusId === 0 && e.requiredProfessionId === 0 &&
+        e?.status === "verified" && (e.socketCount === 0 || emptySocket) && e.socketBonusId === 0 && e.requiredProfessionId === 0 &&
         stats?.length === 46 && stats.every(Number.isSafeInteger) && supportedAuctionModifiers(v.modifiers ?? [])) {
       // The worker never emits reagent IDs (38–51). Drop level and content
       // tuning can be ignored only with positive evidence from the native resolver.
       const scaling = r.nativeScalingInputsV1;
-      const certifiedScaling = pinned && scaling?.length === 4 &&
+      const certifiedScaling = !emptySocket && pinned && scaling?.length === 4 &&
         scaling.every(value => Number.isSafeInteger(value) && value >= 0 && value <= 2147483647);
       // A legacy stat suffix can carry a different list ID for the exact same
       // ordered DBC operations. Every other bonus keeps its original identity.
       const suffix = r.nativeSuffixProgramV1;
       const bonuses = certifiedScaling && v.bonusIds.length === 1 && Number.isSafeInteger(v.bonusIds[0]) &&
         v.bonusIds[0] >= 1 && v.bonusIds[0] <= 500 && typeof suffix === "string" && /^[a-f0-9]{64}$/.test(suffix)
-        ? suffix : v.bonusIds;
+        ? suffix : emptySocket ? "empty-waist-socket-v1" : v.bonusIds;
       const modifiers = (v.modifiers ?? []).filter(m => (m.type < 38 || m.type > 51) &&
         !(certifiedScaling && (m.type === 9 || m.type === 28))).sort((a, b) => a.type - b.type);
       pieces.push([c.slotType, [c.itemId, c.inventoryType, c.itemSubclassId, v.itemLevel, bonuses,
@@ -78,7 +87,7 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
 /** For every marked offer any legal completion can buy the cheaper equivalent
  * in the same slot. A shared lot or item identity could invalidate that receipt. */
 export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
-  specId: number, engine: string): Set<string> {
+  specId: number, engine: string, compareEmptySockets = false): Set<string> {
   const itemSlots = new Map<number, string>(), lotSlots = new Map<number, string>();
   const recordSlot = (map: Map<number, string>, id: number, slot: string) => {
     const seen = map.get(id);
@@ -98,12 +107,16 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
     const { candidate, auctionId } = option;
     if (!candidate.eligible || candidate.compatibility.specId !== specId ||
         lotSlots.get(auctionId) !== candidate.slotType || itemSlots.get(candidate.itemId) !== candidate.slotType) continue;
-    const key = auctionAppliedStatsKey([option], engine);
-    if (!key) continue;
-    keyed.push([option, key]);
-    const best = cheapest.get(key);
-    if (!best || option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id)
-      cheapest.set(key, option);
+    const keys = new Set([auctionAppliedStatsKey([option], engine)]);
+    if (compareEmptySockets && candidate.slotType === "WAIST")
+      keys.add(auctionAppliedStatsKey([option], engine, true));
+    for (const key of keys) {
+      if (!key) continue;
+      keyed.push([option, key]);
+      const best = cheapest.get(key);
+      if (!best || option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id)
+        cheapest.set(key, option);
+    }
   }
   const dominated = new Set<string>();
   for (const [option, key] of keyed) {
