@@ -213,6 +213,17 @@ var errVariantMetadataMissing = errors.New("variant_metadata_worker_upgrade_requ
 var errVariantReportTooLarge = errors.New("variant_report_too_large")
 var errVariantItemRejected = errors.New("variant_item_rejected")
 
+func variantReportSlot(slot string) string {
+	switch slot {
+	case "shoulder":
+		return "shoulders"
+	case "wrist":
+		return "wrists"
+	default:
+		return slot
+	}
+}
+
 func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantRequest) (GearVariantResponse, error) {
 	dir, err := os.MkdirTemp("", "gildra-item-resolve-")
 	if err != nil {
@@ -221,7 +232,9 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	defer os.RemoveAll(dir)
 	ref := supportedSpecs[input.Spec]
 	var profile strings.Builder
+	slots := make([]string, len(input.Variants))
 	for i, v := range input.Variants {
+		slots[i] = variantReportSlot(v.Change.Slot)
 		fmt.Fprintf(&profile, "%s=gildra_variant_%d\nspec=%s\nlevel=%d\nrace=%s\nrole=attack\nload_default_gear=1\nactions=wait,sec=1\n%s\n", ref.Class, i, ref.Spec, input.CharacterLevel, ref.Race, serializeGearChange(v.Change))
 	}
 	path := filepath.Join(dir, "items.simc")
@@ -231,6 +244,7 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	}
 	cmd := exec.CommandContext(ctx, e.binary, path, "iterations=1", "threads=1", "max_time=1", "fixed_time=1", "vary_combat_length=0", "optimal_raid=0", "desired_targets=1", "report_details=1", "json2="+report)
 	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GILDRA_VARIANT_REPORT_SLOTS="+strings.Join(slots, ","))
 	var output bytes.Buffer
 	cmd.Stdout = &limitedBuffer{buffer: &output, remaining: maxSimCOutputBytes}
 	cmd.Stderr = &limitedBuffer{buffer: &output, remaining: maxSimCOutputBytes}
@@ -277,12 +291,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		gear := players[fmt.Sprintf("gildra_variant_%d", i)]
 		item := gear[v.Change.Slot]
 		if item == nil {
-			if v.Change.Slot == "wrist" {
-				item = gear["wrists"]
-			}
-			if v.Change.Slot == "shoulder" {
-				item = gear["shoulders"]
-			}
+			item = gear[variantReportSlot(v.Change.Slot)]
 		}
 		result := GearVariantMetadata{Key: v.Key, ItemID: v.Change.ItemID, Stats: map[string]float64{}, Enhancements: GearVariantEnhancements{Status: "unknown"}}
 		if item == nil {
