@@ -308,10 +308,14 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         .sort((a, b) => compareAuctionEnhancementValue(a, b, state.preciseBaseline!.dps))[0];
       const dps = preferred && confirmedGain(preferred) ? preferred : pass?.confirmedDps ?? preferred;
       const verifiedObjectives = complete && dps ? { dps: dps.configuration.key, value: (value ?? dps).configuration.key } : undefined;
-      const choices = complete ? [input.objective === "value" ? value ?? dps : dps, preferred, value,
-        peak, pass?.confirmedDps, pass?.second, pass?.tiedAlternative] : [];
+      const choices = [input.objective === "value" ? value ?? dps : dps, preferred, value, peak];
+      if (complete) choices.push(pass?.confirmedDps, pass?.second, pass?.tiedAlternative);
       const unique = new Map(choices.filter((row): row is Receipt => Boolean(row)).map(row => [row.configuration.key, row]));
-      const rows = complete ? [...unique.values()] : recommendations(state, input.objective);
+      // Publish an independently measured purchase as soon as it is useful.
+      // Only completion can certify a winner or its statistical tie group.
+      const measured = [...unique.values()];
+      const rows = complete || measured.some(row => row.optionIds.length || row.configuration.ownedChanges?.length)
+        ? measured : recommendations(state, input.objective);
       const sourceUpdatedAt = state.stage.quotes?.sourceUpdatedAt;
       if (sourceUpdatedAt) assertFreshMarket({sourceUpdatedAt});
       const published = rows.map((row, index) => ({ ...row, label: index ? `exhaustive:alternative-${index}` : "exhaustive",
@@ -545,6 +549,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (!selected.every((option): option is AuctionGearOption => Boolean(option))) throw new Error("invalid_enhancement_checkpoint");
     let dependencies: number[] = [];
     const pass = state.precisionPass, preciseBaseline = state.preciseBaseline, receipts = state.finalistReceipts;
+    const newScreenKeys = new Set<string>();
     const sameClass = (a: Receipt, b: Receipt) => {
       const identity = (row: Receipt) => input.finalistKey!(row.optionIds.map(id => byId.get(id)!), row.configuration);
       return identity(a) === identity(b);
@@ -556,6 +561,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       // Duplicate receipts may need a later slice with the same remaining capacity.
       remainingScreenComparisons: !pass && receipts && receipts !== "overflow"
         ? () => maxFinalistReceipts + 1 - Object.keys(receipts).length : undefined,
+      onPricedScreenWitness: !pass && receipts && receipts !== "overflow" ? configuration => {
+        const key = input.finalistKey!(selected, configuration);
+        if (!Object.hasOwn(receipts, key)) newScreenKeys.add(key);
+        if (newScreenKeys.size + Object.keys(receipts).length > maxFinalistReceipts) state.finalistReceipts = "overflow";
+      } : undefined,
       ...(pass && preciseBaseline ? {
         baseline: preciseBaseline, includePrecisionContenders: false,
         simulateConfiguration: async (options: AuctionGearOption[], configuration: Receipt["configuration"], signal: AbortSignal) => {

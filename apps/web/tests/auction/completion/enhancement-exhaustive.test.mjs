@@ -49,6 +49,28 @@ test('exact resumes past twelve calls to a winner excluded by the legacy cap',as
   assert.equal(resumed.simulations,0);assert.equal(exact.calls.length,21);
 });
 
+test('a screen probe counts only affordable layouts and yields without consuming the exact cursor',async()=>{
+  const choices=gems(8), witnessed=new Set();
+  const h=fixture({choices,sockets:2,budgetCopper:51,
+    prices:{sourceUpdatedAt:new Date().toISOString(),prices:Object.fromEntries(choices.map(g=>[g.consumableItemId,{ladder:[[1,1]]}]))},
+    remainingScreenComparisons:()=>65,onPricedScreenWitness:config=>{
+      assert.equal(config.status,'priced');assert(config.totalCopper<=51);witnessed.add(config.key);
+    }});
+  let paused=true;
+  h.input.shouldYield=()=>paused && witnessed.size===1;
+  const interrupted=await optimizeAuctionGearEnhancements(h.input);
+  assert.equal(interrupted.visited,0);assert.equal(interrupted.simulations,0);
+  assert.equal(interrupted.checkpoint.exactNextConfiguration,'0');
+  paused=false;
+  await complete(h,interrupted);
+  assert.equal(witnessed.size,1,'A short time slice cannot repeatedly restart the probe');
+  assert.equal(h.calls.length,17);
+  witnessed.clear();h.calls.length=0;
+  await complete(h);
+  assert.equal(witnessed.size,17,'Two sockets give 81 raw combinations but only 17 purchasable receipts');
+  assert.deepEqual(witnessed,new Set(h.calls.map(c=>c.key)));
+});
+
 test('unpriced purchases leave bare and installed gems available; legacy ordinals still resume',async()=>{
   const prices={sourceUpdatedAt:new Date().toISOString(),prices:{8000:{ladder:[[1,1000]]}}};
   const h=fixture({choices:gems(3),prices,limits:{configurations:1,simulations:1}});

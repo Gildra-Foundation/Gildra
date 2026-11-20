@@ -52,6 +52,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   /** Authoritative decimal cursor for exhaustive traversal; JSON preserves every digit. */
   exactNextConfiguration?: string;
   /** Earlier checkpoints compacted only unavailable commodities. */
+  screenCoverageProbed?: true;
   pricedAxes?: true | "within_budget" | "equivalent_scrolls" | "equivalent_gems" | "conditional_ring_gems";
   cache: Record<string, GearPlanSimulation>; totalSimulations?: number; traversalSteps?: number; seedSelections?: number[][]; nextSeed?: number; reasons?: string[];
   confirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
@@ -77,6 +78,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   /** Runtime worker capacity; never part of the durable traversal identity. */
   simulationConcurrency?: 1 | 2;
   remainingScreenComparisons?: () => number;
+  onPricedScreenWitness?: (configuration: PricedEnhancementConfiguration) => void;
   /** Maximum candidates per native request confirmed by this worker. */
   simulationBatchSize?: number;
   /** Worker can import owned item edits independently for each profileset. */
@@ -444,6 +446,27 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const indicesAt = (at: bigint) => axes.map(axis => {
     const index = Number(at % BigInt(axis.length)); at /= BigInt(axis.length); return index;
   });
+  // A bounded scan can prove that the complete precise pass is mandatory
+  // before submitting any of this layout's screening fights. An unpriced
+  // configuration or duplicate finalist input provides no new witness.
+  const remaining = input.remainingScreenComparisons?.();
+  if (exact && input.onPricedScreenWitness && remaining && !checkpoint.screenCoverageProbed && position() === 0n && total > 1n && total >= BigInt(remaining)) {
+    checkpoint.screenCoverageProbed = true;
+    let at = 0n;
+    for (let scanned = 0; scanned < 2 * remaining && at < total; scanned++) {
+      if (scanned && scanned % 32 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+      signal.throwIfAborted();
+      if (input.shouldYield?.()) break;
+      const candidate = prepare(indicesAt(at), new Set());
+      if (!candidate.valid) {
+        const stride = strides[candidate.pruneAxis];
+        at = (at / stride + 1n) * stride;
+      } else {
+        if (candidate.config.status === "priced") input.onPricedScreenWitness(candidate.config);
+        at++;
+      }
+    }
+  }
   const saveCheckpoint = () => {
     checkpoint.confirmed=confirmed;checkpoint.bestValueConfirmed=bestValueConfirmed;checkpoint.bestDpsConfirmed=bestDpsConfirmed;
     if (exact) { checkpoint.bestMeasuredDps = bestMeasuredDps; checkpoint.secondMeasuredDps = secondMeasuredDps; checkpoint.thirdMeasuredDps = thirdMeasuredDps; }

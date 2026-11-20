@@ -24,7 +24,7 @@ test('full exact pipeline publishes every distinct enhancement result in order a
   assert.equal(run.final.result.enhancementOptimization.complete,true);
   assert.equal(run.summary.equipmentChecked,2,'Both retained equipment and the purchasable replacement were exhaustively evaluated');
   const ordinary=run.requests.filter(request=>request.precision==='auction-candidate');
-  assert.equal(ordinary.length,66,'After the early equipment preview, the 65th distinct enhancement receipt ends screening');
+  assert.equal(ordinary.length,2,'The bare baseline and equipment preview suffice when prices already prove 65 distinct finalist inputs');
   assert.equal(run.summary.counts.native,ordinary.length+1+21*21);
   assert.equal(new Set(run.requests.map(nativeKey)).size,run.requests.length);
   assert.deepEqual(published,expected);
@@ -71,7 +71,11 @@ test('cancelling after a durable exact update stops later native work and keeps 
   }});
   assert.equal(run.final.status,'cancelled');
   assert.equal(run.summary.counts.native,nativeAtCancel);
-  assert.equal(run.publications.filter(row=>row.enhancementOptimization).length,2);
+  const purchased=run.publications.flatMap(row=>row.enhancementOptimization??[]).filter(stage=>stage.recommendations.some(row=>row.optionIds.length));
+  assert.equal(purchased.length,1);
+  assert.equal(purchased[0].complete,false);
+  assert.equal(purchased[0].verifiedObjectives,undefined);
+  assert(purchased[0].recommendations.some(row=>row.optionIds.length && row.simulation.iterations===750));
   assert.deepEqual(run.diskEntry.data.latestAssemblyResult.enhancementOptimization,run.publications.at(-1).enhancementOptimization);
   assert.equal(run.entry.busy,false);
 });
@@ -93,8 +97,12 @@ test('cancelling a slice with an unchanged public result commits its newer priva
   const run=await exactPipeline({items:1,onEnhancementSlice:({result,entry,jobs,owner,counts,writesBefore})=>{
     if(!beforeCancel && counts.searchWrites===writesBefore && !result.complete) {
       const ordinal=state=>Object.values(state.stage.checkpoints)[0]?.exactNextConfiguration;
-      prior=ordinal(readAuctionState('search',entry.id).data.exhaustiveEnhancementState);
-      beforeCancel=ordinal(entry.exhaustiveEnhancementState);
+      const saved=readAuctionState('search',entry.id).data.exhaustiveEnhancementState;
+      const current=entry.exhaustiveEnhancementState;
+      if (!ordinal(saved) || !ordinal(current) || saved.currentOrdinal!==current.currentOrdinal ||
+          saved.precisionPass?.phase!==current.precisionPass?.phase || BigInt(ordinal(current))<=BigInt(ordinal(saved))) return;
+      prior=ordinal(saved);
+      beforeCancel=ordinal(current);
       assert(BigInt(beforeCancel)>BigInt(prior));
       jobs.cancelAuctionGearJob(owner,jobs.getActiveAuctionGearJob(owner,entry.id).id);
     }
