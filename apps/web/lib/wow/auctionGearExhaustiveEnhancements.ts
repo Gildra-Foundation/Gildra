@@ -347,8 +347,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         state.preciseBaseline = result;
         input.onState(state);
       });
+      // Submit ready finalists together. The native transport groups compatible
+      // rows and schedules at most two processes, just as it does for screening.
+      const finalistCapacity = sliceBudget === 2 ? 2 * Math.max(1, Math.min(25, input.simulationBatchSize ?? 0)) : 1;
       for (const leader of contenders()) {
-        if (!recheck || jobs.length >= sliceBudget) break;
+        if (!recheck || jobs.length >= finalistCapacity) break;
         const row = leader.recommendation, key = row.configuration.key;
         const original = !leader.options.length && !row.configuration.ownedChanges?.length;
         if (state.precise?.[key] || (original && measureBaseline)) continue;

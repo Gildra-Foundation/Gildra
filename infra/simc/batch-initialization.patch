@@ -8,7 +8,7 @@
  #include <future>
  #include <iostream>
  #include <memory>
-@@ -103,9 +104,19 @@
+@@ -103,12 +104,30 @@
    return s.str();
  }
 
@@ -29,7 +29,18 @@
  {
    // Reset random seed for the profileset sims
    profile_sim -> seed = 0;
-@@ -124,6 +135,10 @@
++  if ( validate_on_profileset_execution() && profile_sim->deterministic )
++  {
++    // The parent has already consumed its random stream. Replay the configured
++    // seed so this row starts at the same point as a standalone auction fight.
++    for ( const auto& option : set.options()->options )
++      if ( option.scope == "global" && option.name == "seed" )
++        profile_sim->parse_option( option.name, option.value );
++  }
+   profile_sim -> profileset_enabled = true;
+   profile_sim -> report_details = 0;
+   if ( parent -> profileset_work_threads > 0 )
+@@ -124,6 +143,10 @@
      profile_sim -> progress_bar.set_phase( set.name() );
    }
 
@@ -40,7 +51,7 @@
    auto ret = profile_sim -> execute();
    if ( ret )
    {
-@@ -496,17 +511,10 @@
+@@ -496,17 +519,10 @@
  {
    if ( m_mode == SEQUENTIAL )
    {
@@ -60,7 +71,7 @@
      }
      catch ( const std::exception& )
      {
-@@ -601,11 +609,13 @@
+@@ -601,11 +617,13 @@
                 util::str_compare_ci( name, "json2" );
        } );
 

@@ -431,3 +431,29 @@ test('equal precise DPS and cost resolve by receipt key even when screening favo
   assert.equal(result.finalistRecheck.preferredKey, 'option-1');
   assert.equal(result.verifiedValueKey, 'option-1');
 });
+
+test('a batch-capable worker receives the ready finalists together and returns independent scores', async () => {
+  const h = fixture();
+  h.iterations = 100;
+  h.input.baseline = {...simulation(1000), iterations: 100, dpsError: 10};
+  h.input.options.forEach((row, index) => { row.costCopper = [100, 200, 400][index]; });
+  h.scores = {baseline: 1000, 'option-1': 1037, 'option-2': 1080, 'option-3': 1150};
+  h.input.simulationConcurrency = 2;
+  h.input.simulationBatchSize = 8;
+  let queued = 0, largest = 0;
+  const submitted = [];
+  const measure = async (id, mean) => {
+    submitted.push(id);
+    largest = Math.max(largest, ++queued);
+    await new Promise(resolve => setImmediate(resolve));
+    queued--;
+    return simulation(mean);
+  };
+  h.input.recheckBaseline = () => measure('baseline', 1000);
+  h.input.recheck = rows => measure(rows[0].id, h.scores[rows[0].id]);
+  const result = await finish(h);
+  assert.equal(result.complete, true);
+  assert(largest > 2);
+  assert.deepEqual(submitted.sort(), ['baseline', 'option-1', 'option-2', 'option-3']);
+  assert.equal(result.recommendations[0].simulation.iterations, 750);
+});
