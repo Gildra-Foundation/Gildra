@@ -38,6 +38,12 @@ function fixture() {
       const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:{...simulation(dps),iterations:h.iterations??750,dpsError:h.errors?.[key]??1},
         comparison:{deltaDps:dps-1000,candidateDps:dps,uncertainty:{significant:dps>1000}},
         configuration:{key,status:'priced',itemsCopper:spent,totalCopper:spent+cost,fullyEnhanced:false,consumables:[],slots:[],sourceUpdatedAt:input.state.quotes.sourceUpdatedAt}};
+      if (input.simulateConfiguration) {
+        recommendation.simulation = await input.simulateConfiguration(options, recommendation.configuration, input.signal);
+        recommendation.comparison = compareGearSimulationResults(input.baseline, recommendation.simulation);
+      }
+      if (!h.stale && spent+cost<=input.budgetCopper)
+        input.onMeasured?.(recommendation.configuration, () => recommendation);
       return{complete:!h.partial,status:h.stale?'unavailable':spent+cost>input.budgetCopper?'no_affordable_configuration':'ready',searchLimited:true,recommendations:h.stale||spent+cost>input.budgetCopper?[]:[recommendation],reasons:h.stale?['market_unverified']:[],traversal:'exhaustive'};
     },
   });
@@ -473,4 +479,44 @@ test('an older saved search finishes on its original glove axes', async () => {
   assert.equal(h.state.inputKey, saved.inputKey);
   assert.equal(h.stageCalls.filter(key=>key==='baseline').length, 1);
   assert.equal(result.equipmentChecked, 4);
+});
+
+test('independent precision covers more than one private receipt window, across restores and a price change', async () => {
+  const h = fixture();
+  const options = Array.from({length: 78}, (_, i) => ({...h.input.options[0], id: `offer-${i}`,
+    auctionId: i + 50, costCopper: i + 1, candidate: {...h.input.options[0].candidate, itemId: 500+i}}));
+  h.input.options = options;
+  h.iterations = 100;
+  h.input.baseline = {...simulation(1000), iterations: 100};
+  h.input.finalistKey = selected => selected[0]?.id ?? 'baseline';
+  h.input.recheckBaseline = async () => simulation(1000);
+  const precise = id => id === 0 ? 1035 : id === 51 ? 1199 : id === 72 ? 1200 : 1000;
+  const nativeInputs = new Set();
+  h.input.recheck = async selected => {
+    const id = selected[0].candidate.itemId - 500;
+    nativeInputs.add(id);
+    return simulation(precise(id));
+  };
+  const run = async () => {
+    for (let slice=0; slice<360; slice++) {
+      const {result}=await h.run();
+      h.state=structuredClone(h.state);
+      if (result.complete) return result;
+    }
+    assert.fail('all precision passes should complete');
+  };
+  const result = await run();
+  assert.equal(h.state.finalistReceipts, 'overflow');
+  assert.equal(nativeInputs.size,78);
+  assert.equal(result.equipmentChecked,79);
+  assert.equal(result.finalistRecheck.leaderKey,'offer-72');
+  assert.equal(result.finalistRecheck.preferredKey,'offer-51');
+  assert.equal(result.verifiedValueKey,'offer-51');
+  assert(result.recommendations.every(r=>r.simulation.iterations===750));
+  assert(result.recommendations.length<=7);
+  h.price=1;h.state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
+  assert.equal((await h.run()).result.complete,false);
+  const repriced=await run();
+  assert.equal(repriced.verifiedValueKey,'offer-0');
+  assert.equal(repriced.recommendations.find(r=>r.configuration.key==='offer-0').configuration.totalCopper,2);
 });

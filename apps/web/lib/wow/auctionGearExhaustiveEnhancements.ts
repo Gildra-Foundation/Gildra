@@ -11,6 +11,51 @@ import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { auctionGearSlots } from "./auctionGearSelection";
 
 type Leader = { recommendation: AuctionEnhancedRecommendation; options: AuctionGearOption[] };
+type Receipt = AuctionEnhancedRecommendation;
+type PrecisionPass = {
+  phase: "peak" | "rank" | "done";
+  replayThrough?: string;
+  peak?: Receipt; second?: Receipt; preferred?: Receipt; outsideValue?: Receipt; confirmedDps?: Receipt; tiedAlternative?: Receipt;
+};
+const confirmedGain = (row: Receipt) => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant;
+function rankMeasured(a: Receipt, b: Receipt) {
+  return b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper! ||
+    a.configuration.key.localeCompare(b.configuration.key);
+}
+function rankTied(a: Receipt, b: Receipt) {
+  return Number(confirmedGain(b)) - Number(confirmedGain(a)) ||
+    a.configuration.totalCopper! - b.configuration.totalCopper! || rankMeasured(a, b);
+}
+// With the global peak fixed, a confirmed value winner is either the cheapest
+// tied gain (highest DPS at that cost), or the best confirmed gain outside its
+// interval. Neither comparison needs the other receipts in memory.
+function observePrecision(pass: PrecisionPass, row: Receipt, ordinal: string, sameClass: (a: Receipt, b: Receipt) => boolean) {
+  if (pass.phase === "peak") {
+    const previous = pass.peak;
+    if (!previous || rankMeasured(row, previous) < 0) {
+      if (previous && !sameClass(previous, row)) pass.second = previous;
+      pass.peak = row;
+      if (previous && (previous.simulation.dps !== row.simulation.dps ||
+          previous.simulation.dpsError !== row.simulation.dpsError || !sameClass(previous, row))) {
+        // The membership test changed. Only receipts up to this equipment
+        // ordinal can have been classified against a different leader.
+        pass.replayThrough = ordinal;
+        delete pass.preferred;
+        delete pass.outsideValue;
+        delete pass.tiedAlternative;
+      }
+    } else if ((!pass.second || rankMeasured(row, pass.second) < 0) && !sameClass(previous, row)) {
+      pass.second = row;
+    }
+  }
+  const peak = pass.peak!;
+  const confirmed = confirmedGain(row);
+  if (confirmed && (!pass.confirmedDps || rankMeasured(row, pass.confirmedDps) < 0)) pass.confirmedDps = row;
+  if (!compareGearSimulationResults(peak.simulation, row.simulation).uncertainty.significant) {
+    if (!pass.preferred || rankTied(row, pass.preferred) < 0) pass.preferred = row;
+    if (!sameClass(peak, row) && (!pass.tiedAlternative || rankTied(row, pass.tiedAlternative) < 0)) pass.tiedAlternative = row;
+  } else if (confirmed && (!pass.outsideValue || compareAuctionEnhancementValue(row, pass.outsideValue, row.comparison.baselineDps) < 0)) pass.outsideValue = row;
+}
 type Ranking = { valuePrecision?: ValuePrecisionContenders<Leader>; measured?: Leader; value?: Leader; dps?: Leader; runnerUp?: Leader; nextMeasured?: Leader };
 type OrdinalRange = [first: string, last: string];
 type PriceGroup = Ranking & { ordinals: OrdinalRange[]; checked: number; reasons: string[]; unavailable: boolean };
@@ -31,11 +76,15 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
   recentMeasurements?: SavedMeasurements[];
   precise?: Record<string, GearPlanSimulation>;
   preciseBaseline?: GearPlanSimulation;
+  /** One affordable receipt per independent finalist input. Old checkpoints lack this index. */
+  precisionPass?: PrecisionPass;
+  finalistReceipts?: Record<string, AuctionEnhancedRecommendation> | "overflow";
 };
 type StageInput = Parameters<typeof evaluateAuctionEnhancementStage>[0];
 type Input = Omit<StageInput, "finalists" | "state"> & {
   options: AuctionGearOption[]; selectedSlots?: string[];
   recheck?: (options: AuctionGearOption[], configuration: AuctionEnhancedRecommendation["configuration"], signal: AbortSignal) => Promise<GearPlanSimulation>;
+  finalistKey?: (options: AuctionGearOption[], configuration: AuctionEnhancedRecommendation["configuration"]) => string;
   recheckBaseline?: (signal: AbortSignal) => Promise<GearPlanSimulation>;
   state?: AuctionGearExhaustiveEnhancementState;
   onState: (state: AuctionGearExhaustiveEnhancementState) => void;
@@ -133,6 +182,7 @@ function staleQuotes(quotes: AuctionEnhancementStageState["quotes"]) {
 
 // Consecutive compatible assignments share two decimal endpoints. Limit both
 // metadata and retained receipts independently of the mixed-radix domain.
+const maxFinalistReceipts = 64;
 const maxPriceGroups = 32, maxOrdinalRanges = 4096, maxMeasurementSets = 8;
 function addOrdinal(group: PriceGroup, ordinal: string) {
   const last = group.ordinals.at(-1);
@@ -149,9 +199,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const aliases = input.recheck ? finalistAliases(input.options, input.engine) : undefined;
   const valueBaseline = input.recheck && input.baseline.iterations === 100 ? input.baseline : undefined;
   const omitNeutralGloveEnchants = !input.state || input.state.omitNeutralGloveEnchants === true;
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const collectReceipts = Boolean(input.finalistKey && input.recheck && input.recheckBaseline && valueBaseline);
+  const byId = new Map(input.options.map(option => [option.id, option]));
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
-    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
+    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
   // Validate even an exhausted restored cursor without advancing it. Completed
@@ -173,11 +225,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const signatures = Object.fromEntries((state.stage.quotedItemIds ?? []).map(id => [String(id), hash(quotes.prices[String(id)] ?? null)]));
     const changed = new Set(Object.entries(state.quoteSignatures ?? {}).filter(([id, signature]) => signatures[id] !== signature).map(([id]) => id));
     if (changed.size) {
-      if (!state.priceGroups) {
+      if (!state.priceGroups || collectReceipts) {
         // Old checkpoints and oversized indices still prove a complete result
         // by replay. Preserve price-independent native facts across this reset.
         const { stage, precise, recentMeasurements } = state;
-        state = { ...initial({ checkpoints: {}, quotes, quotedItemIds: stage.quotedItemIds }), precise, recentMeasurements };
+        state = { ...initial({ checkpoints: {}, quotes, quotedItemIds: stage.quotedItemIds }), precise, recentMeasurements: state.precisionPass ? undefined : recentMeasurements };
         state.quoteSignatures = signatures;
         input.onState(state);
         return true;
@@ -212,6 +264,13 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   if (state.preciseBaseline && !validRecheck(state.preciseBaseline, input.baseline)) throw new Error("invalid_enhancement_checkpoint");
   const contenders = (): Leader[] => {
     if (!input.recheck || state.replay?.length || !state.cursor.exhausted || state.currentOptionIds !== undefined || !state.measured) return [];
+    if (state.finalistReceipts && state.finalistReceipts !== "overflow") {
+      return Object.values(state.finalistReceipts).map(recommendation => {
+        const options = recommendation.optionIds.map(id => byId.get(id));
+        if (!options.every((option): option is AuctionGearOption => Boolean(option))) throw new Error("invalid_enhancement_checkpoint");
+        return { options, recommendation };
+      });
+    }
     const leaders = new Map<string, Leader>();
     const add = (leader: Leader) => leaders.set(leader.recommendation.configuration.key, leader);
     const a = state.measured.recommendation, b = state.runnerUp?.recommendation;
@@ -233,6 +292,31 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     return [...leaders.values()];
   };
   const finish = (): { state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult } => {
+    if (state.precisionPass || state.finalistReceipts === "overflow") {
+      const pass = state.precisionPass;
+      const complete = pass?.phase === "done";
+      const peak = pass?.peak, preferred = pass?.preferred;
+      const verified = preferred && confirmedGain(preferred) ? preferred : undefined;
+      const value = [pass?.outsideValue, verified].filter((row): row is Receipt => Boolean(row))
+        .sort((a, b) => compareAuctionEnhancementValue(a, b, state.preciseBaseline!.dps))[0];
+      const choices = complete ? [input.objective === "value" ? value : preferred, preferred, value,
+        peak, pass?.confirmedDps, pass?.second, pass?.tiedAlternative] : [];
+      const unique = new Map(choices.filter((row): row is Receipt => Boolean(row)).map(row => [row.configuration.key, row]));
+      const rows = complete ? [...unique.values()] : recommendations(state, input.objective);
+      const sourceUpdatedAt = state.stage.quotes?.sourceUpdatedAt;
+      if (sourceUpdatedAt) assertFreshMarket({sourceUpdatedAt});
+      const published = rows.map((row, index) => ({ ...row, label: index ? `exhaustive:alternative-${index}` : "exhaustive",
+        configuration: { ...row.configuration, sourceUpdatedAt: sourceUpdatedAt ?? row.configuration.sourceUpdatedAt } }));
+      const recheck = complete && preferred && peak && pass?.second ? {
+        keys: [...unique.keys()], leaderKey: peak.configuration.key, preferredKey: preferred.configuration.key,
+        significant: !pass.tiedAlternative, marginDps: compareGearSimulationResults(peak.simulation, pass.second.simulation).uncertainty.marginDps,
+        indistinguishableKeys: published.filter(row => !compareGearSimulationResults(peak.simulation, row.simulation).uncertainty.significant).map(row => row.configuration.key),
+      } : undefined;
+      return { state, result: { traversal: "exhaustive", includesOwnedEquipment: true, complete, equipmentChecked: state.equipmentChecked,
+        status: !complete ? "pending" : rows.length ? "ready" : state.unavailable ? "unavailable" : "no_affordable_configuration",
+        verifiedValueKey: complete ? value?.configuration.key : undefined, finalistRecheck: recheck,
+        searchLimited: true, reasons: [...state.reasons], recommendations: published, catalogRevision: auctionEnhancementCatalogInfo.revision } };
+    }
     const group = contenders();
     const refined = group.flatMap(leader => {
       const simulation = state.precise?.[leader.recommendation.configuration.key];
@@ -241,6 +325,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       return [{ ...leader.recommendation, simulation }];
     });
     const complete = !state.replay?.length && state.cursor.exhausted && state.currentOptionIds === undefined && group.length === refined.length && !needsBaseline();
+    const allInputs = Boolean(state.finalistReceipts);
     let all = recommendations(state, input.objective);
     let verifiedValueKey: string | undefined;
     let finalistRecheck: AuctionEnhancementStageResult["finalistRecheck"];
@@ -248,7 +333,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       const baselineIndex = group.findIndex(leader => !leader.options.length && !leader.recommendation.configuration.ownedChanges?.length);
       const baseline = state.preciseBaseline ?? refined[baselineIndex]?.simulation ?? input.baseline;
       const confirmed = (row: AuctionEnhancedRecommendation) => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant;
-      const candidates = new Map(all.map(row => [row.configuration.key, baseline === input.baseline ? row :
+      const candidates = new Map((allInputs ? [] : all).map(row => [row.configuration.key, baseline === input.baseline ? row :
         { ...row, comparison: compareGearSimulationResults(baseline, row.simulation) }]));
       for (const row of refined) {
         row.comparison = compareGearSimulationResults(baseline, row.simulation);
@@ -282,6 +367,19 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         const byValue = refined.filter(row => confirmed(row) && !dearerTies.has(row.configuration.key)).sort((a, b) => compareAuctionEnhancementValue(a, b, baseline.dps));
         verifiedValueKey = byValue[0]?.configuration.key;
       }
+      if (allInputs) {
+        // Keep the public report bounded even after measuring the whole market.
+        const visible = new Set([all[0]?.configuration.key, leading.configuration.key, preferred.configuration.key,
+          byDps[1]?.configuration.key, tied[1]?.configuration.key, verifiedValueKey]);
+        all = all.filter(row => visible.has(row.configuration.key));
+        if (finalistRecheck) {
+          finalistRecheck.keys = finalistRecheck.keys.filter(key => visible.has(key));
+          finalistRecheck.indistinguishableKeys = finalistRecheck.indistinguishableKeys?.filter(key => visible.has(key));
+        }
+        // Receipts may span several refreshes with byte-identical price ladders.
+        const sourceUpdatedAt = state.stage.quotes?.sourceUpdatedAt;
+        if (sourceUpdatedAt) all = all.map(row => ({ ...row, configuration: { ...row.configuration, sourceUpdatedAt } }));
+      }
     }
     const fresh = all.filter(row => {
       try { assertFreshMarket({ sourceUpdatedAt: row.configuration.sourceUpdatedAt ?? "" }); return true; }
@@ -314,6 +412,13 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     // Entering another slice may change the cursor or prices without producing
     // an update. Only reuse a snapshot when no later slice has touched state.
     lastUpdate = undefined;
+    if (state.precisionPass?.phase === "done") break;
+    if (state.precisionPass?.phase === "rank" && state.currentOptionIds === undefined &&
+        (state.cursor.exhausted || BigInt(state.cursor.visited) > BigInt(state.precisionPass.replayThrough!))) {
+      state.precisionPass.phase = "done";
+      input.onState(state);
+      break;
+    }
     if (state.currentOptionIds === undefined && state.replay?.length) {
       if (input.shouldYield()) break;
       const range = state.replay.at(-1)!;
@@ -340,6 +445,24 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     }
     if (state.currentOptionIds === undefined) {
       if (input.shouldYield()) break;
+      if (state.finalistReceipts === "overflow" && state.cursor.exhausted && !state.replay?.length) {
+        if (state.precisionPass && state.precisionPass.replayThrough === undefined) {
+          state.precisionPass.phase = "done";
+          input.onState(state);
+          break;
+        }
+        const baseline = state.preciseBaseline ?? await input.recheckBaseline!(input.signal);
+        input.signal.throwIfAborted();
+        if (!validRecheck(baseline, input.baseline)) throw new Error("invalid_simulation_result");
+        state.preciseBaseline = baseline;
+        state.precisionPass = { ...state.precisionPass, phase: state.precisionPass ? "rank" : "peak" };
+        state.cursor = iterator.initialState();
+        state.stage.checkpoints = {};
+        delete state.recentMeasurements;
+        delete state.priceGroups;
+        input.onState(state);
+        continue;
+      }
       const jobs: (() => Promise<void>)[] = [];
       const recheckBaseline = input.recheckBaseline, recheck = input.recheck;
       const measureBaseline = state.cursor.exhausted && !state.replay?.length && needsBaseline() && recheckBaseline;
@@ -385,12 +508,38 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       if (lastUpdate.result.complete || input.shouldYield()) return lastUpdate;
       continue;
     }
-    const byId = new Map(input.options.map(option => [option.id, option]));
     const selected = state.currentOptionIds.map(id => byId.get(id));
     if (!selected.every((option): option is AuctionGearOption => Boolean(option))) throw new Error("invalid_enhancement_checkpoint");
     let dependencies: number[] = [];
+    const pass = state.precisionPass, preciseBaseline = state.preciseBaseline;
+    const sameClass = (a: Receipt, b: Receipt) => {
+      const identity = (row: Receipt) => input.finalistKey!(row.optionIds.map(id => byId.get(id)!), row.configuration);
+      return identity(a) === identity(b);
+    };
     const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
+      ...(pass && preciseBaseline ? {
+        baseline: preciseBaseline, includePrecisionContenders: false,
+        simulateConfiguration: async (options: AuctionGearOption[], configuration: Receipt["configuration"], signal: AbortSignal) => {
+          if (!options.length && !configuration.ownedChanges?.length) return preciseBaseline;
+          const result = await input.recheck!(options, configuration, signal);
+          if (!validRecheck(result, input.baseline)) throw new Error("invalid_simulation_result");
+          return result;
+        },
+      } : {}),
+      onMeasured: pass ? (_configuration, describe) => observePrecision(pass, describe(), state.currentOrdinal!, sameClass) : state.finalistReceipts && state.finalistReceipts !== "overflow" ? (configuration, describe) => {
+        const receipts = state.finalistReceipts;
+        if (!receipts || receipts === "overflow") return;
+        const key = input.finalistKey!(selected, configuration);
+        const previous = receipts[key]?.configuration;
+        if (previous && (previous.totalCopper! < configuration.totalCopper! ||
+            previous.totalCopper === configuration.totalCopper && previous.key <= configuration.key)) return;
+        if (!previous && Object.keys(receipts).length >= maxFinalistReceipts) {
+          state.finalistReceipts = "overflow";
+          return;
+        }
+        receipts[key] = describe();
+      } : undefined,
       onPriceDependencies: itemIds => { dependencies = itemIds; },
       priorSimulations: state.recentMeasurements?.find(entry => entry.ordinal === state.currentOrdinal)?.cache });
     input.signal.throwIfAborted();
@@ -404,7 +553,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (acceptQuotes()) break;
     restamp(state);
     const candidates = result.recommendations.map(recommendation => ({ recommendation, options: selected }));
-    for (const candidate of candidates) consider(state, candidate, Boolean(input.recheck), aliases, valueBaseline);
+    if (!pass) for (const candidate of candidates) consider(state, candidate, Boolean(input.recheck), aliases, valueBaseline);
     state.reasons = [...new Set([...state.reasons, ...result.reasons])];
     if (result.complete) {
       const ordinal = state.currentOrdinal;
@@ -434,7 +583,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         }
         state.recentMeasurements = recent;
       }
-      state.equipmentChecked++;
+      if (!pass) state.equipmentChecked++;
       state.unavailable ||= result.status === "unavailable";
       state.currentOptionIds = undefined;
       state.currentOrdinal = undefined;

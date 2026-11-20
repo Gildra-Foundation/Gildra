@@ -68,6 +68,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   simulationCache?: Record<string, GearPlanSimulation>;
   /** Enumerate every supported priced configuration, including partial and bare. */
   exhaustive?: boolean;
+  onMeasured?: (configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) => void;
   valuePrecision?: boolean;
   objective?: "dps" | "value"; baselineDps?: number; baseline?: GearPlanSimulation;
   simulate: (configuration: PricedEnhancementConfiguration, signal: AbortSignal) => Promise<GearPlanSimulation>;
@@ -567,6 +568,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
           confirmed = input.objective === "value" ? bestValueConfirmed : bestDpsConfirmed;
         }
       }
+      if (exact) input.onMeasured?.(config, simulation);
       finalists.sort(rank);
       finalists.length = Math.min(finalists.length,bounds.finalists);
       if (confirmed && !finalists.some(f=>f.configuration.key === confirmed!.configuration.key)) {

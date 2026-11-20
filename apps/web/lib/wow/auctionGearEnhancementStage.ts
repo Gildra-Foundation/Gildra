@@ -68,6 +68,8 @@ export async function evaluateAuctionEnhancementStage(input: {
   simulationBatchSize?: number;
   simulationOwnedBatch?: boolean;
   additionalSearchReasons?: readonly string[];
+  simulateConfiguration?: (options: AuctionGearOption[], configuration: PricedEnhancementConfiguration, signal: AbortSignal) => Promise<GearPlanSimulation>;
+  onMeasured?: (configuration: PricedEnhancementConfiguration, describe: () => AuctionEnhancedRecommendation) => void;
   onPriceDependencies?: (itemIds: number[]) => void;
   priorSimulations?: EnhancementCheckpoint["cache"];
 }): Promise<AuctionEnhancementStageResult> {
@@ -201,6 +203,18 @@ export async function evaluateAuctionEnhancementStage(input: {
     const prices = input.exhaustive ? Object.fromEntries(ids.filter(id=>Object.hasOwn(input.state.quotes!.prices,id))
       .map(id=>[id,input.state.quotes!.prices[id]])) : input.state.quotes.prices;
     const batchSize = finalist.options.length || input.simulationOwnedBatch ? input.simulationBatchSize ?? 0 : 0;
+    const describe = (candidate: {configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation}, label = finalist.label): AuctionEnhancedRecommendation => ({label,...candidate,
+      comparison:compareGearSimulationResults(input.baseline,candidate.simulation),optionIds:finalist.options.map(o=>o.id),
+      removedSlots:[...removed],
+      purchases:finalist.options.map(auctionGearPurchase),
+      enhancementNames: {
+        gems:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='gem' && r.name && candidate.configuration.slots.some(s=>s.gemIds.includes(r.simulationId))).map(r=>[String(r.simulationId),r.name!])),
+        enchants:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='enchant' && r.name && candidate.configuration.slots.some(s=>s.enchantId===r.simulationId)).map(r=>[String(r.simulationId),r.name!])),
+      },
+      consumableNames:Object.fromEntries(candidate.configuration.consumables.flatMap(c=>{
+        const record=auctionEnhancementRecords.find(r=>r.consumableItemId===c.itemId);
+        return record?.name ? [[String(c.itemId),record.name]] : [];
+      }))});
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
       character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
@@ -210,8 +224,10 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationConcurrency:input.simulationConcurrency,
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
+      onMeasured: input.onMeasured && ((configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) =>
+        input.onMeasured!(configuration, () => describe({ configuration, simulation }))),
       onCheckpoint:(checkpoint:EnhancementCheckpoint)=>{input.state.checkpoints[identity]=checkpoint;},
-      simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal,ownedAuctionGearChanges(config))};
+      simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulateConfiguration ? input.simulateConfiguration(finalist.options,config,signal) : input.simulate(customizedAuctionGearOptions(finalist.options,config),signal,ownedAuctionGearChanges(config))};
     let optimized;
     try { optimized=await optimizeAuctionGearEnhancements(args); }
     catch(error){if(!(error instanceof Error)||error.message!=='enhancement_checkpoint_changed')throw error;
@@ -229,18 +245,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       ? [confirmed, optimized.checkpoint.bestValueConfirmed, optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : confirmed ? [confirmed] : [];
     const selected = [...new Map((retained.length ? retained : optimized.finalists.slice(0,1)).map(candidate => [candidate.configuration.key, candidate])).values()];
-    for(const [index,candidate] of selected.entries()) result.recommendations.push({label:index ? `${finalist.label}:alternative-${index}` : finalist.label,...candidate,
-      comparison:compareGearSimulationResults(input.baseline,candidate.simulation),optionIds:finalist.options.map(o=>o.id),
-      removedSlots:[...removed],
-      purchases:finalist.options.map(auctionGearPurchase),
-      enhancementNames: {
-        gems:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='gem' && r.name && candidate.configuration.slots.some(s=>s.gemIds.includes(r.simulationId))).map(r=>[String(r.simulationId),r.name!])),
-        enchants:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='enchant' && r.name && candidate.configuration.slots.some(s=>s.enchantId===r.simulationId)).map(r=>[String(r.simulationId),r.name!])),
-      },
-      consumableNames:Object.fromEntries(candidate.configuration.consumables.flatMap(c=>{
-        const record=auctionEnhancementRecords.find(r=>r.consumableItemId===c.itemId);
-        return record?.name ? [[String(c.itemId),record.name]] : [];
-      }))});
+    for (const [index, candidate] of selected.entries())
+      result.recommendations.push(describe(candidate, index ? `${finalist.label}:alternative-${index}` : finalist.label));
   }
   // Keep absent state only while a step yielded before reaching that finalist.
   if(result.complete) for(const key of Object.keys(input.state.checkpoints))if(!activeKeys.has(key))delete input.state.checkpoints[key];

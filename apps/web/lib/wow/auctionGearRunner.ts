@@ -750,6 +750,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           simulationConcurrency: enhancementConcurrency,
           get simulationBatchSize() { return enhancementConcurrency === 2 ? context.simulate.batchSize : 0; },
           get simulationOwnedBatch() { return context.simulate.ownedBatch; },
+          finalistKey: context.simulate.finalistKey && ((selected, configuration) =>
+            context.simulate.finalistKey(customizedAuctionGearOptions(selected, configuration), ownedAuctionGearChanges(configuration))),
           recheckBaseline: simSignal => context.simulate([], simSignal, undefined, "finalist"),
           recheck: (selected, configuration, simSignal) => context.simulate(
             customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
@@ -1012,11 +1014,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
   const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
-    assertFreshMarket(market);
+  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate") => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
-    const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
-    simSignal.throwIfAborted();
     const verifiedEngine = engine() || measuredEngine;
     const jewelryScore = mode && selections.length
       ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings, mode === "finalist" ? mode : undefined) : undefined;
@@ -1025,6 +1024,15 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
     const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, unenchantedHandsId, wornRings });
+    return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
+  };
+  const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
+    prepareScore(selections, ownedChanges, "finalist").cacheKey;
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
+    assertFreshMarket(market);
+    simSignal.throwIfAborted();
+    const { prepared, verifiedEngine, scoreChanges, request, cacheKey } = prepareScore(selections, ownedChanges, mode);
+    const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {
@@ -1097,7 +1105,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     try { return await measurement; }
     finally { pending.delete(entry); }
   };
-  return Object.defineProperties(Object.assign(simulate, { concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
+  return Object.defineProperties(Object.assign(simulate, { finalistKey, concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
     batchSize: { get: () => transport.batchSize },
     ownedBatch: { get: () => transport.ownedBatch },
   });
