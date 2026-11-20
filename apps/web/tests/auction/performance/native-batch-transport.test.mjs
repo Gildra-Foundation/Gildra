@@ -500,3 +500,38 @@ test('ordinary auction measurements reuse parsed item inputs across lots on the 
   state.requests[1].finish();
   await changed;
 });
+
+test('a direct chest enchant preserves rounded suffix equivalence only for proved candidate fights', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  function chest(suffix, enchantId, workerEngine) {
+    const o = armor(suffix, enchantId, workerEngine);
+    Object.assign(o.candidate, { itemId: 116427, inventoryType: 5, slotType: 'CHEST' });
+    const v = o.candidate.variants[0];
+    Object.assign(v, { itemLevel: 16, modifiers: [{ type: 28, value: 1218 }], bonusIds: [suffix] });
+    Object.assign(v.resolution, { nativeScalingInputsV1: [0, 0, 0, 0], nativeSuffixProgramV1: (suffix === 47 ? 'a' : 'b').repeat(64) });
+    return o;
+  }
+  for (const [name, enchant, worker, edit, shouldShare] of [
+    ['direct stat', 6623, pinned, () => {}, true],
+    ['direct resistance', 15, pinned, () => {}, true],
+    ['another enchant', 6623, pinned, o => { o.customization.enchantId = 6624; }, false],
+    ['spell effect', 2661, pinned, () => {}, false],
+    ['different final rating', 6623, pinned, (_, v) => { v.resolution.appliedStatsV1[27]++; }, false],
+    ['missing proof', 6623, pinned, (_, v) => { delete v.resolution.nativeSuffixProgramV1; }, false],
+    ['a gem was added', 6623, pinned, (o, v) => { o.customization.gemIds = [22459]; Object.assign(v.resolution.enhancements, { socketColors: [14, 0, 0], socketCount: 1 }); }, false],
+    ['uncertified engine', 6623, engine, () => {}, false],
+  ]) {
+    const { state, run } = fixture({ workerEngine: worker });
+    const first = chest(47, enchant, worker), second = chest(70, enchant, worker);
+    edit(second, second.candidate.variants[0]);
+    for (const [o, mode, expected] of [[first, 'certified-candidate', true], [second, 'certified-candidate', !shouldShare],
+      [first, 'finalist', true], [second, 'finalist', true]]) {
+      const before = state.requests.length;
+      const result = run([o], signal(), [], mode);
+      await tick();
+      assert.equal(state.requests.length - before, Number(expected), name);
+      if (expected) state.requests.at(-1).finish();
+      assert.equal((await result).iterations, mode === 'finalist' ? 750 : 100);
+    }
+  }
+});

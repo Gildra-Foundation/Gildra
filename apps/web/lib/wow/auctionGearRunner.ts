@@ -1024,12 +1024,15 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {
       const bare = selections.map(({ customization, ...option }) => option);
-      const proof = auctionAppliedStatsKey(bare, verifiedEngine);
+      const chest = selections.findIndex(o => o.candidate.slotType === "CHEST" && o.customization?.enchantId);
+      const withChest = chest >= 0 && !ownedChanges?.some(change => change.slotType === "CHEST")
+        ? auctionAppliedStatsKey(bare.map((option, i) => i === chest ? selections[i] : option), verifiedEngine, "enchanted-suffix")
+        : undefined;
+      const proof = withChest ?? auctionAppliedStatsKey(bare, verifiedEngine);
       if (proof) {
-        // The proof checks item context against this engine. Keep the actual
-        // enchant/gems and raw scaling modifiers on every enhanced piece.
-        // serializeGearItem omits the validated reagent identifiers (38–51).
-        const customized = prepared.changes.filter(change => change.enchantId || change.gemIds?.length)
+        // A proved chest enchant is already in the score key. Preserve the
+        // original ordered bonus list and scaling inputs on every other edit.
+        const customized = prepared.changes.filter((change, i) => !(withChest && i === chest) && (change.enchantId || change.gemIds?.length))
           .map(change => [change.slot, change.itemId, change.bonusIds, change.enchantId, change.gemIds,
             change.modifiers?.filter(m => m.type < 38 || m.type > 51) ?? []]);
         equivalentKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: [{ appliedStats: proof }, ...customized] });
