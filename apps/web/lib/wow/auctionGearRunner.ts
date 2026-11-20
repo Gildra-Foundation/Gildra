@@ -751,6 +751,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         const enhancementConcurrency = shouldYield() ? 1 : await context.simulate.concurrency?.(signal) ?? 1;
         signal.throwIfAborted();
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
+          nativePlayerLevel: context.armory.profile?.level === 90 ? 90 : undefined,
           simulationConcurrency: enhancementConcurrency,
           get simulationBatchSize() { return enhancementConcurrency === 2 ? context.simulate.batchSize : 0; },
           get simulationOwnedBatch() { return context.simulate.ownedBatch; },
@@ -1027,7 +1028,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, unenchantedHandsId, wornRings });
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings });
     return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>

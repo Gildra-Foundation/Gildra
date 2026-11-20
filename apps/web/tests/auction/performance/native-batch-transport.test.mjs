@@ -24,7 +24,7 @@ function option(itemId, slotType = 'WRIST') {
     variants: [{ key: 'base', bonusIds: [] }] }, variantKey: 'base' };
 }
 
-function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine,
+function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
   const state = { capacity: '2', batch: '25', ownedBatch, mixedSlots:false, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
@@ -51,7 +51,7 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
   const create = vm.runInNewContext(code, { fetch, process, AbortSignal, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
     assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => createAuctionGearDiagnostics() });
-  const armory = { profile: {}, specializations: {}, activeTalentLoadout: 'fixture', equipment };
+  const armory = { profile, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
     encounter: {fightLengthSeconds: 120, targets: 1}, engine: () => metadataEngine });
   async function finishFrom(start) {
@@ -725,6 +725,61 @@ test('independent finalist scores cover equivalent purchased ring gems while pre
   await measure([withBonus, second(22459)], true);
   await measure([first(240870), second(22459)], true);
   await measure([first(22459), second(240870)], true);
+});
+
+test('level-90 ring ratings share fights within a precision and preserve the purchase', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd';
+  function ring(gem, enchant, slot = 'FINGER_1') {
+    const row = option(258910, slot);
+    row.candidate.inventoryType = 11;
+    Object.assign(row.candidate.variants[0], {
+      itemLevel: 120,
+      resolution: { engine, nativeNoItemEffects: true, enhancements: {
+        status: 'verified', socketCount: 1, socketColors: [14, 0, 0], socketBonusId: 0, requiredProfessionId: 0,
+      } },
+    });
+    row.customization = { enchantId: enchant, ...(gem ? { gemIds: [gem] } : {}) };
+    return row;
+  }
+  const equivalentPair = () => [ring(115804, 8020), ring(0, 8021)];
+  const { run, state, finishFrom } = fixture({ workerEngine: engine, profile: { level: 90 } });
+  const [withGem, enchantOnly] = equivalentPair();
+  for (const mode of ['certified-candidate', 'finalist']) {
+    const previousCount = state.requests.length;
+    const shared = signal();
+    const results = Promise.all([withGem, enchantOnly].map(row => run([row], shared, undefined, mode)));
+    await tick();
+    assert.equal(state.requests.length, previousCount + 1);
+    const [change] = state.requests.at(-1).base.gearChanges;
+    assert.equal(change.enchantId, 8020);
+    assert.deepEqual(change.gemIds, [115804]);
+    await finishFrom(previousCount);
+    const [first, second] = await results;
+    assert.deepEqual({ ...first }, { ...second });
+    assert.equal(first.iterations, mode === 'finalist' ? 750 : 100);
+  }
+  const key = (row, simulator = run) => simulator.finalistKey([row]);
+  assert.equal(key(withGem), key(enchantOnly));
+  assert.equal(key(ring(115813, 8020)), key(enchantOnly));
+  for (const other of [ring(115807, 8020), ring(115804, 6550), ring(240869, 8020), ring(0, 8021, 'FINGER_2')]) {
+    assert.notEqual(key(other), key(enchantOnly));
+  }
+  const unverifiedHosts = [
+    variant => { variant.itemLevel = 119; },
+    variant => { variant.resolution.enhancements.socketBonusId = 1; },
+    variant => { variant.resolution.nativeNoItemEffects = false; },
+    variant => { variant.resolution.enhancements.socketColors = [1, 0, 0]; },
+    variant => { variant.resolution.engine = 'older'; },
+  ];
+  for (const changeHost of unverifiedHosts) {
+    const [a, b] = equivalentPair();
+    for (const row of [a, b]) changeHost(row.candidate.variants[0]);
+    assert.notEqual(key(a), key(b));
+  }
+  for (const level of [89, undefined]) {
+    const { run: otherLevel } = fixture({ workerEngine: engine, profile: { level } });
+    assert.notEqual(key(withGem, otherLevel), key(enchantOnly, otherLevel));
+  }
 });
 
 test('a short worker response cannot populate or satisfy a shared finalist measurement', async () => {

@@ -1,12 +1,13 @@
 """Verify the additive rating contract for the cached ring enchant swaps."""
 from pathlib import Path
+import json
 import re
 import sys
 
 data = Path(sys.argv[1])
-module = Path(__file__).resolve().parents[3] / 'lib/wow/auctionGearMechanicalCache.ts'
-declaration = module.read_text().split('const ringStatEnchants = new Set([', 1)[1].split(']);', 1)[0]
-enabled = set(map(int, re.findall(r'\d+', declaration)))
+module = Path(__file__).resolve().parents[3] / 'lib/wow/auctionRingRatings.ts'
+declaration = module.read_text().split('const enchantRanks90 = ', 1)[1].split(' as const;', 1)[0]
+enabled = {eid for group in json.loads(declaration.replace(',\n]', '\n]')) for eid in group}
 verified = set()
 for line in (data / 'spell_item_enchantment.inc').open():
     r = re.match(r'^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),\s*"Enchant Ring - ', line)

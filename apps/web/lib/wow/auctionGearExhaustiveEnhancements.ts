@@ -206,8 +206,10 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   // receipt index and the precise tie classification only on affected markets.
   const chestSuffixFinalists = collectReceipts && input.options.some(option => option.candidate.slotType === "CHEST" &&
     option.candidate.variants.some(v => v.key === option.variantKey && v.resolution?.nativeSuffixProgramV1));
+  const ringRatings = collectReceipts && input.nativePlayerLevel === 90 &&
+    input.options.some(option => option.candidate.slotType === "FINGER_1" || option.candidate.slotType === "FINGER_2");
   const byId = new Map(input.options.map(option => [option.id, option]));
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v1"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
     version: 1, inputKey, cursor: iterator.initialState(), stage, ...(collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });

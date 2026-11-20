@@ -64,6 +64,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   exhaustive?: boolean;
   omitNeutralGloveEnchants?: boolean;
   pruneEquivalentRingGems?: boolean;
+  nativePlayerLevel?: number;
   preview?: boolean;
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
@@ -231,7 +232,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
         const host = finalist.options.find(option => option.candidate.slotType === slot);
-        return host && purchasedRingGemEffect(host, input.engine, id, enchantId);
+        return host && purchasedRingGemEffect(host, input.engine, id, enchantId, input.nativePlayerLevel);
       } : undefined,
       onMeasured: input.onMeasured && ((configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) =>
         input.onMeasured!(configuration, () => describe({ configuration, simulation }))),
