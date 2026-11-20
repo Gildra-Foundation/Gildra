@@ -996,7 +996,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
     const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
-    const shareKey = verified && verifiedEngine.startsWith("SimulationCraft") ? equivalentKey : undefined;
+    const shareKey = verified && verifiedEngine.startsWith("SimulationCraft") && mode !== "finalist"
+      ? equivalentKey ?? cacheKey : undefined;
     if (shareKey) for (const entry of pending) {
       if (entry.key !== shareKey || entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
       const measured = await entry.result;

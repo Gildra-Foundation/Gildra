@@ -122,6 +122,19 @@ test('concurrent certified candidates share one successful measurement in either
   }
 });
 
+test('ordinary discovery candidates with the same mechanical key share a pending fight', async () => {
+  const { state, run, finishFrom } = fixture(), shared = signal();
+  await run.concurrency(shared);
+  const first = option(121), second = { ...option(121), id: 'another-listing' };
+  const results = Promise.all([run([first], shared), run([second], shared), run([option(122)], shared)]);
+  await tick();
+  assert.deepEqual(state.requests.flatMap(request => request.ids), [121, 122]);
+  await finishFrom(0);
+  const [a, b, c] = await results;
+  assert.deepEqual({ ...a }, { ...b });
+  assert.notEqual(a.dps, c.dps);
+});
+
 test('failed shared measurements reach both callers and retry with one new request', async () => {
   const { state, run } = fixture(), shared = signal();
   const submit = () => [1, 2].map(reagent => run([armor(reagent)], shared, [], 'certified-candidate'));
