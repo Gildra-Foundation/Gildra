@@ -93,6 +93,44 @@ test('one accepted full job completes all exact turns without browser polls or c
   assert(!JSON.stringify(recovered.body).includes(state.token));
 }));
 
+test('full assembly starts after discovery even when single comparisons remain', async () => fixture(async state => {
+  state.entry.context.coverage = { discoveryComplete: true };
+  state.entry.retainedBaseline = { dps: 1000 };
+  const search = state.search;
+  state.search = () => ({ ...search(false), discoveryComplete: true, pendingItems: 20 });
+  const posted = await request('POST', {}, { ...base, clientRequestId: randomUUID() });
+  state.release();
+  const job = await settled(state.owner, posted.body.id);
+  assert.equal(job.status, 'completed');
+  assert.deepEqual([state.searches, state.assemblies], [0, 3]);
+  assert(state.selections.every(s => s.excludedOptionIds.join() === 'two'));
+}));
+
+test('an equipment search with every lot excluded still terminates', async () => fixture(async state => {
+  state.entry.context.coverage = { discoveryComplete: true };
+  state.entry.retainedBaseline = { dps: 1000 };
+  state.entry.excludedOptionIds = [...state.options];
+  const search = state.search;
+  state.search = complete => ({ ...search(complete), discoveryComplete: true });
+  const posted = await request('POST', {}, { ...base, clientRequestId: randomUUID() });
+  state.release();
+  const job = await settled(state.owner, posted.body.id);
+  assert.equal(job.status, 'completed');
+  assert.deepEqual([state.searches, state.assemblies], [3, 0]);
+}));
+
+test('a refreshed pool with pending discovery still advances the search', async () => fixture(async state => {
+  state.entry.context.coverage = { discoveryComplete: false };
+  state.entry.retainedBaseline = { dps: 1000 };
+  const search = state.search;
+  state.search = complete => ({ ...search(complete), discoveryComplete: true });
+  const posted = await request('POST', {}, { ...base, clientRequestId: randomUUID() });
+  state.release();
+  const job = await settled(state.owner, posted.body.id);
+  assert.equal(job.status, 'completed');
+  assert.deepEqual([state.searches, state.assemblies], [3, 3]);
+}));
+
 test('duplicate full POST and scoped discovery keep one identity; nonce execution changes are rejected', async () => fixture(async state => {
   const body = { ...base, clientRequestId: randomUUID() }, first = await request('POST', {}, body), replay = await request('POST', {}, body);
   assert.equal(replay.body.id, first.body.id); assert.equal(state.starts, 1); assert.equal((await request('GET', latest())).body.job.id, first.body.id);

@@ -352,7 +352,12 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
   const diagnostics = metricsFor(entry.context.armory ?? entry.context);
   const finishStep = diagnostics.beginStep("search");
   const discoveryShouldYield = () => Date.now() - started >= 5_000;
+  // Full assembly visits the single-item combinations as well. Once the first
+  // comparison is visible, spend discovery turns completing the candidate pool.
+  const prioritizeDiscovery = fullMarket && entry.context.discovery && !entry.context.coverage.discoveryComplete &&
+    entry.retainedBaseline && entry.latestSearchResult?.items.some(item => item.comparison);
   const advanceComparisons = async () => {
+    if (prioritizeDiscovery) return updateAuctionSearchResult(entry, signal, progress, () => true);
     let remaining = entry.latestSearchResult ? 8 : 3;
     let verifiedCapacity: 1 | 2 | undefined;
     if (fullMarket && entry.context.options.length > 1 && !shouldYield()) {
@@ -393,7 +398,7 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
     // Alternate the first turn when discovery outlives its cooperative budget.
     // Retain this choice across recovery so slow upstream calls cannot starve
     // already-discovered comparisons on every continuation.
-    if (entry.nextSearchPhase === "simulation" && entry.context.options.length) {
+    if (!prioritizeDiscovery && entry.nextSearchPhase === "simulation" && entry.context.options.length) {
       setAuctionGearPhase(entry, "nextSearchPhase", "discovery");
       await advanceComparisons();
       simulated = true;
@@ -460,7 +465,7 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
       // identity used by the simulator's engine callback.
       Object.assign(context.discovery, createAuctionGearDiscovery(market, context.input.budgetCopper));
       entry.metadataMarketRefreshRequired = false;
-    } else refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true });
+    } else refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true || Boolean(entry.latestAssemblyResult) });
     synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery));
   } else {
     // Trusted historical contexts have no discovery state. Refresh only their

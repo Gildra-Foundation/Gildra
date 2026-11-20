@@ -24,7 +24,10 @@ export function fullAuctionGearTask(turn: AuctionGearTask, owner: string, token:
       // native precision and persisted planner checkpoints for every turn.
       await verifyAuctionGearSearch(entry, token, nextSignal);
       nextSignal.throwIfAborted();
-      return result.kind === "search" && !result.searchComplete
+      const assemblyReady = result.kind === "search" && result.discoveryComplete && entry.context.coverage.discoveryComplete &&
+        entry.retainedBaseline && !entry.metadataRebuildRequired &&
+        (entry.context.input.enhancementMode === "enhanced" || selectedAuctionGearAssemblyOptions(entry, acceptedSelection).length > 0);
+      return result.kind === "search" && !result.searchComplete && !assemblyReady
         ? continueAuctionGearSearch(entry, nextSignal, nextProgress, token, nextHooks.publishResult, true)
         : assembleAuctionGearSearch(entry, acceptedSelection, nextSignal, nextProgress, token, nextHooks.publishResult, true);
     };
