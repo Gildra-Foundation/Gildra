@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
-import { supportedAuctionModifiers } from "./gearItemModifiers";
+import { ignoresItemContext, supportedAuctionModifiers } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
@@ -16,9 +16,6 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
 }
 
 const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
-
-// This revision of SimC parses context into DUMMY_CONTEXT. Other builds keep it.
-const ignoresItemContext = (engine: string) => / · 18428cd(?:3902412abc8ee274d19567d603e674e66)?$/.test(engine);
 
 /** A certified substitution must preserve the item identity observable to APLs
  * and the ordered bonus IDs observable to other equipped items' effects. */

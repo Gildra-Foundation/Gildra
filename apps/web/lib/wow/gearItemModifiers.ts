@@ -10,3 +10,6 @@ export function supportedAuctionModifiers(modifiers: AuctionModifier[]) {
   if (modifiers.length > 24 || new Set(modifiers.map(m => m.type)).size !== modifiers.length) return false;
   return modifiers.every(m => Number.isSafeInteger(m.type) && Number.isSafeInteger(m.value) && m.value >= 0 && m.value <= 10_000_000 && (m.type === 9 ? m.value >= 1 && m.value <= 90 : m.type === 28 || m.type === 64 ? m.value > 0 : m.type === 29 || m.type === 30 ? [32, 36, 40, 49].includes(m.value) : m.type >= 38 && m.type <= 51));
 }
+
+// The pinned SimC item parser stores context in a discarded local variable.
+export const ignoresItemContext = (engine: string) => / · 18428cd(?:3902412abc8ee274d19567d603e674e66)?$/.test(engine);

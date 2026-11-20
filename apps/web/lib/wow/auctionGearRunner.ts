@@ -973,11 +973,11 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     assertFreshMarket(market);
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
-    const request = { spec: specSlug, scenario, ...encounter, ...(ownedChanges?.length ? { ownedChanges } : {}),
+    const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}), ...(ownedChanges?.length ? { ownedChanges } : {}),
       ...(mode === "finalist" ? { precision: mode } : {}) };
-    const cacheKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: prepared.changes });
     simSignal.throwIfAborted();
     const verifiedEngine = engine();
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: prepared.changes, engine: verifiedEngine });
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {

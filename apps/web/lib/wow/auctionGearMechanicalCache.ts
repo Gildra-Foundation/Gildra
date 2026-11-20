@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { GearPlanSimulation } from "./auctionGearTypes";
-import { auctionMeasurementContract } from "./gearSimulation";
+import { ignoresItemContext } from "./gearItemModifiers";
+import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
 const ttlMs = 15 * 60_000;
 const maximum = 4096;
@@ -11,11 +12,21 @@ function canonical(value: unknown): unknown {
     .sort(([left], [right]) => left.localeCompare(right)).map(([key, entry]) => [key, canonical(entry)]));
 }
 
+// The Go worker omits reagent identities when it writes the native item line.
+function auctionNativeGearChanges(changes: SimcGearChange[], engine: string) {
+  if (!ignoresItemContext(engine)) return changes;
+  return changes.map(({ contextId: _context, modifiers, ...change }) => {
+    const native = modifiers?.filter(modifier => modifier.type < 38 || modifier.type > 51);
+    return native?.length ? { ...change, modifiers: native } : change;
+  });
+}
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
-  spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; ownedChanges?: readonly unknown[]; precision?: "finalist";
-}) {
-  const changes = (request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly unknown[]; precision?: "finalist";
+}, native?: { changes: SimcGearChange[]; engine: string }) {
+  const gear = native ? auctionNativeGearChanges(native.changes, native.engine) : request.gearChanges ?? [];
+  const changes = gear.map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, gearChanges: changes,
     actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }

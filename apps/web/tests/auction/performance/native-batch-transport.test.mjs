@@ -422,3 +422,26 @@ test('enchant-only edits on the same owned item share a batch and keep separate 
   await Promise.all(enchants.map(id=>run([],signal(),changes(id))));
   assert.equal(state.requests.length,count);
 });
+
+test('ordinary auction measurements reuse parsed item inputs across lots on the pinned engine', async () => {
+  const {state, run} = fixture({workerEngine: 'SimulationCraft 1210-01 · 18428cd'});
+  const first = option(240948, 'NECK');
+  const variant = first.candidate.variants[0];
+  variant.contextId = 13;
+  variant.modifiers = [{type: 28, value: 1218}, {type: 40, value: 123}];
+  const second = structuredClone(first);
+  second.candidate.variants[0].contextId = 2;
+  second.candidate.variants[0].modifiers[1].value = 456;
+  const job = run([first], signal());
+  await tick();
+  state.requests[0].finish();
+  const score = await job;
+  assert.deepEqual(await run([second], signal()), score);
+  assert.equal(state.requests.length, 1);
+  second.candidate.variants[0].modifiers[0].value++;
+  const changed = run([second], signal());
+  await tick();
+  assert.equal(state.requests.length, 2);
+  state.requests[1].finish();
+  await changed;
+});
