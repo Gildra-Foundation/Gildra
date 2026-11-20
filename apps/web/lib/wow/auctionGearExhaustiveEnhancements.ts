@@ -1,4 +1,5 @@
 import "server-only";
+import { observeAuctionEquipment, type EquipmentLeaders } from "./auctionGearPlanner";
 import { createHash } from "node:crypto";
 import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey, type AuctionGearEnhancedLoadoutState } from "./auctionGearEnhancedLoadouts";
 import { evaluateAuctionEnhancementStage, type AuctionEnhancedRecommendation, type AuctionEnhancementStageResult, type AuctionEnhancementStageState } from "./auctionGearEnhancementStage";
@@ -62,8 +63,17 @@ type Ranking = { valuePrecision?: ValuePrecisionContenders<Leader>; measured?: L
 type OrdinalRange = [first: string, last: string];
 type PriceGroup = Ranking & { ordinals: OrdinalRange[]; checked: number; reasons: string[]; unavailable: boolean };
 type SavedMeasurements = { ordinal: string; cache: Record<string, GearPlanSimulation> };
+type BareEquipmentCoverage = {
+  leaders: EquipmentLeaders; singles: Record<string, GearPlanSimulation>; totalAssignments: string;
+  layouts: number; observedOrdinal?: string; missing?: true; covered?: true;
+};
+function bareEquipmentCoverage(baseline: GearPlanSimulation, totalAssignments: string): BareEquipmentCoverage {
+  return { leaders: {baseline, best:{optionIds:[], simulation:baseline}, bestConfirmed:null, bestDpsConfirmed:null, bestValueConfirmed:null},
+    singles:{}, totalAssignments, layouts:0 };
+}
 export type AuctionGearExhaustiveEnhancementState = Ranking & {
   version: 1; inputKey: string; cursor: AuctionGearEnhancedLoadoutState;
+  bareEquipment?: BareEquipmentCoverage;
   currentOptionIds?: string[]; stage: AuctionEnhancementStageState;
   /** Price basis of global ranking, independent of an in-flight stage refresh. */
   quoteSignatures?: Record<string, string>;
@@ -86,7 +96,7 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
 };
 type StageInput = Parameters<typeof evaluateAuctionEnhancementStage>[0];
 type Input = Omit<StageInput, "finalists" | "state"> & {
-  options: AuctionGearOption[]; selectedSlots?: string[];
+  options: AuctionGearOption[]; selectedSlots?: string[]; trackBareEquipment?: boolean;
   recheck?: (options: AuctionGearOption[], configuration: AuctionEnhancedRecommendation["configuration"], signal: AbortSignal) => Promise<GearPlanSimulation>;
   finalistKey?: (options: AuctionGearOption[], configuration: AuctionEnhancedRecommendation["configuration"]) => string;
   recheckBaseline?: (signal: AbortSignal) => Promise<GearPlanSimulation>;
@@ -211,9 +221,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const ringRatings = collectReceipts && input.nativePlayerLevel === 90 &&
     input.options.some(option => option.candidate.slotType === "FINGER_1" || option.candidate.slotType === "FINGER_2");
   const byId = new Map(input.options.map(option => [option.id, option]));
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
-    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
+    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
   // Validate even an exhausted restored cursor without advancing it. Completed
@@ -303,6 +313,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     return [...leaders.values()];
   };
   const finish = (): { state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult } => {
+    if (state.bareEquipment && (!state.precisionPass || state.precisionPass.phase === "peak") &&
+        state.cursor.exhausted && state.currentOptionIds === undefined && !state.replay?.length) state.bareEquipment.covered = true;
     if (state.precisionPass || state.finalistReceipts === "overflow") {
       const pass = state.precisionPass;
       const complete = pass?.phase === "done";
@@ -449,6 +461,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       if (!validRecheck(baseline, input.baseline)) throw new Error("invalid_simulation_result");
       state.preciseBaseline = baseline;
       state.precisionPass = { phase: "peak", checkedEquipment: 0 };
+      if (state.bareEquipment) state.bareEquipment = bareEquipmentCoverage(baseline, iterator.totalAssignments);
       state.cursor = iterator.initialState();
       delete state.currentOptionIds;
       delete state.currentOrdinal;
@@ -490,6 +503,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (state.currentOptionIds === undefined) {
       if (input.shouldYield()) break;
       if (state.precisionPass && state.cursor.exhausted && !state.replay?.length) {
+        if (state.bareEquipment) state.bareEquipment.covered = true;
         if (state.precisionPass.replayThrough === undefined) {
           return completePrecision();
         }
@@ -579,7 +593,18 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           return result;
         },
       } : {}),
-      onMeasured: pass ? (_configuration, describe) => observePrecision(pass, describe(), state.currentOrdinal!, sameClass) : state.finalistReceipts && state.finalistReceipts !== "overflow" ? (configuration, describe) => {
+      onMeasured: pass || state.bareEquipment || state.finalistReceipts && state.finalistReceipts !== "overflow" ? (configuration, describe) => {
+        const bare = state.bareEquipment;
+        if (bare && (!pass || pass.phase === "peak") && configuration.status === "priced" && configuration.totalCopper === configuration.itemsCopper &&
+            !configuration.consumables.length && !configuration.ownedChanges?.length) {
+          const { simulation } = describe();
+          if (simulation.iterations !== bare.leaders.baseline.iterations || simulation.engine !== bare.leaders.baseline.engine)
+            throw new Error("invalid_simulation_result");
+          observeAuctionEquipment(bare.leaders, selected, simulation, best => best.optionIds.map(id => byId.get(id)!), input.objective);
+          if (selected.length === 1) for (const option of iterator.equivalentSingles(selected[0].id)) bare.singles[option.id] = simulation;
+          bare.observedOrdinal = state.currentOrdinal;
+        }
+        if (pass) { observePrecision(pass, describe(), state.currentOrdinal!, sameClass); return; }
         const receipts = state.finalistReceipts;
         if (!receipts || receipts === "overflow") return;
         const key = input.finalistKey!(selected, configuration);
@@ -609,6 +634,13 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     state.reasons = [...new Set([...state.reasons, ...result.reasons])];
     if (result.complete) {
       const ordinal = state.currentOrdinal;
+      if (state.bareEquipment && (!pass || pass.phase === "peak")) {
+        // The empty purchase is the measured baseline. Other layouts must
+        // have produced their own unmodified, priced receipt on this pass.
+        if (selected.length && state.bareEquipment.observedOrdinal !== ordinal) state.bareEquipment.missing = true;
+        state.bareEquipment.layouts++;
+        delete state.bareEquipment.observedOrdinal;
+      }
       if (state.priceGroups && ordinal !== undefined) {
         const key = dependencies.join(",");
         const group = state.priceGroups[key] ??= { ordinals: [], checked: 0, reasons: [], unavailable: false };

@@ -257,5 +257,11 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     if (!purchase) throw new Error("invalid_search_checkpoint");
     return purchase.options.map(option => option.id);
   }
-  return { inputKey, totalAssignments: total.toString(), initialState, nextBatch, optionIdsAt };
+  let singleAliases: Map<string, AuctionGearOption[]> | undefined;
+  function equivalentSingles(id: string) {
+    singleAliases ??= new Map(choices.flatMap(axis => axis.flatMap(group =>
+      group.options.map(option => [option.id, group.options] as const))));
+    return singleAliases.get(id) ?? [];
+  }
+  return { inputKey, totalAssignments: total.toString(), initialState, nextBatch, optionIdsAt, equivalentSingles };
 }

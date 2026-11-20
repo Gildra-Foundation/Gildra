@@ -9,6 +9,7 @@ import vm from 'node:vm';
 import { serialize } from 'node:v8';
 import { compareAuctionEnhancementValue, trackValuePrecision } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
 import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { observeAuctionEquipment } from '../../../lib/wow/auctionGearPlanner.ts';
 import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { readAuctionState, writeAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
@@ -23,7 +24,7 @@ function fixture() {
   const h={price:10,stale:false,partial:false,stageCalls:[],screenCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:h.prices ?? {'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
+    createHash,observeAuctionEquipment,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
@@ -90,6 +91,32 @@ test('enhances duplicate equipment once and reopens with the next cheapest recei
   assert.equal(resumed.recommendations[0].optionIds[0], 'option-3');
   assert.equal(resumed.recommendations[0].configuration.itemsCopper, 100);
   assert(!h.stageCalls.includes(copy.id));
+});
+
+test('the joint traversal certifies each bare equipment layout and its equivalent physical offers across resumes',async()=>{
+  const h=fixture();h.price=0;h.scale=10;
+  h.input.trackBareEquipment=true;
+  const [first,second,third]=h.input.options;
+  first.costCopper=20;second.costCopper=100;third.costCopper=200;
+  const dearer={...third,id:'other-lot',auctionId:33,costCopper:300};
+  h.input.options.push(dearer);
+  for(let turn=0;turn<10;turn++){
+    const result=await h.run();
+    h.state=structuredClone(result.state);
+    if(result.result.complete)break;
+    assert.equal(h.state.bareEquipment.covered,undefined);
+  }
+  const {leaders,layouts,covered,missing,singles}=h.state.bareEquipment;
+  assert.equal(covered,true);assert.equal(missing,undefined);assert.equal(layouts,4);
+  assert.deepEqual([...leaders.bestDpsConfirmed.optionIds],[third.id]);
+  assert.deepEqual([...leaders.bestValueConfirmed.optionIds],[first.id]);
+  assert.deepEqual(singles[third.id],singles[dearer.id]);assert.equal(singles[dearer.id].dps,1030);
+  const saved=structuredClone(h.state.bareEquipment);await h.run();
+  assert.deepEqual(structuredClone(h.state.bareEquipment),saved);
+  const gap=fixture();gap.input.trackBareEquipment=true;
+  await finish(gap);
+  assert.equal(gap.state.bareEquipment.missing,true,'a measured upgrade with additional cost cannot stand in for bare');
+  assert.equal(Object.keys(gap.state.bareEquipment.singles).length,0);
 });
 
 test('price ladder changes reopen completed ranking while equal-price timestamps keep the exact cursor',async()=>{

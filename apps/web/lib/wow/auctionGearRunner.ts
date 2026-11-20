@@ -37,7 +37,7 @@ import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from ".
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, nativeGearSimulationMeasurement, type GearSimulationScenario } from "./gearSimulation";
-import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
+import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, auctionEquipmentWinners, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
 import { createAuctionGearSearch, deleteAuctionGearSearch, scheduleAuctionGearSearchSave, flushAuctionGearSearch, flushPendingAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
@@ -631,6 +631,21 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       const cached = entry.enhancementPreview;
       return cached?.validUntil !== undefined && cached.validUntil > Date.now() ? cached.result : undefined;
     };
+    const priorEnhancements = entry.exhaustiveEnhancementState;
+    // The exact enhancement iterator includes the unmodified purchase for each
+    // legal layout. Older cursors did not retain those measurements.
+    const jointMarket = fullMarket && context.input.enhancementMode === "enhanced" && Boolean(context.simulate.finalistKey) &&
+      (entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)?.iterations === 100 &&
+      (!context.discovery || context.coverage.discoveryComplete) && options.length === context.options.length &&
+      (!priorEnhancements || Boolean(priorEnhancements.bareEquipment)) && !options.some(option => option.customization);
+    const advanceTogether = jointMarket && !priorEnhancements?.bareEquipment?.missing;
+    const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
+      currentItem: context.currentBySlot.get(purchase.slotType) });
+    const presentWinners = (result: Pick<AuctionGearAssemblyResult, "purchases" | "bestConfirmed" | "bestDpsConfirmed" | "bestValueConfirmed">) => {
+      const decorate = (row: typeof result.bestConfirmed | undefined) => row ? { ...row, purchases:row.purchases.map(present) } : null;
+      return { purchases:result.purchases.map(present), bestConfirmed:decorate(result.bestConfirmed),
+        bestDpsConfirmed:decorate(result.bestDpsConfirmed), bestValueConfirmed:decorate(result.bestValueConfirmed) };
+    };
     const advanceAssembly = async () => {
       const { result, checkpoint, preciseSingles } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
         searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
@@ -649,23 +664,23 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             entry.assemblyCheckpoint?.equipmentVerification !== undefined)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
-        maxNewSimulations: assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
-        shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
+        maxNewSimulations: advanceTogether ? 1 : assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
+        shouldYield: advanceTogether && entry.assemblyCheckpoint ? () => true : shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
       }));
       signal.throwIfAborted();
       entry.assemblyCheckpoint = checkpoint;
       entry.retainedSimulationCache = checkpoint.simulationCache;
       const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true, undefined, undefined, false, preciseSingles);
-      const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
-        currentItem: context.currentBySlot.get(purchase.slotType) });
       const preview = currentPreview();
       const published = publicAuctionResult(context, { ...result, ...(statLimited ? { exhaustiveComplete: false, searchLimited: true } : {}), ...(preview ? { enhancementOptimization: preview } : {}), updatedSearch, marketChange: context.marketChange,
         ...(context.input.compareScenarios?.length ? { scenarioComparisonsComplete: false } : {}),
-        purchases: result.purchases.map(present),
-        bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null,
-        bestValueConfirmed: result.bestValueConfirmed ? { ...result.bestValueConfirmed, purchases: result.bestValueConfirmed.purchases.map(present) } : null,
-        bestDpsConfirmed: result.bestDpsConfirmed ? { ...result.bestDpsConfirmed, purchases: result.bestDpsConfirmed.purchases.map(present) } : null });
+        ...presentWinners(result) });
+      // On resume this paused preview has no new evaluation. Keep the durable
+      // enhancement result visible until its iterator publishes this turn.
+      if (advanceTogether && priorEnhancements && entry.latestAssemblyResult?.enhancementOptimization) {
+        return { checkpoint, published, poolComplete: result.exhaustiveComplete };
+      }
       entry.latestAssemblyResult = published;
       scheduleAuctionGearSearchSave(entry);
       // Persist and publish each completed assembly evaluation before starting
@@ -676,7 +691,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       return { checkpoint, published, poolComplete: result.exhaustiveComplete };
     };
     let { checkpoint, published, poolComplete } = await advanceAssembly();
-    if (fullMarket && context.input.enhancementMode === "enhanced" && !published.exhaustiveComplete) {
+    if (!advanceTogether && fullMarket && context.input.enhancementMode === "enhanced" && !published.exhaustiveComplete) {
       await diagnostics.measureStage("enhancements", () => previewAuctionGearLeader(entry, options, signal, progress));
       const preview = currentPreview();
       scheduleAuctionGearSearchSave(entry);
@@ -688,12 +703,12 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         publishResult?.(published);
       }
     }
-    for (let step = 1; publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
+    for (let step = 1; !advanceTogether && publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
       ({ checkpoint, published, poolComplete } = await advanceAssembly());
     }
     if (!shouldYield()) setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     const encounters = parseAuctionGearCompareScenarios(context.input.compareScenarios);
-    if (published.exhaustiveComplete) {
+    if (published.exhaustiveComplete || advanceTogether) {
       // Publications are snapshots. Do not mutate the result already held by a job.
       published = { ...published, ...(encounters.length ? {scenarioComparisonsComplete: false} : {}) };
       const finalists = new Map<string, AuctionGearOption[]>();
@@ -739,6 +754,19 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             return;
           }
           const visible = !result.complete && !result.recommendations.length ? currentPreview() ?? result : result;
+          const bare = entry.exhaustiveEnhancementState?.bareEquipment;
+          if (advanceTogether && result.complete && result.traversal === "exhaustive" && bare?.covered && bare.layouts > 0 && !bare.missing) {
+            // Every affordable equipment layout returned a bare comparison. Its
+            // winners and all single-item cards use the same native baseline.
+            const winners = auctionEquipmentWinners(bare.leaders, best => best.optionIds.map(id => byId.get(id)!),
+              {loadout:context.loadout, specId:context.specId, budgetCopper:context.input.budgetCopper}, published.selectedSlots);
+            const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true, undefined, undefined, false,
+              {baseline:bare.leaders.baseline, byOption:new Map(Object.entries(bare.singles))});
+            published = { ...published, ...winners, ...presentWinners(winners), updatedSearch, exhaustiveComplete:true,
+              searchLimited:context.searchLimited, validCombinations:bare.layouts, combinationCount:bare.totalAssignments,
+              combinationsChecked:Math.min(Number(bare.totalAssignments), Number.MAX_SAFE_INTEGER),
+              simulations:diagnostics.snapshot().simulations, proofPrunedAssignments:undefined, pruningCounts:undefined };
+          }
           published = { ...published, enhancementOptimization: visible };
           entry.latestAssemblyResult = published;
           scheduleAuctionGearSearchSave(entry);
@@ -753,6 +781,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         const enhancementConcurrency = shouldYield() ? 1 : await context.simulate.concurrency?.(signal) ?? 1;
         signal.throwIfAborted();
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
+          trackBareEquipment: jointMarket,
           nativePlayerLevel: context.armory.profile?.level === 90 ? 90 : undefined,
           simulationConcurrency: enhancementConcurrency,
           get simulationBatchSize() { return enhancementConcurrency === 2 ? context.simulate.batchSize : 0; },
@@ -793,7 +822,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         // changed state. Other exits still require a durable publication. The
         // enclosing catch marks mutations from failed/aborted stage calls.
         if (enhanced.result !== lastPublishedEnhancement) await publishEnhancement(enhanced.result);
-        if (!enhanced.result.complete) return published;
+        if (!enhanced.result.complete || !published.exhaustiveComplete) return published;
         if (enhanced.result.recommendations.length) {
           finalists.clear();
           for (const recommendation of auctionEnhancementScenarioFinalists(enhanced.result.recommendations, context.input.objective ?? "dps")) {
