@@ -93,6 +93,40 @@ cat > report.json <<'REPORT'
 	}
 }
 
+func TestMixedSlotBatchUsesUnchangedArmoryAndOmitsPrimaryResult(t *testing.T) {
+	engine, _ := admissionTestEngine(t, 2)
+	script := `#!/bin/sh
+set -eu
+if grep -q '=gildra_candidate,' "$1"; then exit 1; fi
+printf '%s\n' "$@" > args
+grep -Fqx 'profileset.c1+=head=gildra_candidate,id=1001,source=local' args
+grep -Fqx 'profileset.c2+=neck=gildra_candidate,id=1002,source=local' args
+cat > report.json <<'REPORT'
+` + batchReportFixture + "\nREPORT\n"
+	if err := os.WriteFile(engine.binary, []byte(script), 0700); err != nil {
+		t.Fatal(err)
+	}
+	b := simulationBatch{MixedSlots: true, Base: nativeGearInput(t), Candidates: []batchCandidate{
+		{GearChanges: []GearChange{{Slot: "head", ItemID: 1001}}},
+		{GearChanges: []GearChange{{Slot: "neck", ItemID: 1002}}},
+	}}
+	b.Base.Precision = auctionCandidatePrecision
+	rows, err := engine.SimulateBatch(context.Background(), b)
+	if err != nil || len(rows) != 2 || rows[0].DPSMean != 1234.56789 || rows[1].DPSMean != 8765.4321 {
+		t.Fatal(rows, err)
+	}
+	if err := os.WriteFile(engine.binary, []byte(strings.ReplaceAll(script, "18428cd3902", "unknown")), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := engine.SimulateBatch(context.Background(), b); err != errUnsupportedMixedSlots || rows != nil {
+		t.Fatalf("unexpected mixed output from unknown revision: %v %v", rows, err)
+	}
+	b.Base.Precision = auctionFinalistPrecision
+	if b.validate() == nil {
+		t.Fatal("mixed finalist requests must retain homogeneous slots")
+	}
+}
+
 func TestSimulationBatchRejectsIncompleteNativeOutput(t *testing.T) {
 	for _, bad := range []struct{ from, to string }{
 		{`"mean_std_dev":0.78`, `"std_dev":0.78`},

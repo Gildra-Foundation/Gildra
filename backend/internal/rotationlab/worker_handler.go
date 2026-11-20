@@ -54,6 +54,9 @@ func (h *WorkerHandler) health(w http.ResponseWriter, postgres bool) {
 			w.Header().Set("X-Gildra-Simulation-Concurrency", strconv.Itoa(capacity))
 		}
 	}
+	if _, ok := h.engine.(*SimCEngine); ok {
+		w.Header().Set("X-Gildra-Simulation-Mixed-Slots", "1")
+	}
 	if _, ok := h.engine.(batchEngine); ok {
 		w.Header().Set("X-Gildra-Simulation-Batch", strconv.Itoa(maxSimulationBatch))
 		w.Header().Set("X-Gildra-Simulation-Owned-Batch", "1")
@@ -108,6 +111,9 @@ func (h *WorkerHandler) simulateBatch(w http.ResponseWriter, r *http.Request) {
 		writeWorkerSimulationError(w, err)
 		return
 	}
+	if input.MixedSlots {
+		w.Header().Set("X-Gildra-Simulation-Mixed-Slots", "1")
+	}
 	if len(input.Candidates) > 0 && len(input.Candidates[0].OwnedChanges) > 0 {
 		w.Header().Set("X-Gildra-Simulation-Owned-Batch", "1")
 	}
@@ -118,6 +124,10 @@ func (h *WorkerHandler) simulateBatch(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeWorkerSimulationError(w http.ResponseWriter, err error) {
+	if errors.Is(err, errUnsupportedMixedSlots) {
+		writeProblem(w, http.StatusUnprocessableEntity, "unsupported_mixed_slots", err.Error())
+		return
+	}
 	if errors.Is(err, errUnsupportedOwnedBatch) {
 		writeProblem(w, http.StatusUnprocessableEntity, "unsupported_owned_batch", err.Error())
 		return

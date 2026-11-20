@@ -12,6 +12,8 @@ import (
 
 const maxSimulationBatch = 25
 
+var errUnsupportedMixedSlots = errors.New("mixed-slot batches require a verified SimulationCraft revision")
+
 type batchCandidate struct {
 	GearChanges  []GearChange `json:"gearChanges"`
 	OwnedChanges []ownedEdit  `json:"ownedChanges,omitempty"`
@@ -19,6 +21,7 @@ type batchCandidate struct {
 }
 
 type simulationBatch struct {
+	MixedSlots bool             `json:"mixedSlots,omitempty"`
 	Base       SimulationInput  `json:"base"`
 	Candidates []batchCandidate `json:"candidates"`
 }
@@ -50,21 +53,27 @@ func (b simulationBatch) validate() error {
 	if err := ValidateInput(b.Base); err != nil {
 		return err
 	}
-	// Profilesets inherit the first candidate's overrides. Every row must
-	// replace that complete set or it could silently retain another row's gear.
+	if b.MixedSlots && (b.Base.Armory == nil || b.Base.Precision != auctionCandidatePrecision) {
+		return errors.New("mixed slots require a candidate armory")
+	}
+	// Homogeneous batches inherit row zero. Mixed batches use an untouched
+	// primary actor and give each profileset all its own overrides.
 	slots := make(map[string]bool)
 	for _, change := range b.Candidates[0].GearChanges {
 		slots[change.Slot] = true
 	}
 	for _, row := range b.Candidates {
-		if len(row.GearChanges)+len(row.OwnedChanges) == 0 || len(row.GearChanges) != len(slots) || len(row.OwnedChanges) != len(b.Candidates[0].OwnedChanges) {
+		if b.MixedSlots && len(row.OwnedChanges) != 0 {
+			return errors.New("mixed slots require purchased candidate gear")
+		}
+		if len(row.GearChanges)+len(row.OwnedChanges) == 0 || (!b.MixedSlots && len(row.GearChanges) != len(slots)) || len(row.OwnedChanges) != len(b.Candidates[0].OwnedChanges) {
 			return errors.New("batch candidates must replace the same slots")
 		}
 		if err := validateGearChanges(row.GearChanges, true); err != nil {
 			return err
 		}
 		for _, change := range row.GearChanges {
-			if !slots[change.Slot] {
+			if !b.MixedSlots && !slots[change.Slot] {
 				return errors.New("batch candidates must replace the same slots")
 			}
 		}
@@ -92,12 +101,24 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	}
 	defer e.release()
 	input := b.Base
-	input.GearChanges = b.Candidates[0].GearChanges
+	// Mixed rows inherit the original armory. The extra primary measurement
+	// is never returned as a candidate or used in its confidence interval.
+	if b.MixedSlots {
+		b.Candidates = append([]batchCandidate{{}}, b.Candidates...)
+	} else {
+		input.GearChanges = b.Candidates[0].GearChanges
+	}
 	payload, err := e.runReport(ctx, input, b.Candidates)
 	if err != nil {
 		return nil, err
 	}
 	rows, err := parseSimulationBatch(payload, len(b.Candidates), e.iterationBudget(input))
+	if err == nil && b.MixedSlots {
+		if !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
+			return nil, errUnsupportedMixedSlots
+		}
+		rows = rows[1:]
+	}
 	if err == nil && owned && !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
 		return nil, errUnsupportedOwnedBatch
 	}
@@ -105,7 +126,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 }
 
 func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batchMeasurement, error) {
-	if count < 1 || count > maxSimulationBatch || expectedIterations < 2 {
+	if count < 1 || count > maxSimulationBatch+1 || expectedIterations < 2 {
 		return nil, errors.New("invalid SimulationCraft measurement count")
 	}
 	// The two native JSON schemas use different names for standard error.

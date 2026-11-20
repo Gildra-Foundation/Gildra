@@ -26,10 +26,10 @@ function option(itemId, slotType = 'WRIST') {
 
 function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine,
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
-  const state = { capacity: '2', batch: '25', ownedBatch, requests: [], active: 0, peak: 0 };
+  const state = { capacity: '2', batch: '25', ownedBatch, mixedSlots:false, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
     const path = new URL(url).pathname;
-    if (path === '/healthz') return Response.json({}, { headers: { 'x-gildra-simulation-concurrency': state.capacity, 'x-gildra-simulation-batch': state.batch, ...(state.ownedBatch ? {'x-gildra-simulation-owned-batch': '1'} : {}) } });
+    if (path === '/healthz') return Response.json({}, { headers: { 'x-gildra-simulation-concurrency': state.capacity, 'x-gildra-simulation-batch': state.batch, ...(state.ownedBatch ? {'x-gildra-simulation-owned-batch': '1'} : {}), ...(state.mixedSlots ? {'x-gildra-simulation-mixed-slots':'1'} : {}) } });
     const body = JSON.parse(request.body), batch = path.endsWith('/batch');
     const base = batch ? body.base : body, rows = batch ? body.candidates : [body];
     const ids = rows.map(row => row.gearChanges?.[0]?.itemId ?? row.ownedChanges?.[0].gems[0]?.itemId
@@ -40,9 +40,9 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
     state.peak = Math.max(state.active, state.peak);
     try {
       return await new Promise((resolve, reject) => {
-        state.requests.push({ base, rows, ids, batch, signal: request.signal, finish(payload = batch ? {results} : results[0], status = 201, echo = state.ownedBatch) {
+        state.requests.push({ base, rows, ids, batch, mixed:body.mixedSlots, signal: request.signal, finish(payload = batch ? {results} : results[0], status = 201, echo = state.ownedBatch) {
           resolve(Response.json(payload, { status, headers: { 'x-gildra-engine': 'simulationcraft',
-            ...(echo ? {'x-gildra-simulation-owned-batch': '1'} : {}) } }));
+            ...(echo ? {'x-gildra-simulation-owned-batch': '1'} : {}), ...(body.mixedSlots && state.mixedSlots ? {'x-gildra-simulation-mixed-slots':'1'} : {}) } }));
         } });
         request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
       });
@@ -258,6 +258,24 @@ test('distinct signals cancel queued and running callers independently and abort
   const results = await all;
   assert.deepEqual(results.map(row => row.status === 'fulfilled' ? row.value.dps : row.reason.name),
     [100.25,'AbortError','AbortError','AbortError','AbortError','AbortError','AbortError',107.25,'AbortError']);
+});
+
+test('mixed-slot candidates share only an advertised worker and retry on rollback', async () => {
+  for (const rollback of [null, "missing-header", "unsupported-revision"]) {
+    const {state,run,finishFrom} = fixture();
+    state.mixedSlots = true;
+    await run.concurrency(signal());
+    const calls = ['WRIST','WAIST','WRIST','WAIST','WRIST','WAIST','WRIST'].map((slot,i) =>
+      run([option(200+i,slot)],signal()));
+    await tick();
+    const group = state.requests.find(request => request.mixed);
+    assert(group && new Set(group.rows.map(row=>row.gearChanges[0].slot)).size>1);
+    if (rollback === "missing-header") state.mixedSlots = false;
+    if (rollback === "unsupported-revision") group.finish({code:"unsupported_mixed_slots"},422);
+    await finishFrom(0);
+    assert.deepEqual((await Promise.all(calls)).map(row=>row.dps),[200.25,201.25,202.25,203.25,204.25,205.25,206.25]);
+    if (rollback) assert(group.ids.every(id=>state.requests.some(request=>!request.batch&&request.ids.includes(id))));
+  }
 });
 
 test('transport groups by effective equipment, changed slots and native precision', async () => {

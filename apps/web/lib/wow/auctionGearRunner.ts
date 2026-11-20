@@ -1030,12 +1030,14 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const ownedBatch = transport.ownedBatch && ownedChanges?.length
         ? { base: { ...base, armory: { ...base.armory, equipment: prepared.equipment } }, changes: ownedChanges }
         : undefined;
-      // Profilesets inherit the first row's overrides. Each row in a group must
-      // replace the same slots against the same armory (including off-hand removal).
+      // A mixed-slot worker starts each profileset from the original armory.
+      // Owned edits and off-hand removal still require their own base and slot set.
       const batchEquipment = ownedBatch ? prepared.equipment : equipment;
+      const mixed = transport.mixedSlots && batchEquipment === armory.equipment && !ownedChanges?.length && base.precision === "auction-candidate";
       const group = transport.batchSize && (prepared.changes.length || ownedBatch)
         ? JSON.stringify([base.precision, batchEquipment === armory.equipment ? null : batchEquipment,
-          prepared.changes.map(change => change.slot).sort(), ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
+          mixed ? "mixed" : prepared.changes.map(change => change.slot).sort(),
+          ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
         : undefined;
       const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
       simSignal.throwIfAborted();
@@ -1073,7 +1075,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
   const pending: AuctionNativeJob[] = [];
   const subscribers = new Map<AbortSignal, { jobs: Set<AuctionNativeJob>; abort: () => void }>();
-  let ownedBatch = false;
+  let ownedBatch = false, mixedSlots = false;
   let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
 
   function schedule() {
@@ -1123,10 +1125,13 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       };
     }
     const singleTimeout = first.base.precision === "auction-finalist" ? 190_000 : 50_000;
+    const slotKey = (job: AuctionNativeJob) => job.changes.map(change => change.slot).sort().join(",");
+    const firstSlots = slotKey(first);
+    const mixed = batch && !first.ownedBatch && jobs.some(job => slotKey(job) !== firstSlots);
     const response = await fetch(worker() + "/v1/wow/rotation/simulations" + (batch ? "/batch" : ""), {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, cache: "no-store",
       signal: AbortSignal.any([requestSignal, AbortSignal.timeout(batch ? Math.min(190_000, jobs.length * singleTimeout) : singleTimeout)]),
-      body: JSON.stringify(batch ? { base: first.ownedBatch?.base ?? first.base, candidates: jobs.map(job => ({
+      body: JSON.stringify(batch ? { ...(mixed ? { mixedSlots: true } : {}), base: first.ownedBatch?.base ?? first.base, candidates: jobs.map(job => ({
         gearChanges: job.changes, ...(job.ownedBatch ? {ownedChanges: job.ownedBatch.changes} : {}) })) }
         : { ...first.base, ...(first.changes.length ? { gearChanges: first.changes } : {}) }),
     });
@@ -1135,10 +1140,19 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       // The advertised worker may have been rolled back between health and POST.
       capacity = 1;
       batchSize = 0;
+      mixedSlots = false;
       ownedBatch = false;
       for (const job of jobs) job.checkGroupAbort = undefined;
       pending.unshift(...jobs.filter(job => !job.signal.aborted));
       await response.body?.cancel();
+      return;
+    }
+    const unsupportedMixed = mixed && response.status === 422 && (await response.json().catch(() => null))?.code === "unsupported_mixed_slots";
+    if (mixed && (unsupportedMixed || response.status === 400 || response.ok && response.headers.get("x-gildra-simulation-mixed-slots") !== "1")) {
+      mixedSlots = false;
+      for (const job of jobs) { job.group = undefined; job.checkGroupAbort = undefined; }
+      pending.unshift(...jobs.filter(job => !job.signal.aborted));
+      if (!response.bodyUsed) await response.body?.cancel();
       return;
     }
     if (batch && first.ownedBatch) {
@@ -1215,6 +1229,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       signal.throwIfAborted();
       capacity = permits;
       batchSize = permits === 2 && /^\d+$/.test(advertised) && Number(advertised) >= 2 ? Math.min(25, Number(advertised)) : 0;
+      mixedSlots = batchSize > 0 && response.headers.get("x-gildra-simulation-mixed-slots") === "1";
       ownedBatch = batchSize > 0 && response.headers.get("x-gildra-simulation-owned-batch") === "1";
       schedule();
       return capacity;
@@ -1222,9 +1237,10 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       signal.throwIfAborted();
       capacity = 1;
       batchSize = 0;
+      mixedSlots = false;
       ownedBatch = false;
       return capacity;
     }
   }
-  return { submit, concurrency, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
+  return { submit, concurrency, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
 }
