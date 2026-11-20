@@ -74,6 +74,38 @@ function armor(reagent, enchantId = 5250, workerEngine = engine) {
   return row;
 }
 
+test('bare belt substitutions share one fight per precision and keep a socketed gem distinct', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  const { run, state, finishFrom } = fixture({ workerEngine: pinned });
+  const belt = (socket) => {
+    const o = armor(1, 0, pinned);
+    delete o.customization;
+    Object.assign(o.candidate, { itemId: 258942, inventoryType: 6, slotType: 'WAIST' });
+    const v = o.candidate.variants[0];
+    Object.assign(v, { bonusIds: [6652,13663,socket ? 13695 : 13696,13901], modifiers: [{type:9,value:90},{type:28,value:3321}] });
+    Object.assign(v.resolution.enhancements, {socketColors: [socket ? 14 : 0, 0, 0], socketCount: Number(socket)});
+    return o;
+  };
+  const shared = signal();
+  for (const mode of ['certified-candidate','finalist']) {
+    const start = state.requests.length;
+    const [plain, socket] = [belt(false), belt(true)];
+    const pending = Promise.all([run([plain],shared,[],mode), run([socket],shared,[],mode)]);
+    await tick();
+    await finishFrom(start);
+    const [a,b] = await pending;
+    assert.deepEqual({...a},{...b});
+    assert.equal(a.iterations,mode === 'finalist' ? 750 : 100);
+    assert.equal(state.requests.slice(start).flatMap(r=>r.rows).length,1);
+    socket.customization = {gemIds:[130215]};
+    const gem = run([socket],shared,[],mode);
+    await tick();
+    await finishFrom(start+1);
+    await gem;
+    assert.equal(state.requests.slice(start+1).flatMap(r=>r.rows).length,1);
+  }
+});
+
 test('full enhanced candidates share certified native measurements and keep changed enhancements and finalist precision separate', async () => {
   const { state, run } = fixture();
   async function measure(row, { precision, owned = [], native }) {

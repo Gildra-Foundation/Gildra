@@ -1037,7 +1037,15 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
-    if (mode === "certified-candidate" && selections.length) {
+    // A bare substitution can span different socket or suffix programs only
+    // while all the purchased items are bare. Keep the native precision in
+    // the cache key so each independent measurement still runs once.
+    const barePurchase = mode && selections.length > 0 && !ownedChanges?.length &&
+      selections.every(option => !option.customization);
+    if (barePurchase) {
+      const proof = auctionAppliedStatsKey(selections, verifiedEngine, true);
+      if (proof) equivalentKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: [{ appliedStats: proof }] });
+    } else if (mode === "certified-candidate" && selections.length) {
       const bare = selections.map(({ customization, ...option }) => option);
       const chest = selections.findIndex(o => o.candidate.slotType === "CHEST" && o.customization?.enchantId);
       const withChest = chest >= 0 && !ownedChanges?.some(change => change.slotType === "CHEST")
