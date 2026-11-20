@@ -283,9 +283,40 @@ test('the three measured finalists retain the cheapest scroll for each distinct 
   };
   const {checkpoint}=await complete(h);
   assert.equal(ids.length,4,'Six scrolls and bare yield only four native effects across restored slices');
+  assert.equal(checkpoint.exactNextConfiguration,'4');
+  assert.equal(checkpoint.pricedAxes,'equivalent_scrolls');
+  // A pre-substitution cursor pointing at the three costly scrolls and bare.
+  const legacy = {version:1,pricedAxes:'within_budget',inputKey:'a23bee658ce042ce03a9b200169562d07af321143b1397e2390f915471b28034',
+    exactNextConfiguration:'3',nextConfiguration:0,cache:{}};
+  const resumed = await complete(h,{checkpoint:legacy});
+  assert.equal(resumed.checkpoint.exactNextConfiguration,'7');
+  assert.deepEqual(ids.slice(4),[6101,6102,6103,0]);
   const leaders=[checkpoint.bestMeasuredDps,checkpoint.secondMeasuredDps,checkpoint.thirdMeasuredDps];
   assert.deepEqual(leaders.map(row=>[row.configuration.slots[0].enchantId,row.configuration.totalCopper,
     row.configuration.consumables[0].itemId]),[[6101,55,12202],[6102,60,12204],[6103,65,12206]]);
+});
+
+test('scroll substitution respects shared stock, marginal price, ties and equip restrictions',async()=>{
+  const scroll=(id,properties={})=>({key:String(id),kind:'enchant',simulationId:123,consumableItemId:id,...properties});
+  for(const [cheap,other,restrictions,expectedCount,cost] of [
+    [[[2,2]],[[5,2]],{},4,4],
+    [[[2,1]],[[5,2]],{},9,7],
+    [[[2,1],[8,1]],[[5,2]],{},9,7],
+    [[[2,1],[5,1]],[[5,2]],{},9,7],
+    [[[2,2]],[[5,2]],{category:{id:'one',limit:1}},9,7],
+  ]){
+    const h=fixture({sockets:0,slots:2,objective:'value'});
+    h.input.catalog.resolve=()=>({verified:true,enchantApplicable:true,enchantChoices:[scroll(1,restrictions),scroll(2)],gemChoices:{}});
+    h.input.prices.prices={1:{ladder:cheap},2:{ladder:other}};
+    h.input.simulate=async c=>measurement(1000+c.slots.filter(s=>s.enchantId).length*500);
+    const result=await complete(h);
+    assert.equal(Number(result.checkpoint.exactNextConfiguration),expectedCount);
+    for(const leader of [result.checkpoint.bestDpsConfirmed,result.checkpoint.bestValueConfirmed]){
+      assert.equal(leader.simulation.dps,2000);
+      assert.equal(leader.configuration.totalCopper,50+cost);
+      assert.equal(leader.configuration.consumables.reduce((n,row)=>n+row.quantity,0),2);
+    }
+  }
 });
 
 test('the real enhancement stage uses the advertised profileset capacity for affordable gem choices', async () => {

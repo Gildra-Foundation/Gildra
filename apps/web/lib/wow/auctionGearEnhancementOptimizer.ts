@@ -28,7 +28,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   /** Authoritative decimal cursor for exhaustive traversal; JSON preserves every digit. */
   exactNextConfiguration?: string;
   /** Earlier checkpoints compacted only unavailable commodities. */
-  pricedAxes?: true | "within_budget";
+  pricedAxes?: true | "within_budget" | "equivalent_scrolls";
   cache: Record<string, GearPlanSimulation>; totalSimulations?: number; traversalSteps?: number; seedSelections?: number[][]; nextSeed?: number; reasons?: string[];
   confirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   bestValueConfirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
@@ -86,6 +86,47 @@ const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(cano
 const positive = (value: number) => Number.isSafeInteger(value) && value > 0;
 
 type Choice = { slot: number; socket: number | null; enhancement: Enhancement | null; retained: boolean };
+/** Replacing one scroll preserves the installed enchant and the configuration
+ * key. Even if every eligible position also buys the substitute, its last
+ * required unit must be strictly cheaper than the first unit of the old SKU. */
+function pruneCostlierScrolls(axes: Choice[][], prices: ExactCommodityPrices) {
+  const lastPrice = new Map<number, number>();
+  const maximumMarginal = (id: number) => {
+    const cached = lastPrice.get(id);
+    if (cached !== undefined) return cached;
+    let demand = axes.filter(axis => axis.some(c => !c.retained && c.enhancement?.consumableItemId === id)).length;
+    let price = Infinity;
+    for (const [unit, quantity] of prices[id].ladder) {
+      demand -= quantity;
+      if (demand <= 0) { price = unit; break; }
+    }
+    lastPrice.set(id, price);
+    return price;
+  };
+  // Compute demand against the original axes, including restricted purchases
+  // that may consume one of the same scrolls on a different slot.
+  const dominated = new Set<Choice>();
+  for (const axis of axes) {
+    if (axis[0].socket !== null) continue;
+    const byEffect = new Map<number, Choice[]>();
+    for (const choice of axis) {
+      const e = choice.enhancement;
+      if (choice.retained || !e || e.category || e.uniqueEquipped || e.profession) continue;
+      const group = byEffect.get(e.simulationId);
+      if (group) group.push(choice);
+      else byEffect.set(e.simulationId, [choice]);
+    }
+    for (const group of byEffect.values()) {
+      if (group.length < 2) continue;
+      const bound = group.reduce((min, c) => Math.min(min, maximumMarginal(c.enhancement!.consumableItemId)), Infinity);
+      for (const c of group) if (bound < prices[c.enhancement!.consumableItemId].ladder[0][0]) dominated.add(c);
+    }
+  }
+  if (dominated.size) {
+    for (const [index, axis] of axes.entries()) axes[index] = axis.filter(c => !dominated.has(c));
+  }
+  return dominated.size > 0;
+}
 function measurement(value: GearPlanSimulation) {
   if (!Number.isFinite(value.dps) || value.dps <= 0 || !Number.isFinite(value.dpsError) || value.dpsError < 0 ||
       value.confidence !== 95 || !positive(value.iterations) || !value.engine.startsWith("SimulationCraft")) throw new Error("invalid_simulation_result");
@@ -166,7 +207,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
           if (!Number.isFinite(unitCost)) return false;
           // Additional purchases can only increase the total. The full quantity ladder
           // still applies to affordable choices when constructing an actual receipt.
-          if (pricedAxes === "within_budget" && unitCost > remainingCopper) {
+          if (pricedAxes !== true && unitCost > remainingCopper) {
             hasUnaffordableChoice = true;
             return false;
           }
@@ -180,12 +221,13 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       addAxis(index, resolved.gemChoices[socket.key], slot.installed?.gems[index] ?? null);
     }
   }
+  const compactScrolls = exact && (!input.checkpoint || pricedAxes === "equivalent_scrolls") && pruneCostlierScrolls(axes, input.prices.prices);
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
-  const inputKey = hash({ traversal: pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+  const inputKey = hash({ traversal: compactScrolls ? "priced-exhaustive-v4" : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
     prices:exact ? input.prices.prices : input.prices,
     budget:input.budgetCopper, items:input.itemsCopper, objective:input.objective ?? "dps", baselineDps, baseline, identity:input.simulationIdentity, axes });
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
-  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(exact?{exactNextConfiguration:"0",pricedAxes:"within_budget" as const}:{})};
+  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(exact?{exactNextConfiguration:"0",pricedAxes:compactScrolls ? "equivalent_scrolls" as const : "within_budget" as const}:{})};
   if (!Number.isSafeInteger(checkpoint.nextConfiguration) || checkpoint.nextConfiguration < 0) throw new Error("invalid_enhancement_checkpoint");
   if (exact && (typeof checkpoint.exactNextConfiguration !== "string" || checkpoint.exactNextConfiguration.length > 512 ||
     !/^(0|[1-9][0-9]*)$/.test(checkpoint.exactNextConfiguration))) throw new Error("invalid_enhancement_checkpoint");
