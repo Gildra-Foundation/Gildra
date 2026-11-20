@@ -5,17 +5,18 @@ import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagnostics.ts';
 
-async function harness(evaluate) {
+async function harness(evaluate, previewEvaluator, overrides = {}) {
   const source = await readFile(new URL('../../../lib/wow/auctionGearRunner.ts', import.meta.url), 'utf8');
   const start = source.indexOf('export async function assembleAuctionGearSearch(');
   const end = source.indexOf('\nexport async function ', start + 1);
   const phase = source.slice(source.indexOf('function setAuctionGearPhase('), source.indexOf('export async function continueAuctionGearSearch('));
-  const body = phase + source.slice(start, end);
+  const preview = source.slice(source.indexOf('async function previewAuctionGearLeader('), start);
+  const body = phase + preview + source.slice(start, end);
   const entry = { id: 'assembly-publication', latestSearchResult: { kind: 'search' }, retainedBaseline: {},
     allowedKey: 'same', context: { options: [{}], input: {}, currentBySlot: new Map() } };
   let now = 0, flushes = 0;
   const run = vm.runInNewContext(stripTypeScriptTypes(body).replace('export ', '') + ';assembleAuctionGearSearch', {
-    Date: { now: () => now }, logAuctionGearDiagnostics, metricsFor: () => createAuctionGearDiagnostics(),
+    MARKET_MAX_AGE_MS: 7200000, evaluateAuctionEnhancementStage: previewEvaluator, Date: { now: () => now, parse: Date.parse }, logAuctionGearDiagnostics, metricsFor: () => createAuctionGearDiagnostics(),
     selectedAuctionGearAssemblyOptions: current => current.context.options,
     publicAuctionResult: (_context, result) => result,
     discoverAuctionOptions: async () => {}, auctionFactsKey: () => 'same',
@@ -23,7 +24,7 @@ async function harness(evaluate) {
     assembleAuctionGear: evaluate,
     updateAuctionSearchResult: async () => entry.latestSearchResult,
     scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: async () => { flushes++; }, flushPendingAuctionGearSearch: async () => { flushes++; },
-    parseAuctionGearCompareScenarios: () => [],
+    parseAuctionGearCompareScenarios: () => [], ...overrides,
   });
   return { entry, run, advance: ms => { now += ms; }, flushes: () => flushes };
 }
@@ -86,4 +87,56 @@ test('cancellation after partial assembly fences later evaluation result and rel
   assert.equal(publications.at(-1).bestDps, 101);
   assert.equal(h.entry.assemblyCheckpoint.cursor, 1);
   assert.equal(h.entry.busy, false);
+});
+
+test('enhanced full search publishes a priced leader before gear enumeration finishes and resumes gear work', async () => {
+  let turns = 0, previews = 0;
+  const h = await harness(async () => ({
+    result: resultFor(++turns), checkpoint: { best: { optionIds: ['offer'] }, baseline: { engine: 'simc' }, simulationCache: {} },
+  }), async input => {
+    previews++;
+    assert.equal(input.preview, true);
+    assert.deepEqual([...input.finalists[0].options], [h.entry.context.options[0]]);
+    input.state.quotes = { fetchedAt: new Date(0).toISOString(), sourceUpdatedAt: new Date(0).toISOString() };
+    return { complete: true, recommendations: [{configuration:{status:'priced',consumables:[{}],totalCopper:25}}] };
+  });
+  Object.assign(h.entry.context, { options: [{id:'offer'}], character: {}, armory: {},
+    input: {enhancementMode:'enhanced', budgetCopper:25}, simulate: {} });
+  const rows = [];
+  const result = await h.run(h.entry, undefined, new AbortController().signal, () => {}, 'token', row => rows.push(row), true);
+  assert.equal(previews, 1);
+  const first = rows.findIndex(row => row.enhancementOptimization?.traversal === 'preview');
+  assert(first > 0 && first < rows.length - 1);
+  assert.equal(result.enhancementOptimization.recommendations[0].configuration.totalCopper,25);
+  assert.equal(result.enhancementOptimization.complete, false);
+  assert.equal(result.exhaustiveComplete, false);
+  assert.equal(turns, 8);
+  h.entry.enhancementPreview = structuredClone(h.entry.enhancementPreview);
+  await h.run(h.entry, undefined, new AbortController().signal, () => {}, 'token', () => {}, true);
+  assert.equal(previews, 1, 'a recovered preview with current quotes is reused');
+  h.advance(61_000);
+  const afterExpiry = [];
+  await h.run(h.entry, undefined, new AbortController().signal, () => {}, 'token', row => afterExpiry.push(row), true);
+  assert.equal(previews, 2, 'prices are requested again');
+  assert(afterExpiry.every(row => !row.enhancementOptimization), 'expired prices cannot authorize a shopping list');
+});
+
+test('a completed shortlist stays partial and the following full turn restores the original domain', async () => {
+  const weak = {id:'weak'}, strong = {id:'strong'};
+  const pools = [];
+  const h = await harness(async input => {
+    pools.push(input.options.map(o => o.id));
+    assert.equal(input.checkpoint, undefined, 'domain change resets its enumeration cursor');
+    return { result:resultFor(1, pools.length === 1), checkpoint:{simulationCache:{}} };
+  }, undefined, {
+    quickAuctionStatChoices: () => [strong], auctionFactsKey: options => options.map(o=>o.id).join(','),
+    retainAuctionIncumbents: () => {},
+  });
+  Object.assign(h.entry.context,{options:[weak,strong],input:{enhancementMode:'equipment'},simulate:{}});
+  const signal = new AbortController().signal;
+  const preview = await h.run(h.entry, undefined, signal, () => {}, 'token');
+  assert.equal(preview.exhaustiveComplete,false);
+  assert.equal(preview.searchLimited,true);
+  await h.run(h.entry, undefined, signal, () => {}, 'token', undefined, true);
+  assert.deepEqual(pools,[['strong'],['weak','strong']]);
 });

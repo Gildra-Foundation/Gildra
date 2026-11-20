@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createAuctionGearEnhancedLoadoutIterator as create} from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import {auctionEffectGroupKey} from '../../../lib/wow/auctionGearEffects.ts';
 import {auctionPlanCost} from '../../../lib/wow/auctionGearPlanner.ts';
 import {auctionGearSlots} from '../../../lib/wow/auctionGearSelection.ts';
 const signal=()=>new AbortController().signal;
@@ -144,10 +145,32 @@ test('grouped traversal matches physical receipts across budgets, exclusions and
   }
 });
 
+test('conflicting item identities for one physical lot stay ineligible together',async()=>{
+ const head=option(10,'HEAD'),chest=option(11,'CHEST');
+ chest.auctionId=head.auctionId;
+ const {rows}=await all(base([head,chest],['HEAD','CHEST']));
+ assert.deepEqual(rows.map(key).sort(),['',head.id,chest.id].sort());
+});
+
 test('two ring aliases charge one whole lot and respect its quantity without unsafe partial-sum pruning',async()=>{
  const a=option(1,'FINGER_1',60),b=option(1,'FINGER_2',60);const one=await all(base([a,b],['FINGER_1','FINGER_2'],[],60));assert.equal(one.rows.length,3);assert(!one.rows.some(r=>r.options.length===2));
  const two=await all(base([{...a,quantity:2},{...b,quantity:2}],['FINGER_1','FINGER_2'],[],60));assert.equal(two.rows.length,4);const pair=two.rows.find(r=>r.options.length===2);assert.equal(pair.spentCopper,60);assert.equal(pair.remainingCopper,0);
 });
+test('a resumed conflicting ring pair skips only its remaining suffix',async()=>{
+ const tail=[option(51,'TRINKET_1'),option(52,'TRINKET_1'),option(53,'TRINKET_1')];
+ for(const conflict of ['quantity','category']){
+  const left=option(1,'FINGER_1'),right=option(conflict==='quantity'?1:2,'FINGER_2');
+  if(conflict==='category')for(const row of [left,right])Object.assign(row.candidate.constraints,{limitCategoryId:8,limitQuantity:1});
+  const nextRing=option(3,'FINGER_2');
+  const input=base([left,right,nextRing,...tail],['FINGER_1','FINGER_2','TRINKET_1']);
+  const it=create(input),state={...it.initialState(),cursor:[1,1,1],visited:'17'};
+  const jump=await it.nextBatch(state,{signal:signal(),maxAssignments:1,maxResults:1});
+  assert.deepEqual(jump.loadouts,[]);assert.deepEqual(jump.state.cursor,[1,2,0]);assert.equal(jump.state.visited,'20');
+  const next=await it.nextBatch(JSON.parse(JSON.stringify(jump.state)),{signal:signal(),maxAssignments:1,maxResults:1});
+  assert.deepEqual(next.loadouts[0].options.map(o=>o.id),[left.id,nextRing.id]);
+ }
+});
+
 test('retained unique items and categories are checked only after simultaneous replacements',async()=>{
  const worn=[{slotType:'FINGER_1',itemId:10,inventoryType:11,itemSubclassId:0,uniqueEquipped:true},{slotType:'FINGER_2',itemId:20,inventoryType:11,itemSubclassId:0}];
  const replaceFirst=option(30,'FINGER_1',5),moveUnique=option(10,'FINGER_2',5);moveUnique.candidate.constraints.uniqueEquipped=true;
@@ -207,4 +230,87 @@ test('an over-budget prefix skips its entire suffix while an affordable shared l
  assert.equal(accepted.length,12);
  assert(accepted.some(row=>row.options.length===3 && row.spentCopper===100));
  assert(!accepted.some(row=>row.options.some(o=>o.auctionId===1)&&row.options.some(o=>o.auctionId===2)));
+});
+
+test('equivalent native variants share an affordable receipt only inside the same enhancement domain',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const options=[1,2,3,4].map(i=>{
+   const o=option(i,'HEAD',i===2?2:30);
+   o.candidate.itemId=999;
+   const v=o.candidate.variants[0];
+   v.key=o.variantKey='variant-'+i;
+   v.contextId=i;
+   v.resolution={engine:i===4?'other':engine,metadataVersion:3,enhancements:{status:'verified',
+    socketColors:i===3?[14,0,0]:[0,0,0],socketCount:i===3?1:0,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}};
+   return o;
+ });
+ const input=base(options),legacy=await all(input),pinned=await all({...input,engine},{maxAssignments:1,maxResults:1});
+ assert.equal(legacy.total,'5');assert.equal(pinned.total,'4');
+ assert.deepEqual(pinned.rows.slice(1).map(r=>r.options[0].auctionId),[2,3,4]);
+ assert.equal(pinned.rows[1].spentCopper,2);
+ await assert.rejects(create({...input,engine}).nextBatch(legacy.state,{maxAssignments:1,maxResults:1,signal:signal()}),/invalid_search_checkpoint/);
+});
+
+test('socketless scaling aliases retain the cheaper enchantable receipt and resume legacy ordinals',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const offers=[1,2,3,4,5].map(i=>{
+  const o=option(i,'WRIST',i===2?10:35);
+  o.candidate.itemId=41116;
+  const v=o.candidate.variants[0];v.key=o.variantKey='version-'+i;
+  v.modifiers=[{type:28,value:100+i}];
+  if(i===5)v.bonusIds=[123];
+  v.resolution={engine,metadataVersion:3,enhancements:{status:'verified',socketColors:i===3?[14,0,0]:[0,0,0],
+   socketCount:i===3?1:0,socketBonusId:i===4?99:0,requiredProfessionId:0,requiredProfessionRank:0}};
+  return o;
+ });
+ // The bare assembly can share one measurement for all four empty-bonus lots.
+ // Its representative alone would discard the socket and socket-bonus variants.
+ assert.equal(new Set(offers.slice(0,4).map(o=>auctionEffectGroupKey(o,engine,true,true))).size,1);
+ const input={...base(offers,['WRIST']),engine};
+ const old=create({...input,nativeLotGroups:1}),current=create(input);
+ const limits={maxAssignments:1,maxResults:1,signal:signal()};
+ const partial=await old.nextBatch(old.initialState(),limits);
+ assert.equal(partial.state.nativeLotGroups,1);
+ assert.equal(old.totalAssignments,'6');assert.equal(current.totalAssignments,'5');
+ await assert.rejects(current.nextBatch(partial.state,limits),/invalid_search_checkpoint/);
+ assert.equal((await old.nextBatch(partial.state,limits)).loadouts[0].options[0].auctionId,1);
+ const result=await all(input,limits);
+ assert.deepEqual(result.rows.slice(1).map(r=>r.options[0].auctionId),[2,3,4,5]);
+ assert.equal(result.rows[1].spentCopper,10);
+});
+
+test('verified drop curves keep both ring receipts and enhancement domains across cursor versions', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd';
+  const options = [];
+  for (const slot of ['FINGER_1', 'FINGER_2']) {
+    for (const [lot, cost, drop, level] of [[51, 20, 81, 133], [52, 10, 82, 133], [53, 30, 90, 253]]) {
+      const row = option(lot, slot, cost);
+      row.candidate.itemId = 258910;
+      Object.assign(row.candidate.variants[0], {
+        bonusIds: [13668, 13900], itemLevel: level, modifiers: [{type: 9, value: drop}],
+        resolution: {engine, metadataVersion: 3, nativeDropCurveV1: [drop, 0, level],
+          enhancements: {status: 'verified', socketColors: [14, 0, 0], socketCount: 1, socketBonusId: 0}}
+      });
+      options.push(row);
+    }
+  }
+  const input = {...base(options, ['FINGER_1', 'FINGER_2']), engine};
+  const old = create({...input, nativeLotGroups: 2});
+  const current = create(input);
+  assert.equal(old.totalAssignments, '16');
+  assert.equal(current.totalAssignments, '9');
+  const limits = {maxAssignments: 1, maxResults: 1, signal: signal()};
+  const first = await old.nextBatch(old.initialState(), limits);
+  assert.equal(first.state.nativeLotGroups, 2);
+  await assert.rejects(current.nextBatch(first.state, limits), /invalid_search_checkpoint/);
+  const {rows} = await all(input, limits);
+  const pair = rows.find(r => r.options.length === 2 && r.options.every(o => o.candidate.variants[0].itemLevel === 133));
+  assert.deepEqual(pair.options.map(o => o.auctionId).sort(), [51, 52]);
+  assert.equal(pair.spentCopper, 30);
+  const variant = options[0].candidate.variants[0];
+  variant.resolution.enhancements.socketColors = [1, 0, 0];
+  assert.equal(create(input).totalAssignments, '12');
+  variant.resolution.enhancements.socketColors = [14, 0, 0];
+  variant.resolution.nativeDropCurveV1[0] = 82;
+  assert.equal(create(input).totalAssignments, '12');
 });

@@ -54,6 +54,7 @@ type SimCEngine struct {
 	limit      chan struct{}
 	waiting    chan struct{}
 	queueWait  time.Duration
+	variants   gearVariantCache
 	cacheMu    sync.RWMutex
 	baseline   map[string]int
 }
@@ -205,7 +206,13 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 	}
 	if len(candidates) > 1 {
 		args = append(args, "profileset_work_threads=0", "profileset_init_threads=1")
+		if candidates[0].neutralPrimary {
+			args = append(args, fmt.Sprintf("iterations=%d", neutralPrimaryIterations))
+		}
 		for i, candidate := range candidates[1:] {
+			if candidates[0].neutralPrimary {
+				args = append(args, fmt.Sprintf("profileset.c%d+=iterations=%d", i+1, e.iterationBudget(input)))
+			}
 			for _, line := range candidate.ownedLines {
 				args = append(args, fmt.Sprintf("profileset.c%d+=%s", i+1, line))
 			}
@@ -216,6 +223,10 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 	}
 	command := exec.CommandContext(runCtx, e.binary, args...)
 	command.Dir = filepath.Dir(profilePath)
+	if len(candidates) > 1 {
+		// The pinned native build validates each profileset on its simulation instance.
+		command.Env = append(command.Environ(), "GILDRA_SIMC_BATCH_SINGLE_INIT=1")
+	}
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &limitedBuffer{buffer: &stdout, remaining: maxSimCOutputBytes}
 	command.Stderr = &limitedBuffer{buffer: &stderr, remaining: maxSimCOutputBytes}

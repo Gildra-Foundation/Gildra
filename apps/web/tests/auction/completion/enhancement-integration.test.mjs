@@ -17,7 +17,7 @@ import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/aucti
 import { auctionSelectionEffectKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { auctionEnhancementCatalogInfo, auctionEnhancementRecords, resolveExactEnhancements } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { prepareGearLoadout, nativeGearSimulationMeasurement } from '../../../lib/wow/gearSimulation.ts';
-import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 
 // Synthetic rules and quotes, never live catalogue claims. The optimizer,
 // equipment preparation and native mechanical cache are production modules.
@@ -134,6 +134,111 @@ test('actual mechanical cache separates paid customization and encounter identit
     assert.notEqual(otherKey,key);assert.equal(cache.get(otherKey,'SimulationCraft synthetic-enhancements'),undefined);
   }
   assert.equal(cache.get(key,'SimulationCraft synthetic-enhancements').dps,1234);
+});
+
+test('empty-bonus local candidates omit unused scaling inputs from the measurement key',()=>{
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const key=(change,version=engine,precision)=>auctionGearMechanicalKey('profile',{...request,precision},
+    {engine:version,changes:[{slot:'off_hand',itemId:260904,bonusIds:[],...change}]});
+  const modifiers=[{type:9,value:80},{type:28,value:3615}];
+  assert.equal(key({modifiers}),key({}));
+  for (const extra of [{bonusIds:[9042]},{gemIds:[130215]},{enchantId:7997},{contextId:-1}])
+    assert.notEqual(key({...extra,modifiers}),key(extra));
+  assert.notEqual(key({modifiers},'SimulationCraft other'),key({},'SimulationCraft other'));
+  assert.notEqual(key({modifiers},engine,'finalist'),key({},engine,'finalist'));
+  assert.notEqual(key({modifiers:[{type:9,value:999}]}),key({}));
+  assert.notEqual(key({modifiers:[...modifiers,{type:64,value:123}]}),key({}));
+});
+
+test('candidate cache reuses verified armor and jewelry gem fights while purchases and finalists keep their actual IDs',()=>{
+  const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const nativeKey=(gemIds,slot='neck',version=engine,precision)=>auctionGearMechanicalKey('profile',
+    {...request,precision},{engine:version,changes:[{slot,itemId:240948,bonusIds:[],gemIds}]});
+  const purchased=[0,153712];
+  for(const slot of ['head','neck','shoulder','back','chest','wrist','hands','waist','legs','feet','finger1','finger2']) {
+    assert.equal(nativeKey(purchased,slot),nativeKey([0,130217],slot));
+  }
+  assert.notEqual(nativeKey(purchased,'finger1'),nativeKey(purchased,'finger2'));
+  assert.deepEqual(purchased,[0,153712]);
+  assert.notEqual(nativeKey(purchased),nativeKey([130217,0]));
+  for(const [slot,version,precision] of [['trinket1',engine],['off_hand',engine],['main_hand',engine],['neck','SimulationCraft other'],['neck',engine,'finalist']]) {
+    assert.notEqual(nativeKey(purchased,slot,version,precision),nativeKey([0,130217],slot,version,precision));
+  }
+  assert.notEqual(nativeKey([192906]),nativeKey([192907])); // agreement depends on character level
+  assert.notEqual(nativeKey([192953]),nativeKey([130217])); // Ysemerald name is observable by equipped items
+});
+
+test('owned neck candidate reuse preserves the edited socket, purchase and finalist identities',()=>{
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const edit={slotType:'NECK',itemId:273781,gems:[{index:1,itemId:153712}]};
+  const other={...edit,gems:[{index:1,itemId:130217}]};
+  const key=(change,version=engine,precision)=>auctionGearMechanicalKey('profile',
+    {...request,ownedChanges:[change],precision},{engine:version,changes:[]});
+  assert.equal(key(edit),key(other));
+  assert.equal(edit.gems[0].itemId,153712);
+  assert.notEqual(key(edit),key({...other,gems:[{index:0,itemId:130217}]}));
+  for(const patch of [{slotType:'HEAD'},{itemId:273782},{enchantId:5292}])
+    assert.notEqual(key(edit),key({...other,...patch}));
+  assert.notEqual(key(edit,engine,'finalist'),key(other,engine,'finalist'));
+  assert.notEqual(key(edit,'SimulationCraft other'),key(other,'SimulationCraft other'));
+});
+
+test('swapped direct ring enchants share candidate scores and retain the actual socket changes', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const request = {spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const edit = (slot,id,enchantId,gems=[]) => ({slotType:slot,itemId:id,enchantId,gems});
+  const left = (enchant,gems) => edit('FINGER_1',41,enchant,gems);
+  const right = (enchant,gems) => edit('FINGER_2',42,enchant,gems);
+  const key = (ownedChanges, options={}) => auctionGearMechanicalKey('profile',
+    {...request,ownedChanges,precision:options.precision},
+    {engine,changes:[],wornRings:[{itemId:41,enchantId:0},{itemId:42,enchantId:0}],...options});
+  const a = [left(7964),right(8022)], b = [left(8022),right(7964)];
+  assert.equal(key(a),key(b));
+  assert.equal(key([left(7965)]),key([right(7965)]));
+  assert.notEqual(key(a),key([left(7965),right(8022)]));
+  const gem=[{index:0,itemId:240869}];
+  assert.equal(key([left(7964,gem),right(8022)]),key([left(8022,gem),right(7964)]));
+  assert.notEqual(key([left(7964,gem),right(8022)]),key([left(8022),right(7964,gem)]));
+  assert.notEqual(key([left(7966),right(8022)]),key([left(8022),right(7966)]));
+  for (const options of [{wornRings:undefined},{wornRings:[{itemId:41,enchantId:0},{itemId:43,enchantId:0}]},
+    {changes:[{slot:'finger2',itemId:51,bonusIds:[]}]},{precision:'finalist'},{engine:'other'}]) {
+    assert.notEqual(key(a,options),key(b,options));
+  }
+  const installed = {wornRings:[{itemId:41,enchantId:7964},{itemId:42,enchantId:8022}]};
+  assert.equal(key(undefined,installed),key(b,installed));
+  assert.notEqual(key([left(7994)],installed),key([right(7994)],installed));
+  const proc = {wornRings:[{itemId:41,enchantId:7966},{itemId:42,enchantId:0}]};
+  assert.notEqual(key([left(8022)],proc),key([right(8022)],proc));
+  assert.equal(key(a,proc),key(b,proc));
+  assert.equal(a[0].enchantId,7964);
+});
+
+test('candidate glove keys preserve combat enchant removal, gem edits and finalist identity', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const request = {spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const edit = {slotType:'HANDS',itemId:42,gems:[],enchantId:3238};
+  const key = (edits, bareId, precision, revision = engine, changes = []) =>
+    auctionGearMechanicalKey('profile', {...request,ownedChanges:edits,precision},
+      {changes,engine:revision,unenchantedHandsId:bareId});
+  for (const enchantId of [3238,5447,5933,5937,6205]) {
+    const candidate = [{...edit,enchantId}];
+    assert.equal(key(candidate,42),key(undefined,42));
+    assert.equal(key(candidate),key([edit]));
+    assert.notEqual(key(candidate),key(undefined));
+    assert.notEqual(key(candidate,41),key(undefined,41));
+    assert.notEqual(key(candidate,42,'finalist'),key(undefined,42,'finalist'));
+    assert.notEqual(key(candidate,42,undefined,'other'),key(undefined,42,undefined,'other'));
+  }
+  const gem = {index:0,itemId:1234};
+  assert.equal(key([{...edit,gems:[gem]}],42),key([{...edit,gems:[gem],enchantId:undefined}],42));
+  assert.notEqual(key([{...edit,gems:[gem]}],42),key(undefined,42));
+  assert.notEqual(key([{...edit,enchantId:684}],42),key(undefined,42));
+  assert.notEqual(key([{...edit,slotType:'WRIST'}],42),key(undefined,42));
+  const purchased = [{slot:'hands',itemId:99,bonusIds:[]}];
+  assert.notEqual(key([edit],42,undefined,engine,purchased),key(undefined,42,undefined,engine,purchased));
 });
 
 test('serialized continuation retains priced finalists and never repeats already simulated configurations',async()=>{
@@ -355,7 +460,7 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
       assert(requests.length-before<=8,'Exact enhancement continuation retains its total eight-native budget');
       stagePeaks.push(stagePeak);stageOutputs.push(result.result);return result;
     },
-    auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey,
+    auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey, purchasedJewelryScoreChanges,
     auctionGearMechanicalCache:createAuctionGearMechanicalCache(),assertFreshMarket,
     Map,Set,Object,Number,JSON,Date,AbortSignal,process,
     scheduleAuctionGearSearchSave:()=>{},flushAuctionGearSearch:async()=>{flushes++;},flushPendingAuctionGearSearch:async()=>{flushes++;},
@@ -456,7 +561,8 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
   assert.equal(new Set(nativeKeys).size,nativeKeys.length,'Continuation must never duplicate a measurement at the same precision');
   if (socketLoser && !synergy) {
     const rechecked=requests.filter(request=>request.precision==='auction-finalist');
-    assert.equal(rechecked.length,3,'All three competitive loadouts receive higher precision');
+    assert.equal(rechecked.filter(row => row.gearChanges?.length).length,24,'Every distinct purchasable combat input receives independent precision');
+    assert.equal(rechecked.filter(row => !row.gearChanges?.length).length,1,'Their improvement is compared with an independent baseline');
     assert.equal(result.enhancementOptimization.finalistRecheck.significant,false);
     for (const key of result.enhancementOptimization.finalistRecheck.keys) {
       assert.equal(result.enhancementOptimization.recommendations.find(row=>row.configuration.key===key).simulation.iterations,750);

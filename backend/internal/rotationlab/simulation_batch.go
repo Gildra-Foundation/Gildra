@@ -12,13 +12,20 @@ import (
 
 const maxSimulationBatch = 25
 
+// SimC excludes its warm-up iteration. Keep one sample for the unused primary row.
+const neutralPrimaryIterations = 2
+
+var errUnsupportedMixedSlots = errors.New("mixed-slot batches require a verified SimulationCraft revision")
+
 type batchCandidate struct {
-	GearChanges  []GearChange `json:"gearChanges"`
-	OwnedChanges []ownedEdit  `json:"ownedChanges,omitempty"`
-	ownedLines   []string
+	GearChanges    []GearChange `json:"gearChanges"`
+	OwnedChanges   []ownedEdit  `json:"ownedChanges,omitempty"`
+	ownedLines     []string
+	neutralPrimary bool
 }
 
 type simulationBatch struct {
+	MixedSlots bool             `json:"mixedSlots,omitempty"`
 	Base       SimulationInput  `json:"base"`
 	Candidates []batchCandidate `json:"candidates"`
 }
@@ -30,6 +37,8 @@ type batchMeasurement struct {
 	Iterations int     `json:"iterations"`
 	Confidence int     `json:"confidence"`
 	Engine     string  `json:"engine"`
+
+	furyWithoutLeechHealing bool
 }
 
 type batchEngine interface {
@@ -50,21 +59,27 @@ func (b simulationBatch) validate() error {
 	if err := ValidateInput(b.Base); err != nil {
 		return err
 	}
-	// Profilesets inherit the first candidate's overrides. Every row must
-	// replace that complete set or it could silently retain another row's gear.
+	if b.MixedSlots && (b.Base.Armory == nil || b.Base.Precision != auctionCandidatePrecision) {
+		return errors.New("mixed slots require a candidate armory")
+	}
+	// Homogeneous batches inherit row zero. Mixed batches use an untouched
+	// primary actor and give each profileset all its own overrides.
 	slots := make(map[string]bool)
 	for _, change := range b.Candidates[0].GearChanges {
 		slots[change.Slot] = true
 	}
 	for _, row := range b.Candidates {
-		if len(row.GearChanges)+len(row.OwnedChanges) == 0 || len(row.GearChanges) != len(slots) || len(row.OwnedChanges) != len(b.Candidates[0].OwnedChanges) {
+		if b.MixedSlots && len(row.OwnedChanges) != 0 {
+			return errors.New("mixed slots require purchased candidate gear")
+		}
+		if len(row.GearChanges)+len(row.OwnedChanges) == 0 || (!b.MixedSlots && len(row.GearChanges) != len(slots)) || len(row.OwnedChanges) != len(b.Candidates[0].OwnedChanges) {
 			return errors.New("batch candidates must replace the same slots")
 		}
 		if err := validateGearChanges(row.GearChanges, true); err != nil {
 			return err
 		}
 		for _, change := range row.GearChanges {
-			if !slots[change.Slot] {
+			if !b.MixedSlots && !slots[change.Slot] {
 				return errors.New("batch candidates must replace the same slots")
 			}
 		}
@@ -92,12 +107,27 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	}
 	defer e.release()
 	input := b.Base
-	input.GearChanges = b.Candidates[0].GearChanges
+	// Mixed rows inherit the original armory. The extra primary measurement
+	// is never returned as a candidate or used in its confidence interval.
+	candidateIterations := e.iterationBudget(input)
+	primaryIterations := candidateIterations
+	if b.MixedSlots {
+		primaryIterations = neutralPrimaryIterations
+		b.Candidates = append([]batchCandidate{{neutralPrimary: true}}, b.Candidates...)
+	} else {
+		input.GearChanges = b.Candidates[0].GearChanges
+	}
 	payload, err := e.runReport(ctx, input, b.Candidates)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := parseSimulationBatch(payload, len(b.Candidates), e.iterationBudget(input))
+	rows, err := parseSimulationBatchBudgets(payload, len(b.Candidates), candidateIterations, primaryIterations)
+	if err == nil && b.MixedSlots {
+		if !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
+			return nil, errUnsupportedMixedSlots
+		}
+		rows = rows[1:]
+	}
 	if err == nil && owned && !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
 		return nil, errUnsupportedOwnedBatch
 	}
@@ -105,7 +135,11 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 }
 
 func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batchMeasurement, error) {
-	if count < 1 || count > maxSimulationBatch || expectedIterations < 2 {
+	return parseSimulationBatchBudgets(payload, count, expectedIterations, expectedIterations)
+}
+
+func parseSimulationBatchBudgets(payload []byte, count, expectedIterations, primaryIterations int) ([]batchMeasurement, error) {
+	if count < 1 || count > maxSimulationBatch+1 || expectedIterations < 2 || primaryIterations < 2 {
 		return nil, errors.New("invalid SimulationCraft measurement count")
 	}
 	// The two native JSON schemas use different names for standard error.
@@ -119,7 +153,8 @@ func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batc
 				Iterations int     `json:"iterations"`
 			} `json:"options"`
 			Players []struct {
-				CollectedData struct {
+				FuryWithoutLeechHealing bool `json:"gildra_fury_without_leech_healing_v1"`
+				CollectedData           struct {
 					DPS struct {
 						Mean  float64  `json:"mean"`
 						Error *float64 `json:"mean_std_dev"`
@@ -144,7 +179,7 @@ func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batc
 	}
 	sim := report.Sim
 	if report.Version == "" || report.GitRevision == "" || len(sim.Players) != 1 || len(sim.Profilesets.Results) != count-1 ||
-		sim.Options.Iterations != expectedIterations || sim.Options.Confidence <= 0 || sim.Options.Confidence >= 1 ||
+		sim.Options.Iterations != primaryIterations || sim.Options.Confidence <= 0 || sim.Options.Confidence >= 1 ||
 		(count > 1 && sim.Profilesets.Metric != "Damage per Second") {
 		return nil, errors.New("incomplete SimulationCraft batch report")
 	}
@@ -159,23 +194,32 @@ func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batc
 			standardError == nil || *standardError < 0 || iterations != expectedIterations {
 			return errors.New("invalid SimulationCraft batch measurement")
 		}
-		measurements[i] = batchMeasurement{int(math.Round(mean)), mean, *standardError, iterations, confidence, engine}
+		measurements[i] = batchMeasurement{DPS: int(math.Round(mean)), DPSMean: mean, DPSError: *standardError, Iterations: iterations, Confidence: confidence, Engine: engine}
 		return nil
 	}
 	base := sim.Players[0].CollectedData
 	// The pinned binary excludes its warm-up iteration from sample statistics.
 	// Keep the configured iteration budget on the wire, but reject a truncated
 	// sample set rather than treating its uncertainty as the requested precision.
-	if base.DPS.Count == nil || (*base.DPS.Count != expectedIterations-1 && *base.DPS.Count != expectedIterations) {
+	if base.DPS.Count == nil || (*base.DPS.Count != primaryIterations-1 && *base.DPS.Count != primaryIterations) {
 		return nil, errors.New("incomplete SimulationCraft DPS samples")
 	}
 	iterations := base.TotalIterations
 	if iterations == 0 {
 		iterations = sim.Options.Iterations
 	}
-	if err := add(0, base.DPS.Mean, base.DPS.Error, iterations); err != nil {
+	if primaryIterations != expectedIterations {
+		// This row only supplies the common armory. An idle primary actor
+		// may deal zero damage even when a purchased weapon can attack.
+		if iterations != primaryIterations {
+			return nil, errors.New("incomplete SimulationCraft primary iterations")
+		}
+		measurements[0].Engine = engine
+	} else if err := add(0, base.DPS.Mean, base.DPS.Error, iterations); err != nil {
 		return nil, err
 	}
+	// Only the primary actor emitted this evidence. Profileset rows contain scores alone.
+	measurements[0].furyWithoutLeechHealing = sim.Players[0].FuryWithoutLeechHealing
 	for _, row := range sim.Profilesets.Results {
 		// SimC sorts by performance. Restore the request order using the exact
 		// generated name and reject a duplicate, unknown or missing candidate.

@@ -26,6 +26,7 @@ func TestWorkerSimulationBatch(t *testing.T) {
 	// overwrites both slots, even when their order changes between candidates.
 	script := `#!/bin/sh
 set -eu
+test "$GILDRA_SIMC_BATCH_SINGLE_INIT" = 1
 grep -qx 'neck=gildra_candidate,id=1001,source=local' "$1"
 grep -qx 'head=gildra_candidate,id=1002,source=local' "$1"
 printf '%s\n' "$@" > args
@@ -77,9 +78,9 @@ cat > report.json <<'REPORT'
 			t.Fatal(err)
 		}
 		want := []batchMeasurement{
-			{4322, 4321.87654, .78, 100, 95, "SimulationCraft 1210-01 · 18428cd"},
-			{1235, 1234.56789, 0, 100, 95, "SimulationCraft 1210-01 · 18428cd"},
-			{8765, 8765.4321, 1.23, 100, 95, "SimulationCraft 1210-01 · 18428cd"},
+			{4322, 4321.87654, .78, 100, 95, "SimulationCraft 1210-01 · 18428cd", false},
+			{1235, 1234.56789, 0, 100, 95, "SimulationCraft 1210-01 · 18428cd", false},
+			{8765, 8765.4321, 1.23, 100, 95, "SimulationCraft 1210-01 · 18428cd", false},
 		}
 		if len(reply.Results) != len(want) {
 			t.Fatal(reply)
@@ -89,6 +90,49 @@ cat > report.json <<'REPORT'
 				t.Errorf("row %d: got %+v, want %+v", i, row, want[i])
 			}
 		}
+	}
+}
+
+func TestMixedSlotBatchUsesUnchangedArmoryAndOmitsPrimaryResult(t *testing.T) {
+	engine, _ := admissionTestEngine(t, 2)
+	script := `#!/bin/sh
+set -eu
+if grep -q '=gildra_candidate,' "$1"; then exit 1; fi
+printf '%s\n' "$@" > args
+grep -Fqx 'profileset.c1+=head=gildra_candidate,id=1001,source=local' args
+grep -Fqx 'profileset.c2+=neck=gildra_candidate,id=1002,source=local' args
+grep -Fqx 'iterations=2' args
+grep -Fqx 'profileset.c1+=iterations=100' args
+grep -Fqx 'profileset.c2+=iterations=100' args
+cat > report.json <<'REPORT'
+` + strings.NewReplacer(`"iterations":100,"confidence"`, `"iterations":2,"confidence"`, `"count":99`, `"count":1`, `"mean":4321.87654,"mean_std_dev":0.78`, `"mean":0`).Replace(batchReportFixture) + "\nREPORT\n"
+	if err := os.WriteFile(engine.binary, []byte(script), 0700); err != nil {
+		t.Fatal(err)
+	}
+	b := simulationBatch{MixedSlots: true, Base: nativeGearInput(t), Candidates: []batchCandidate{
+		{GearChanges: []GearChange{{Slot: "head", ItemID: 1001}}},
+		{GearChanges: []GearChange{{Slot: "neck", ItemID: 1002}}},
+	}}
+	b.Base.Precision = auctionCandidatePrecision
+	rows, err := engine.SimulateBatch(context.Background(), b)
+	if err != nil || len(rows) != 2 || rows[0].DPSMean != 1234.56789 || rows[1].DPSMean != 8765.4321 {
+		t.Fatal(rows, err)
+	}
+	if err := os.WriteFile(engine.binary, []byte(strings.ReplaceAll(script, `"iterations":100}`, `"iterations":2}`)), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := engine.SimulateBatch(context.Background(), b); err == nil || rows != nil {
+		t.Fatal("accepted a candidate measured at the neutral primary budget")
+	}
+	if err := os.WriteFile(engine.binary, []byte(strings.ReplaceAll(script, "18428cd3902", "unknown")), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if rows, err := engine.SimulateBatch(context.Background(), b); err != errUnsupportedMixedSlots || rows != nil {
+		t.Fatalf("unexpected mixed output from unknown revision: %v %v", rows, err)
+	}
+	b.Base.Precision = auctionFinalistPrecision
+	if b.validate() == nil {
+		t.Fatal("mixed finalist requests must retain homogeneous slots")
 	}
 }
 

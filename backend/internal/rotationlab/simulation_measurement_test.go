@@ -62,6 +62,10 @@ func TestAuctionSingleMeasurementPreservesNativeUncertaintyAndRunEnvelope(t *tes
 			input.Precision = precision
 			iterations := e.iterationBudget(input)
 			report := `{"version":"1210-01","git_revision":"18428cd","sim":{"options":{"iterations":` + strconv.Itoa(iterations) + `,"confidence":0.95},"players":[{"collected_data":{"dps":{"mean":4321.87654,"mean_std_dev":0.780123456789,"count":` + strconv.Itoa(iterations-1) + `}}}]}}`
+			withNativeEvidence := precision == auctionCandidatePrecision
+			if withNativeEvidence {
+				report = strings.Replace(report, `"collected_data":`, `"gildra_fury_without_leech_healing_v1":true,"collected_data":`, 1)
+			}
 			script := "#!/bin/sh\nset -eu\nprintf '%s\\n' \"$@\" > args\ngrep -qx 'report_details=0' args\ngrep -q 'full_states=0$' args\ncat > report.json <<'REPORT'\n" + report + "\nREPORT\n"
 			if err := os.WriteFile(e.binary, []byte(script), 0700); err != nil {
 				t.Fatal(err)
@@ -91,10 +95,19 @@ func TestAuctionSingleMeasurementPreservesNativeUncertaintyAndRunEnvelope(t *tes
 				if _, err := uuid.Parse(got.ID); err != nil || got.Status != "completed" || got.Scenario != input.Scenario || got.Targets != input.Targets || got.FightLengthSeconds != input.FightLengthSeconds {
 					t.Fatalf("incomplete persistent run envelope: %+v", got)
 				}
+				if got.FuryWithoutLeechHealing != withNativeEvidence {
+					t.Fatalf("lost native baseline evidence: %+v", got)
+				}
 				if got.BaselineIncluded == nil || *got.BaselineIncluded || len(got.Casts) != 0 || len(got.DPSSeries) != 0 || got.Accuracy.RotationSource != "simulationcraft-default-apl" {
 					t.Fatalf("measurement contains playback or wrong provenance: %+v", got)
 				}
 			}
+			input.GearChanges = []GearChange{{Slot: "head", ItemID: 123}}
+			changed, err := e.Simulate(context.Background(), input)
+			if err != nil || changed.FuryWithoutLeechHealing {
+				t.Fatalf("changed gear must not attest the original armory: %+v, %v", changed, err)
+			}
+
 		})
 	}
 }
@@ -125,6 +138,23 @@ func TestAuctionCompactReportsPinnedOutput(t *testing.T) {
 					t.Fatalf("compact report changed measurements: %v != %v", full, measurements)
 				}
 			}
+		}
+	}
+}
+
+func TestFuryLeechEvidenceBelongsOnlyToTheNativePrimaryActor(t *testing.T) {
+	const payload = `{"version":"1210-01","git_revision":"18428cd","sim":{"options":{"confidence":0.95,"iterations":100},"players":[{"gildra_fury_without_leech_healing_v1":true,"collected_data":{"total_iterations":100,"dps":{"mean":1000,"mean_std_dev":1,"count":99}}}],"profilesets":{"metric":"Damage per Second","results":[{"name":"c1","mean":900,"mean_stddev":1,"iterations":100}]}}}`
+	for _, present := range []bool{true, false} {
+		report := payload
+		if !present {
+			report = strings.Replace(report, `"gildra_fury_without_leech_healing_v1":true,`, "", 1)
+		}
+		rows, err := parseSimulationBatch([]byte(report), 2, 100)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rows[0].furyWithoutLeechHealing != present || rows[1].furyWithoutLeechHealing {
+			t.Fatalf("unexpected native role evidence: %+v", rows)
 		}
 	}
 }

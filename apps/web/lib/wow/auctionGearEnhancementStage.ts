@@ -9,6 +9,9 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
+import { isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { ignoresItemContext } from './gearItemModifiers';
+import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -21,7 +24,9 @@ export type AuctionEnhancedRecommendation = { label: string; configuration: Pric
   purchases: AuctionGearPurchase[]; consumableNames: Record<string, string>;
   enhancementNames?: { gems: Record<string, string>; enchants: Record<string, string> } };
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
-  traversal?: 'exhaustive'; includesOwnedEquipment?: true; equipmentChecked?: number;
+  traversal?: 'exhaustive' | 'preview'; includesOwnedEquipment?: true; equipmentChecked?: number;
+  verifiedValueKey?: string;
+  verifiedObjectives?: { dps: string; value: string };
   finalistRecheck?: { keys: string[]; significant: boolean; marginDps: number;
     leaderKey?: string; indistinguishableKeys?: string[]; preferredKey?: string; competingKey?: string };
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };
@@ -59,11 +64,24 @@ export async function evaluateAuctionEnhancementStage(input: {
   quote?: typeof exactCommodityPrices;
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
+  omitNeutralGloveEnchants?: boolean;
+  omitShoulderIllusions?: boolean;
+  omitWristHearthEnchants?: boolean;
+  omitInertFuryLeech?: boolean;
+  pruneCradleEnchants?: boolean;
+  pruneEquivalentRingGems?: boolean;
+  pruneOwnedJewelryGems?: boolean;
+  nativePlayerLevel?: number;
+  preview?: boolean;
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
   simulationBatchSize?: number;
+  remainingScreenComparisons?: () => number;
+  onPricedScreenWitness?: (configuration: PricedEnhancementConfiguration) => void;
   simulationOwnedBatch?: boolean;
   additionalSearchReasons?: readonly string[];
+  simulateConfiguration?: (options: AuctionGearOption[], configuration: PricedEnhancementConfiguration, signal: AbortSignal) => Promise<GearPlanSimulation>;
+  onMeasured?: (configuration: PricedEnhancementConfiguration, describe: () => AuctionEnhancedRecommendation) => void;
   onPriceDependencies?: (itemIds: number[]) => void;
   priorSimulations?: EnhancementCheckpoint["cache"];
 }): Promise<AuctionEnhancementStageResult> {
@@ -85,13 +103,18 @@ export async function evaluateAuctionEnhancementStage(input: {
   if (!input.engine.includes(info.simcRevision.slice(0, 7))) { reasons.add('engine_build_mismatch'); return finish(); }
   // At most three retained equipment objectives and two socket proposals.
   if (input.finalists.length > 5) throw new Error('invalid_enhancement_candidate_limit');
-  const editableSlots = new Set<string>(input.exhaustive ? input.selectedSlots ?? auctionGearSlots : []);
+  const editableSlots = new Set<string>((input.exhaustive || input.preview) ? input.selectedSlots ?? auctionGearSlots : []);
   const activeKeys = new Set<string>();
   const equipmentSets = new Set<string>();
   for (const finalist of input.finalists) {
     const equipmentKey=JSON.stringify(finalist.options.map(o=>o.id).sort());
     if(equipmentSets.has(equipmentKey))continue;
     equipmentSets.add(equipmentKey);
+    const inertFuryLeech = input.exhaustive && input.omitInertFuryLeech && input.specId === 72 && ignoresItemContext(input.engine);
+    const cradleSlots = new Set<string>();
+    const eligibleWeapon = (slot: string, itemClass: number) => input.exhaustive && input.pruneCradleEnchants &&
+      ignoresItemContext(input.engine) && itemClass === 2 && (slot === 'MAIN_HAND' || slot === 'OFF_HAND');
+    const ownedGemSlots = new Set<string>();
     const slots: EnhancementSlot[] = [], resolutions = new Map<string, EnhancementResolution>();
     const replaced = new Set(finalist.options.map(o => o.candidate.slotType));
     const removed = new Set(prepareGearLoadout({selections:finalist.options,equipment:input.equipment,loadout:input.loadout,specId:input.specId}).removedSlots);
@@ -120,8 +143,17 @@ export async function evaluateAuctionEnhancementStage(input: {
       const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash(variant.resolution?.metadataVersion===3 ? [target,metadata,3] : [target,metadata]),owned:false,
         sockets:metadata.socketColors.flatMap((color,index)=>color ? [{key:String(index),type:String(color)}] : [])};
       slots.push(slot);
+      const bareShoulder = input.exhaustive && input.omitShoulderIllusions && slot.slotType === 'SHOULDER' &&
+        target.inventoryType === 3 && !option.customization;
+      const bareWrist = input.exhaustive && input.omitWristHearthEnchants && slot.slotType === 'WRIST' &&
+        target.inventoryType === 9 && !option.customization;
+      const bareWeapon = !option.customization && eligibleWeapon(slot.slotType, target.itemClassId);
       resolutions.set(slot.slotType,{...resolved,
-        enchantChoices:resolved.enchantChoices.map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
+        enchantChoices:resolved.enchantChoices.filter(e =>
+          !(bareWeapon && isWorldsoulCradle(e.simulationId)) &&
+          !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
+          !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine)) &&
+          !(inertFuryLeech && !option.customization && pureArmorLeechEnchant(slot.slotType, target.inventoryType, e.simulationId))).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
     }
     if (unsupported) continue;
     // Retained equipment is not bought again, but its enhancements consume uniqueness limits.
@@ -157,11 +189,39 @@ export async function evaluateAuctionEnhancementStage(input: {
           build:info.build,revision:info.simcRevision,engine:input.engine};
         const resolved = resolveExactEnhancements(target,{level:input.level,faction:input.faction,professions:input.professions});
         if (resolved.verified) {
+          // Leaving an originally bare glove unchanged has the same native effect
+          // and costs zero. Every purchasable scroll costs strictly positive copper.
+          const unenchanted = item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length;
+          const weapon = eligibleWeapon(slotType, target.itemClassId);
+          // A paid overwrite may remove a working enchant, so it cannot be
+          // substituted with free retention unless the original is also inert.
+          const freeCradle = weapon && (unenchanted || rows(item.enchantments).length === 1 &&
+            !!enchant && isWorldsoulCradle(enchant.simulationId));
+          if (weapon && !freeCradle) cradleSlots.add(slotType);
+          const bareGloves = unenchanted && input.exhaustive && input.omitNeutralGloveEnchants &&
+            slotType === 'HANDS' && obj(item.inventory_type).type === 'HAND';
+          const bareShoulder = unenchanted && input.exhaustive && input.omitShoulderIllusions &&
+            slotType === 'SHOULDER' && obj(item.inventory_type).type === 'SHOULDER' && target.inventoryType === 3;
+          const bareLeechHost = inertFuryLeech && unenchanted && obj(item.inventory_type).type === slotType;
+          const bareWrist = unenchanted && input.exhaustive && input.omitWristHearthEnchants &&
+            slotType === 'WRIST' && obj(item.inventory_type).type === 'WRIST' && target.inventoryType === 9;
+          // Both paid edits replace this exact socket with a bare gem ID. They
+          // preserve every other socket, item bonus and installed enhancement.
+          const neck = slotType === 'NECK' && target.inventoryType === 2 && obj(item.inventory_type).type === 'NECK';
+          const ring = (slotType === 'FINGER_1' || slotType === 'FINGER_2') && target.inventoryType === 11 && obj(item.inventory_type).type === 'FINGER';
+          if (input.pruneOwnedJewelryGems && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
+              (neck || ring) && target.itemClassId === 4 && target.itemLevel >= 120 && gems.length === 1 && socketColors[0] === 14)
+            ownedGemSlots.add(slotType);
           slot.ownedItemId = itemId;
           slot.allowOwnedChanges = true;
           slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
           resolution = {...resolved,enchantApplicable:resolved.enchantApplicable || Boolean(enchant),
-            enchantChoices:resolved.enchantChoices.map(normalized),
+            enchantChoices:resolved.enchantChoices.filter(e =>
+              !(freeCradle && isWorldsoulCradle(e.simulationId)) &&
+              !(bareGloves && neutralProfessionGloveEnchant(e.simulationId, input.engine)) &&
+              !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
+              !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine)) &&
+              !(bareLeechHost && pureArmorLeechEnchant(slotType, target.inventoryType, e.simulationId))).map(normalized),
             gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))};
         } else {
           // Preserve unknown instances and their installed unique limits while
@@ -177,7 +237,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     input.onPriceDependencies?.(ids);
     const now=Date.now();
     let sourceFresh=true;
-    if(input.exhaustive && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
+    if((input.exhaustive || input.preview) && input.state.quotes) try{assertFreshMarket({sourceUpdatedAt:input.state.quotes.sourceUpdatedAt ?? ''},now);}catch{sourceFresh=false;}
     if(!input.state.quotes || !sourceFresh || ids.some(id=>!input.state.quotedItemIds?.includes(id)) || !Number.isFinite(Date.parse(input.state.quotes.fetchedAt)) || now-Date.parse(input.state.quotes.fetchedAt)>60_000) {
       const requested=[...new Set([...(input.state.quotedItemIds??[]),...ids])].sort((a,b)=>a-b);
       input.state.quotes=requested.length ? await (input.quote??exactCommodityPrices)(input.region,requested,{refresh:true,signal:input.signal})
@@ -192,17 +252,46 @@ export async function evaluateAuctionEnhancementStage(input: {
     const prices = input.exhaustive ? Object.fromEntries(ids.filter(id=>Object.hasOwn(input.state.quotes!.prices,id))
       .map(id=>[id,input.state.quotes!.prices[id]])) : input.state.quotes.prices;
     const batchSize = finalist.options.length || input.simulationOwnedBatch ? input.simulationBatchSize ?? 0 : 0;
+    const describe = (candidate: {configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation}, label = finalist.label): AuctionEnhancedRecommendation => ({label,...candidate,
+      comparison:compareGearSimulationResults(input.baseline,candidate.simulation),optionIds:finalist.options.map(o=>o.id),
+      removedSlots:[...removed],
+      purchases:finalist.options.map(auctionGearPurchase),
+      enhancementNames: {
+        gems:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='gem' && r.name && candidate.configuration.slots.some(s=>s.gemIds.includes(r.simulationId))).map(r=>[String(r.simulationId),r.name!])),
+        enchants:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='enchant' && r.name && candidate.configuration.slots.some(s=>s.enchantId===r.simulationId)).map(r=>[String(r.simulationId),r.name!])),
+      },
+      consumableNames:Object.fromEntries(candidate.configuration.consumables.flatMap(c=>{
+        const record=auctionEnhancementRecords.find(r=>r.consumableItemId===c.itemId);
+        return record?.name ? [[String(c.itemId),record.name]] : [];
+      }))});
+    const ratingRingSlots = new Set(finalist.options
+      .filter(option => input.pruneEquivalentRingGems && hasLevel90RingRatings(option, input.engine, input.nativePlayerLevel))
+      .map(option => option.candidate.slotType));
+    for (const slot of ownedGemSlots) if (slot === 'FINGER_1' || slot === 'FINGER_2') ratingRingSlots.add(slot);
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
       character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
       budgetCopper:input.budgetCopper,simulationIdentity:identity,objective:input.objective,baselineDps:input.baseline.dps,baseline:input.baseline,
       signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache ?? input.priorSimulations,onCacheHit:input.onCacheHit,
-      exhaustive:input.exhaustive,
+      exhaustive:input.exhaustive, valuePrecision: input.exhaustive && input.includePrecisionContenders && input.baseline.iterations === 100,
       simulationConcurrency:input.simulationConcurrency,
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
+      remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
+      ratingRingSlots,
+      purchasedEnchantEffect: cradleSlots.size ? (slot: string, id: number) =>
+        cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined : undefined,
+      ownedGemEffect: ownedGemSlots.size ? (slot: string, id: number, enchantId: number) =>
+        ownedGemSlots.has(slot) && (!enchantId || slot !== 'NECK' && isDirectRingEnchant(enchantId))
+          ? ringGemRepresentative90(id) : undefined : undefined,
+      purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
+        const host = finalist.options.find(option => option.candidate.slotType === slot);
+        return host && purchasedRingGemEffect(host, input.engine, id, enchantId, input.nativePlayerLevel);
+      } : undefined,
+      onMeasured: input.onMeasured && ((configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) =>
+        input.onMeasured!(configuration, () => describe({ configuration, simulation }))),
       onCheckpoint:(checkpoint:EnhancementCheckpoint)=>{input.state.checkpoints[identity]=checkpoint;},
-      simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulate(customizedAuctionGearOptions(finalist.options,config),signal,ownedAuctionGearChanges(config))};
+      simulate:(config:PricedEnhancementConfiguration,signal:AbortSignal)=>input.simulateConfiguration ? input.simulateConfiguration(finalist.options,config,signal) : input.simulate(customizedAuctionGearOptions(finalist.options,config),signal,ownedAuctionGearChanges(config))};
     let optimized;
     try { optimized=await optimizeAuctionGearEnhancements(args); }
     catch(error){if(!(error instanceof Error)||error.message!=='enhancement_checkpoint_changed')throw error;
@@ -215,23 +304,13 @@ export async function evaluateAuctionEnhancementStage(input: {
       return comparison.deltaDps > 0 && comparison.uncertainty.significant;
     });
     const retained = input.exhaustive
-      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed, ...(input.includePrecisionContenders ? [optimized.checkpoint.secondMeasuredDps, optimized.checkpoint.thirdMeasuredDps] : [])].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
+      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed, ...(input.includePrecisionContenders ? [optimized.checkpoint.secondMeasuredDps, optimized.checkpoint.thirdMeasuredDps, optimized.checkpoint.valuePrecision?.lower, optimized.checkpoint.valuePrecision?.upper] : [])].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : input.includeObjectiveAlternatives
       ? [confirmed, optimized.checkpoint.bestValueConfirmed, optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : confirmed ? [confirmed] : [];
     const selected = [...new Map((retained.length ? retained : optimized.finalists.slice(0,1)).map(candidate => [candidate.configuration.key, candidate])).values()];
-    for(const [index,candidate] of selected.entries()) result.recommendations.push({label:index ? `${finalist.label}:alternative-${index}` : finalist.label,...candidate,
-      comparison:compareGearSimulationResults(input.baseline,candidate.simulation),optionIds:finalist.options.map(o=>o.id),
-      removedSlots:[...removed],
-      purchases:finalist.options.map(auctionGearPurchase),
-      enhancementNames: {
-        gems:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='gem' && r.name && candidate.configuration.slots.some(s=>s.gemIds.includes(r.simulationId))).map(r=>[String(r.simulationId),r.name!])),
-        enchants:Object.fromEntries(auctionEnhancementRecords.filter(r=>r.kind==='enchant' && r.name && candidate.configuration.slots.some(s=>s.enchantId===r.simulationId)).map(r=>[String(r.simulationId),r.name!])),
-      },
-      consumableNames:Object.fromEntries(candidate.configuration.consumables.flatMap(c=>{
-        const record=auctionEnhancementRecords.find(r=>r.consumableItemId===c.itemId);
-        return record?.name ? [[String(c.itemId),record.name]] : [];
-      }))});
+    for (const [index, candidate] of selected.entries())
+      result.recommendations.push(describe(candidate, index ? `${finalist.label}:alternative-${index}` : finalist.label));
   }
   // Keep absent state only while a step yielded before reaching that finalist.
   if(result.complete) for(const key of Object.keys(input.state.checkpoints))if(!activeKeys.has(key))delete input.state.checkpoints[key];

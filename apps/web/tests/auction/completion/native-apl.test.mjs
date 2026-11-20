@@ -1,5 +1,5 @@
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
-import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
+import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
@@ -14,7 +14,7 @@ test("auction baseline and exact candidate request the native maintained APL", a
   const body = stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
   const captured = [];
   const createSimulator = new vm.Script(body + "\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
-    auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, prepareGearLoadout, assertFreshMarket, process, AbortSignal, Number, Error, JSON,
+    auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, prepareGearLoadout, assertFreshMarket, process, AbortSignal, Number, Error, JSON,
     fetch: async (_url, request) => {
       captured.push(JSON.parse(request.body));
       return { ok: true, headers: { get: () => "simulationcraft" }, json: async () => ({

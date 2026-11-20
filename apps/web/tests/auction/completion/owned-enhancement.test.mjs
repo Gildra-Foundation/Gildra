@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { restoreAuctionGearContext } from '../../../lib/wow/auctionGearRunner.ts';
 import { createAuctionGearDiscovery } from '../../../lib/wow/auctionGearDiscovery.ts';
+import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/auctionGearExhaustiveEnhancements.ts';
 import { auctionEnhancementRecords } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { buildAuctionShoppingRows } from '../../../lib/wow/auctionShoppingList.ts';
@@ -53,6 +54,18 @@ test('exact assembly upgrades selected equipped gear with commodity-only checkou
       return {prices:{[replacement.consumableItemId]:{ladder:[[10,1]]},[enchant.consumableItemId]:{ladder:[[15,1]]}},
         sourceUpdatedAt,fetchedAt:sourceUpdatedAt};
     }};
+  const previewState = { checkpoints: {} };
+  let preview;
+  for (let slice = 0; slice < 16; slice++) {
+    preview = await evaluateAuctionEnhancementStage({...stage, preview: true, finalists:[{label:'leader', options:[]}], state:previewState});
+    if (preview.recommendations.some(row => row.configuration.consumables.length)) break;
+    if (preview.complete) break;
+  }
+  const priced = preview.recommendations.find(row => row.configuration.consumables.length);
+  assert(priced, 'seeded preview finds a purchasable improvement to the equipped ring');
+  assert(priced.configuration.totalCopper <= stage.budgetCopper);
+  assert(priced.comparison.deltaDps > 0);
+  assert(priced.configuration.ownedChanges.every(change => change.slotType === 'FINGER_1'));
   let next;
   for(let step=0;step<20;step++) {
     next = await advanceAuctionGearExhaustiveEnhancements({...stage,state:next?.state});
@@ -71,4 +84,244 @@ test('exact assembly upgrades selected equipped gear with commodity-only checkou
   assert(requests.some(row=>row.sockets[1].item?.id===replacement.simulationId &&
     row.sockets[0].bonus_list?.[0]===999 && row.enchantments.some(e=>e.enchantment_id===enchant.simulationId)));
   assert.deepEqual(equipment,original);
+});
+
+test('bare worn gloves skip profession-only purchases and keep socket upgrades at exact pricing', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const glove = {item:{id:271457}, slot:{type:'HANDS'}, inventory_type:{type:'HAND'},
+    level:{value:270}, item_class:{id:4}, item_subclass:{id:4}, spells:[], sockets:[{socket_type:{type:'PRISMATIC'}}]};
+  const prices = {38960:{ladder:[[30,10]]}, 128558:{ladder:[[40,10]]}, 130215:{ladder:[[50,10]]}};
+  async function measured(item, enabled, revision = engine) {
+    const state = {checkpoints:{}}, calls = [];
+    const baseline = {dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for (let turn = 0; turn < 20; turn++) {
+      const result = await evaluateAuctionEnhancementStage({exhaustive:true,omitNeutralGloveEnchants:enabled,
+        finalists:[{label:'exhaustive',options:[]}], equipment:{equipped_items:[item]},
+        loadout:[{slotType:'HANDS',itemId:271457,inventoryType:10,itemSubclassId:4}], selectedSlots:['HANDS'],
+        specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'glove-facts',
+        encounter:{scenario:'single-target',fightLengthSeconds:120,targets:1},budgetCopper:100,objective:'dps',
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async() => ({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async(_options,_signal,edits) => {
+          calls.push(edits?.[0] ?? {});
+          return {...baseline,dps:edits?.[0]?.gems.length ? 1100 : 1000};
+        }});
+      if (result.complete) return calls;
+    }
+    assert.fail('glove fixture did not exhaust');
+  }
+  for (const item of [glove,{...glove,enchantments:[]}]) {
+    const calls = await measured(item,true);
+    assert.equal(calls.length,2);
+    assert(calls.every(row=>!row.enchantId));
+    assert(calls.some(row=>row.gems?.[0].itemId===130215));
+  }
+  for (const [item,enabled,revision] of [
+    [glove,false,engine], [glove,true,'SimulationCraft 18428cd fixture'],
+    [{...glove,enchantments:[{enchantment_slot:{id:0},enchantment_id:3238}]},true,engine],
+    [{...glove,enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]},true,engine],
+  ]) {
+    const calls=await measured(item,enabled,revision);
+    assert(calls.some(row=>row.enchantId===5444));
+  }
+});
+
+test('shoulder illusions cannot improve an unenchanted purchase or an unenchanted owned shoulder', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const item = {item:{id:271454}, slot:{type:'SHOULDER'}, inventory_type:{type:'SHOULDER'},
+    level:{value:270}, item_class:{id:4}, item_subclass:{id:4}, spells:[], sockets:[]};
+  const option = {id:'new-shoulder', auctionId:18, costCopper:200, quantity:1, variantKey:'shoulder',
+    candidate:{itemId:237924, name:'Shoulder', slotType:'SHOULDER', inventoryType:3, itemClassId:4, itemSubclassId:4,
+      eligible:true, compatibility:{specId:72}, constraints:{requiredLevel:1},
+      variants:[{key:'shoulder', itemLevel:270, contextId:0, bonusIds:[], resolution:{effectsVerified:true, effects:[],
+        metadataVersion:3, enhancements:{status:'verified', socketColors:[0,0,0], socketCount:0, socketBonusId:0, requiredProfessionId:0, requiredProfessionRank:0}}}]}};
+  const prices = {201315:{ladder:[[10,10]]},243961:{ladder:[[20,10]]},244018:{ladder:[[30,10]]}};
+  async function run(owned, installed, revision = engine, enabled = true, omitInertFuryLeech = false) {
+    const state={checkpoints:{}}, measured=new Set();
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    const shoulder = installed ? {...item,enchantments:[{enchantment_slot:{id:0},enchantment_id:7970}]} : item;
+    for(let turn=0;turn<12;turn++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,omitShoulderIllusions:enabled,omitInertFuryLeech,
+        finalists:[{label:'exhaustive',options:owned?[]:[option]}], equipment:{equipped_items:[shoulder]},
+        loadout:[{slotType:'SHOULDER',itemId:item.item.id,inventoryType:3,itemSubclassId:4}],selectedSlots:['SHOULDER'],
+        specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'shoulder',encounter:{},budgetCopper:1000,
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async(options,_signal,edits)=>{
+          measured.add(options[0]?.customization?.enchantId ?? edits?.[0]?.enchantId ?? 0);
+          return baseline;
+        }});
+      if(result.complete)return measured;
+    }
+    assert.fail('shoulder fixture did not finish');
+  }
+  for (const owned of [true,false]) {
+    const calls = await run(owned,false);
+    assert(calls.has(8028));assert(!(await run(owned,false,engine,true,true)).has(8028));
+    assert(calls.has(0));assert(calls.has(7971));assert(!calls.has(6685));
+    assert((await run(owned,false,engine,false)).has(6685));
+    assert((await run(owned,false,'SimulationCraft 18428cd unknown')).has(6685));
+  }
+  assert((await run(true,true,engine,true,true)).has(8028),'An existing shoulder enchant can be replaced');
+  assert((await run(true,true)).has(6685),'An illusion can replace an existing combat enchant');
+});
+
+test('owned jewelry gem substitutions preserve scarce stock, installed gems, and receipt prices', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd', cheap=115804, dear=115811;
+  const slots=['NECK','FINGER_1'];
+  const loadout=slots.map((slotType,i)=>({slotType,itemId:1500+i,inventoryType:i ? 11 : 2,itemSubclassId:0}));
+  const baseline={engine,dps:1000,dpsError:1,confidence:95,iterations:750};
+  async function market({ladder=[[2,2]],nativePlayerLevel=90,enabled=true,installed,ringEnchant,unknownHost=false}={}) {
+    const items=loadout.map((row,i)=>({slot:{type:row.slotType},inventory_type:{type:unknownHost?'UNKNOWN':i?'FINGER':'NECK'},
+      item:{id:row.itemId},item_class:{id:4},item_subclass:{id:0},level:{value:270},
+      sockets:[{socket_type:{type:'PRISMATIC'},...(i && installed ? {item:{id:installed},bonus_list:[123]}:{})}],
+      ...(i && ringEnchant ? {enchantments:[{enchantment_slot:{id:0},enchantment_id:ringEnchant}]}:{})}));
+    const prices={[cheap]:{ladder},[dear]:{ladder:[[5,2]]}};
+    const state={checkpoints:{}},receipts=[];
+    for(let turn=0;turn<24;turn++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneOwnedJewelryGems:enabled,nativePlayerLevel,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,selectedSlots:slots,
+        specId:72,level:90,region:'eu',engine,profileFingerprint:'owned-gem-cost',encounter:{},budgetCopper:100,
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,
+        onMeasured:config=>receipts.push({edits:(config.ownedChanges??[]).map(edit=>[edit.slotType,edit.gems[0]?.itemId]),cost:config.totalCopper})});
+      if(result.complete)return receipts;
+    }
+    assert.fail('expected exhaustive receipts for both owned sockets');
+  }
+  const positive=await market();
+  assert.equal(positive.length,4);
+  assert.deepEqual(positive.find(r=>r.edits.length===2)?.cost,4);
+  assert(positive.every(r=>r.edits.every(([,id])=>id===cheap)));
+  for(const ladder of [[[2,1]],[[2,1],[5,1]],[[2,1],[8,1]]]) {
+    const exact=await market({ladder});
+    assert(exact.some(r=>r.cost===7 && r.edits.length===2 && new Set(r.edits.map(e=>e[1])).size===2));
+    assert(exact.some(r=>r.edits.length===2 && r.edits.every(([,id])=>id===dear)));
+  }
+  for(const flags of [{enabled:false},{nativePlayerLevel:89},{unknownHost:true}]) assert.equal((await market(flags)).length,9);
+  const installed=await market({installed:dear});
+  assert(installed.some(r=>r.edits.length===0 && r.cost===0),'retaining the installed gem costs nothing');
+  const proc=await market({ringEnchant:7967});
+  assert(proc.some(r=>r.edits.some(([slot,id])=>slot==='FINGER_1' && id===dear)));
+});
+
+test('hearthstone scrolls can be omitted only when the unchanged wrist is available', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const slotType = 'WRIST', inventoryType = 9, itemId = 1234;
+  const item = {item:{id:itemId}, slot:{type:slotType}, inventory_type:{type:'WRIST'}, level:{value:270},
+    item_class:{id:4}, item_subclass:{id:4}, spells:[], sockets:[]};
+  const candidate = {itemId:5000, name:'Bracers', slotType, inventoryType, itemClassId:4, itemSubclassId:4, eligible:true,
+    compatibility:{specId:72}, constraints:{requiredLevel:1}, variants:[{key:'wrist', itemLevel:270, contextId:0, bonusIds:[],
+      resolution:{effectsVerified:true, effects:[], metadataVersion:3, enhancements:{status:'verified', socketColors:[0,0,0],
+        socketCount:0, socketBonusId:0, requiredProfessionId:0, requiredProfessionRank:0}}}]};
+  const option = {id:'wrist', auctionId:20, costCopper:200, quantity:1, variantKey:'wrist', candidate};
+  const prices = {160328:{ladder:[[10,1]]},172416:{ladder:[[20,1]]}};
+  async function measured({owned=true, equipped=item, enabled=true, revision=engine} = {}) {
+    const state = {checkpoints:{}}, ids = new Set();
+    const baseline = {dps:1000, dpsError:1, confidence:95, iterations:100, engine:revision};
+    for (let step=0; step<12; step++) {
+      const stage = await evaluateAuctionEnhancementStage({exhaustive:true, omitWristHearthEnchants:enabled,
+        finalists:[{label:'exhaustive', options:owned?[]:[option]}], equipment:{equipped_items:[equipped]},
+        loadout:[{slotType,itemId,inventoryType,itemSubclassId:4}],selectedSlots:[slotType],specId:72,level:90,
+        region:'eu',engine:revision,profileFingerprint:'hearth',encounter:{},budgetCopper:1000,baseline,state,
+        signal:new AbortController().signal, shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async(options,_signal,edits)=>{
+          ids.add(options[0]?.customization?.enchantId ?? edits?.[0]?.enchantId ?? 0);
+          return baseline;
+        }});
+      if (stage.complete) return ids;
+    }
+    assert.fail('wrist fixture did not exhaust');
+  }
+  const all = new Set([0,5970,6222]);
+  for (const owned of [true,false]) {
+    assert.deepEqual(await measured({owned}), new Set([0]));
+    assert.deepEqual(await measured({owned,enabled:false}), all);
+    assert.deepEqual(await measured({owned,revision:'SimulationCraft 18428cd unknown'}), all);
+  }
+  assert.deepEqual(await measured({equipped:{...item,enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]}}), all);
+  assert.deepEqual(await measured({equipped:{...item,enchantments:[{enchantment_slot:{id:0},enchantment_id:369}]}}), all);
+});
+
+test('only a fresh full search with native Fury healing evidence removes pure helm leech', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd', slotType='HEAD', itemId=271456;
+  const item={item:{id:itemId},slot:{type:slotType},inventory_type:{type:'HEAD'},level:{value:270},
+    item_class:{id:4},item_subclass:{id:4},sockets:[],spells:[]};
+  const prices={243948:{ladder:[[10,2]]},243949:{ladder:[[20,2]]}};
+  async function run({evidence,specId=72,revision=engine,historical=false}) {
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision,
+      ...(evidence ? {furyWithoutLeechHealingV1:true} : {})};
+    const seen=new Set();
+    const input={options:[],selectedSlots:[slotType],equipment:{equipped_items:[item]},loadout:[{slotType,itemId,inventoryType:1,itemSubclassId:4}],
+      specId,level:90,region:'eu',engine:revision,profileFingerprint:'leech',encounter:{},budgetCopper:1000,objective:'dps',baseline,
+      simulate:async(_options,_signal,edits)=>{seen.add(edits?.[0]?.enchantId??0);return baseline},
+      quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+      signal:new AbortController().signal,shouldYield:()=>false,onState:()=>{}};
+    let state, historicalKey;
+    if (historical) {
+      // Make an actual pre-capability cursor, then resume with the new worker's baseline.
+      const older={...input,baseline:{...baseline},shouldYield:()=>true};
+      delete older.baseline.furyWithoutLeechHealingV1;
+      state=(await advanceAuctionGearExhaustiveEnhancements(older)).state;
+      historicalKey=state.inputKey;
+      seen.clear();
+    }
+    for (let slice=0;slice<30;slice++) {
+      const step=await advanceAuctionGearExhaustiveEnhancements({...input,state});
+      state=step.state;
+      if (historical) assert.equal(state.inputKey,historicalKey);
+      if (step.result.complete) return seen;
+    }
+    assert.fail('helm receipts did not exhaust');
+  }
+  assert.deepEqual(await run({evidence:true}),new Set([0]));
+  const all=new Set([0,7958,7959]);
+  assert.deepEqual(await run({evidence:false}),all);
+  assert.deepEqual(await run({evidence:true,specId:71}),all);
+  assert.deepEqual(await run({evidence:true,revision:'SimulationCraft 18428cd unknown'}),all);
+  assert.deepEqual(await run({evidence:true,historical:true}),all);
+});
+
+test('Cradle can stay free on a bare weapon, but removing an installed combat enchant requires a purchase', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const equipped = (slotType, id, installed) => ({
+    item:{id}, slot:{type:slotType}, inventory_type:{type:'TWOHWEAPON'}, level:{value:334},
+    item_class:{id:2}, item_subclass:{id:1}, spells:[], sockets:[],
+    ...(installed ? {enchantments:[{enchantment_slot:{id:0},enchantment_id:installed}]} : {}),
+  });
+  const main = equipped('MAIN_HAND',1001,0), off = equipped('OFF_HAND',1002,7983);
+  const candidate = {itemId:1003,name:'Axe',slotType:'MAIN_HAND',inventoryType:17,itemClassId:2,itemSubclassId:1,
+    eligible:true,compatibility:{specId:72},constraints:{requiredLevel:1},variants:[{key:'axe',itemLevel:334,
+      contextId:0,bonusIds:[],resolution:{effectsVerified:true,effects:[],metadataVersion:3,enhancements:{
+        status:'verified',socketCount:0,socketColors:[0,0,0],socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}}}]};
+  const option = {id:'axe',auctionId:30,costCopper:3,quantity:1,variantKey:'axe',candidate};
+  async function market({items=[main,off], enabled=true, options=[], cheap=[[1,2]], revision=engine}={}) {
+    const state={checkpoints:{}}, choices=new Set();
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for (let step=0;step<50;step++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneCradleEnchants:enabled,
+        finalists:[{label:'exhaustive',options}],equipment:{equipped_items:items},
+        loadout:items.map(i=>({slotType:i.slot.type,itemId:i.item.id,inventoryType:17,itemSubclassId:1})),
+        selectedSlots:items.map(i=>i.slot.type),specId:72,level:90,region:'eu',engine:revision,
+        profileFingerprint:'worldsoul',encounter:{},budgetCopper:100,baseline,state,
+        signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices:{243996:{ladder:cheap},243997:{ladder:[[5,2]]},243998:{ladder:[[8,2]]},243999:{ladder:[[9,2]]}},
+          sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>choices.add(c.slots.map(s=>s.enchantId).join(','))});
+      if (result.complete) return choices;
+    }
+    assert.fail('weapon enchant combinations did not exhaust');
+  }
+  const expected=new Set([0,8008,8009].flatMap(m=>[7983,8006,8008,8009].map(o=>[m,o].join(','))));
+  assert.deepEqual(await market(),expected);
+  assert.deepEqual(await market({options:[option]}),expected);
+  for (const args of [{enabled:false},{revision:'SimulationCraft 18428cd different build'}])
+    assert.equal((await market(args)).size,25);
+  const installed=await market({items:[equipped('MAIN_HAND',1001,8007)]});
+  assert.deepEqual(installed,new Set(['8007','8008','8009']));
+  const both=[equipped('MAIN_HAND',1001,7983),off];
+  for (const cheap of [[[1,1]],[[1,1],[5,1]],[[1,1],[6,1]]])
+    assert((await market({items:both,cheap})).has('8007,8006'),'another hand may consume the last cheap scroll');
 });

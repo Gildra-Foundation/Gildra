@@ -15,6 +15,7 @@ export type AuctionGearOption = {
   variantKey: string;
 };
 export type GearPlanSimulation = {
+  furyWithoutLeechHealingV1?: true;
   dps: number;
   dpsError: number;
   confidence: number;
@@ -112,6 +113,15 @@ export type AuctionGearSearchResult = {
   searchLimited: boolean;
   optionsConsidered: number;
 };
+/** Counts in the canonical gear cursor. A prefix includes its current assignment
+ * and all remaining suffixes, including any previously examined during warmup. */
+export type AuctionGearPruningCounts = {
+  substitutionBranches: string;
+  procurementBranches: string;
+  procurementAssignments: string;
+  equipConflictBranches: string;
+  equipConflictAssignments: string;
+};
 export type AuctionGearAssemblyResult = AuctionGearPlan & {
   kind: "assembly";
   enhancementMode?: import("./auctionGearEnhancementMode").AuctionGearEnhancementMode;
@@ -129,6 +139,10 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   bestDpsConfirmed?: AuctionGearConfirmed | null;
   exhaustiveComplete: boolean;
   combinationsChecked: number;
+  /** Cartesian assignments skipped by a certified substitution, before budget/equip checks. */
+  proofPrunedAssignments?: string;
+  /** Absent for a legacy cursor whose historical branch counts are unknown. */
+  pruningCounts?: AuctionGearPruningCounts;
   validCombinations: number;
   combinationKind: "effects";
   /** Exact effect-choice Cartesian upper bound, including incompatible and over-budget states. */
@@ -158,7 +172,8 @@ export type AuctionGearSearchCheckpoint = {
   simulations: number;
 };
 export type AuctionGearAssemblyCheckpoint = {
-  version: 3;
+  version: 3 | 4;
+  nativeLotGroups?: 1 | 2 | 3 | 4 | 5;
   inputKey: string;
   /** Next mixed-radix effect-group assignment. Zero keeps the current item. */
   cursor: number[];
@@ -173,11 +188,23 @@ export type AuctionGearAssemblyCheckpoint = {
   baseline: GearPlanSimulation;
   best: { optionIds: string[]; simulation: GearPlanSimulation };
   bestConfirmed: { optionIds: string[]; simulation: GearPlanSimulation } | null;
+  /** Finalist-precision measurements stay separate from screening and survive a yielded turn. */
+  equipmentFinalistMeasurements?: Record<string, GearPlanSimulation>;
+  /** Next single-effect group needed for preview cards before exact equipment verification. */
+  nextEquipmentSingle?: number;
+  /** Single-item cards use the same independent measurements as the exhaustive equipment pass. */
+  preciseSingleCards?: true;
+  /** Independent precise traversal, with its own cursor, winners and score cache. */
+  equipmentVerification?: Omit<AuctionGearAssemblyCheckpoint, "equipmentVerification">;
   /** Legacy checkpoints without these fields replay cached traversal before claiming completion. */
   bestValueConfirmed?: { optionIds: string[]; simulation: GearPlanSimulation } | null;
   bestDpsConfirmed?: { optionIds: string[]; simulation: GearPlanSimulation } | null;
   simulationCache: AuctionGearSimulationCache;
   simulations: number;
   combinationsChecked: number;
+  /** Cartesian assignments skipped by a certified substitution, before budget/equip checks. */
+  proofPrunedAssignments?: string;
+  /** Absent for a legacy cursor whose historical branch counts are unknown. */
+  pruningCounts?: AuctionGearPruningCounts;
   validCombinations: number;
 };

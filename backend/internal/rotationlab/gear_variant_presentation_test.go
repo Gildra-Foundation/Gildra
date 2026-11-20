@@ -54,9 +54,25 @@ func TestVariantPresentationWeaponDPSUsesResolvedTooltipDamage(t *testing.T) {
 	}
 }
 
+func TestVariantPresentationPreservesZeroWeaponMinimum(t *testing.T) {
+	input := GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81, Variants: []GearVariantInput{{Key: "auction:zero-min", Change: GearChange{Slot: "main_hand", ItemID: 123}}}}
+	raw := presentationVariantReport(`,"gildra_weapon":{"minDamage":0,"maxDamage":1,"dps":0.4,"speedSeconds":2.6}`)
+	out, err := parseVariantReport(raw, input)
+	if err != nil || len(out.Variants) != 1 || out.Variants[0].Error != "" {
+		t.Fatalf("zero minimum report failed: %+v %v", out, err)
+	}
+	weapon := out.Variants[0].Weapon
+	if weapon == nil || weapon.MinDamage != 0 || weapon.MaxDamage != 1 || math.Abs(weapon.DPS-0.5/2.6) > 1e-10 {
+		t.Fatalf("lost resolved damage endpoints: %+v", weapon)
+	}
+}
+
 func TestVariantPresentationRejectsInvalidNativeWeapon(t *testing.T) {
 	input := GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81, Variants: []GearVariantInput{{Key: "auction:presentation", Change: GearChange{Slot: "main_hand", ItemID: 123}}}}
 	for _, weapon := range []string{
+		`{"maxDamage":1,"dps":0.4,"speedSeconds":2.6}`,
+		`{"minDamage":null,"maxDamage":1,"dps":0.4,"speedSeconds":2.6}`,
+		`{"minDamage":0,"maxDamage":0,"dps":0.4,"speedSeconds":2.6}`,
 		`{"minDamage":-1,"maxDamage":4200,"dps":1000,"speedSeconds":3.5}`,
 		`{"minDamage":2800,"maxDamage":100,"dps":1000,"speedSeconds":3.5}`,
 		`{"minDamage":2800,"maxDamage":4200,"dps":1000,"speedSeconds":0}`,

@@ -12,14 +12,15 @@ export const auctionMeasurementContract = `${nativeGearMeasurementContract}:auct
  * must fail closed instead of silently relabelling integer DPS as precise. */
 export function nativeGearSimulationMeasurement(value: unknown) {
   if (!value || typeof value !== "object") throw new Error("invalid_simulation_result");
-  const result = value as { dps: number; dpsMean: number; dpsError: number; confidence: number; iterations: number; engine: string };
+  const result = value as { dps: number; dpsMean: number; dpsError: number; confidence: number; iterations: number; engine: string; furyWithoutLeechHealingV1?: unknown };
   if (!Number.isFinite(result.dpsMean) || result.dpsMean <= 0 ||
       !Number.isSafeInteger(result.dps) || result.dps !== Math.round(result.dpsMean) ||
       !Number.isFinite(result.dpsError) || result.dpsError < 0 || result.confidence !== 95 ||
       !Number.isSafeInteger(result.iterations) || result.iterations <= 0 ||
       typeof result.engine !== "string" || !result.engine.startsWith("SimulationCraft")) throw new Error("invalid_simulation_result");
   return { dps: result.dpsMean, dpsError: result.dpsError, confidence: result.confidence,
-    iterations: result.iterations, engine: result.engine };
+    iterations: result.iterations, engine: result.engine,
+    ...(result.furyWithoutLeechHealingV1 === true ? {furyWithoutLeechHealingV1: true as const} : {}) };
 }
 
 export type GearCustomization = {

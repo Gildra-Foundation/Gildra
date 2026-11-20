@@ -95,6 +95,7 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
       : t("Проверена часть вариантов. Можно продолжить поиск.", "Only some options have been checked. You can keep searching.")}</p> : null}
     {complete && limitedEnhancements && selected.kind === "enhanced" ? <p className={styles.note}>{t("Камни и чары выбраны из проверенных сочетаний.", "Gems and enchants were selected from the combinations checked.")}</p> : null}
     {assembly.dataComplete === false ? <p className={styles.note}>{t("Часть предметов не удалось оценить.", "Some items could not be evaluated.")}</p> : null}
+    {stage?.traversal === "preview" ? <p className={styles.note}>{t("Камни и чары уже проверены для промежуточного комплекта. Поиск по аукциону продолжается.", "Gems and enchants have been tested for a provisional loadout. The auction search continues.")}</p> : null}
     {exhaustiveEnhancements ? <p className={styles.note} data-auction-enhancement-status={stage.status}>
       {!stage.complete ? t("Перебираем комплекты с камнями и чарами. Показан промежуточный результат.", "Checking loadouts with gems and enchants. This result is provisional.")
         : stage.status === "unavailable" ? t("Не хватает данных для сравнения комплектов с камнями и чарами.", "There is insufficient data to compare loadouts with gems and enchants.")

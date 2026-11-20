@@ -7,7 +7,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { serialize } from 'node:v8';
-import { createAuctionGearEnhancedLoadoutIterator } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { compareAuctionEnhancementValue, trackValuePrecision } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
+import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { observeAuctionEquipment } from '../../../lib/wow/auctionGearPlanner.ts';
 import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { readAuctionState, writeAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
@@ -19,14 +21,14 @@ const storeCode=storeSource.slice(storeSource.indexOf('function storedEntry('),s
 const storedEntry=vm.runInNewContext(stripTypeScriptTypes(storeCode)+';storedEntry',{snapshotAuctionGearContext:()=>({})});
 const simulation=dps=>({dps,dpsError:1,iterations:750,confidence:95,engine:'SimulationCraft synthetic-state'});
 function fixture() {
-  const h={price:10,stale:false,partial:false,stageCalls:[],slice:0,abortAfterQuotes:false};
+  const h={price:10,stale:false,partial:false,stageCalls:[],screenCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:h.prices ?? {'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,createAuctionGearEnhancedLoadoutIterator,assertFreshMarket,structuredClone,compareGearSimulationResults,
+    createHash,observeAuctionEquipment,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
-      h.stageCalls.push(key);h.slice++;
+      h.stageCalls.push(key);if (!input.simulateConfiguration) h.screenCalls.push(key);h.slice++;h.lastGloveRule=input.omitNeutralGloveEnchants;
       const ids=h.dependencies?.[key] ?? [1];
       input.onPriceDependencies(ids);
       input.state.quotes=await quote();input.state.quotedItemIds=[...new Set([...(input.state.quotedItemIds??[]),...ids])];
@@ -34,9 +36,15 @@ function fixture() {
       input.state.checkpoints.current={nativeFacts:'preserved',key};
       if(h.abortAfterQuotes)throw new DOMException('Aborted','AbortError');
       const spent=options.reduce((sum,o)=>sum+o.costCopper,0),dps=h.scores?.[key]??1000+(options[0]?.candidate.itemId??0)*(h.scale??1);
-      const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:{...simulation(dps),dpsError:h.errors?.[key]??1},
+      const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:{...simulation(dps),iterations:h.iterations??750,dpsError:h.errors?.[key]??1},
         comparison:{deltaDps:dps-1000,candidateDps:dps,uncertainty:{significant:dps>1000}},
         configuration:{key,status:'priced',itemsCopper:spent,totalCopper:spent+cost,fullyEnhanced:false,consumables:[],slots:[],sourceUpdatedAt:input.state.quotes.sourceUpdatedAt}};
+      if (input.simulateConfiguration) {
+        recommendation.simulation = await input.simulateConfiguration(options, recommendation.configuration, input.signal);
+        recommendation.comparison = compareGearSimulationResults(input.baseline, recommendation.simulation);
+      }
+      if (!h.stale && spent+cost<=input.budgetCopper)
+        input.onMeasured?.(recommendation.configuration, () => recommendation);
       return{complete:!h.partial,status:h.stale?'unavailable':spent+cost>input.budgetCopper?'no_affordable_configuration':'ready',searchLimited:true,recommendations:h.stale||spent+cost>input.budgetCopper?[]:[recommendation],reasons:h.stale?['market_unverified']:[],traversal:'exhaustive'};
     },
   });
@@ -83,6 +91,32 @@ test('enhances duplicate equipment once and reopens with the next cheapest recei
   assert.equal(resumed.recommendations[0].optionIds[0], 'option-3');
   assert.equal(resumed.recommendations[0].configuration.itemsCopper, 100);
   assert(!h.stageCalls.includes(copy.id));
+});
+
+test('the joint traversal certifies each bare equipment layout and its equivalent physical offers across resumes',async()=>{
+  const h=fixture();h.price=0;h.scale=10;
+  h.input.trackBareEquipment=true;
+  const [first,second,third]=h.input.options;
+  first.costCopper=20;second.costCopper=100;third.costCopper=200;
+  const dearer={...third,id:'other-lot',auctionId:33,costCopper:300};
+  h.input.options.push(dearer);
+  for(let turn=0;turn<10;turn++){
+    const result=await h.run();
+    h.state=structuredClone(result.state);
+    if(result.result.complete)break;
+    assert.equal(h.state.bareEquipment.covered,undefined);
+  }
+  const {leaders,layouts,covered,missing,singles}=h.state.bareEquipment;
+  assert.equal(covered,true);assert.equal(missing,undefined);assert.equal(layouts,4);
+  assert.deepEqual([...leaders.bestDpsConfirmed.optionIds],[third.id]);
+  assert.deepEqual([...leaders.bestValueConfirmed.optionIds],[first.id]);
+  assert.deepEqual(singles[third.id],singles[dearer.id]);assert.equal(singles[dearer.id].dps,1030);
+  const saved=structuredClone(h.state.bareEquipment);await h.run();
+  assert.deepEqual(structuredClone(h.state.bareEquipment),saved);
+  const gap=fixture();gap.input.trackBareEquipment=true;
+  await finish(gap);
+  assert.equal(gap.state.bareEquipment.missing,true,'a measured upgrade with additional cost cannot stand in for bare');
+  assert.equal(Object.keys(gap.state.bareEquipment.singles).length,0);
 });
 
 test('price ladder changes reopen completed ranking while equal-price timestamps keep the exact cursor',async()=>{
@@ -288,4 +322,280 @@ test('a long run of identical dependencies occupies one range and diverse overfl
   const after=await finish(overflow);
   assert.equal(after.recommendations[0].configuration.key,'option-64');
   assert.equal(after.recommendations[0].configuration.totalCopper,135);
+});
+
+test('a distant value finalist gets 750 iterations against the precise baseline and resumes without another fight',async()=>{
+  const h=fixture(), calls=[];
+  h.iterations=100;
+  h.input.baseline={...simulation(1000),iterations:100};
+  h.price=0;
+  h.input.options.forEach((o,i)=>{o.costCopper=[1,500,600][i];});
+  h.scores={baseline:1000,'option-1':1010,'option-2':1100,'option-3':1200};
+  h.input.objective='value';
+  h.input.recheckBaseline=async()=>{calls.push('baseline'); h.slice++; return simulation(1005);};
+  h.input.recheck=async options=>{
+    const key=options[0].id; calls.push(key); h.slice++;
+    return simulation({'option-1':1012,'option-3':1190}[key]);
+  };
+  let result;
+  for(let i=0;i<20;i++){
+    result=(await h.run()).result;
+    h.state=structuredClone(h.state);
+    if(result.complete)break;
+  }
+  assert(result.complete);
+  assert.deepEqual(calls,['baseline','option-3','option-1']);
+  assert.deepEqual(result.recommendations.map(r=>r.configuration.key).join(','),'option-1,option-3');
+  assert.deepEqual(result.recommendations.map(r=>r.comparison.deltaDps).join(','),'7,185');
+  assert(result.recommendations.every(r=>r.simulation.iterations===750));
+  await h.run();assert.equal(calls.length,3);
+});
+
+test('a sole unchanged finalist shares one independently verified baseline fight',async()=>{
+  const h=fixture();
+  h.input.options=[]; h.iterations=100; h.price=0;
+  h.input.baseline={...simulation(1000),iterations:100};
+  h.input.recheck=async()=>assert.fail('unchanged finalist already has its independent measurement');
+  h.input.recheckBaseline=async()=>({...simulation(995),iterations:200});
+  await assert.rejects(finish(h),/invalid_simulation_result/);
+  assert.equal(h.state.preciseBaseline,undefined);
+  let calls=0;
+  h.input.recheckBaseline=async()=>{calls++;return simulation(995);};
+  const result=await finish(h);
+  assert.equal(calls,1);
+  assert.equal(result.recommendations.length,1);
+  assert.equal(result.recommendations[0].simulation.iterations,750);
+  assert.equal(result.recommendations[0].comparison.deltaDps,0);
+  assert.equal(result.finalistRecheck,undefined);
+});
+
+test('two enhanced finalist lanes preserve a successful sibling across retry',async()=>{
+  const h=fixture(), calls=[];
+  let active=0, peak=0, fail=true;
+  h.iterations=100;
+  h.input.baseline={...simulation(1000),iterations:100};
+  h.input.simulationConcurrency=2;
+  h.scores={baseline:1000,'option-1':1100,'option-2':1200,'option-3':1300};
+  async function measure(key){
+    calls.push(key);active++;peak=Math.max(peak,active);
+    try{
+      await new Promise(resolve=>setImmediate(resolve));
+      if(key==='option-3' && fail)throw Error('worker busy');
+      return simulation(h.scores[key]);
+    }finally{active--;}
+  }
+  h.input.recheckBaseline=()=>measure('baseline');
+  h.input.recheck=options=>measure(options[0].id);
+  await assert.rejects(finish(h),/worker busy/);
+  assert.equal(peak,2);assert.equal(active,0);
+  assert.equal(h.state.preciseBaseline.dps,1000);assert.equal(h.state.precise?.['option-3'],undefined);
+  h.state=structuredClone(h.state);fail=false;
+  const result=await finish(h);
+  assert.equal(result.complete,true);
+  assert.deepEqual(calls,['baseline','option-3','option-3']);
+  assert.equal(result.recommendations[0].simulation.iterations,750);
+});
+
+test('equal tuning caps reserve a finalist position for a distinct setup and retain slot-specific gems', () => {
+  const { consider, finalistAliases } = vm.runInNewContext(code + ';({consider, finalistAliases})', { enhancedFinalistOptionKey });
+  const engine = 'SimulationCraft fixture · 18428cd';
+  function candidate(id, tuning, gem, dps, cap = 90) {
+    const option = fixture().input.options[0];
+    option.id = id;
+    option.variantKey = id;
+    Object.assign(option.candidate.variants[0], {key: id, bonusIds: [6652, 13668, 13901],
+      modifiers: [{type: 9, value: 90}, {type: 28, value: tuning}],
+      resolution: {engine, metadataVersion: 3, nativeContentTuningV1: [tuning, cap],
+        enhancements: {status: 'verified', socketColors: [14, 0, 0], socketCount: 1, socketBonusId: 0}}});
+    const configuration = {key: id, status: 'priced', totalCopper: gem ? 110 : 100,
+      slots: [{slotType: 'HEAD', variantKey: id, enchantId: 0, gemIds: [gem]}]};
+    return {options: [option], recommendation: {configuration, simulation: {...simulation(dps), engine},
+      comparison: {deltaDps: dps - 1000, uncertainty: {significant: true}}}};
+  }
+  const state = {};
+  const rows = [candidate('b', 3321, 130215, 1020), candidate('a', 5381, 130215, 1020),
+    candidate('c', 3084, 130215, 1020), candidate('d', 3321, 0, 1018),
+    candidate('e', 3084, 130215, 1017, 80)];
+  const aliases = finalistAliases(rows.flatMap(row => row.options), engine);
+  for (const row of rows) consider(state, row, true, aliases);
+  assert.deepEqual([state.measured, state.runnerUp, state.nextMeasured].map(r => r.recommendation.configuration.key),
+    ['a', 'd', 'e']);
+});
+
+test('a change of the value leader at finalist precision survives checkpoint recovery', async () => {
+  const h = fixture();
+  h.price = 0;
+  h.iterations = 100;
+  h.input.objective = 'value';
+  h.input.baseline = {...simulation(1000), iterations: 100, dpsError: 10};
+  h.input.options.forEach((row, i) => { row.costCopper = [100, 200, 400][i]; });
+  h.scores = {baseline: 1000, 'option-1': 1037, 'option-2': 1080, 'option-3': 1150};
+  h.errors = {'option-1': 2, 'option-2': 2, 'option-3': 2};
+  const checked = [];
+  h.input.recheckBaseline = async () => simulation(1000);
+  h.input.recheck = async options => {
+    const id = options[0].id;
+    checked.push(id);
+    return simulation({'option-1': 1043, 'option-2': 1082, 'option-3': 1150}[id]);
+  };
+  let result;
+  for (let i = 0; i < 50; i++) {
+    result = (await h.run()).result;
+    h.state = JSON.parse(JSON.stringify(h.state));
+    if (result.complete) break;
+  }
+  assert.equal(result.complete, true);
+  assert.equal(result.verifiedValueKey, 'option-1');
+  assert.equal(result.recommendations[0].configuration.key, 'option-1');
+  assert.equal(result.recommendations[0].comparison.deltaDps, 43);
+  assert.deepEqual([...new Set(checked)].sort(), ['option-1', 'option-2', 'option-3']);
+  assert.equal(checked.length, 3);
+});
+
+test('equal precise DPS and cost resolve by receipt key even when screening favored the other purchase', async () => {
+  const h = fixture();
+  h.iterations = 100;
+  h.input.baseline = {...simulation(1000), iterations: 100};
+  h.scores = {baseline: 1000, 'option-1': 1099, 'option-2': 1100, 'option-3': 900};
+  h.input.recheck = async () => simulation(1100);
+  h.input.recheckBaseline = async () => simulation(1000);
+  const result = await finish(h);
+  assert.equal(result.finalistRecheck.leaderKey, 'option-1');
+  assert.equal(result.finalistRecheck.preferredKey, 'option-1');
+  assert.equal(result.verifiedValueKey, 'option-1');
+});
+
+test('a batch-capable worker receives the ready finalists together and returns independent scores', async () => {
+  const h = fixture();
+  h.iterations = 100;
+  h.input.baseline = {...simulation(1000), iterations: 100, dpsError: 10};
+  h.input.options.forEach((row, index) => { row.costCopper = [100, 200, 400][index]; });
+  h.scores = {baseline: 1000, 'option-1': 1037, 'option-2': 1080, 'option-3': 1150};
+  h.input.simulationConcurrency = 2;
+  h.input.simulationBatchSize = 8;
+  let queued = 0, largest = 0;
+  const submitted = [];
+  const measure = async (id, mean) => {
+    submitted.push(id);
+    largest = Math.max(largest, ++queued);
+    await new Promise(resolve => setImmediate(resolve));
+    queued--;
+    return simulation(mean);
+  };
+  h.input.recheckBaseline = () => measure('baseline', 1000);
+  h.input.recheck = rows => measure(rows[0].id, h.scores[rows[0].id]);
+  const result = await finish(h);
+  assert.equal(result.complete, true);
+  assert(largest > 2);
+  assert.deepEqual(submitted.sort(), ['baseline', 'option-1', 'option-2', 'option-3']);
+  assert.equal(result.recommendations[0].simulation.iterations, 750);
+});
+
+test('joint precision ranks affordable native classes once, resumes and reprices both objectives', async () => {
+  const h = fixture();
+  const [one, two, three] = h.input.options;
+  const four = {...one, id:'option-4', auctionId:4, candidate:{...one.candidate, itemId:4}};
+  h.input.options.push(four);
+  one.costCopper=400; two.costCopper=100; three.costCopper=250; four.costCopper=1;
+  h.input.baseline = {...simulation(1000), iterations:100};
+  h.input.trackBareEquipment = true;
+  h.input.finalistKey = options => [one.id,two.id].includes(options[0]?.id) ? 'paired' : options[0]?.id ?? 'baseline';
+  let baselines=0;
+  h.input.recheckBaseline = async () => { baselines++; return simulation(1000); };
+  const calls=[];
+  h.input.recheck = async options => {
+    const id=options[0].id;
+    calls.push(id);
+    return simulation(id===three.id ? 1051 : id===four.id ? 1020 : 1049);
+  };
+  h.dependencies={baseline:[],[one.id]:[],[two.id]:[],[three.id]:[],[four.id]:[1]};
+  h.prices={'1':{ladder:[[0,100]]}};
+  const run = async () => {
+    for(let turn=0;turn<24;turn++){
+      const {result}=await h.run();
+      h.state=structuredClone(h.state);
+      if(result.complete)return result;
+    }
+    assert.fail('joint market did not complete');
+  };
+  const result=await run();
+  assert.equal(baselines,1);
+  assert.deepEqual(h.screenCalls,[]);
+  assert.deepEqual(calls.sort(),[one.id,two.id,three.id,four.id]);
+  assert.equal(h.state.precisionPass.rankedFromReceipts,4);
+  assert.equal(h.state.precisionPass.rankReceipts,undefined);
+  assert.equal(h.state.bareEquipment.layouts,5);
+  assert.equal(h.state.bareEquipment.covered,true);
+  assert.equal(h.state.bareEquipment.missing,undefined);
+  assert.deepEqual({...result.verifiedObjectives},{dps:two.id,value:four.id});
+  assert.equal(result.finalistRecheck.leaderKey,three.id);
+  assert.equal(result.finalistRecheck.significant,false);
+  h.prices={'1':{ladder:[[500,100]]}};
+  h.state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
+  const repriced=await run();
+  assert.deepEqual({...repriced.verifiedObjectives},{dps:two.id,value:two.id});
+  assert.equal(h.state.bareEquipment.missing,true);
+  assert.equal(baselines,1);
+  assert.equal(h.screenCalls.length,0);
+});
+
+test('an older saved search finishes on its original glove axes', async () => {
+  const h = fixture();
+  await h.run();
+  assert.equal(h.lastGloveRule, true);
+  const saved = structuredClone(h.state);
+  delete saved.omitNeutralGloveEnchants;
+  const legacyHash = vm.runInNewContext(code + ';hash', {createHash});
+  saved.inputKey = legacyHash(['owned-enhancements-partial-coverage-v1', saved.cursor.inputKey, h.input.profileFingerprint,
+    h.input.engine, h.input.encounter, h.input.objective, h.input.baseline, 'synthetic-state-v1']);
+  h.state = saved;
+  const result = await finish(h);
+  assert.equal(h.lastGloveRule, false);
+  assert.equal(h.state.inputKey, saved.inputKey);
+  assert.equal(h.stageCalls.filter(key=>key==='baseline').length, 1);
+  assert.equal(result.equipmentChecked, 4);
+});
+
+test('independent precision covers more than one private receipt window, across restores and a price change', async () => {
+  const h = fixture();
+  const options = Array.from({length: 78}, (_, i) => ({...h.input.options[0], id: `offer-${i}`,
+    auctionId: i + 50, costCopper: i + 1, candidate: {...h.input.options[0].candidate, itemId: 500+i}}));
+  h.input.options = options;
+  h.scores = {'offer-0': 985, 'offer-51': 982};
+  h.iterations = 100;
+  h.input.baseline = {...simulation(1000), iterations: 100};
+  h.input.finalistKey = selected => selected[0]?.id ?? 'baseline';
+  h.input.recheckBaseline = async () => simulation(1000);
+  const precise = id => id === 0 ? 1035 : id === 51 ? 1199 : id === 72 ? 1200 : 1000;
+  const nativeInputs = new Set();
+  h.input.recheck = async selected => {
+    const id = selected[0].candidate.itemId - 500;
+    nativeInputs.add(id);
+    return simulation(precise(id));
+  };
+  const run = async () => {
+    for (let slice=0; slice<360; slice++) {
+      const {result}=await h.run();
+      h.state=structuredClone(h.state);
+      if (result.complete) return result;
+    }
+    assert.fail('all precision passes should complete');
+  };
+  const result = await run();
+  assert.equal(h.state.finalistReceipts, 'overflow');
+  assert.equal(h.screenCalls.length,65,'the 65th distinct receipt requires a precise traversal from the first layout');
+  assert.equal(nativeInputs.size,78);
+  assert(!h.state.cursor.exhausted, 'Only the prefix seen before the final peak needs a ranking replay');
+  assert.equal(result.equipmentChecked,79);
+  assert.equal(result.finalistRecheck.leaderKey,'offer-72');
+  assert.equal(result.finalistRecheck.preferredKey,'offer-51');
+  assert.equal(result.verifiedValueKey,'offer-51');
+  assert(result.recommendations.every(r=>r.simulation.iterations===750));
+  assert(result.recommendations.length<=7);
+  h.price=1;h.state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
+  assert.equal((await h.run()).result.complete,false);
+  const repriced=await run();
+  assert.equal(h.screenCalls.length,65,'repricing reopens the exact domain without rescreening it');
+  assert.equal(repriced.verifiedValueKey,'offer-0');
+  assert.equal(repriced.recommendations.find(r=>r.configuration.key==='offer-0').configuration.totalCopper,2);
 });

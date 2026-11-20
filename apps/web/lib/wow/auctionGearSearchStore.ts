@@ -1,5 +1,5 @@
 import "server-only";
-import type { AuctionEnhancementStageState } from "./auctionGearEnhancementStage";
+import type { AuctionEnhancementStageState, AuctionEnhancementStageResult } from "./auctionGearEnhancementStage";
 import type { AuctionGearExhaustiveEnhancementState } from "./auctionGearExhaustiveEnhancements";
 import { randomUUID } from "node:crypto";
 import type { AuctionGearContext, AuctionGearRunMetadata } from "./auctionGearRunner";
@@ -24,6 +24,8 @@ export type AuctionGearSearchEntry = {
   /** Refresh raw market exactly once; later bootstrap turns keep their cursor. */
   metadataMarketRefreshRequired?: boolean;
   enhancementState?: AuctionEnhancementStageState;
+  enhancementPreview?: { leader: string; stage: AuctionEnhancementStageState; retryAt: number;
+    result?: AuctionEnhancementStageResult; validUntil?: number };
   exhaustiveEnhancementState?: AuctionGearExhaustiveEnhancementState;
   /** Persisted logical order preserves recency when wall-clock timestamps tie. */
   recency: number;
@@ -92,7 +94,11 @@ function load(id: string) {
         data.recency > record.metadata.recency || data.createdAt !== record.metadata.createdAt ||
         !(data.knownOptionIds instanceof Set)) throw new Error();
     const context = restoreAuctionGearContext(data.context);
-    const reset = context.discovery !== data.context.discovery || (data.context.discovery?.socketMetadataRevision !== 3 && context.discovery?.socketMetadataRevision === 3) ||
+    // Early stat-only caches could copy a DPS measurement to an item with a
+    // different observable ID or bonus. Its aliases and winners must replay together.
+    const hadStatOnlyResults = [data.assemblyCheckpoint?.simulationCache, data.searchCheckpoint?.simulationCache,
+      data.retainedSimulationCache].some(cache => cache && Object.keys(cache).some(key => key.startsWith("applied-v1:")));
+    const reset = hadStatOnlyResults || context.discovery !== data.context.discovery || (data.context.discovery?.socketMetadataRevision !== 3 && context.discovery?.socketMetadataRevision === 3) ||
       (data.context.discovery?.equippedReferenceRevision !== 1 && context.discovery?.equippedReferenceRevision === 1);
     // Preserve the user's selection, including formerly available lots. Rebuild
     // all results and cursors together when the underlying variant proof changed.
@@ -114,7 +120,7 @@ function storedEntry(entry: AuctionGearSearchEntry): StoredEntry {
     nextSearchPhase: entry.nextSearchPhase, nextAssemblyPhase: entry.nextAssemblyPhase,
     metadataRebuildRequired: entry.metadataRebuildRequired,
     metadataMarketRefreshRequired: entry.metadataMarketRefreshRequired,
-    enhancementState: entry.enhancementState,
+    enhancementState: entry.enhancementState, enhancementPreview: entry.enhancementPreview,
     exhaustiveEnhancementState: entry.exhaustiveEnhancementState,
     knownOptionIds: entry.knownOptionIds, searchCheckpoint: entry.searchCheckpoint,
     assemblyCheckpoint: entry.assemblyCheckpoint, allowedKey: entry.allowedKey,

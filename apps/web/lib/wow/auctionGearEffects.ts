@@ -1,25 +1,179 @@
 import { createHash } from "node:crypto";
-import { candidateLoadoutItem } from "./gearSimulation";
+import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
+import type { GearLoadoutItem } from "./gearCompatibility";
+import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
-    return [option.candidate.slotType, option.candidate.itemId, [...variant.bonusIds].sort((a, b) => a - b),
-      variant.contextId ?? 0, [...(variant.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value),
+    const bare = groupUnusedScaling && !option.customization && variant.bonusIds?.length === 0;
+    const resolution = engine && variant.resolution?.engine === engine ? variant.resolution : undefined;
+    const curve = groupUnusedScaling === "drop-curve" ? resolution?.nativeDropCurveV1 : undefined;
+    const tuning = typeof groupUnusedScaling === "string" && resolution
+      ? resolution.nativeContentTuningV1 : undefined;
+    const item = engine ? auctionNativeItemOptions(variant, engine, bare, tuning, curve) : variant;
+    const cap = "dropCurveLevel" in item && item.dropCurveLevel !== undefined ? ["drop-curve-v1", item.dropCurveLevel] :
+      "contentTuningCap" in item ? [item.contentTuningCap] : [];
+    let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
+    // Keep certified groups separate from historical and uncertified offers,
+    // even when the latter already use ascending crafting modifier values.
+    const symmetric = craftedSymmetry && !option.customization && engine && ignoresItemContext(engine) &&
+      variant.resolution?.engine === engine && variant.resolution.nativeCraftedSymmetryV1 === true &&
+      validAuctionItemContext(variant.contextId) && supportedAuctionModifiers(modifiers);
+    if (symmetric) {
+      const first = modifiers.find(m => m.type === 29), second = modifiers.find(m => m.type === 30);
+      if (first && second && first.value !== second.value) {
+        modifiers = modifiers.map(m => m === first ? { ...m, value: Math.min(first.value, second.value) } :
+          m === second ? { ...m, value: Math.max(first.value, second.value) } : m);
+        return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds, item.contextId ?? 0, modifiers, "crafted-symmetry-v1", ...cap];
+      }
+    }
+    return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
+      item.contextId ?? 0, modifiers, ...cap,
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
+}
+
+const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
+
+// Pinned chest enchants with only STAT and RESISTANCE operations. SimC
+// adds their contribution to the player's stats without rereading the item's
+// unrounded rating allocations. The enchant ID remains part of the score key.
+const directChestEnchants = new Set([
+  15, 16, 17, 18, 24, 41, 242, 246, 254, 843, 850, 857,
+  908, 913, 1843, 1893, 1953, 2381, 2503, 2659, 2792, 2793, 2794, 2841,
+  2933, 3150, 3233, 3236, 3245, 3297, 3329, 3330, 4070, 4077, 4088, 4103,
+  4120, 4121, 4417, 4418, 4420, 4869, 5237, 5260, 6614, 6615, 6616, 6620,
+  6621, 6622, 6623, 6624, 6625,
+]);
+
+/** A certified substitution must preserve the item identity observable to APLs
+ * and the ordered bonus IDs observable to other equipped items' effects. */
+export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: string, proofMode: boolean | "enchanted-suffix" = false): string | undefined {
+  const pieces: Array<[string, unknown]> = [];
+  let certified = false;
+  let enchantedSuffix = false;
+  const pinned = ignoresItemContext(engine);
+  for (const option of options) {
+    const enchant = option.customization?.enchantId;
+    if (option.customization && (proofMode !== "enchanted-suffix" ||
+        option.candidate.slotType !== "CHEST" || !enchant || !directChestEnchants.has(enchant) ||
+        option.customization.gemIds?.length)) return;
+    const c = option.candidate, t = c.constraints;
+    const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
+    if (!v || !validAuctionItemContext(v.contextId)) return;
+    const e = r?.enhancements, stats = r?.appliedStatsV1;
+    // This pinned waist program has two alternatives. 13695 adds one
+    // prismatic socket, 13696 does nothing. Neither contributes a combat
+    // effect or a cross-item description tag. Without a gem or socket bonus
+    // their native stat vectors and all other inputs must still match.
+    const emptySocket = proofMode === true && pinned && c.slotType === "WAIST" && c.inventoryType === 6 &&
+      v.bonusIds.length === 4 && v.bonusIds[0] === 6652 && v.bonusIds[1] === 13663 && v.bonusIds[3] === 13901 &&
+      e?.status === "verified" && e.socketColors?.length === 3 && e.socketColors[1] === 0 && e.socketColors[2] === 0 &&
+      ((v.bonusIds[2] === 13695 && e.socketCount === 1 && e.socketColors[0] === 14) ||
+       (v.bonusIds[2] === 13696 && e.socketCount === 0 && e.socketColors[0] === 0));
+    if (plainArmorSlots.has(c.slotType) && c.itemClassId === 4 && Number.isSafeInteger(v.itemLevel) && v.itemLevel > 0 &&
+        r?.engine === engine && r.nativeNoItemEffects === true && !r.effects?.length && !r.weapon &&
+        !t.setId && !t.setName && !t.crafted && !t.uniqueEquipped && !t.limitCategoryId &&
+        e?.status === "verified" && (e.socketCount === 0 || emptySocket) && e.socketBonusId === 0 && e.requiredProfessionId === 0 &&
+        stats?.length === 46 && stats.every(Number.isSafeInteger) && supportedAuctionModifiers(v.modifiers ?? [])) {
+      // The worker never emits reagent IDs (38–51). Drop level and content
+      // tuning can be ignored only with positive evidence from the native resolver.
+      const scaling = r.nativeScalingInputsV1;
+      const certifiedScaling = !emptySocket && pinned && scaling?.length === 4 &&
+        scaling.every(value => Number.isSafeInteger(value) && value >= 0 && value <= 2147483647);
+      // A legacy stat suffix can carry a different list ID for the exact same
+      // ordered DBC operations. Every other bonus keeps its original identity.
+      const suffix = r.nativeSuffixProgramV1;
+      const verifiedSuffix = certifiedScaling && v.bonusIds.length === 1 && Number.isSafeInteger(v.bonusIds[0]) &&
+        v.bonusIds[0] >= 1 && v.bonusIds[0] <= 500 && typeof suffix === "string" && /^[a-f0-9]{64}$/.test(suffix);
+      let bonuses: string | number[] = emptySocket ? "empty-waist-socket-v1" : v.bonusIds;
+      let appliedEnchant: number | undefined;
+      if (verifiedSuffix) {
+        // On this DBC the certified two-allocation suffixes below 251 only
+        // add secondary ratings. Bare combat consumes their final integer
+        // ratings via item_t::total_stats. Direct chest enchants only append
+        // their own stats. Both items must carry the same enchant.
+        const ratingsOnly = (proofMode === true || !!enchant) && v.bonusIds[0] <= 250 &&
+          scaling.every(value => value === 0) && (v.modifiers ?? []).every(m => m.type === 28);
+        bonuses = ratingsOnly ? "bare-secondary-suffix-v1" : suffix;
+        if (ratingsOnly && enchant) {
+          appliedEnchant = enchant;
+          enchantedSuffix = true;
+        }
+      }
+      if (option.customization && !appliedEnchant) return;
+      const modifiers = (v.modifiers ?? []).filter(m => (m.type < 38 || m.type > 51) &&
+        !(certifiedScaling && (m.type === 9 || m.type === 28))).sort((a, b) => a.type - b.type);
+      pieces.push([c.slotType, [c.itemId, c.inventoryType, c.itemSubclassId, v.itemLevel, bonuses,
+        pinned ? 0 : v.contextId ?? 0, modifiers, certifiedScaling ? scaling : null, stats, ...(appliedEnchant ? [appliedEnchant] : [])]]);
+      certified = true;
+    } else {
+      if (option.customization) return;
+      pieces.push([c.slotType, [auctionSelectionEffectKey([option]), v.bonusIds]]);
+    }
+  }
+  if (!certified || (proofMode === "enchanted-suffix" && !enchantedSuffix)) return;
+  pieces.sort(([a], [b]) => a.localeCompare(b));
+  return "applied-v2:" + createHash("sha256").update(JSON.stringify([auctionMeasurementContract, engine, pieces])).digest("hex");
+}
+
+/** For every marked offer any legal completion can buy the cheaper equivalent
+ * in the same slot. A shared lot or item identity could invalidate that receipt. */
+export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
+  specId: number, engine: string, bareEquipmentProofs = false, replacements?: Map<string, string>): Set<string> {
+  const itemSlots = new Map<number, string>(), lotSlots = new Map<number, string>();
+  const recordSlot = (map: Map<number, string>, id: number, slot: string) => {
+    const seen = map.get(id);
+    map.set(id, seen === undefined || seen === slot ? slot : "multiple");
+  };
+  for (const item of loadout) recordSlot(itemSlots, item.itemId, item.slotType);
+  for (const { candidate, auctionId } of options) {
+    recordSlot(itemSlots, candidate.itemId, candidate.slotType);
+    recordSlot(lotSlots, auctionId, candidate.slotType);
+  }
+  // The final tie-break compares sorted option IDs joined by "|". For
+  // prefix-free IDs, inserting the same suffix purchases preserves that order.
+  const ids = options.map(option => option.id).sort();
+  const stableTies = ids.every((id, index) => !id.includes("|") && (!index || !id.startsWith(ids[index - 1])));
+  const keyed: Array<[AuctionGearOption, string]> = [], cheapest = new Map<string, AuctionGearOption>();
+  for (const option of options) {
+    const { candidate, auctionId } = option;
+    if (!candidate.eligible || candidate.compatibility.specId !== specId ||
+        lotSlots.get(auctionId) !== candidate.slotType || itemSlots.get(candidate.itemId) !== candidate.slotType) continue;
+    const keys = new Set([auctionAppliedStatsKey([option], engine)]);
+    if (bareEquipmentProofs && (candidate.slotType === "WAIST" ||
+        candidate.variants.some(v => v.key === option.variantKey && v.resolution?.nativeSuffixProgramV1)))
+      keys.add(auctionAppliedStatsKey([option], engine, true));
+    for (const key of keys) {
+      if (!key) continue;
+      keyed.push([option, key]);
+      const best = cheapest.get(key);
+      if (!best || option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id)
+        cheapest.set(key, option);
+    }
+  }
+  const dominated = new Set<string>();
+  for (const [option, key] of keyed) {
+    const best = cheapest.get(key)!;
+    if (option.costCopper > best.costCopper || stableTies && option.id !== best.id) {
+      dominated.add(option.id);
+      replacements?.set(option.id, best.id);
+    }
+  }
+  return dominated;
 }
 
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option]), constraints])).digest("hex");
+  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */

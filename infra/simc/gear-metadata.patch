@@ -1,15 +1,196 @@
 --- a/engine/report/json/report_json.cpp
 +++ b/engine/report/json/report_json.cpp
-@@ -384,7 +384,7 @@
+@@ -2,6 +2,9 @@
+ // Dedmonwakeen's Raid DPS/TPS Simulator.
+ // Send questions to natehieter@gmail.com
+ // ==========================================================================
++
++#include <cstdlib>
++#include "dbc/item_scaling.hpp"
+-
++
+ #include "interfaces/sc_js.hpp"
+ #include "rapidjson/document.h"
+@@ -379,12 +382,175 @@
+   } );
+ }
+-
++
+-void gear_to_json( JsonOutput root, const player_t& p )
++// Pinned decode_stats replaces the two crafting placeholders before accumulating
++// their ratings. Only certify two distinct rows with identical unrounded inputs
++// to scaled_stat. The last array position has special handling in stat_value.
++void gildra_crafted_symmetry( JsonOutput node, const item_t& item )
++{
++  const auto& p = item.parsed;
++  const auto& mods = p.crafted_stat_mod;
++  if ( mods.size() != 2 || mods[ 0 ] == mods[ 1 ] || item.parent_slot != SLOT_INVALID ||
++       p.enchant_id || p.addon_id || !p.temporary_enchants.empty() ||
++       range::any_of( p.gem_id, []( auto id ) { return id != 0; } ) )
++    return;
++  const auto size = p.data.stat_type_e.size();
++  std::array<size_t, 2> index{ size, size };
++  for ( size_t i = 0; i < size; ++i )
++    for ( size_t j = 0; j < index.size(); ++j )
++      if ( p.data.stat_type_e[ i ] == mods[ j ] )
++      {
++        if ( index[ j ] != size || i + 1 == size )
++          return;
++        index[ j ] = i;
++      }
++  const auto a = index[ 0 ], b = index[ 1 ];
++  auto socket_mul = [&]( size_t i ) {
++    return i < p.data._dbc_stats_count ? p.data._dbc_stats[ i ].socket_mul : 0.0f;
++  };
++  if ( a == size || b == size || p.data.stat_alloc[ a ] != p.data.stat_alloc[ b ] ||
++       p.stat_val[ a ] != p.stat_val[ b ] || socket_mul( a ) != socket_mul( b ) )
++    return;
++  auto pair = node[ "gildra_crafted_symmetry_v1" ];
++  pair.make_array();
++  pair.add() = mods[ 0 ];
++  pair.add() = mods[ 1 ];
++}
++
++// The only drop/tuning reader in these bonus lists is one type-51 curve.
++// Equal rounded outputs write the same item level and scaling flag. The other
++// accepted entries add sockets or are ignored by the pinned item parser.
++void gildra_drop_curve( JsonOutput node, const item_t& item )
++{
++  const auto& parsed = item.parsed;
++  if ( !parsed.drop_level || parsed.data.item_class != ITEM_CLASS_ARMOR || item.parent_slot != SLOT_INVALID )
++    return;
++  const auto& dbc = *item.player->dbc;
++  int config_id = 0;
++  for ( auto id : parsed.bonus_id )
++  {
++    auto entries = dbc.item_bonus( id );
++    if ( entries.empty() ) return;
++    for ( const auto& entry : entries )
++    {
++      switch ( entry.type )
++      {
++        case ITEM_BONUS_SCALE_CONFIG_2:
++          if ( config_id || entry.value_1 <= 0 ) return;
++          config_id = entry.value_1;
++          break;
++        case ITEM_BONUS_SOCKET:
++        case 26:
++        case 27:
++        case 47:
++          break;
++        default:
++          return;
++      }
++    }
++  }
++  if ( !config_id ) return;
++  const auto configs = item_scaling_config_data_t::find( config_id, dbc.ptr );
++  if ( configs.empty() ) return;
++  const auto offsets = item_offset_curve_data_t::find( configs[ 0 ].item_offset_curve_id, dbc.ptr );
++  if ( offsets.empty() ) return;
++  auto drop = parsed.drop_level;
++  const auto& tuning = dbc.content_tuning( parsed.content_tuning_id );
++  if ( parsed.content_tuning_id && tuning.id != parsed.content_tuning_id ) return;
++  if ( tuning.max_level_squish > 0 ) drop = std::min( drop, static_cast<unsigned>( tuning.max_level_squish ) );
++  const auto& offset = offsets[ 0 ];
++  const int level = as<int>( util::round( item_database::curve_point_value( dbc, offset.curve_id, drop ) ) ) + offset.offset;
++  if ( level <= 0 || level != as<int>( parsed.data.level ) || !parsed.has_midnight_scaling ) return;
++  auto proof = node[ "gildra_drop_curve_v1" ];
++  proof.make_array();
++  proof.add() = parsed.drop_level;
++  proof.add() = parsed.content_tuning_id;
++  proof.add() = level;
++}
++
++// Pinned 18428cd parses context into DUMMY_CONTEXT. Its only mechanical reads of
++// drop_level/content_tuning are the three handlers in apply_item_bonus. Keep their
++// effective inputs for bare local items. Callers must also match the item ID, all
++// original bonus IDs, slot, and every other mechanically serialized option.
++void gildra_scaling_inputs( JsonOutput slotnode, const item_t& item )
++{
++  const auto& parsed = item.parsed;
++  if ( parsed.data.item_class != ITEM_CLASS_ARMOR || item.parent_slot != SLOT_INVALID ||
++       parsed.enchant_id || parsed.addon_id || !parsed.temporary_enchants.empty() ||
++       parsed.data.id_socket_bonus || !parsed.special_effects.empty() ||
++       range::any_of( parsed.data.effects, []( const auto& e ) { return e.spell_id != 0; } ) ||
++       range::any_of( parsed.data.socket_color, []( auto color ) { return color != 0; } ) ||
++       range::any_of( parsed.gem_id, []( auto id ) { return id != 0; } ) )
++    return;
++
++  const auto& dbc = *item.player->dbc;
++  const auto& tuning = dbc.content_tuning( parsed.content_tuning_id );
++  if ( parsed.content_tuning_id && !tuning.id )
++    return;
++  const unsigned cap = parsed.content_tuning_id ? static_cast<unsigned>( std::max( 0, tuning.max_level_squish ) ) : 0;
++  const unsigned drop = parsed.drop_level;
++  std::array<unsigned, 4> inputs{};
++  for ( auto id : parsed.bonus_id )
++  {
++    const auto entries = dbc.item_bonus( id );
++    if ( entries.empty() )
++      return;
++    for ( const auto& entry : entries )
++    {
++      switch ( entry.type )
++      {
++        case ITEM_BONUS_APPLY_BONUS:
++          return; // Nested lists may introduce additional handlers.
++        case ITEM_BONUS_SCALING_2:
++          inputs[ 0 ] = drop;
++          break;
++        case ITEM_BONUS_SCALE_CONFIG:
++          inputs[ 1 ] = drop <= 80 ? drop : 0;
++          inputs[ 2 ] = cap;
++          break;
++        case ITEM_BONUS_SCALE_CONFIG_2:
++          inputs[ 3 ] = cap ? std::min( drop, cap ) : drop;
++          break;
++      }
++    }
++  }
++  auto result = slotnode[ "gildra_scaling_inputs_v1" ];
++  result.make_array();
++  for ( auto input : inputs )
++    result.add() = input;
++
++  // In the audited revision these early standalone suffix IDs have no numeric
++  // lookup in combat. Only the two stat allocations and suffix are applied.
++  // Retain their ordered unrounded DBC operands, even if a low ilvl rounds
++  // different allocations to the same stat. Raw type-4 cross-item tags fail.
++  if ( parsed.bonus_id.size() != 1 || !parsed.azerite_ids.empty() )
++    return;
++  const int id = parsed.bonus_id.front();
++  if ( id < 1 || id > 500 )
++    return;
++  const auto entries = dbc.item_bonus( id );
++  if ( entries.size() != 3 || entries[ 0 ].type != ITEM_BONUS_MOD ||
++       entries[ 1 ].type != ITEM_BONUS_MOD || entries[ 2 ].type != ITEM_BONUS_SUFFIX )
++    return;
++  auto program = slotnode[ "gildra_suffix_program_v1" ];
++  program.make_array();
++  program.add() = id; // Bound to the request in the worker and omitted from the digest.
++  for ( const auto& row : entries )
++  {
++    program.add() = row.type;
++    program.add() = row.value_1;
++    program.add() = row.value_2;
++    program.add() = row.value_3;
++    program.add() = row.value_4;
++    program.add() = row.index;
++  }
++}
++
++void gear_to_json( JsonOutput root, const player_t& p, slot_e requested = SLOT_INVALID )
+ {
    for ( slot_e slot = SLOT_MIN; slot < SLOT_MAX; slot++ )
    {
      const item_t& item = p.items[ slot ];
 -    if ( !item.active() || !item.has_stats() )
-+    if ( !item.active() )
++    if ( ( requested != SLOT_INVALID && requested != slot ) || !item.active() )
      {
        continue;
      }
-@@ -393,6 +393,46 @@
+@@ -393,6 +559,67 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -22,6 +203,20 @@
 +    slotnode[ "socket_bonus_id" ] = item.parsed.data.id_socket_bonus;
 +    slotnode[ "required_profession_id" ] = item.parsed.data.req_skill;
 +    slotnode[ "required_profession_rank" ] = item.parsed.data.req_skill_level;
++    slotnode[ "gildra_no_item_effects" ] = item.parsed.special_effects.empty() &&
++      !range::any_of( item.parsed.data.effects, []( const auto& effect ) { return effect.spell_id != 0; } );
++    if ( p.sim->report_details != 0 )
++    {
++      static_assert( STAT_MAX - STAT_STRENGTH == 46, "Version the applied stat vector when its layout changes" );
++      gildra_scaling_inputs( slotnode, item );
++      gildra_drop_curve( slotnode, item );
++      gildra_crafted_symmetry( slotnode, item );
++      const auto applied_stats = item.total_stats();
++      auto applied = slotnode[ "gildra_applied_stats_v1" ];
++      applied.make_array();
++      for ( stat_e stat = STAT_STRENGTH; stat < STAT_MAX; ++stat )
++        applied.add() = applied_stats.get_stat( stat );
++    }
 +    // These are the resolved fields, including already-applied item bonuses.
 +    slotnode[ "id" ] = item.parsed.data.id;
 +    slotnode[ "required_level" ] = item.parsed.data.req_level;
@@ -32,7 +227,7 @@
 +    if ( item.parsed.data.item_class == ITEM_CLASS_WEAPON )
 +    {
 +      const auto* weapon = item.weapon();
-+      if ( weapon && weapon->min_dmg > 0 && weapon->max_dmg >= weapon->min_dmg &&
++      if ( weapon && weapon->min_dmg >= 0 && weapon->max_dmg > 0 && weapon->max_dmg >= weapon->min_dmg &&
 +           weapon->dps > 0 && weapon->swing_time.total_seconds() > 0 )
 +      {
 +        auto weapon_node = slotnode[ "gildra_weapon" ];
@@ -50,12 +245,79 @@
 +    slotnode[ "unknown_bonus_count" ] = unknown_bonuses;
 +    slotnode[ "redirected_stats_known" ] = item.parsed.redirect_item_id == 0 ||
 +      p.dbc->item( item.parsed.redirect_item_id ).id != 0;
-+    slotnode[ "content_tuning_known" ] = item.parsed.content_tuning_id == 0 ||
-+      p.dbc->content_tuning( item.parsed.content_tuning_id ).id != 0;
++    const auto& tuning = p.dbc->content_tuning( item.parsed.content_tuning_id );
++    slotnode[ "content_tuning_known" ] = item.parsed.content_tuning_id == 0 || tuning.id != 0;
++    if ( tuning.id && tuning.id == item.parsed.content_tuning_id )
++    {
++      auto pair = slotnode[ "gildra_content_tuning_v1" ];
++      pair.make_array();
++      pair.add() = tuning.id;
++      pair.add() = std::max( 0, tuning.max_level_squish );
++    }
 +
  
      for ( size_t i = 0; i < std::size( item.parsed.data.stat_type_e ); i++ )
      {
+@@ -753,6 +980,8 @@
+   root[ "race" ] = util::race_type_string( p.race );
+   root[ "level" ] = p.true_level;
+   root[ "role" ] = util::role_type_string( p.role );
++  if ( p.specialization() == WARRIOR_FURY && !p.record_healing() && !p.spells.leech )
++    root[ "gildra_fury_without_leech_healing_v1" ] = true;
+   root[ "specialization" ] = util::specialization_string( p.specialization() );
+   root[ "profile_source" ] = util::profile_source_string( p.profile_source_ );
+   root[ "talents" ] = p.talents_str;
+@@ -1372,6 +1601,37 @@
+   }
+ }
+-
++
++// The worker resolves each variant on its own actor. Keep the usual native
++// initialization and gear serializer, and emit only the fields the worker reads.
++bool gildra_variant_report( JsonOutput node, const sim_t& sim )
++{
++  const char* requested = std::getenv( "GILDRA_VARIANT_REPORT_SLOTS" );
++  if ( !requested || sim.iterations != 1 )
++    return false;
++  const auto names = util::string_split<util::string_view>( requested, "," );
++  if ( names.size() != sim.player_no_pet_list.size() )
++    return false;
++
++  std::vector<slot_e> slots;
++  for ( size_t i = 0; i < names.size(); ++i )
++  {
++    const auto slot = util::parse_slot_type( names[ i ] );
++    if ( slot == SLOT_INVALID || sim.player_no_pet_list[ i ]->name_str != fmt::format( "gildra_variant_{}", i ) )
++      return false;
++    slots.push_back( slot );
++  }
++
++  auto players = node[ "players" ].make_array();
++  for ( size_t i = 0; i < slots.size(); ++i )
++  {
++    const auto* p = sim.player_no_pet_list[ i ];
++    auto actor = players.add();
++    actor[ "name" ] = p->name();
++    gear_to_json( actor[ "gear" ], *p, slots[ i ] );
++  }
++  return true;
++}
++
+ void print_json_pretty( FILE* o, const sim_t& sim, const ::report::json::report_configuration_t& report_configuration )
+ {
+   Document doc;
+@@ -1403,7 +1663,8 @@
+     root[ "git_branch" ] = git_info::branch();
+   }
+-
++
+-  to_json( report_configuration, root[ "sim" ], sim );
++  if ( !gildra_variant_report( root[ "sim" ], sim ) )
++    to_json( report_configuration, root[ "sim" ], sim );
+-
++
+   if ( !sim.error_list.empty() )
+   {
 --- a/engine/item/item.cpp
 +++ b/engine/item/item.cpp
 @@ -89,6 +89,7 @@

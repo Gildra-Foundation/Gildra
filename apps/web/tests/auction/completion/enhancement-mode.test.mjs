@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
+import { quickAuctionStatChoices } from '../../../lib/wow/auctionGearStatChoices.ts';
 import { parseAuctionGearEnhancementMode, auctionGearAssemblyGoalComplete } from '../../../lib/wow/auctionGearEnhancementMode.ts';
 import { advanceAuctionGearRunPolicy, createAuctionGearRunPolicy } from '../../../lib/wow/auctionGearRunPolicy.ts';
 import { auctionGearResultMatchesIntent } from '../../../lib/wow/auctionGearResult.ts';
@@ -42,7 +43,7 @@ test('explicit enhanced waits for an actual terminal stage; unavailable is hones
   }
 });
 
-async function runner(mode, { verified = true, stageComplete = true, aborted = false, failSave = false, scenarios = false } = {}) {
+async function runner(mode, { verified = true, stageComplete = true, aborted = false, failSave = false, scenarios = false, joint = false } = {}) {
   const source = await readFile(new URL('../../../lib/wow/auctionGearRunner.ts', import.meta.url), 'utf8');
   const start = source.indexOf('export async function assembleAuctionGearSearch(');
   const end = source.indexOf('\nexport async function ', start + 1);
@@ -52,16 +53,21 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
     resolution: { ...(verified ? { enhancements: { status: 'verified' } } : {}) } }] } };
   const entry = { id: 'fixture-search', context: { input, options: [option], simulate: async () => assert.fail('unexpected direct simulation'), currentBySlot: new Map(), armory: { equipment: {} }, character: {} },
     latestSearchResult: { kind: 'search', items: [] }, retainedBaseline: {}, allowedKey: 'same' };
+  if (joint) {
+    entry.context.simulate.finalistKey = () => 'fixture-key';
+    entry.retainedBaseline.iterations = 100;
+  }
   const calls = { equipment: [], enhancement: [], exact: 0, scenarios: 0, saved: 0 }, publications = [];
   const controller = new AbortController(); if (aborted) controller.abort();
   const checkpoint = { best: { optionIds: ['fixture-option'] }, bestConfirmed: null, baseline: { engine: 'fixture', iterations: 750, confidence: 95 }, simulationCache: {} };
   const flush = async () => { calls.saved++; if (failSave && entry.latestAssemblyResult?.enhancementOptimization) throw Error('auction_storage_unavailable'); };
   const run = vm.runInNewContext(stripTypeScriptTypes(phase + source.slice(start, end)).replace('export ', '') + ';assembleAuctionGearSearch', {
-    Date, Map, Set, logAuctionGearDiagnostics, metricsFor: () => createAuctionGearDiagnostics(),
+    Date, Map, Set, quickAuctionStatChoices, logAuctionGearDiagnostics, metricsFor: () => createAuctionGearDiagnostics(),
     selectedAuctionGearAssemblyOptions: () => [option], auctionFactsKey: () => 'same',
     publicAuctionResult: (_context, value) => ({ ...value, ...input }),
     discoverAuctionOptions: async () => {}, retainAuctionSimulations: () => ({}),
-    assembleAuctionGear: async request => { calls.equipment.push(request); return { checkpoint, result: { kind: 'assembly', exhaustiveComplete: true, purchases: [], bestConfirmed: null } }; },
+    assembleAuctionGear: async request => { calls.equipment.push(request); return { checkpoint, result: { kind: 'assembly', exhaustiveComplete: !joint || !!entry.exhaustiveEnhancementState?.bareEquipment?.missing, purchases: [], bestConfirmed: null } }; },
+    auctionEquipmentWinners: () => ({purchases:[],bestConfirmed:null,bestDpsConfirmed:null,bestValueConfirmed:null}),
     updateAuctionSearchResult: async () => entry.latestSearchResult,
     scheduleAuctionGearSearchSave: () => {}, flushAuctionGearSearch: flush, flushPendingAuctionGearSearch: flush,
     parseAuctionGearCompareScenarios: () => input.compareScenarios,
@@ -69,6 +75,7 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
     advanceAuctionGearExhaustiveEnhancements: async request => {
       calls.exact++;
       const state = request.state ?? { cursor: {}, stage: { checkpoints: {} } };
+      if (joint) state.bareEquipment={layouts:2,totalAssignments:"3",covered:true,missing:!verified,singles:{},leaders:{baseline:checkpoint.baseline}};
       request.onState(state);
       if (verified) calls.enhancement.push({ ...request, state });
       return { state, result: { complete: verified ? stageComplete : true, status: verified ? stageComplete ? 'ready' : 'pending' : 'unavailable',
@@ -76,8 +83,23 @@ async function runner(mode, { verified = true, stageComplete = true, aborted = f
     },
     evaluateAuctionGearScenarios: async () => { calls.scenarios++; return []; }, withFreshEnhancementQuotes: value => value,
   });
-  return { entry, calls, publications, execute: () => run(entry, undefined, controller.signal, () => {}, 'fixture-token', value => publications.push(value)) };
+  return { entry, calls, publications, execute: (full = false) => run(entry, undefined, controller.signal, () => {}, 'fixture-token', value => publications.push(value), full) };
 }
+
+test('a complete joint stage needs bare coverage before publishing completion or starting scenarios',async()=>{
+  const h=await runner('enhanced',{joint:true,scenarios:true});
+  const result=await h.execute(true);
+  assert.equal(h.calls.equipment.length,1);assert.equal(h.calls.exact,1);
+  assert.equal(h.calls.enhancement[0].trackBareEquipment,true);
+  assert.equal(result.exhaustiveComplete,true);assert.equal(result.validCombinations,2);
+  assert.equal(result.combinationCount,"3");assert.equal(result.scenarioComparisonsComplete,true);
+  const gap=await runner('enhanced',{joint:true,verified:false,scenarios:true});
+  assert.equal((await gap.execute(true)).exhaustiveComplete,false);
+  assert.equal(gap.calls.scenarios,0);
+  const fallback=await gap.execute(true);
+  assert.equal(fallback.exhaustiveComplete,true);assert.equal(fallback.enhancementOptimization.status,'unavailable');
+  assert.equal(fallback.scenarioComparisonsComplete,true);
+});
 
 test('actual Runner equipment mode skips all enhancement calls/state and keeps native equipment parameters', async () => {
   const h = await runner('equipment', { scenarios: true }); const result = await h.execute();
@@ -123,4 +145,12 @@ test('actual Runner abort and failed durable stage publication cannot acknowledg
   const unavailable = await runner('enhanced', { verified: false, failSave: true });
   await assert.rejects(unavailable.execute(), /auction_storage_unavailable/);
   assert(unavailable.publications.every(result => !result.enhancementOptimization));
+});
+
+test('only full assembly enables equivalent bare armor measurements', async () => {
+  for (const full of [false, true]) {
+    const h = await runner('equipment');
+    await h.execute(full);
+    assert.equal(h.calls.equipment[0].reuseAppliedStats, full);
+  }
 });

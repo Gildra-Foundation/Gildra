@@ -14,7 +14,7 @@ import type { AuctionGearOption, AuctionPlanProgress } from "./auctionGearTypes"
 /** Limits bound one continuation's work, never the retained candidate domain. */
 // Align complete 100-ID/four-request waves. Like 500 IDs, 800 needs at most
 // two waves per step, while avoiding a mostly idle second wave on every step.
-const catalogBatch = 800, detailBatch = 8, initialVariantBatch = 4, variantBatch = 8;
+const catalogBatch = 800, initialVariantBatch = 4;
 /** A repaired catalog can join a retained search without retrying on every poll. */
 const catalogRetryMs = 60_000;
 type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
@@ -22,6 +22,8 @@ export type AuctionGearDiscovery = {
   /** Older persisted coverage may already have excluded gear with prismatic sockets. */
   socketMetadataRevision?: 3;
   equippedReferenceRevision?: 1;
+  weaponReferenceRevision?: 1;
+  variantBatchLimit?: 16 | 64;
   marketId: string;
   discoveredSnapshotId?: string;
   budgetCopper: number;
@@ -73,7 +75,7 @@ const optionCache = new WeakMap<AuctionGearDiscovery, {
 }>();
 
 export function createAuctionGearDiscovery(market: AuctionSnapshot, budgetCopper: number): AuctionGearDiscovery {
-  const state: AuctionGearDiscovery = { socketMetadataRevision: 3, equippedReferenceRevision: 1, marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
+  const state: AuctionGearDiscovery = { socketMetadataRevision: 3, equippedReferenceRevision: 1, weaponReferenceRevision: 1, marketId: market.id, budgetCopper, offers: new Map(), itemVariants: new Map(), itemIds: [], itemCursor: 0,
     queuedItems: new Set(), records: [], catalogHints: new Map(), entities: new Map(), variantKeys: [], variantCursor: 0, queuedVariants: new Set(),
     candidates: new Map(), rejectedVariants: new Set(), references: new Map(),
     verifiedReferences: new Set(), rejectedReferences: new Set(), referenceRetryAt: new Map(), referenceRejectedVariants: new Map(),
@@ -92,23 +94,28 @@ function queueVariants(state: AuctionGearDiscovery, itemId: number) {
   }
 }
 
-/** A new snapshot changes prices/availability immediately; only new effects need native work. */
-export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market: AuctionSnapshot,
-  { retryCatalog = true }: { retryCatalog?: boolean } = {}) {
+// A 304 reuses the provider's offers array; its snapshot ID hashes all lot fields.
+// Key the derived IDs by the specific index so restored or replaced maps rebuild.
+const indexedMarkets = new WeakMap<AuctionGearDiscovery["offers"], {
+  source: WeakRef<AuctionOffer[]>; snapshotId: string; budgetCopper: number; ids: number[];
+}>();
+
+function indexMarketOffers(state: AuctionGearDiscovery, market: AuctionSnapshot) {
+  const saved = indexedMarkets.get(state.offers);
+  if (saved?.snapshotId === market.id && saved.budgetCopper === state.budgetCopper && saved.source.deref() === market.offers &&
+      state.catalogItemClasses && state.supportedSummaryItems && state.unsupportedLotsByItem) return saved.ids;
   const affordable = market.offers.filter(offer => offer.buyoutCopper <= state.budgetCopper);
-  const supported = affordable.filter(offer => supportedAuctionModifiers(offer.modifiers));
   const legacyClasses = !state.catalogItemClasses;
   state.catalogItemClasses ??= new Map();
   state.supportedSummaryItems ??= new Set();
   state.unsupportedLotsByItem = new Map();
-  for (const offer of affordable) if (!supportedAuctionModifiers(offer.modifiers)) {
-    state.unsupportedLotsByItem.set(offer.itemId, (state.unsupportedLotsByItem.get(offer.itemId) ?? 0) + 1);
-    // Older checkpoints may have already visited the same ID through a
-    // supported lot without retaining its authoritative noncombat class.
-    if (legacyClasses && state.queuedItems.has(offer.itemId)) state.catalogRetryAt.set(offer.itemId, 0);
-  }
   const offers = new Map<string, AuctionOffer[]>();
-  for (const offer of supported) {
+  for (const offer of affordable) {
+    if (!supportedAuctionModifiers(offer.modifiers)) {
+      state.unsupportedLotsByItem.set(offer.itemId, (state.unsupportedLotsByItem.get(offer.itemId) ?? 0) + 1);
+      if (legacyClasses && state.queuedItems.has(offer.itemId)) state.catalogRetryAt.set(offer.itemId, 0);
+      continue;
+    }
     const key = auctionVariantKey(offer), list = offers.get(key) ?? [];
     list.push(offer);
     offers.set(key, list);
@@ -120,25 +127,31 @@ export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market:
     variants.push(key);
     state.itemVariants.set(list[0].itemId, variants);
   }
-  state.marketId = market.id;
   state.affordableLots = affordable.length;
-  updateUnsupportedCoverage(state);
-  // Unsupported variants never enter native work, but their cheap summaries
-  // can establish that profession equipment/recipes are outside combat gear.
   const ids = [...new Set(affordable.map(offer => offer.itemId))].sort((a, b) => a - b);
+  indexedMarkets.set(offers, { source: new WeakRef(market.offers), snapshotId: market.id, budgetCopper: state.budgetCopper, ids });
+  return ids;
+}
+
+/** A new snapshot changes prices/availability immediately; only new effects need native work. */
+export function refreshAuctionGearDiscovery(state: AuctionGearDiscovery, market: AuctionSnapshot,
+  { retryCatalog = true }: { retryCatalog?: boolean } = {}) {
+  const ids = indexMarketOffers(state, market);
+  state.marketId = market.id;
+  updateUnsupportedCoverage(state);
   const now = Date.now();
   // A long active traversal must finish before missing IDs can cycle again.
   const retry = new Set(retryCatalog && auctionGearDiscoveryComplete(state)
     ? ids.filter(id => (state.catalogRetryAt.get(id) ?? Infinity) <= now) : []);
   for (const id of ids) {
-    const itemClass = state.catalogItemClasses.get(id);
+    const itemClass = state.catalogItemClasses?.get(id);
     // An unsupported-only combat item had its cheap summary classified but
     // never needed details. Its first supported offer needs that first pass,
     // even during another traversal or when timed catalog retries are disabled.
     // Legacy checkpoints get one bounded pass, including ones saved after the
     // old refresh had populated supported maps without opening details.
     // A recorded null entity is a previous attempt and keeps its retry policy.
-    if ((itemClass === 2 || itemClass === 4) && state.itemVariants.has(id) && !state.supportedSummaryItems.has(id) &&
+    if ((itemClass === 2 || itemClass === 4) && state.itemVariants.has(id) && !state.supportedSummaryItems?.has(id) &&
         state.queuedItems.has(id) && !state.entities.has(id)) retry.add(id);
   }
   if (retry.size) {
@@ -266,8 +279,14 @@ function variantEntity(entity: CatalogGearEntity, offer: AuctionOffer, requiredL
 }
 
 function rememberUnverifiedEligibility(state: AuctionGearDiscovery, itemId: number, candidates: GearCandidate[]) {
-  if (candidates.some(candidate => candidate.rejectionReasons.includes("equip_requirements_unverified") ||
-      candidate.itemClassId < 0 || candidate.itemSubclassId < 0 || candidate.inventoryType < 0)) {
+  const unverified = candidates.some(candidate => {
+    if (candidate.itemClassId < 0 || candidate.itemSubclassId < 0 || candidate.inventoryType < 0) return true;
+    const reasons = candidate.rejectionReasons;
+    // Resolving a profession or reputation cannot change a known slot or armor type.
+    return reasons.includes("equip_requirements_unverified") && !reasons.includes("slot_mismatch") &&
+      !reasons.includes("armor_specialization_mismatch");
+  });
+  if (unverified) {
     state.eligibilityUnverifiedItems.add(itemId);
     state.catalogRetryAt.set(itemId, Date.now() + catalogRetryMs);
   }
@@ -316,6 +335,7 @@ type DiscoveryInput = {
   measure?: <T>(stage: "catalog" | "details" | "references" | "variants", work: () => Promise<T>) => Promise<T>;
   /** Publish a useful verified batch before resolving the rest of the market. */
   stopAfterNewCandidates?: boolean;
+  fullMarket?: boolean;
 };
 
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
@@ -344,6 +364,11 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     }
   }
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
+    const batchLimit = state.variantBatchLimit ?? 16;
+    const bulk = !input.stopAfterNewCandidates && batchLimit === 64;
+    const paired = bulk && input.fullMarket === true;
+    // Read enough catalog rows for two native pages after class and slot filtering.
+    const detailBatch = paired ? 3 * batchLimit : bulk ? batchLimit : 8;
     input.signal.throwIfAborted();
     if (warmCandidatesFirst && !state.records.length && state.variantCursor === state.variantKeys.length) {
       warmCandidatesFirst = false;
@@ -364,9 +389,8 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
       state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
-      // Preserve first-result latency, then fill one native request (at most
-      // eight candidate variants plus eight exact reference controls).
-      const size = input.stopAfterNewCandidates ? initialVariantBatch : variantBatch;
+      // Each candidate may also need an exact reference control.
+      const size = input.stopAfterNewCandidates ? initialVariantBatch : paired ? detailBatch : batchLimit / 2;
       const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + size);
       const probes = keys.flatMap(key => {
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
@@ -389,9 +413,36 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         return [{ offer: reference.offer, slot: probes.find(probe => probe.offer.itemId === id)!.slot }];
       });
       const simcSlot = (slot: string) => ({ FINGER_1: "finger1", FINGER_2: "finger2", TRINKET_1: "trinket1", TRINKET_2: "trinket2" }[slot] ?? slot.toLowerCase());
-      const resolution = probes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...probes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
-        spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
+      // A failed base reference can only be rescued by the exact equipped instance.
+      // Keep the original probes for coverage, rejection bookkeeping and timed retries.
+      const equipped = input.equipment && ids.some(id => !state.verifiedReferences.has(id))
+        ? new Map(equippedAuctionReferences(input.equipment).map(reference => [auctionVariantKey(reference.offer), reference])) : undefined;
+      const nativeProbes = probes.filter(({ offer }) => state.verifiedReferences.has(offer.itemId) ||
+        (!state.rejectedReferences.has(offer.itemId) && state.references.get(offer.itemId)) || equipped?.has(auctionVariantKey(offer)));
+      const resolve = (rows: Array<{ offer: AuctionOffer; slot: string }>, limit = batchLimit) =>
+        measure("variants", () => resolveAuctionVariants({ offers: rows.map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
+          batchLimit: limit, parallelBatches: paired, spec: input.spec, characterLevel: input.characterLevel, signal: input.signal }));
+      // Resolve unknown base references first. Exact equipped instances and
+      // already verified item IDs can share that first wave unconditionally.
+      const staged = paired && references.length > 0;
+      const first = staged ? [...references, ...nativeProbes.filter(({ offer }) =>
+        state.verifiedReferences.has(offer.itemId) || equipped?.has(auctionVariantKey(offer)))] : [...references, ...nativeProbes];
+      const resolution = nativeProbes.length ? await resolve(first) : null;
+      if (staged && resolution) {
+        input.signal.throwIfAborted();
+        const passed = new Set(references.filter(({ offer }) => nativeMatchesItemReference(
+          state.references.get(offer.itemId)!, resolution.variants.get(auctionVariantKey(offer)))).map(({ offer }) => offer.itemId));
+        const pending = nativeProbes.filter(({ offer }) => passed.has(offer.itemId) && !resolution.variants.has(auctionVariantKey(offer)));
+        if (pending.length) {
+          const next = await resolve(pending, resolution.batchLimit);
+          if (resolution.engine && next.engine && resolution.engine !== next.engine) throw new Error("simulation_version_changed");
+          resolution.engine ||= next.engine;
+          resolution.batchLimit = next.batchLimit;
+          for (const [key, row] of next.variants) resolution.variants.set(key, row);
+        }
+      }
       input.signal.throwIfAborted();
+      if (resolution) state.variantBatchLimit = resolution.batchLimit;
       if (resolution?.engine) {
         if (state.engine && state.engine !== resolution.engine) throw new Error("simulation_version_changed");
         state.engine = resolution.engine;
@@ -406,11 +457,10 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
           state.referenceRetryAt.set(id, Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS);
         }
       }
-      const equipped = input.equipment && ids.some(id => state.rejectedReferences.has(id))
-        ? new Map(equippedAuctionReferences(input.equipment).map(reference => [auctionVariantKey(reference.offer), reference])) : undefined;
+      const instanceReferences = ids.some(id => state.rejectedReferences.has(id)) ? equipped : undefined;
       for (const probe of probes) {
         const key = auctionVariantKey(probe.offer), metadata = resolution?.variants.get(key);
-        const instance = equipped?.get(key);
+        const instance = instanceReferences?.get(key);
         const instanceVerified = instance && nativeMatchesItemReference(instance, metadata, true);
         if (!metadata || metadata.error || (!state.verifiedReferences.has(probe.offer.itemId) && !instanceVerified) || metadata.itemLevel > 1000 ||
             metadata.requiredLevel === 0 && (state.references.get(probe.offer.itemId)?.requiredLevel ?? 0) > 0) {

@@ -3,6 +3,7 @@ package rotationlab
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,11 +13,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
+
+const maxVariantBatchSize = 64
 
 type GearVariantRequest struct {
 	Spec           string             `json:"spec"`
@@ -41,21 +45,28 @@ type GearVariantEnhancements struct {
 }
 
 type GearVariantMetadata struct {
-	MetadataVersion int                     `json:"metadataVersion"`
-	Enhancements    GearVariantEnhancements `json:"enhancements"`
-	Key             string                  `json:"key"`
-	ItemID          int                     `json:"itemId"`
-	ItemLevel       int                     `json:"itemLevel"`
-	RequiredLevel   int                     `json:"requiredLevel"`
-	InventoryType   int                     `json:"inventoryType"`
-	ItemClassID     int                     `json:"itemClassId"`
-	ItemSubclassID  int                     `json:"itemSubclassId"`
-	Quality         int                     `json:"quality"`
-	UniqueEquipped  bool                    `json:"uniqueEquipped"`
-	SetID           int                     `json:"setId"`
-	Stats           map[string]float64      `json:"stats"`
-	Weapon          *GearVariantWeapon      `json:"weapon,omitempty"`
-	Error           string                  `json:"error,omitempty"`
+	MetadataVersion         int                     `json:"metadataVersion"`
+	Enhancements            GearVariantEnhancements `json:"enhancements"`
+	Key                     string                  `json:"key"`
+	ItemID                  int                     `json:"itemId"`
+	ItemLevel               int                     `json:"itemLevel"`
+	RequiredLevel           int                     `json:"requiredLevel"`
+	InventoryType           int                     `json:"inventoryType"`
+	ItemClassID             int                     `json:"itemClassId"`
+	ItemSubclassID          int                     `json:"itemSubclassId"`
+	Quality                 int                     `json:"quality"`
+	UniqueEquipped          bool                    `json:"uniqueEquipped"`
+	SetID                   int                     `json:"setId"`
+	NativeCraftedSymmetryV1 *[]int                  `json:"nativeCraftedSymmetryV1,omitempty"`
+	NativeSuffixProgramV1   string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeDropCurveV1       *[3]int                 `json:"nativeDropCurveV1,omitempty"`
+	NativeContentTuningV1   *[2]int                 `json:"nativeContentTuningV1,omitempty"`
+	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
+	AppliedStatsV1          []float64               `json:"appliedStatsV1,omitempty"`
+	NativeNoItemEffects     bool                    `json:"nativeNoItemEffects,omitempty"`
+	Stats                   map[string]float64      `json:"stats"`
+	Weapon                  *GearVariantWeapon      `json:"weapon,omitempty"`
+	Error                   string                  `json:"error,omitempty"`
 }
 type GearVariantWeapon struct {
 	MinDamage    float64 `json:"minDamage"`
@@ -65,7 +76,7 @@ type GearVariantWeapon struct {
 }
 
 func validGearVariantWeapon(weapon *GearVariantWeapon) bool {
-	if weapon == nil || weapon.MinDamage <= 0 || weapon.MaxDamage < weapon.MinDamage || weapon.DPS <= 0 || weapon.SpeedSeconds <= 0 {
+	if weapon == nil || weapon.MinDamage < 0 || weapon.MaxDamage <= 0 || weapon.MaxDamage < weapon.MinDamage || weapon.DPS <= 0 || weapon.SpeedSeconds <= 0 {
 		return false
 	}
 	for _, value := range []float64{weapon.MinDamage, weapon.MaxDamage, weapon.DPS, weapon.SpeedSeconds} {
@@ -84,7 +95,7 @@ type GearVariantResponse struct {
 var variantKeyPattern = regexp.MustCompile(`^[a-zA-Z0-9:_-]{1,160}$`)
 
 func validateVariantRequest(input GearVariantRequest) error {
-	if _, ok := supportedSpecs[input.Spec]; !ok || input.CharacterLevel < 1 || input.CharacterLevel > 90 || len(input.Variants) < 1 || len(input.Variants) > 16 {
+	if _, ok := supportedSpecs[input.Spec]; !ok || input.CharacterLevel < 1 || input.CharacterLevel > 90 || len(input.Variants) < 1 || len(input.Variants) > maxVariantBatchSize {
 		return errors.New("invalid variant request")
 	}
 	seen := map[string]bool{}
@@ -107,13 +118,58 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	if err := validateVariantRequest(input); err != nil {
 		return GearVariantResponse{}, err
 	}
+	if err := ctx.Err(); err != nil {
+		return GearVariantResponse{}, err
+	}
+	binary, _ := os.Stat(e.binary)
+	keys := gearVariantKeys(input)
+	hits := e.variants.lookup(binary, keys)
+	out := GearVariantResponse{Variants: make([]GearVariantMetadata, len(keys))}
+	missing := input
+	missing.Variants = nil
+	var positions []int
+	var missingKeys []gearVariantKey
+	for i, hit := range hits {
+		if hit.engine != "" {
+			if err := json.Unmarshal(hit.row, &out.Variants[i]); err != nil {
+				return GearVariantResponse{}, err
+			}
+			out.Variants[i].Key = input.Variants[i].Key
+			out.Engine = hit.engine
+			continue
+		}
+		positions = append(positions, i)
+		missingKeys = append(missingKeys, keys[i])
+		missing.Variants = append(missing.Variants, input.Variants[i])
+	}
+	if len(positions) == 0 {
+		return out, ctx.Err()
+	}
 	if err := e.acquire(ctx); err != nil {
 		return GearVariantResponse{}, err
 	}
 	defer e.release()
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-	return e.resolveVariantBatch(ctx, input)
+	resolved, err := e.resolveVariantBatch(ctx, missing)
+	if err != nil {
+		return GearVariantResponse{}, err
+	}
+	if out.Engine != "" && resolved.Engine != "" && out.Engine != resolved.Engine {
+		return GearVariantResponse{}, errors.New("native variant engine changed")
+	}
+	if resolved.Engine != "" {
+		out.Engine = resolved.Engine
+	}
+	for n, i := range positions {
+		out.Variants[i] = resolved.Variants[n]
+	}
+	after, _ := os.Stat(e.binary)
+	if !sameVariantBinary(binary, after) && binary != nil {
+		return GearVariantResponse{}, errors.New("native variant executable changed")
+	}
+	e.variants.store(binary, missingKeys, resolved)
+	return out, ctx.Err()
 }
 func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantRequest) (GearVariantResponse, error) {
 	out, err := e.runVariantBatch(ctx, input)
@@ -126,7 +182,7 @@ func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantR
 	if errors.Is(err, errVariantMetadataMissing) {
 		return GearVariantResponse{}, err
 	}
-	if !errors.Is(err, errVariantItemRejected) {
+	if !errors.Is(err, errVariantItemRejected) && !(len(input.Variants) > 1 && errors.Is(err, errVariantReportTooLarge)) {
 		return GearVariantResponse{}, err
 	}
 	if len(input.Variants) == 1 {
@@ -156,7 +212,19 @@ func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantR
 }
 
 var errVariantMetadataMissing = errors.New("variant_metadata_worker_upgrade_required")
+var errVariantReportTooLarge = errors.New("variant_report_too_large")
 var errVariantItemRejected = errors.New("variant_item_rejected")
+
+func variantReportSlot(slot string) string {
+	switch slot {
+	case "shoulder":
+		return "shoulders"
+	case "wrist":
+		return "wrists"
+	default:
+		return slot
+	}
+}
 
 func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantRequest) (GearVariantResponse, error) {
 	dir, err := os.MkdirTemp("", "gildra-item-resolve-")
@@ -165,9 +233,13 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	}
 	defer os.RemoveAll(dir)
 	ref := supportedSpecs[input.Spec]
+	// Probe the actual auction item. Class-default weapon oils are a combat
+	// profile choice and would add their ratings to the resolved item vector.
 	var profile strings.Builder
+	slots := make([]string, len(input.Variants))
 	for i, v := range input.Variants {
-		fmt.Fprintf(&profile, "%s=gildra_variant_%d\nspec=%s\nlevel=%d\nrace=%s\nrole=attack\nload_default_gear=1\nactions=wait,sec=1\n%s\n", ref.Class, i, ref.Spec, input.CharacterLevel, ref.Race, serializeGearChange(v.Change))
+		slots[i] = variantReportSlot(v.Change.Slot)
+		fmt.Fprintf(&profile, "%s=gildra_variant_%d\nspec=%s\nlevel=%d\nrace=%s\nrole=attack\nload_default_gear=1\ntemporary_enchant=disabled\nactions=wait,sec=1\n%s\n", ref.Class, i, ref.Spec, input.CharacterLevel, ref.Race, serializeGearChange(v.Change))
 	}
 	path := filepath.Join(dir, "items.simc")
 	report := filepath.Join(dir, "items.json")
@@ -176,6 +248,7 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	}
 	cmd := exec.CommandContext(ctx, e.binary, path, "iterations=1", "threads=1", "max_time=1", "fixed_time=1", "vary_combat_length=0", "optimal_raid=0", "desired_targets=1", "report_details=1", "json2="+report)
 	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GILDRA_VARIANT_REPORT_SLOTS="+strings.Join(slots, ","))
 	var output bytes.Buffer
 	cmd.Stdout = &limitedBuffer{buffer: &output, remaining: maxSimCOutputBytes}
 	cmd.Stderr = &limitedBuffer{buffer: &output, remaining: maxSimCOutputBytes}
@@ -186,12 +259,16 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 		}
 		return GearVariantResponse{}, fmt.Errorf("resolve items: %w", err)
 	}
-	raw, err := os.ReadFile(report)
+	info, err := os.Stat(report)
 	if err != nil {
 		return GearVariantResponse{}, err
 	}
-	if len(raw) > 32<<20 {
-		return GearVariantResponse{}, errors.New("variant_report_too_large")
+	if info.Size() > 32<<20 {
+		return GearVariantResponse{}, errVariantReportTooLarge
+	}
+	raw, err := os.ReadFile(report)
+	if err != nil {
+		return GearVariantResponse{}, err
 	}
 	return parseVariantReport(raw, input)
 }
@@ -218,12 +295,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		gear := players[fmt.Sprintf("gildra_variant_%d", i)]
 		item := gear[v.Change.Slot]
 		if item == nil {
-			if v.Change.Slot == "wrist" {
-				item = gear["wrists"]
-			}
-			if v.Change.Slot == "shoulder" {
-				item = gear["shoulders"]
-			}
+			item = gear[variantReportSlot(v.Change.Slot)]
 		}
 		result := GearVariantMetadata{Key: v.Key, ItemID: v.Change.ItemID, Stats: map[string]float64{}, Enhancements: GearVariantEnhancements{Status: "unknown"}}
 		if item == nil {
@@ -232,6 +304,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 			continue
 		}
 		n := func(key string) int { var value int; _ = json.Unmarshal(item[key], &value); return value }
+		result.ItemLevel = n("ilevel")
 		reportVersion := n("gildra_metadata_version")
 		if reportVersion != 1 && reportVersion != 2 {
 			return GearVariantResponse{}, errVariantMetadataMissing
@@ -239,12 +312,35 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		result.MetadataVersion = reportVersion
 		if reportVersion == 2 {
 			result.MetadataVersion = 3
+			result.NativeNoItemEffects = string(item["gildra_no_item_effects"]) == "true"
+			if nativeCraftedSymmetryV1(r.Git, v.Change.Modifiers, item["gildra_crafted_symmetry_v1"]) {
+				// Auction variant IDs may sort bonuses. Bind the proof to the exact
+				// order sent to SimC, including an explicitly empty bonus list.
+				bonuses := append([]int{}, v.Change.BonusIDs...)
+				result.NativeCraftedSymmetryV1 = &bonuses
+			}
+			result.NativeDropCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_drop_curve_v1"])
+			result.NativeContentTuningV1 = nativeContentTuningV1(r.Git, v.Change.Modifiers, item["gildra_content_tuning_v1"])
+			result.NativeScalingInputsV1 = nativeScalingInputsV1(r.Git, item["gildra_scaling_inputs_v1"])
+			if result.NativeScalingInputsV1 != nil {
+				result.NativeSuffixProgramV1 = nativeSuffixProgramV1(v.Change.BonusIDs, item["gildra_suffix_program_v1"])
+			}
+			// A missing proof on older binaries leaves exact item identity in force.
+			var applied []*float64
+			if json.Unmarshal(item["gildra_applied_stats_v1"], &applied) == nil && len(applied) == 46 {
+				for _, value := range applied {
+					if value == nil {
+						result.AppliedStatsV1 = nil
+						break
+					}
+					result.AppliedStatsV1 = append(result.AppliedStatsV1, *value)
+				}
+			}
 		}
 		var tuningKnown bool
 		_ = json.Unmarshal(item["content_tuning_known"], &tuningKnown)
 		var redirectedKnown bool
 		_ = json.Unmarshal(item["redirected_stats_known"], &redirectedKnown)
-		result.ItemLevel = n("ilevel")
 		result.RequiredLevel = n("required_level")
 		result.InventoryType = n("inventory_type")
 		result.ItemClassID = n("item_class")
@@ -253,7 +349,8 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		result.SetID = n("set_id")
 		_ = json.Unmarshal(item["unique_equipped"], &result.UniqueEquipped)
 		if rawWeapon, present := item["gildra_weapon"]; present {
-			var weapon GearVariantWeapon
+			// Zero is a measured minimum. A missing or null minimum must remain invalid.
+			weapon := GearVariantWeapon{MinDamage: -1}
 			if json.Unmarshal(rawWeapon, &weapon) != nil || !validGearVariantWeapon(&weapon) {
 				result.Error = "item_variant_unverified"
 			} else {
@@ -290,6 +387,125 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		response.Variants = append(response.Variants, result)
 	}
 	return response, nil
+}
+
+func nativeCraftedSymmetryV1(revision string, modifiers []ItemModifier, raw json.RawMessage) bool {
+	if !auditedItemRevision(revision) {
+		return false
+	}
+	var pair []int
+	if json.Unmarshal(raw, &pair) != nil || len(pair) != 2 || pair[0] == pair[1] {
+		return false
+	}
+	var requested [2]int
+	for _, m := range modifiers {
+		if m.Type != 29 && m.Type != 30 {
+			continue
+		}
+		i := m.Type - 29
+		if requested[i] != 0 || (m.Value != 32 && m.Value != 36 && m.Value != 40 && m.Value != 49) {
+			return false
+		}
+		requested[i] = m.Value
+	}
+	return requested[0] != 0 && requested[1] != 0 && requested[0] == pair[0] && requested[1] == pair[1]
+}
+
+func auditedItemRevision(revision string) bool {
+	const audited = "18428cd3902412abc8ee274d19567d603e674e66"
+	return len(revision) >= 7 && strings.HasPrefix(audited, revision)
+}
+
+// Both content-tuning readers in the pinned item parser use only a known
+// row's positive level cap. Bind the reported cap to the requested tuning ID.
+func nativeDropCurveV1(revision string, modifiers []ItemModifier, level int, raw json.RawMessage) *[3]int {
+	if len(raw) == 0 || !auditedItemRevision(revision) || level < 1 {
+		return nil
+	}
+	var values []*int
+	if json.Unmarshal(raw, &values) != nil || len(values) != 3 || values[0] == nil || values[1] == nil || values[2] == nil {
+		return nil
+	}
+	drop, tuning := 0, 0
+	for _, m := range modifiers {
+		switch m.Type {
+		case 9:
+			drop = m.Value
+		case 28:
+			tuning = m.Value
+		}
+	}
+	if drop < 1 || drop > 90 || *values[0] != drop || *values[1] != tuning || *values[2] != level {
+		return nil
+	}
+	return &[3]int{drop, tuning, level}
+}
+
+func nativeContentTuningV1(revision string, modifiers []ItemModifier, raw json.RawMessage) *[2]int {
+	if len(raw) == 0 || !auditedItemRevision(revision) {
+		return nil
+	}
+	var pair []*int
+	if json.Unmarshal(raw, &pair) != nil || len(pair) != 2 || pair[0] == nil || pair[1] == nil ||
+		*pair[0] <= 0 || *pair[1] < 0 || *pair[1] > 2147483647 {
+		return nil
+	}
+	for _, m := range modifiers {
+		if m.Type == 28 && m.Value == *pair[0] {
+			return &[2]int{m.Value, *pair[1]}
+		}
+	}
+	return nil
+}
+
+// SimC reports an abbreviated revision. Only this revision's local item parser
+// was audited for context, drop_level and content_tuning consumers.
+func nativeScalingInputsV1(revision string, raw json.RawMessage) *[4]int {
+	if !auditedItemRevision(revision) {
+		return nil
+	}
+	var inputs []*int
+	if json.Unmarshal(raw, &inputs) != nil || len(inputs) != 4 {
+		return nil
+	}
+	var verified [4]int
+	for i, n := range inputs {
+		if n == nil || *n < 0 || *n > 2147483647 {
+			return nil
+		}
+		verified[i] = *n
+	}
+	return &verified
+}
+
+// The program is exactly three ordered DBC rows (MOD, MOD, SUFFIX). Require
+// the resolver to have seen the same standalone bonus the worker serialized.
+func nativeSuffixProgramV1(bonusIDs []int, raw json.RawMessage) string {
+	if len(bonusIDs) != 1 || bonusIDs[0] < 1 || bonusIDs[0] > 500 {
+		return ""
+	}
+	var fields []*int32
+	if json.Unmarshal(raw, &fields) != nil || len(fields) != 19 {
+		return ""
+	}
+	var program [18]int32
+	for i, field := range fields {
+		if field == nil {
+			return ""
+		}
+		if i == 0 {
+			if int(*field) != bonusIDs[0] {
+				return ""
+			}
+		} else {
+			program[i-1] = *field
+		}
+	}
+	if program[0] != 2 || program[6] != 2 || program[12] != 5 {
+		return ""
+	}
+	encoded, _ := json.Marshal(program)
+	return fmt.Sprintf("%x", sha256.Sum256(encoded))
 }
 
 // Strictly decode raw report v2 fields, normalizing SocketType only once at
@@ -381,6 +597,7 @@ func (h *WorkerHandler) resolveVariants(w http.ResponseWriter, r *http.Request) 
 		writeProblem(w, http.StatusServiceUnavailable, code, code)
 		return
 	}
+	w.Header().Set("X-Gildra-Variant-Batch-Limit", strconv.Itoa(maxVariantBatchSize))
 	w.Header().Set("X-Gildra-Engine", "simulationcraft")
 	httpjson.Write(w, http.StatusOK, httpjson.PrivateNoStore, result)
 }

@@ -15,7 +15,8 @@ import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios, type Aucti
 import { evaluateAuctionGearScenarios } from "./auctionGearScenarioExecution";
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from "./auctionGearEnhancementStage";
 import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiveEnhancements";
-import { auctionSelectionEffectKey } from "./auctionGearEffects";
+import { quickAuctionStatChoices } from "./auctionGearStatChoices";
+import { auctionAppliedStatsKey, auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import { applyOwnedAuctionGearChanges, ownedAuctionGearChanges, customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
@@ -24,19 +25,19 @@ import { getBattleNetCharacterBySlug, type BattleNetCharacter } from "./battleNe
 import { getBattleNetSimulationSnapshot, type BattleNetSimulationSnapshot } from "./battleNetCharacterDetails";
 import { auctionGearProfileFingerprint } from "./auctionGearFingerprint";
 import { getCharacterAuctionMarket } from "./auctionMarketProvider";
-import { assertFreshMarket } from "./auctionMarket";
+import { assertFreshMarket, MARKET_MAX_AGE_MS } from "./auctionMarket";
 import { auctionGearVariantSelectionKey } from "./auctionGearExclusions";
 import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { auctionGearMechanicalCache, auctionGearMechanicalKey } from "./auctionGearMechanicalCache";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
 import { prepareGearLoadout, nativeGearSimulationMeasurement, type GearSimulationScenario } from "./gearSimulation";
-import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
+import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, auctionEquipmentWinners, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
 import { createAuctionGearSearch, deleteAuctionGearSearch, scheduleAuctionGearSearchSave, flushAuctionGearSearch, flushPendingAuctionGearSearch, type AuctionGearSearchEntry } from "./auctionGearSearchStore";
 import type { GearLoadoutItem } from "./gearCompatibility";
@@ -207,12 +208,14 @@ function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
   retainAuctionIncumbents(entry);
   entry.searchCheckpoint = undefined;
   entry.assemblyCheckpoint = undefined;
+  entry.enhancementPreview = undefined;
   entry.exhaustiveEnhancementState = undefined;
   entry.allowedKey = undefined;
 }
 
 const auctionFactsKey = (options: AuctionGearOption[]) => JSON.stringify(options.map(option =>
-  [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
+  [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey,
+    ...(option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.nativeCraftedSymmetryV1 ? [true] : [])]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
 
 function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: AuctionGearOption[]) {
   const context = entry.context;
@@ -233,7 +236,7 @@ function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: Aucti
 }
 
 async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: string | undefined, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxSteps = 12) {
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxSteps = 12, fullMarket = false) {
   const context = entry.context;
   if (!context.discovery) return; // Backward-compatible trusted in-memory fixtures.
   if (context.engineVerificationRequired) {
@@ -257,7 +260,7 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
     if (!token) throw new Error("auction_discovery_authorization_required");
     await metricsFor(context.armory ?? context).measure("discovery", () => advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
       equipment: context.armory?.equipment, region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
-      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps,
+      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps, fullMarket,
       measure: (stage, work) => metricsFor(context.armory ?? context).measureStage(stage, work),
       stopAfterNewCandidates: !entry.latestSearchResult?.items.some(item => item.comparison), onProgress: progress,
       onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); scheduleAuctionGearSearchSave(entry); } }));
@@ -270,7 +273,8 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
 }
 
 async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2) {
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2, fullMarket = false,
+  preciseSingles?: Awaited<ReturnType<typeof assembleAuctionGear>>["preciseSingles"]) {
   const context = entry.context;
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
@@ -285,7 +289,11 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
   const { result, checkpoint } = await diagnostics.measureStage("search", () => searchAuctionGearOptions({
     searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options: context.options,
     selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
-    market: context.market, signal, simulate: context.simulate, checkpoint: entry.searchCheckpoint,
+    market: context.market, signal, simulate: fullMarket
+      ? (selection, requestSignal) => context.simulate(selection, requestSignal, undefined, "certified-candidate")
+      : context.simulate, checkpoint: entry.searchCheckpoint,
+    preciseSingles, statPriority: context.input.enhancementMode === "equipment",
+    groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
     baseline: entry.retainedBaseline, simulationCache: cache,
     simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
     // The initial response includes baseline plus two native comparisons.
@@ -347,7 +355,12 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
   const diagnostics = metricsFor(entry.context.armory ?? entry.context);
   const finishStep = diagnostics.beginStep("search");
   const discoveryShouldYield = () => Date.now() - started >= 5_000;
+  // Full assembly visits the single-item combinations as well. Once the first
+  // comparison is visible, spend discovery turns completing the candidate pool.
+  const prioritizeDiscovery = fullMarket && entry.context.discovery && !entry.context.coverage.discoveryComplete &&
+    entry.retainedBaseline && entry.latestSearchResult?.items.some(item => item.comparison);
   const advanceComparisons = async () => {
+    if (prioritizeDiscovery) return updateAuctionSearchResult(entry, signal, progress, () => true);
     let remaining = entry.latestSearchResult ? 8 : 3;
     let verifiedCapacity: 1 | 2 | undefined;
     if (fullMarket && entry.context.options.length > 1 && !shouldYield()) {
@@ -360,7 +373,7 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // the rest of this turn's budget in one planner pass instead of rebuilding
       // and durably writing every lot after each individual simulation.
       const batch = publishResult && !(fullMarket && entry.context.simulate.batchSize) && !entry.latestSearchResult?.items.some(item => item.comparison) ? 1 : remaining;
-      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult || fullMarket ? batch : undefined, verifiedCapacity);
+      result = await updateAuctionSearchResult(entry, signal, progress, shouldYield, publishResult || fullMarket ? batch : undefined, verifiedCapacity, fullMarket);
       remaining -= batch;
       if (publishResult) {
         // This comparison batch finishes before the deadline. Store the next
@@ -388,14 +401,17 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
     // Alternate the first turn when discovery outlives its cooperative budget.
     // Retain this choice across recovery so slow upstream calls cannot starve
     // already-discovered comparisons on every continuation.
-    if (entry.nextSearchPhase === "simulation" && entry.context.options.length) {
+    if (!prioritizeDiscovery && entry.nextSearchPhase === "simulation" && entry.context.options.length) {
       setAuctionGearPhase(entry, "nextSearchPhase", "discovery");
       await advanceComparisons();
       simulated = true;
     }
     if (!shouldYield()) {
       setAuctionGearPhase(entry, "nextSearchPhase", "simulation");
-      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, entry.latestSearchResult ? 4 : 12);
+      // Accumulate more candidates per full-market batch within the same discovery deadline.
+      const ongoingDiscoverySteps = fullMarket ? 24 : 4;
+      const discoverySteps = entry.latestSearchResult ? ongoingDiscoverySteps : 12;
+      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, discoverySteps, fullMarket);
     }
     signal.throwIfAborted();
     const result = simulated
@@ -452,7 +468,7 @@ export async function verifyAuctionGearSearch(entry: AuctionGearSearchEntry, tok
       // identity used by the simulator's engine callback.
       Object.assign(context.discovery, createAuctionGearDiscovery(market, context.input.budgetCopper));
       entry.metadataMarketRefreshRequired = false;
-    } else refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true });
+    } else refreshAuctionGearDiscovery(context.discovery, market, { retryCatalog: entry.latestSearchResult?.searchComplete === true || Boolean(entry.latestAssemblyResult) });
     synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery));
   } else {
     // Trusted historical contexts have no discovery state. Refresh only their
@@ -480,7 +496,7 @@ function withFreshEnhancementQuotes<T extends AuctionGearAssemblyResult>(result:
     catch { return false; }
   });
   if (recommendations.length === enhanced.recommendations.length) return result;
-  return {...result, enhancementOptimization:{...enhanced, recommendations, finalistRecheck: undefined,
+  return {...result, enhancementOptimization:{...enhanced, recommendations, finalistRecheck: undefined, verifiedValueKey: undefined, verifiedObjectives: undefined,
     status:enhanced.complete ? recommendations.length ? 'ready' : 'unavailable' : 'pending',
     reasons:[...new Set([...enhanced.reasons,'market_unverified'])]}};
 }
@@ -514,6 +530,53 @@ export function selectedAuctionGearOptions(entry: AuctionGearSearchEntry, value:
   return selectedAuctionGearAssemblyOptions(entry, value);
 }
 
+/** Sample one leader after equipment has advanced. The bounded optimizer tries
+ * seeded configurations first and resumes its own cursor on the next turn. */
+async function previewAuctionGearLeader(entry: AuctionGearSearchEntry, options: AuctionGearOption[],
+  signal: AbortSignal, progress: (p: AuctionPlanProgress) => void) {
+  const context = entry.context, checkpoint = entry.assemblyCheckpoint!;
+  const ids = (checkpoint.bestConfirmed ?? checkpoint.best).optionIds;
+  const key = JSON.stringify([...ids].sort());
+  if (entry.enhancementPreview?.leader !== key)
+    entry.enhancementPreview = { leader: key, stage: { checkpoints: {} }, retryAt: 0 };
+  const preview = entry.enhancementPreview;
+  if (Date.now() < preview.retryAt) return;
+  const byId = new Map(options.map(option => [option.id, option]));
+  const selected = ids.map(id => byId.get(id));
+  if (!selected.every((option): option is AuctionGearOption => Boolean(option))) return;
+  const deadline = Date.now() + 3000;
+  progress({ phase: "enhancements", completed: 0, total: 0 });
+  let result: Awaited<ReturnType<typeof evaluateAuctionEnhancementStage>>;
+  try {
+    result = await evaluateAuctionEnhancementStage({
+      preview: true, finalists: [{label: "leader", options: selected}], selectedSlots: context.input.selectedSlots,
+      equipment: context.armory.equipment, loadout: context.loadout, specId: context.specId,
+      level: context.character.level, professions: context.armory.professions, faction: context.character.faction?.type,
+      region: context.character.region, engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
+      encounter: { scenario: context.input.scenario, ...context.encounter }, budgetCopper: context.input.budgetCopper,
+      objective: context.input.objective ?? "dps", baseline: checkpoint.baseline, simulate: context.simulate,
+      state: preview.stage, signal, shouldYield: () => Date.now() >= deadline,
+    });
+  } catch (error) {
+    signal.throwIfAborted();
+    // This optional measurement cannot fail the authoritative equipment traversal.
+    console.warn("auction enhancement preview unavailable", error instanceof Error ? error.name : "Error");
+    preview.retryAt = Date.now() + 60_000;
+    preview.result = undefined;
+    return;
+  }
+  signal.throwIfAborted();
+  const refreshed = Date.parse(preview.stage.quotes?.fetchedAt ?? "");
+  const source = Date.parse(preview.stage.quotes?.sourceUpdatedAt ?? "");
+  preview.validUntil = Number.isFinite(refreshed) && Number.isFinite(source)
+    ? Math.min(refreshed + 60_000, source + MARKET_MAX_AGE_MS) : undefined;
+  preview.retryAt = result.complete ? Math.max(Date.now() + 1000, preview.validUntil ?? Date.now() + 60_000) : 0;
+  const recommendations = result.recommendations.filter(row => row.configuration.status === "priced" &&
+    row.configuration.consumables.length > 0 && row.configuration.totalCopper !== null &&
+    row.configuration.totalCopper <= context.input.budgetCopper);
+  preview.result = recommendations.length ? { ...result, traversal: "preview", complete: false, recommendations } : undefined;
+}
+
 export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, selection: unknown, signal: AbortSignal,
   progress: (p: AuctionPlanProgress) => void, token?: string,
   publishResult?: (result: AuctionGearRunResult) => void, fullMarket = false) {
@@ -541,46 +604,83 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     // Later turns retain discovery/simulation fairness and the full domain.
     } else if (entry.nextAssemblyPhase !== "simulation") {
       setAuctionGearPhase(entry, "nextAssemblyPhase", "simulation");
-      await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4);
+      await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4, fullMarket);
     } else {
       setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     }
-    const options = selectedAuctionGearAssemblyOptions(entry, selection);
+    const available = selectedAuctionGearAssemblyOptions(entry, selection);
+    const options = !fullMarket && context.input.enhancementMode === "equipment" && !entry.latestAssemblyResult
+      ? quickAuctionStatChoices(available, option => {
+          const key = auctionSelectionEffectKey([option]);
+          return entry.retainedSimulationCache?.[key]?.dps ?? entry.searchCheckpoint?.simulationCache[key]?.dps;
+        }) : available;
+    const statLimited = options.length < available.length;
     const allowedKey = auctionFactsKey(options);
     if (entry.allowedKey !== allowedKey) {
       retainAuctionSimulations(entry);
       retainAuctionIncumbents(entry);
       entry.assemblyCheckpoint = undefined;
+      entry.enhancementPreview = undefined;
       entry.exhaustiveEnhancementState = undefined;
       entry.allowedKey = allowedKey;
       scheduleAuctionGearSearchSave(entry);
     }
     const capacity = fullMarket && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
     const assemblyBatchSize = capacity === 2 ? context.simulate.batchSize : undefined;
+    const currentPreview = () => {
+      const cached = entry.enhancementPreview;
+      return cached?.validUntil !== undefined && cached.validUntil > Date.now() ? cached.result : undefined;
+    };
+    const priorEnhancements = entry.exhaustiveEnhancementState;
+    // The exact enhancement iterator includes the unmodified purchase for each
+    // legal layout. Older cursors did not retain those measurements.
+    const jointMarket = fullMarket && context.input.enhancementMode === "enhanced" && Boolean(context.simulate.finalistKey) &&
+      (entry.retainedBaseline ?? entry.searchCheckpoint?.baseline)?.iterations === 100 &&
+      (!context.discovery || context.coverage.discoveryComplete) && options.length === context.options.length &&
+      (!priorEnhancements || Boolean(priorEnhancements.bareEquipment)) && !options.some(option => option.customization);
+    const advanceTogether = jointMarket && !priorEnhancements?.bareEquipment?.missing;
+    const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
+      currentItem: context.currentBySlot.get(purchase.slotType) });
+    const presentWinners = (result: Pick<AuctionGearAssemblyResult, "purchases" | "bestConfirmed" | "bestDpsConfirmed" | "bestValueConfirmed">) => {
+      const decorate = (row: typeof result.bestConfirmed | undefined) => row ? { ...row, purchases:row.purchases.map(present) } : null;
+      return { purchases:result.purchases.map(present), bestConfirmed:decorate(result.bestConfirmed),
+        bestDpsConfirmed:decorate(result.bestDpsConfirmed), bestValueConfirmed:decorate(result.bestValueConfirmed) };
+    };
     const advanceAssembly = async () => {
-      const { result, checkpoint } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
+      const { result, checkpoint, preciseSingles } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
         searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
         selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
         incumbents: entry.retainedIncumbents,
+        reuseAppliedStats: fullMarket,
+        // This pass measures bare gear. The enhancement iterator below receives
+        // every original option and proves its own groups after accounting for sockets.
+        groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
+        bareEquipmentProofs: fullMarket && context.input.enhancementMode !== undefined,
+        preciseSingleCards: fullMarket && options.length === context.options.length,
+        recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" &&
+          (!context.discovery || context.coverage.discoveryComplete || entry.assemblyCheckpoint?.nextEquipmentSingle !== undefined ||
+            entry.assemblyCheckpoint?.equipmentVerification !== undefined)
+          ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
-        maxNewSimulations: assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
-        shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
+        maxNewSimulations: advanceTogether ? 1 : assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
+        shouldYield: advanceTogether && entry.assemblyCheckpoint ? () => true : shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
       }));
       signal.throwIfAborted();
       entry.assemblyCheckpoint = checkpoint;
       entry.retainedSimulationCache = checkpoint.simulationCache;
-      const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true);
-      const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
-        currentItem: context.currentBySlot.get(purchase.slotType) });
-      const published = publicAuctionResult(context, { ...result, updatedSearch, marketChange: context.marketChange,
+      const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true, undefined, undefined, false, preciseSingles);
+      const preview = currentPreview();
+      const published = publicAuctionResult(context, { ...result, ...(statLimited ? { exhaustiveComplete: false, searchLimited: true } : {}), ...(preview ? { enhancementOptimization: preview } : {}), updatedSearch, marketChange: context.marketChange,
         ...(context.input.compareScenarios?.length ? { scenarioComparisonsComplete: false } : {}),
-        purchases: result.purchases.map(present),
-        bestConfirmed: result.bestConfirmed ? { ...result.bestConfirmed, purchases: result.bestConfirmed.purchases.map(present) } : null,
-        bestValueConfirmed: result.bestValueConfirmed ? { ...result.bestValueConfirmed, purchases: result.bestValueConfirmed.purchases.map(present) } : null,
-        bestDpsConfirmed: result.bestDpsConfirmed ? { ...result.bestDpsConfirmed, purchases: result.bestDpsConfirmed.purchases.map(present) } : null });
+        ...presentWinners(result) });
+      // On resume this paused preview has no new evaluation. Keep the durable
+      // enhancement result visible until its iterator publishes this turn.
+      if (advanceTogether && priorEnhancements && entry.latestAssemblyResult?.enhancementOptimization) {
+        return { checkpoint, published, poolComplete: result.exhaustiveComplete };
+      }
       entry.latestAssemblyResult = published;
       scheduleAuctionGearSearchSave(entry);
       // Persist and publish each completed assembly evaluation before starting
@@ -591,20 +691,34 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       return { checkpoint, published, poolComplete: result.exhaustiveComplete };
     };
     let { checkpoint, published, poolComplete } = await advanceAssembly();
-    for (let step = 1; publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
+    if (!advanceTogether && fullMarket && context.input.enhancementMode === "enhanced" && !published.exhaustiveComplete) {
+      await diagnostics.measureStage("enhancements", () => previewAuctionGearLeader(entry, options, signal, progress));
+      const preview = currentPreview();
+      scheduleAuctionGearSearchSave(entry);
+      if (published.enhancementOptimization !== preview) {
+        published = { ...published, enhancementOptimization: preview };
+        entry.latestAssemblyResult = published;
+        await diagnostics.measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
+        signal.throwIfAborted();
+        publishResult?.(published);
+      }
+    }
+    for (let step = 1; !advanceTogether && publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
       ({ checkpoint, published, poolComplete } = await advanceAssembly());
     }
     if (!shouldYield()) setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     const encounters = parseAuctionGearCompareScenarios(context.input.compareScenarios);
-    if (published.exhaustiveComplete) {
+    if (published.exhaustiveComplete || advanceTogether) {
       // Publications are snapshots. Do not mutate the result already held by a job.
       published = { ...published, ...(encounters.length ? {scenarioComparisonsComplete: false} : {}) };
       const finalists = new Map<string, AuctionGearOption[]>();
       const ownedByFinalist = new Map<string, readonly OwnedAuctionGearChange[]>();
       const byId = new Map(options.map(option => [option.id, option]));
       const selectedSets = new Set<string>();
-      for (const [label, best] of [["confirmed", checkpoint.bestConfirmed], ["measured", checkpoint.best],
-        ["value", checkpoint.bestValueConfirmed], ["dps", checkpoint.bestDpsConfirmed]] as const) {
+      const leaders = fullMarket && context.input.enhancementMode === "equipment"
+        ? checkpoint.equipmentVerification ?? checkpoint : checkpoint;
+      for (const [label, best] of [["confirmed", leaders.bestConfirmed], ["measured", leaders.best],
+        ["value", leaders.bestValueConfirmed], ["dps", leaders.bestDpsConfirmed]] as const) {
         if (!best || !best.optionIds.length) continue;
         const key = JSON.stringify([...best.optionIds].sort());
         if (selectedSets.has(key)) continue;
@@ -639,7 +753,21 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             lastPublishedEnhancement = result;
             return;
           }
-          published = { ...published, enhancementOptimization: result };
+          const visible = !result.complete && !result.recommendations.length ? currentPreview() ?? result : result;
+          const bare = entry.exhaustiveEnhancementState?.bareEquipment;
+          if (advanceTogether && result.complete && result.traversal === "exhaustive" && bare?.covered && bare.layouts > 0 && !bare.missing) {
+            // Every affordable equipment layout returned a bare comparison. Its
+            // winners and all single-item cards use the same native baseline.
+            const winners = auctionEquipmentWinners(bare.leaders, best => best.optionIds.map(id => byId.get(id)!),
+              {loadout:context.loadout, specId:context.specId, budgetCopper:context.input.budgetCopper}, published.selectedSlots);
+            const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true, undefined, undefined, false,
+              {baseline:bare.leaders.baseline, byOption:new Map(Object.entries(bare.singles))});
+            published = { ...published, ...winners, ...presentWinners(winners), updatedSearch, exhaustiveComplete:true,
+              searchLimited:context.searchLimited, validCombinations:bare.layouts, combinationCount:bare.totalAssignments,
+              combinationsChecked:Math.min(Number(bare.totalAssignments), Number.MAX_SAFE_INTEGER),
+              simulations:diagnostics.snapshot().simulations, proofPrunedAssignments:undefined, pruningCounts:undefined };
+          }
+          published = { ...published, enhancementOptimization: visible };
           entry.latestAssemblyResult = published;
           scheduleAuctionGearSearchSave(entry);
           await diagnostics.measureStage("checkpoint", () => flushPendingAuctionGearSearch(entry));
@@ -653,9 +781,14 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         const enhancementConcurrency = shouldYield() ? 1 : await context.simulate.concurrency?.(signal) ?? 1;
         signal.throwIfAborted();
         const enhanced = await diagnostics.measureStage("enhancements", () => advanceAuctionGearExhaustiveEnhancements({
+          trackBareEquipment: jointMarket,
+          nativePlayerLevel: context.armory.profile?.level === 90 ? 90 : undefined,
           simulationConcurrency: enhancementConcurrency,
           get simulationBatchSize() { return enhancementConcurrency === 2 ? context.simulate.batchSize : 0; },
           get simulationOwnedBatch() { return context.simulate.ownedBatch; },
+          finalistKey: context.simulate.finalistKey && ((selected, configuration) =>
+            context.simulate.finalistKey(customizedAuctionGearOptions(selected, configuration), ownedAuctionGearChanges(configuration))),
+          recheckBaseline: simSignal => context.simulate([], simSignal, undefined, "finalist"),
           recheck: (selected, configuration, simSignal) => context.simulate(
             customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
@@ -669,13 +802,15 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             // replacement. Keep its native precision/engine checks on reuse.
             if (!ownedChanges?.length && selected.every(option => !option.customization?.enchantId && !option.customization?.gemIds?.some(id => id !== 0))) {
               const bare = selected.map(option => { const copy = { ...option }; delete copy.customization; return copy; });
-              const cached = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
+              const exact = bare.length ? checkpoint.simulationCache[auctionSelectionEffectKey(bare)] : checkpoint.baseline;
+              const equivalent = fullMarket && !exact ? auctionAppliedStatsKey(bare, checkpoint.baseline.engine, true) : undefined;
+              const cached = exact ?? (equivalent ? checkpoint.simulationCache[equivalent] : undefined);
               if (cached && cached.engine === checkpoint.baseline.engine && Number.isFinite(cached.dps) && cached.dps >= 0 &&
                   Number.isFinite(cached.dpsError) && cached.dpsError >= 0 && cached.confidence === 95 && Number.isSafeInteger(cached.iterations) && cached.iterations > 0) {
                 metricsFor(context.armory ?? context).cacheHit(); return { ...cached };
               }
             }
-            return context.simulate(selected, simSignal, ownedChanges);
+            return context.simulate(selected, simSignal, ownedChanges, fullMarket ? "certified-candidate" : undefined);
           },
           signal, shouldYield, state: entry.exhaustiveEnhancementState,
           onState: state => { entry.exhaustiveEnhancementState = state; scheduleAuctionGearSearchSave(entry); },
@@ -687,7 +822,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         // changed state. Other exits still require a durable publication. The
         // enclosing catch marks mutations from failed/aborted stage calls.
         if (enhanced.result !== lastPublishedEnhancement) await publishEnhancement(enhanced.result);
-        if (!enhanced.result.complete) return published;
+        if (!enhanced.result.complete || !published.exhaustiveComplete) return published;
         if (enhanced.result.recommendations.length) {
           finalists.clear();
           for (const recommendation of auctionEnhancementScenarioFinalists(enhanced.result.recommendations, context.input.objective ?? "dps")) {
@@ -856,9 +991,14 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   const retryProfessionEquipment = !data.armory.professions && [...savedDiscovery.candidates.values()].some(candidates =>
     candidates.some(candidate => candidate.variants.some(variant => variant.resolution?.enhancements?.status === "verified" &&
       variant.resolution.enhancements.requiredProfessionId > 0)));
-  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference && !retryProfessionEquipment ? savedDiscovery
+  // Earlier reports suppressed a real zero weapon minimum. A saved reference
+  // could have passed without comparing weapon damage to the public preview.
+  const retryWeaponReference = !savedDiscovery.weaponReferenceRevision && [...(savedDiscovery.verifiedReferences ?? [])]
+    .some(id => savedDiscovery.references.get(id)?.weapon);
+  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference && !retryProfessionEquipment && !retryWeaponReference ? savedDiscovery
     : createAuctionGearDiscovery({ ...data.market, offers: [...data.discovery.offers.values()].flat() }, data.input.budgetCopper);
   discovery.equippedReferenceRevision = 1;
+  discovery.weaponReferenceRevision = 1;
   const coverage = discovery === data.discovery ? data.coverage
     : { ...auctionGearDiscoveryCoverage(discovery), discoveryComplete: false, dataComplete: false };
   const discoveryContext = (slotType: string) => ({
@@ -882,43 +1022,134 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   // Discovery in a fresh context obtains current native metadata over HTTP.
   // Restored metadata is historical: one real native result must validate it.
   let verified = freshMetadata;
+  // A market containing only owned upgrades may have no native item metadata.
+  // Trust a real measurement from this simulator instance before using its cache.
+  let measuredEngine = "";
+  const equipped = Array.isArray(armory.equipment.equipped_items) ? armory.equipment.equipped_items : [];
+  const itemInSlot = (slot: string) => {
+    const matches = equipped.filter(item => item?.slot?.type === slot);
+    return matches.length === 1 ? matches[0] : undefined;
+  };
+  const gloves = itemInSlot("HANDS");
+  const unenchantedHandsId = gloves && (gloves.enchantments === undefined ||
+    Array.isArray(gloves.enchantments) && !gloves.enchantments.length) ? gloves.item?.id : undefined;
+  const wornRing = (slot: string) => {
+    const ring = itemInSlot(slot);
+    if (ring?.inventory_type?.type !== "FINGER" || !Number.isSafeInteger(ring.item?.id) || ring.item.id <= 0 ||
+        !Number.isSafeInteger(ring.level?.value) || ring.level.value < 120) return;
+    const enchants: {enchantment_slot?:{id?:number}; enchantment_id?:number}[] = ring.enchantments === undefined ? [] : ring.enchantments;
+    if (!Array.isArray(enchants) || enchants.some(row => !Number.isSafeInteger(row?.enchantment_slot?.id))) return;
+    const permanent = enchants.filter(row => row.enchantment_slot?.id === 0);
+    const enchantId = permanent.length ? permanent[0].enchantment_id : 0;
+    if (permanent.length <= 1 && typeof enchantId === "number" && Number.isSafeInteger(enchantId) && enchantId >= 0)
+      return {itemId: Number(ring.item.id), enchantId};
+  };
+  const firstRing = wornRing("FINGER_1"), secondRing = wornRing("FINGER_2");
+  const wornRings = firstRing && secondRing ? [firstRing, secondRing] as const : undefined;
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], precision?: "finalist"): Promise<GearPlanSimulation> => {
-    assertFreshMarket(market);
+  const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
+  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate") => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
-    const cacheKey = auctionGearMechanicalKey(fingerprint, { spec: specSlug, scenario, ...encounter, gearChanges: prepared.changes,
-      ...(ownedChanges?.length ? { ownedChanges } : {}), ...(precision ? { precision } : {}) });
+    const verifiedEngine = engine() || measuredEngine;
+    const jewelryScore = mode && selections.length
+      ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings, mode === "finalist" ? mode : undefined) : undefined;
+    const scoreChanges = jewelryScore?.changes ?? prepared.changes;
+    const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
+    const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
+      ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings });
+    return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
+  };
+  const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
+    prepareScore(selections, ownedChanges, "finalist").cacheKey;
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
+    assertFreshMarket(market);
     simSignal.throwIfAborted();
-    const cached = verified ? auctionGearMechanicalCache.get(cacheKey, engine()) : undefined;
+    const { prepared, verifiedEngine, scoreChanges, request, cacheKey } = prepareScore(selections, ownedChanges, mode);
+    const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
+    const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
+    let equivalentKey: string | undefined;
+    // A bare substitution can span different socket or suffix programs only
+    // while all the purchased items are bare. Keep the native precision in
+    // the cache key so each independent measurement still runs once.
+    const barePurchase = mode && selections.length > 0 && !ownedChanges?.length &&
+      selections.every(option => !option.customization);
+    if (barePurchase) {
+      const proof = auctionAppliedStatsKey(selections, verifiedEngine, true);
+      if (proof) equivalentKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: [{ appliedStats: proof }] });
+    } else if (mode === "certified-candidate" && selections.length) {
+      const bare = selections.map(({ customization, ...option }) => option);
+      const chest = selections.findIndex(o => o.candidate.slotType === "CHEST" && o.customization?.enchantId);
+      const withChest = chest >= 0 && !ownedChanges?.some(change => change.slotType === "CHEST")
+        ? auctionAppliedStatsKey(bare.map((option, i) => i === chest ? selections[i] : option), verifiedEngine, "enchanted-suffix")
+        : undefined;
+      const proof = withChest ?? auctionAppliedStatsKey(bare, verifiedEngine);
+      if (proof) {
+        // A proved chest enchant is already in the score key. Preserve the
+        // original ordered bonus list and scaling inputs on every other edit.
+        const customized = scoreChanges.filter((change, i) => !(withChest && i === chest) && (change.enchantId || change.gemIds?.length))
+          .map(change => [change.slot, change.itemId, change.bonusIds, change.enchantId, change.gemIds,
+            change.modifiers?.filter(m => m.type < 38 || m.type > 51) ?? []]);
+        equivalentKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: [{ appliedStats: proof }, ...customized] });
+      }
+    }
+    if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
+    const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
+    // Precision is part of cacheKey. Two finalists can join the same precise
+    // fight under exactly the same conditions as a completed cache hit.
+    const share = verified && verifiedEngine.startsWith("SimulationCraft");
+    if (share) for (const entry of pending) {
+      if (entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
+      // Either proof used by the completed cache also suffices in flight.
+      if (entry.cacheKey !== cacheKey && (!equivalentKey || entry.equivalentKey !== equivalentKey)) continue;
+      const measured = await entry.result;
+      simSignal.throwIfAborted();
+      metrics.cacheHit();
+      return { ...measured };
+    }
     metrics.simulation();
-    return metrics.measure("simulation", async () => {
-      const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
+    const measurement = metrics.measure("simulation", async () => {
       const base = { spec: specSlug, scenario, ...encounter, actionListMode: "native", talentLoadout: armory.activeTalentLoadout,
         armory: { profile: armory.profile, specializations: armory.specializations, equipment },
-        precision: precision === "finalist" ? "auction-finalist" : "auction-candidate" };
+        precision: mode === "finalist" ? "auction-finalist" : "auction-candidate" };
       const ownedBatch = transport.ownedBatch && ownedChanges?.length
         ? { base: { ...base, armory: { ...base.armory, equipment: prepared.equipment } }, changes: ownedChanges }
         : undefined;
-      // Profilesets inherit the first row's overrides. Each row in a group must
-      // replace the same slots against the same armory (including off-hand removal).
+      // A mixed-slot worker starts each profileset from the original armory.
+      // Owned edits and off-hand removal still require their own base and slot set.
       const batchEquipment = ownedBatch ? prepared.equipment : equipment;
+      const mixed = transport.mixedSlots && batchEquipment === armory.equipment && !ownedChanges?.length && base.precision === "auction-candidate";
       const group = transport.batchSize && (prepared.changes.length || ownedBatch)
         ? JSON.stringify([base.precision, batchEquipment === armory.equipment ? null : batchEquipment,
-          prepared.changes.map(change => change.slot).sort(), ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
+          mixed ? "mixed" : prepared.changes.map(change => change.slot).sort(),
+          ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
         : undefined;
       const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
-      if (engine() && simulation.engine !== engine()) throw new Error("simulation_version_changed");
+      if (mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
+      const catalogEngine = engine();
+      if ((catalogEngine && simulation.engine !== catalogEngine) ||
+          (measuredEngine && simulation.engine !== measuredEngine) ||
+          (share && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
+      if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
+      measuredEngine = simulation.engine;
       verified = true;
       return simulation;
     });
+    // Start the native request immediately. Track at most one full two-lane
+    // window, and only share work whose callers cancel together.
+    if (!share || pending.size >= 2 * Math.max(1, transport.batchSize)) return measurement;
+    const entry = { engine: verifiedEngine, cacheKey, equivalentKey, signal: simSignal, result: measurement };
+    pending.add(entry);
+    try { return await measurement; }
+    finally { pending.delete(entry); }
   };
-  return Object.defineProperties(Object.assign(simulate, { concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
+  return Object.defineProperties(Object.assign(simulate, { finalistKey, concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
     batchSize: { get: () => transport.batchSize },
     ownedBatch: { get: () => transport.ownedBatch },
   });
@@ -936,8 +1167,11 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
   const pending: AuctionNativeJob[] = [];
   const subscribers = new Map<AbortSignal, { jobs: Set<AuctionNativeJob>; abort: () => void }>();
-  let ownedBatch = false;
+  let ownedBatch = false, mixedSlots = false;
   let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
+
+  const requestDeadlineMs = 190_000;
+  let finalistMsPerRow = 0, finalistTimeoutCap = Infinity;
 
   function schedule() {
     if (scheduled || !pending.length || active >= capacity) return;
@@ -949,11 +1183,17 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
         const jobs = [first];
         if (batchSize && first.group && (!first.ownedBatch || ownedBatch)) {
           const compatible = pending.filter(job => job.group === first.group);
-          // Leave work for the other native lane when both would draw from
-          // this group. An already busy lane contributes its outstanding rows.
-          const limit = compatible.length === pending.length
-            ? Math.ceil((1 + compatible.length + activeCandidates) / capacity) : batchSize;
-          for (const job of compatible.slice(0, Math.min(batchSize, limit) - 1)) {
+          // Other groups may contain just one job. Count their rows when
+          // splitting the backlog so that both native lanes can finish together.
+          // Finalists use more iterations, so a mixed-precision queue cannot
+          // use candidate counts as comparable units of work.
+          const limit = pending.every(job => job.base.precision === first.base.precision)
+            ? Math.ceil((1 + pending.length + activeCandidates) / capacity) : batchSize;
+          // Reserve headroom for changes in host load. Only 750-iteration
+          // requests measure the cost of a finalist on this transport.
+          const timeLimit = first.base.precision === "auction-finalist"
+            ? Math.max(1, Math.min(finalistTimeoutCap, Math.floor(0.7 * requestDeadlineMs / finalistMsPerRow))) : Infinity;
+          for (const job of compatible.slice(0, Math.min(batchSize, limit, timeLimit) - 1)) {
             jobs.push(job);
             pending.splice(pending.indexOf(job), 1);
           }
@@ -985,23 +1225,49 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
         if (jobs.every(entry => entry.signal.aborted)) controller.abort(job.signal.reason);
       };
     }
-    const singleTimeout = first.base.precision === "auction-finalist" ? 190_000 : 50_000;
+    const finalist = first.base.precision === "auction-finalist";
+    const singleTimeout = finalist ? requestDeadlineMs : 50_000;
+    const deadline = AbortSignal.timeout(batch ? Math.min(requestDeadlineMs, jobs.length * singleTimeout) : singleTimeout);
+    const started = Date.now();
+    const slotKey = (job: AuctionNativeJob) => job.changes.map(change => change.slot).sort().join(",");
+    const firstSlots = slotKey(first);
+    const mixed = batch && !first.ownedBatch && jobs.some(job => slotKey(job) !== firstSlots);
     const response = await fetch(worker() + "/v1/wow/rotation/simulations" + (batch ? "/batch" : ""), {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, cache: "no-store",
-      signal: AbortSignal.any([requestSignal, AbortSignal.timeout(batch ? Math.min(190_000, jobs.length * singleTimeout) : singleTimeout)]),
-      body: JSON.stringify(batch ? { base: first.ownedBatch?.base ?? first.base, candidates: jobs.map(job => ({
+      signal: AbortSignal.any([requestSignal, deadline]),
+      body: JSON.stringify(batch ? { ...(mixed ? { mixedSlots: true } : {}), base: first.ownedBatch?.base ?? first.base, candidates: jobs.map(job => ({
         gearChanges: job.changes, ...(job.ownedBatch ? {ownedChanges: job.ownedBatch.changes} : {}) })) }
         : { ...first.base, ...(first.changes.length ? { gearChanges: first.changes } : {}) }),
+    }).catch(error => {
+      if (!finalist || !batch || !deadline.aborted || requestSignal.aborted) throw error;
+      // Retry only still-requested rows. Halving every timed-out packet
+      // eventually reaches a single, whose failure is returned to the caller.
+      finalistTimeoutCap = Math.min(finalistTimeoutCap, Math.floor(jobs.length / 2));
+      for (const job of jobs) job.checkGroupAbort = undefined;
+      const retry = jobs.filter(job => !job.signal.aborted);
+      metrics.retryFinalistPacket(retry.length);
+      pending.unshift(...retry);
+      return undefined;
     });
+    if (!response) return;
     metrics.workerTiming(response.headers.get("server-timing"));
     if (batch && [404, 405, 501].includes(response.status)) {
       // The advertised worker may have been rolled back between health and POST.
       capacity = 1;
       batchSize = 0;
+      mixedSlots = false;
       ownedBatch = false;
       for (const job of jobs) job.checkGroupAbort = undefined;
       pending.unshift(...jobs.filter(job => !job.signal.aborted));
       await response.body?.cancel();
+      return;
+    }
+    const unsupportedMixed = mixed && response.status === 422 && (await response.json().catch(() => null))?.code === "unsupported_mixed_slots";
+    if (mixed && (unsupportedMixed || response.status === 400 || response.ok && response.headers.get("x-gildra-simulation-mixed-slots") !== "1")) {
+      mixedSlots = false;
+      for (const job of jobs) { job.group = undefined; job.checkGroupAbort = undefined; }
+      pending.unshift(...jobs.filter(job => !job.signal.aborted));
+      if (!response.bodyUsed) await response.body?.cancel();
       return;
     }
     if (batch && first.ownedBatch) {
@@ -1022,6 +1288,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
     const payload = await response.json();
     const results = batch ? payload?.results : [payload];
     if (!Array.isArray(results) || results.length !== jobs.length) throw new Error("invalid_simulation_result");
+    if (finalist) finalistMsPerRow = Math.max(0.8 * finalistMsPerRow, (Date.now() - started) / jobs.length);
     jobs.forEach((job, index) => job.resolve(results[index]));
   }
 
@@ -1078,6 +1345,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       signal.throwIfAborted();
       capacity = permits;
       batchSize = permits === 2 && /^\d+$/.test(advertised) && Number(advertised) >= 2 ? Math.min(25, Number(advertised)) : 0;
+      mixedSlots = batchSize > 0 && response.headers.get("x-gildra-simulation-mixed-slots") === "1";
       ownedBatch = batchSize > 0 && response.headers.get("x-gildra-simulation-owned-batch") === "1";
       schedule();
       return capacity;
@@ -1085,9 +1353,10 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       signal.throwIfAborted();
       capacity = 1;
       batchSize = 0;
+      mixedSlots = false;
       ownedBatch = false;
       return capacity;
     }
   }
-  return { submit, concurrency, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
+  return { submit, concurrency, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
 }

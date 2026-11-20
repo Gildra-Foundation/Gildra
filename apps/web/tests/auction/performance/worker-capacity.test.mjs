@@ -11,7 +11,7 @@ function bridge(fetch) {
   const create = new vm.Script(code + '\n;createAuctionSimulator').runInNewContext({
     fetch, AbortSignal, process, metricsFor: () => ({}), auctionGearProfileFingerprint: () => 'fixture',
   });
-  return create({ armory: {}, engine: () => 'SimulationCraft capacity-test' });
+  return create({ armory: { equipment: { equipped_items: [] } }, engine: () => 'SimulationCraft capacity-test' });
 }
 const wire = capacity => Response.json({ status: 'ok' }, { headers: capacity === null ? {} : { 'x-gildra-simulation-concurrency': capacity } });
 

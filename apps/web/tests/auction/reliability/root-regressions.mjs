@@ -1,6 +1,6 @@
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
-import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
+import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
@@ -28,7 +28,7 @@ const selectionCode = stripTypeScriptTypes(source.slice(source.indexOf("export f
 const selectedAuctionGearAssemblyOptions = new vm.Script(selectionCode + "\n;selectedAuctionGearAssemblyOptions").runInNewContext({ createAuctionGearDiagnostics,auctionGearVariantSelectionKey});
 const simulatorCode = stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
 const createSimulator = new vm.Script(simulatorCode + "\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
-  auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
+  auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
   assertFreshMarket() {}, prepareGearLoadout: () => ({ equipment: {}, changes: [] }),
   fetch: async () => Response.json(full, { headers: { "x-gildra-engine": "simulationcraft" } }),
 });
@@ -45,6 +45,22 @@ const weapon = { minDamage: 2800, maxDamage: 4200, dps: 1000, speedSeconds: 3.5 
 const metadata = { key: auctionVariantKey(offer), itemId: 123, itemLevel: 100, requiredLevel: 1, inventoryType: 17,
   itemClassId: 2, itemSubclassId: 8, quality: 3, uniqueEquipped: false, setId: 0, stats: { strength: 10 },
   weapon, effects: ["Synthetic verified exact effect"], effectsVerified: true };
+check("crafted symmetry stays bound to the ordered bonuses measured by the worker", () => {
+  const listing = {...offer, bonusIds:[2,1], modifiers:[{type:29,value:36},{type:30,value:40}]};
+  const native = {...metadata, key:auctionVariantKey(listing), nativeCraftedSymmetryV1:[2,1]};
+  assert.equal(resolvedAuctionVariant(listing, native, engine).resolution.nativeCraftedSymmetryV1, true);
+  assert.equal(resolvedAuctionVariant({...listing,bonusIds:[1,2]}, native, engine).resolution.nativeCraftedSymmetryV1, undefined);
+});
+check("resolved content tuning must match the listing and carry a complete native cap", () => {
+  const listing = {...offer, modifiers: [{type: 28, value: 3321}]};
+  const resolved = proof => resolvedAuctionVariant(listing, {...metadata, key: auctionVariantKey(listing),
+    nativeContentTuningV1: proof}, engine).resolution.nativeContentTuningV1;
+  assert.deepEqual(resolved([3321, 90]), [3321, 90]);
+  assert.deepEqual(resolved([3321, 0]), [3321, 0]);
+  for (const bad of [[5381, 90], [3321], [3321, -1], [3321, null], [3321, 1.2], undefined]) {
+    assert.equal(resolved(bad), undefined);
+  }
+});
 check("exact native weapon and verified effect facts survive variant resolution", () => {
   const variant = resolvedAuctionVariant(offer, metadata, engine);
   assert.deepEqual(variant.resolution.weapon, weapon);

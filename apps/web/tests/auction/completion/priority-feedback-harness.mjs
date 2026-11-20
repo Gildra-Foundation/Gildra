@@ -4,11 +4,13 @@ import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../.
 import { parseAuctionGearEncounter, parseAuctionGearCompareScenarios } from "../../../lib/wow/auctionGearScenarios.ts";
 import { evaluateAuctionGearScenarios } from "../../../lib/wow/auctionGearScenarioExecution.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
-import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
+import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { stripTypeScriptTypes } from "node:module";
 import vm from "node:vm";
+import { auctionAppliedStatsKey } from "../../../lib/wow/auctionGearEffects.ts";
+import { quickAuctionStatChoices } from "../../../lib/wow/auctionGearStatChoices.ts";
 import * as planner from "../../../lib/wow/auctionGearPlanner.ts";
 import * as store from "../../../lib/wow/auctionGearSearchStore.ts";
 import { normalizeGearCandidate, catalogLoadoutItem, gearSlotCategoryPaths } from "../../../lib/wow/gearCandidates.ts";
@@ -63,7 +65,7 @@ export async function harness({ entity = record(), availableReference = true, re
     });
   const runnerSource = await readFile(new URL("../../../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
   const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch})")
-    .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, auctionGearVariantSelectionKey, auctionGearMechanicalKey, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, ...planner, ...store, ...discovery,
+    .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, auctionGearVariantSelectionKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, validAuctionWeapon, createHash, Date, Map, Set, Object, Number, JSON, AbortSignal, process, quickAuctionStatChoices, auctionAppliedStatsKey, ...planner, ...store, ...discovery,
       talentSpecThemes: [{ classId: 1, specId: 72, role: "melee", slug: "fury-warrior" }],
       getCharacterAuctionMarket: async (_character, _token, options) => { state.marketCalls++; state.marketSignals.push(options?.signal); return state.market; },
       getBattleNetSimulationSnapshot: async () => state.armory,

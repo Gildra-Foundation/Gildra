@@ -7,7 +7,7 @@ export type AuctionModifier = {
   value: number;
 };
 export { supportedAuctionModifiers } from "./gearItemModifiers";
-import { supportedAuctionModifiers } from "./gearItemModifiers";
+import { supportedAuctionModifiers, verifiedAuctionDropCurve } from "./gearItemModifiers";
 export function auctionVariantKey(offer: Pick<AuctionOffer, "itemId" | "contextId" | "bonusIds" | "modifiers">) {
   return "auction:" + createHash("sha256").update(JSON.stringify([offer.itemId, offer.contextId, [...offer.bonusIds].sort((a, b) => a - b), [...offer.modifiers].sort((a, b) => a.type - b.type)])).digest("hex").slice(0, 32);
 }
@@ -22,6 +22,13 @@ export function auctionVariantChange(offer: AuctionOffer, slot: string) {
   };
 }
 export type ResolvedAuctionVariant = {
+  nativeCraftedSymmetryV1?: number[];
+  nativeSuffixProgramV1?: string;
+  nativeContentTuningV1?: number[];
+  nativeDropCurveV1?: number[];
+  nativeScalingInputsV1?: number[];
+  appliedStatsV1?: number[];
+  nativeNoItemEffects?: boolean;
   metadataVersion?: number;
   enhancements?: GearEnhancementMetadata;
   key: string;
@@ -53,6 +60,22 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
       engine,
       requiredLevel: resolved.requiredLevel,
       stats: resolved.stats,
+      ...(Array.isArray(resolved.nativeCraftedSymmetryV1) && resolved.nativeCraftedSymmetryV1.length === offer.bonusIds.length &&
+        resolved.nativeCraftedSymmetryV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeCraftedSymmetryV1: true } : {}),
+      ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
+        ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
+      ...(Array.isArray(resolved.nativeDropCurveV1) && verifiedAuctionDropCurve(offer.modifiers, resolved.nativeDropCurveV1) === resolved.itemLevel
+        ? { nativeDropCurveV1: [...resolved.nativeDropCurveV1] } : {}),
+      ...(Array.isArray(resolved.nativeContentTuningV1) && resolved.nativeContentTuningV1.length === 2 &&
+        resolved.nativeContentTuningV1.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 2147483647) &&
+        offer.modifiers.some(m => m.type === 28 && m.value === resolved.nativeContentTuningV1![0])
+        ? { nativeContentTuningV1: [...resolved.nativeContentTuningV1] } : {}),
+      ...(Array.isArray(resolved.nativeScalingInputsV1) && resolved.nativeScalingInputsV1.length === 4 &&
+        resolved.nativeScalingInputsV1.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 2147483647)
+        ? { nativeScalingInputsV1: [...resolved.nativeScalingInputsV1] } : {}),
+      ...(Array.isArray(resolved.appliedStatsV1) && resolved.appliedStatsV1.length === 46 && resolved.appliedStatsV1.every(Number.isFinite)
+        ? { appliedStatsV1: [...resolved.appliedStatsV1] } : {}),
+      ...(resolved.nativeNoItemEffects === true ? { nativeNoItemEffects: true } : {}),
       ...(resolved.metadataVersion !== undefined ? { metadataVersion: resolved.metadataVersion, enhancements } : {}),
       ...(validAuctionWeapon(resolved.weapon) ? { weapon: { ...resolved.weapon } } : {}),
       ...(resolved.effectsVerified === true && Array.isArray(resolved.effects) && resolved.effects.every(effect =>
@@ -83,5 +106,5 @@ export function validatedAuctionEnhancementMetadata(value: Pick<ResolvedAuctionV
 
 export function validAuctionWeapon(weapon: GearPlannerWeapon | undefined): weapon is GearPlannerWeapon {
   return Boolean(weapon && [weapon.minDamage, weapon.maxDamage, weapon.dps, weapon.speedSeconds].every(Number.isFinite) &&
-    weapon.minDamage > 0 && weapon.maxDamage >= weapon.minDamage && weapon.dps > 0 && weapon.speedSeconds > 0);
+    weapon.minDamage >= 0 && weapon.maxDamage > 0 && weapon.maxDamage >= weapon.minDamage && weapon.dps > 0 && weapon.speedSeconds > 0);
 }
