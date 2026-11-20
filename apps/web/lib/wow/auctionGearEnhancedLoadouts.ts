@@ -125,7 +125,34 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     }
     state.exhausted = true;
   };
+  // A physical lot always belongs to one base item. Fall back to joint
+  // procurement if the supplied pool breaks that invariant.
+  const lotItems = new Map<number, number>();
+  let consistentItems = true;
+  for (const option of eligible) {
+    const prior = lotItems.get(option.auctionId);
+    if (prior !== undefined && prior !== option.candidate.itemId) consistentItems = false;
+    lotItems.set(option.auctionId, option.candidate.itemId);
+  }
+  const cheapest = new Map<AuctionEffectGroup, AuctionGearOption>();
+  for (const rows of choices) for (const group of rows) {
+    const distinctLots = new Set(group.options.map(option => option.auctionId));
+    if (distinctLots.size !== group.options.length) consistentItems = false;
+    cheapest.set(group, group.options.reduce((a, b) =>
+      b.costCopper < a.costCopper || b.costCopper === a.costCopper && b.id < a.id ? b : a));
+  }
   async function procure(groups: AuctionEffectGroup[], signal: AbortSignal) {
+    if (consistentItems) {
+      const selected = groups.map(group => cheapest.get(group)!);
+      if (new Set(selected.map(option => option.candidate.itemId)).size === groups.length) {
+        let remaining = input.budgetCopper;
+        for (const option of selected) {
+          if (option.costCopper > remaining) return null;
+          remaining -= option.costCopper;
+        }
+        return { options: selected, costCopper: input.budgetCopper - remaining };
+      }
+    }
     if (groups.every(group => group.options.length === 1)) {
       const options = groups.map(group => group.options[0]);
       try {

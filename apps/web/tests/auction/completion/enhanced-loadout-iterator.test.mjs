@@ -144,6 +144,13 @@ test('grouped traversal matches physical receipts across budgets, exclusions and
   }
 });
 
+test('conflicting item identities for one physical lot stay ineligible together',async()=>{
+ const head=option(10,'HEAD'),chest=option(11,'CHEST');
+ chest.auctionId=head.auctionId;
+ const {rows}=await all(base([head,chest],['HEAD','CHEST']));
+ assert.deepEqual(rows.map(key).sort(),['',head.id,chest.id].sort());
+});
+
 test('two ring aliases charge one whole lot and respect its quantity without unsafe partial-sum pruning',async()=>{
  const a=option(1,'FINGER_1',60),b=option(1,'FINGER_2',60);const one=await all(base([a,b],['FINGER_1','FINGER_2'],[],60));assert.equal(one.rows.length,3);assert(!one.rows.some(r=>r.options.length===2));
  const two=await all(base([{...a,quantity:2},{...b,quantity:2}],['FINGER_1','FINGER_2'],[],60));assert.equal(two.rows.length,4);const pair=two.rows.find(r=>r.options.length===2);assert.equal(pair.spentCopper,60);assert.equal(pair.remainingCopper,0);
