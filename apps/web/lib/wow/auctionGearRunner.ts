@@ -1141,6 +1141,9 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   let ownedBatch = false, mixedSlots = false;
   let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
 
+  const requestDeadlineMs = 190_000;
+  let finalistMsPerRow = 0, finalistTimeoutCap = Infinity;
+
   function schedule() {
     if (scheduled || !pending.length || active >= capacity) return;
     scheduled = true;
@@ -1157,7 +1160,11 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
           // use candidate counts as comparable units of work.
           const limit = pending.every(job => job.base.precision === first.base.precision)
             ? Math.ceil((1 + pending.length + activeCandidates) / capacity) : batchSize;
-          for (const job of compatible.slice(0, Math.min(batchSize, limit) - 1)) {
+          // Reserve headroom for changes in host load. Only 750-iteration
+          // requests measure the cost of a finalist on this transport.
+          const timeLimit = first.base.precision === "auction-finalist"
+            ? Math.max(1, Math.min(finalistTimeoutCap, Math.floor(0.7 * requestDeadlineMs / finalistMsPerRow))) : Infinity;
+          for (const job of compatible.slice(0, Math.min(batchSize, limit, timeLimit) - 1)) {
             jobs.push(job);
             pending.splice(pending.indexOf(job), 1);
           }
@@ -1189,17 +1196,31 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
         if (jobs.every(entry => entry.signal.aborted)) controller.abort(job.signal.reason);
       };
     }
-    const singleTimeout = first.base.precision === "auction-finalist" ? 190_000 : 50_000;
+    const finalist = first.base.precision === "auction-finalist";
+    const singleTimeout = finalist ? requestDeadlineMs : 50_000;
+    const deadline = AbortSignal.timeout(batch ? Math.min(requestDeadlineMs, jobs.length * singleTimeout) : singleTimeout);
+    const started = Date.now();
     const slotKey = (job: AuctionNativeJob) => job.changes.map(change => change.slot).sort().join(",");
     const firstSlots = slotKey(first);
     const mixed = batch && !first.ownedBatch && jobs.some(job => slotKey(job) !== firstSlots);
     const response = await fetch(worker() + "/v1/wow/rotation/simulations" + (batch ? "/batch" : ""), {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, cache: "no-store",
-      signal: AbortSignal.any([requestSignal, AbortSignal.timeout(batch ? Math.min(190_000, jobs.length * singleTimeout) : singleTimeout)]),
+      signal: AbortSignal.any([requestSignal, deadline]),
       body: JSON.stringify(batch ? { ...(mixed ? { mixedSlots: true } : {}), base: first.ownedBatch?.base ?? first.base, candidates: jobs.map(job => ({
         gearChanges: job.changes, ...(job.ownedBatch ? {ownedChanges: job.ownedBatch.changes} : {}) })) }
         : { ...first.base, ...(first.changes.length ? { gearChanges: first.changes } : {}) }),
+    }).catch(error => {
+      if (!finalist || !batch || !deadline.aborted || requestSignal.aborted) throw error;
+      // Retry only still-requested rows. Halving every timed-out packet
+      // eventually reaches a single, whose failure is returned to the caller.
+      finalistTimeoutCap = Math.min(finalistTimeoutCap, Math.floor(jobs.length / 2));
+      for (const job of jobs) job.checkGroupAbort = undefined;
+      const retry = jobs.filter(job => !job.signal.aborted);
+      metrics.retryFinalistPacket(retry.length);
+      pending.unshift(...retry);
+      return undefined;
     });
+    if (!response) return;
     metrics.workerTiming(response.headers.get("server-timing"));
     if (batch && [404, 405, 501].includes(response.status)) {
       // The advertised worker may have been rolled back between health and POST.
@@ -1238,6 +1259,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
     const payload = await response.json();
     const results = batch ? payload?.results : [payload];
     if (!Array.isArray(results) || results.length !== jobs.length) throw new Error("invalid_simulation_result");
+    if (finalist) finalistMsPerRow = Math.max(0.8 * finalistMsPerRow, (Date.now() - started) / jobs.length);
     jobs.forEach((job, index) => job.resolve(results[index]));
   }
 

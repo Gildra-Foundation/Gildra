@@ -9,6 +9,7 @@ export function createAuctionGearDiagnostics(clock: () => number = () => perform
   const counters = { discovery: 0, queue: 0, compute: null as number | null, workerQueue: null as number | null, simulation: 0, candidates: 0, simulations: 0, task: 0, aborts: 0, timeouts: 0, steps: 0, cacheHits: 0, errors: 0, comparisons: 0 };
   let firstComparisonMs: number | null = null;
   let completedStepMs = 0;
+  let retriedFinalistPackets = 0, retriedFinalistRows = 0;
   const activeSteps = new Map<object, number>();
   const stepDurations: Array<{ kind: AuctionGearStepKind; durationMs: number }> = [];
   const stages = new Map<AuctionGearStage, { calls: number; errors: number; operationMs: number; wallMs: number;
@@ -60,6 +61,7 @@ export function createAuctionGearDiagnostics(clock: () => number = () => perform
     candidates(count = 1) { counters.candidates += count; },
     candidate(count = 1) { counters.candidates += count; },
     simulation() { counters.simulations++; },
+    retryFinalistPacket(rows: number) { retriedFinalistPackets++; retriedFinalistRows += rows; },
     comparison() { counters.comparisons++; firstComparisonMs ??= clock() - started; },
     beginStep(kind: AuctionGearStepKind) {
       const key = {}, began = clock();
@@ -81,7 +83,7 @@ export function createAuctionGearDiagnostics(clock: () => number = () => perform
     cacheHit() { counters.cacheHits++; },
     snapshot() {
       const now = clock();
-      return { ...counters, firstComparisonMs, totalMs: Math.max(0, now - started),
+      return { ...counters, ...(retriedFinalistPackets ? { finalistPacketRetries: { packets: retriedFinalistPackets, rows: retriedFinalistRows } } : {}), firstComparisonMs, totalMs: Math.max(0, now - started),
         activeStepMs: completedStepMs + [...activeSteps.values()].reduce((sum, began) => sum + Math.max(0, now - began), 0),
         stepDurations: stepDurations.map(step => ({ ...step })),
         stages: Object.fromEntries([...stages].map(([name, stage]) => [name, {

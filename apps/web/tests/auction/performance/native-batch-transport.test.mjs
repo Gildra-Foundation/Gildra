@@ -24,7 +24,7 @@ function option(itemId, slotType = 'WRIST') {
     variants: [{ key: 'base', bonusIds: [] }] }, variantKey: 'base' };
 }
 
-function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
+function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
   const state = { capacity: '2', batch: '25', ownedBatch, mixedSlots:false, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
@@ -48,16 +48,17 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
       });
     } finally { state.active--; }
   };
-  const create = vm.runInNewContext(code, { fetch, process, AbortSignal, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
+  const diagnostics = createAuctionGearDiagnostics();
+  const create = vm.runInNewContext(code, { fetch, process, Date:clock, AbortSignal:signals, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
     assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
-    auctionGearProfileFingerprint, metricsFor: () => createAuctionGearDiagnostics() });
+    auctionGearProfileFingerprint, metricsFor: () => diagnostics });
   const armory = { profile, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
     encounter: {fightLengthSeconds: 120, targets: 1}, engine: () => metadataEngine });
   async function finishFrom(start) {
     for (let i = start; i < state.requests.length; i++) { state.requests[i].finish(); await tick(); }
   }
-  return { state, run, finishFrom };
+  return { state, run, finishFrom, diagnostics };
 }
 
 function armor(reagent, enchantId = 5250, workerEngine = engine) {
@@ -407,6 +408,59 @@ test('missing batch endpoint falls back to bounded single calls and health reset
   await finishFrom(2);
   assert.deepEqual((await Promise.all(all)).map(row => row.dps), Array.from({length:7}, (_, i) => 100.25 + i));
   assert(state.requests.slice(2).every(request => !request.batch));
+});
+
+test('slow finalists bound later packets without changing candidate batch sizes or scores', async () => {
+  let now = 1000;
+  const { state, run, finishFrom } = fixture({ clock:class extends Date { static now() { return now; } } });
+  const shared = signal();
+  await run.concurrency(shared);
+  const first = run([option(100)],shared,[],'finalist');
+  await tick(); now += 50_000; state.requests[0].finish(); await first;
+  for (const [precision,size] of [['finalist',2],[undefined,6]]) {
+    const start = state.requests.length;
+    const jobs = Array.from({length:12},(_,i)=>run([option(200+i)],shared,[],precision));
+    await tick(); assert(state.requests.slice(start).every(r=>r.rows.length<=size));
+    assert(state.requests.slice(start).some(r=>r.rows.length===size));
+    await finishFrom(start);
+    assert.deepEqual((await Promise.all(jobs)).map(r=>r.dps), Array.from({length:12},(_,i)=>200.25+i));
+  }
+});
+
+test('a finalist packet deadline retries surviving rows in smaller packets and respects cancellation', async () => {
+  const deadlines = [];
+  const signals = { any:AbortSignal.any.bind(AbortSignal), timeout:() => {
+    const controller = new AbortController(); deadlines.push(controller); return controller.signal;
+  } };
+  const { state, run, finishFrom, diagnostics } = fixture({ signals });
+  const shared = signal(), cancel = new AbortController();
+  await run.concurrency(shared);
+  const pending = Promise.allSettled(Array.from({length:10},(_,i)=>run([option(300+i)],i===2?cancel.signal:shared,[],'finalist')));
+  await tick();
+  const slow = state.requests.findIndex(r=>r.ids.includes(302)); assert(slow>=0);
+  const timedSize = state.requests[slow].ids.length; assert(timedSize>=4);
+  cancel.abort(); deadlines[1+slow].abort(new DOMException('Timed out','TimeoutError'));
+  state.requests[1-slow].finish();
+  await tick(); await finishFrom(2);
+  const results = await pending;
+  assert.equal(results[2].status,'rejected');
+  assert.deepEqual(diagnostics.snapshot().finalistPacketRetries, {packets:1,rows:timedSize-1});
+  assert(state.requests.slice(2).every(r=>r.ids.length<=Math.floor(timedSize/2) && !r.ids.includes(302)));
+  for (const [i,row] of results.entries()) if (i!==2) assert.deepEqual([row.value.dps,row.value.iterations],[300.25+i,750]);
+});
+
+test('a single finalist deadline terminates its request', async () => {
+  const deadlines = [];
+  const signals = { any:AbortSignal.any.bind(AbortSignal), timeout:() => {
+    const controller = new AbortController(); deadlines.push(controller); return controller.signal;
+  } };
+  const { state, run } = fixture({ signals });
+  const shared = signal();
+  await run.concurrency(shared);
+  const job = run([option(701)],shared,[],'finalist');
+  await tick(); deadlines.at(-1).abort(new DOMException('Timed out','TimeoutError'));
+  await assert.rejects(job, { name:'TimeoutError' });
+  await tick(); assert.equal(state.requests.length,1);
 });
 
 test('incorrect batch length rejects every submitted row without caching its measurements', async () => {
