@@ -318,6 +318,7 @@ type DiscoveryInput = {
   measure?: <T>(stage: "catalog" | "details" | "references" | "variants", work: () => Promise<T>) => Promise<T>;
   /** Publish a useful verified batch before resolving the rest of the market. */
   stopAfterNewCandidates?: boolean;
+  fullMarket?: boolean;
 };
 
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
@@ -347,7 +348,10 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
   }
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
     const batchLimit = state.variantBatchLimit ?? 16;
-    const detailBatch = !input.stopAfterNewCandidates && batchLimit === 64 ? 64 : 8;
+    const bulk = !input.stopAfterNewCandidates && batchLimit === 64;
+    const paired = bulk && input.fullMarket === true;
+    // Read enough catalog rows for two native pages after class and slot filtering.
+    const detailBatch = paired ? 3 * batchLimit : bulk ? batchLimit : 8;
     input.signal.throwIfAborted();
     if (warmCandidatesFirst && !state.records.length && state.variantCursor === state.variantKeys.length) {
       warmCandidatesFirst = false;
@@ -369,7 +373,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
       state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
       // Each candidate may also need an exact reference control.
-      const size = input.stopAfterNewCandidates ? initialVariantBatch : batchLimit / 2;
+      const size = input.stopAfterNewCandidates ? initialVariantBatch : paired ? detailBatch / 2 : batchLimit / 2;
       const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + size);
       const probes = keys.flatMap(key => {
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
@@ -399,7 +403,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const nativeProbes = probes.filter(({ offer }) => state.verifiedReferences.has(offer.itemId) ||
         (!state.rejectedReferences.has(offer.itemId) && state.references.get(offer.itemId)) || equipped?.has(auctionVariantKey(offer)));
       const resolution = nativeProbes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...nativeProbes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
-        batchLimit, spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
+        batchLimit, parallelBatches: paired, spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
       input.signal.throwIfAborted();
       if (resolution) state.variantBatchLimit = resolution.batchLimit;
       if (resolution?.engine) {

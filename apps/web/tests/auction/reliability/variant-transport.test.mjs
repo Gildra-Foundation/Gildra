@@ -75,3 +75,58 @@ test("wide metadata requests preserve all rows and retry the same offset on a le
   assert.deepEqual(sizes, [64, 16, 16, 16, 16, 6]);
   assert.deepEqual(progress, [16, 32, 48, 64, 70]);
 });
+
+test("paired metadata pages resolve each distinct item once and reject mixed engines", async t => {
+  const offers = Array.from({ length: 150 }, (_, index) => ({ slot: "head",
+    offer: { auctionId: index + 1, itemId: index + 1, bonusIds: [], modifiers: [], contextId: 0, quantity: 1, buyoutCopper: 1 } }));
+  let active = 0, peak = 0, mismatch = false, legacy = false;
+  const seen = [], progress = [];
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    const { variants } = JSON.parse(init.body);
+    active++;
+    peak = Math.max(peak, active);
+    try {
+      await new Promise(resolve => setImmediate(resolve));
+      if (legacy && variants.length > 16) return Response.json({ code: "invalid_variant_request" }, { status: 400 });
+      seen.push(...variants.map(row => row.change.itemId));
+      const engine = mismatch && variants[0].change.itemId === 65 ? "SimulationCraft changed" : "SimulationCraft verified";
+      return Response.json({ engine, variants: variants.map(row => ({ key: row.key, itemId: row.change.itemId })) },
+        { headers: { "x-gildra-engine": "simulationcraft", "x-gildra-variant-batch-limit": legacy ? "16" : "64" } });
+    } finally {
+      active--;
+    }
+  });
+  const run = () => resolveAuctionVariants({ offers: [...offers, offers[0]], spec: "fury-warrior", characterLevel: 81,
+    batchLimit: 64, parallelBatches: true, signal: new AbortController().signal, onProgress: n => progress.push(n) });
+  const expectedIds = offers.map(row => row.offer.itemId);
+  for (legacy of [false, true]) {
+    const result = await run();
+    assert.deepEqual([...result.variants.values()].map(row => row.itemId), expectedIds);
+    assert.deepEqual(seen.splice(0).sort((a,b) => a-b), expectedIds);
+    assert.deepEqual(progress.splice(0), [128, 150]);
+    assert.equal(result.batchLimit, legacy ? 16 : 64);
+    assert.equal(peak, 2);
+  }
+  legacy = false;
+  mismatch = true;
+  await assert.rejects(run, /simulation_version_changed/);
+  assert.deepEqual(progress, []);
+});
+
+test("a failed metadata page cancels its sibling without publishing partial progress", async t => {
+  const offers = Array.from({ length: 65 }, (_, i) => ({ slot: "head", offer: {
+    auctionId: i + 1, itemId: i + 1, bonusIds: [], modifiers: [], contextId: 0, quantity: 1, buyoutCopper: 1
+  }}));
+  let pendingSignal;
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    if (JSON.parse(init.body).variants.length === 64) {
+      pendingSignal = init.signal;
+      await new Promise((_, reject) => init.signal.addEventListener("abort", () => reject(init.signal.reason), { once: true }));
+    }
+    return Response.json({ variants: [] }, { headers: { "x-gildra-engine": "simulationcraft" } });
+  });
+  await assert.rejects(resolveAuctionVariants({ offers, spec: "fury-warrior", characterLevel: 81,
+    batchLimit: 64, parallelBatches: true, signal: new AbortController().signal, onProgress: () => assert.fail("partial progress") }),
+    /invalid_variant_resolution/);
+  assert.equal(pendingSignal.aborted, true);
+});

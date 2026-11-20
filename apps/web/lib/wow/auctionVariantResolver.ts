@@ -1,18 +1,49 @@
 import "server-only";
 import { auctionVariantChange, auctionVariantKey, type ResolvedAuctionVariant } from "./auctionItemVariant";
 import type { AuctionOffer } from "./auctionMarket";
-export async function resolveAuctionVariants(input: {
+type VariantResolutionInput = {
   offers: Array<{
     offer: AuctionOffer;
     slot: string;
   }>;
   batchLimit?: 16 | 64;
+  parallelBatches?: boolean;
   spec: string;
   characterLevel: number;
   signal: AbortSignal;
   onProgress?: (completed: number, total: number) => void;
-}) {
+};
+
+export async function resolveAuctionVariants(input: VariantResolutionInput) {
   const unique = [...new Map(input.offers.map(v => [auctionVariantKey(v.offer), v])).values()];
+  if (!input.parallelBatches || input.batchLimit !== 64 || unique.length <= 64) return resolveVariantPages(input, unique);
+  // Each worker request owns its own response validation and legacy fallback.
+  // Publish progress only after both pages agree on the native engine.
+  const controller = new AbortController();
+  const signal = AbortSignal.any([input.signal, controller.signal]);
+  const variants = new Map<string, ResolvedAuctionVariant>();
+  let engine = "";
+  let batchLimit: 16 | 64 = 64;
+  try {
+    for (let offset = 0; offset < unique.length; offset += 128) {
+      const pages = [unique.slice(offset, offset + 64), unique.slice(offset + 64, offset + 128)].filter(page => page.length);
+      const requests = pages.map(page => resolveVariantPages({ ...input, signal, batchLimit, onProgress: undefined }, page));
+      const results = await Promise.all(requests);
+      for (const result of results) {
+        if (engine && result.engine && engine !== result.engine) throw new Error("simulation_version_changed");
+        engine ||= result.engine;
+        if (result.batchLimit === 16) batchLimit = 16;
+        for (const [key, item] of result.variants) variants.set(key, item);
+      }
+      input.onProgress?.(variants.size, unique.length);
+    }
+    return { engine, batchLimit, variants };
+  } finally {
+    controller.abort();
+  }
+}
+
+async function resolveVariantPages(input: VariantResolutionInput, unique: VariantResolutionInput["offers"]) {
   const resolved = new Map<string, ResolvedAuctionVariant>();
   let engine = "";
   let batchLimit = input.batchLimit ?? 16;

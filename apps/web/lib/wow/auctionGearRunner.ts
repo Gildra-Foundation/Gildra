@@ -235,7 +235,7 @@ function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: Aucti
 }
 
 async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: string | undefined, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxSteps = 12) {
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxSteps = 12, fullMarket = false) {
   const context = entry.context;
   if (!context.discovery) return; // Backward-compatible trusted in-memory fixtures.
   if (context.engineVerificationRequired) {
@@ -259,7 +259,7 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
     if (!token) throw new Error("auction_discovery_authorization_required");
     await metricsFor(context.armory ?? context).measure("discovery", () => advanceAuctionGearDiscovery(context.discovery, { locale: context.input.locale === "en" ? "en_US" : "ru_RU",
       equipment: context.armory?.equipment, region: context.character.region, token, spec: context.specSlug, characterLevel: context.character.level,
-      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps,
+      selectedSlots: context.input.selectedSlots, context: context.discoveryContext, signal, shouldYield, maxSteps, fullMarket,
       measure: (stage, work) => metricsFor(context.armory ?? context).measureStage(stage, work),
       stopAfterNewCandidates: !entry.latestSearchResult?.items.some(item => item.comparison), onProgress: progress,
       onCheckpoint: () => { synchronizeAuctionOptions(entry, auctionGearDiscoveryOptions(context.discovery)); scheduleAuctionGearSearchSave(entry); } }));
@@ -408,7 +408,7 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
       // Accumulate more candidates per full-market batch within the same discovery deadline.
       const ongoingDiscoverySteps = fullMarket ? 24 : 4;
       const discoverySteps = entry.latestSearchResult ? ongoingDiscoverySteps : 12;
-      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, discoverySteps);
+      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, discoverySteps, fullMarket);
     }
     signal.throwIfAborted();
     const result = simulated
@@ -601,7 +601,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
     // Later turns retain discovery/simulation fairness and the full domain.
     } else if (entry.nextAssemblyPhase !== "simulation") {
       setAuctionGearPhase(entry, "nextAssemblyPhase", "simulation");
-      await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4);
+      await discoverAuctionOptions(entry, token, signal, progress, shouldYield, 4, fullMarket);
     } else {
       setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
     }
