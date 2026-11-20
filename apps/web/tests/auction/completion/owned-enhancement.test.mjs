@@ -163,3 +163,43 @@ test('shoulder illusions cannot improve an unenchanted purchase or an unenchante
   }
   assert((await run(true,true)).has(6685),'An illusion can replace an existing combat enchant');
 });
+
+test('owned jewelry gem substitutions preserve scarce stock, installed gems, and receipt prices', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd', cheap=115804, dear=115811;
+  const slots=['NECK','FINGER_1'];
+  const loadout=slots.map((slotType,i)=>({slotType,itemId:1500+i,inventoryType:i ? 11 : 2,itemSubclassId:0}));
+  const baseline={engine,dps:1000,dpsError:1,confidence:95,iterations:750};
+  async function market({ladder=[[2,2]],nativePlayerLevel=90,enabled=true,installed,ringEnchant,unknownHost=false}={}) {
+    const items=loadout.map((row,i)=>({slot:{type:row.slotType},inventory_type:{type:unknownHost?'UNKNOWN':i?'FINGER':'NECK'},
+      item:{id:row.itemId},item_class:{id:4},item_subclass:{id:0},level:{value:270},
+      sockets:[{socket_type:{type:'PRISMATIC'},...(i && installed ? {item:{id:installed},bonus_list:[123]}:{})}],
+      ...(i && ringEnchant ? {enchantments:[{enchantment_slot:{id:0},enchantment_id:ringEnchant}]}:{})}));
+    const prices={[cheap]:{ladder},[dear]:{ladder:[[5,2]]}};
+    const state={checkpoints:{}},receipts=[];
+    for(let turn=0;turn<24;turn++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneOwnedJewelryGems:enabled,nativePlayerLevel,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,selectedSlots:slots,
+        specId:72,level:90,region:'eu',engine,profileFingerprint:'owned-gem-cost',encounter:{},budgetCopper:100,
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,
+        onMeasured:config=>receipts.push({edits:(config.ownedChanges??[]).map(edit=>[edit.slotType,edit.gems[0]?.itemId]),cost:config.totalCopper})});
+      if(result.complete)return receipts;
+    }
+    assert.fail('expected exhaustive receipts for both owned sockets');
+  }
+  const positive=await market();
+  assert.equal(positive.length,4);
+  assert.deepEqual(positive.find(r=>r.edits.length===2)?.cost,4);
+  assert(positive.every(r=>r.edits.every(([,id])=>id===cheap)));
+  for(const ladder of [[[2,1]],[[2,1],[5,1]],[[2,1],[8,1]]]) {
+    const exact=await market({ladder});
+    assert(exact.some(r=>r.cost===7 && r.edits.length===2 && new Set(r.edits.map(e=>e[1])).size===2));
+    assert(exact.some(r=>r.edits.length===2 && r.edits.every(([,id])=>id===dear)));
+  }
+  for(const flags of [{enabled:false},{nativePlayerLevel:89},{unknownHost:true}]) assert.equal((await market(flags)).length,9);
+  const installed=await market({installed:dear});
+  assert(installed.some(r=>r.edits.length===0 && r.cost===0),'retaining the installed gem costs nothing');
+  const proc=await market({ringEnchant:7967});
+  assert(proc.some(r=>r.edits.some(([slot,id])=>slot==='FINGER_1' && id===dear)));
+});

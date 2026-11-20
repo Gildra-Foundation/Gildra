@@ -483,3 +483,35 @@ test('whole ring upgrades use exact aggregate ratings and conservative shared co
   assert(reverse.evaluated.some(paired));
   assert(!reverse.evaluated.some(c => c.slots[0].enchantId === 8021 && !c.slots[0].gemIds[0]));
 });
+
+test('an owned ring can exchange two paid upgrades only when the whole replacement is affordable',async()=>{
+  const gem=(id)=>({key:String(id),kind:'gem',simulationId:id,consumableItemId:id});
+  const small=gem(115804), large=gem(130220); // +2 and +4 haste
+  const enchant=(id,sku)=>({key:String(sku),kind:'enchant',simulationId:id,consumableItemId:sku});
+  const weak=enchant(8020,244010),strong=enchant(8021,244011); // +22 and +24 haste
+  async function run({enabled=true,limited=false,equal=false,installed=false}={}) {
+    const h=fixture({choices:[small,large],slots:2});
+    for(const [i,s] of h.input.slots.entries()) Object.assign(s,{slotType:'FINGER_'+(i+1),owned:true,
+      allowOwnedChanges:true,ownedItemId:100+i,installed:{gems:[installed?large:null],...(installed?{enchant:weak}:{})}});
+    h.input.ratingRingSlots=enabled ? new Set(h.input.slots.map(s=>s.slotType)) : undefined;
+    h.input.catalog.resolve=()=>({verified:true,enchantApplicable:true,enchantChoices:[weak,strong],gemChoices:{'0':[small,large]}});
+    h.input.prices.prices={115804:{ladder:[[1,4]]},130220:{ladder:[[20,4]]},244010:{ladder:[[5,4]]},
+      244011:{ladder:limited?[[2,1],[30,3]]:[[equal?24:2,4]]}};
+    h.input.simulate=async config=>measurement(1000+config.slots.reduce((sum,s)=>sum+
+      (s.enchantId===8020?22:s.enchantId===8021?24:0)+(s.gemIds[0]===115804?2:s.gemIds[0]===130220?4:0),0)*10);
+    const receipts=[];h.input.onMeasured=config=>receipts.push(config);
+    const result=await complete(h);
+    return {receipts,state:result.checkpoint};
+  }
+  const expensive=c=>c.slots.some(s=>s.enchantId===8020 && s.gemIds[0]===130220);
+  const gold=await run({enabled:false}),cut=await run();
+  assert(gold.receipts.some(expensive));assert(!cut.receipts.some(expensive));
+  assert(cut.state.ringPricePruning);assert(cut.receipts.length<gold.receipts.length);
+  for(const objective of ['bestDpsConfirmed','bestValueConfirmed']) {
+    assert.deepEqual(cut.state[objective].configuration.slots,gold.state[objective].configuration.slots);
+    assert.equal(cut.state[objective].configuration.totalCopper,gold.state[objective].configuration.totalCopper);
+  }
+  for(const flags of [{limited:true},{equal:true}]) assert((await run(flags)).receipts.some(expensive));
+  const retained=await run({installed:true});
+  assert(retained.receipts.some(c=>expensive(c)&&!c.ownedChanges?.length&&c.consumables.length===0));
+});

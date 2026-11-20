@@ -82,11 +82,15 @@ for a, b in pairs:
     assert signature(a) == signature(b), (a, b)
 print(f"Verified {len(pairs)} pairs at all 90 levels")
 
+gate_by_rating = {}
 for gem, rating in gem_ratings.items():
     enchant, color, description = properties[items[gem]]
     low, high, amounts = enchants[enchant]
     assert color == 14 and description == 0 and 0 <= low <= 120 and high == 0
     assert amounts[89] == (rating,), (gem, rating, amounts[89])
+    # The owned item retains its native level and bonuses. Either both
+    # explicit replacement gems pass the exact native host gate, or neither does.
+    assert gate_by_rating.setdefault(rating, (low, high)) == (low, high)
 for eid, rating in enchant_ratings.items():
     low, high, amounts = enchants[eid]
     assert low == 120 and high == 0 and amounts[89] == (rating,), (eid, amounts[89])

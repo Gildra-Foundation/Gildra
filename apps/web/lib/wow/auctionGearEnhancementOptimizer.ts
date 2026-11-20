@@ -73,6 +73,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   exhaustive?: boolean;
   ratingRingSlots?: ReadonlySet<string>;
   purchasedGemEffect?: (slotType: string, id: number, enchantId: number) => number | undefined;
+  ownedGemEffect?: (slotType: string, id: number, enchantId: number) => number | undefined;
   onMeasured?: (configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) => void;
   valuePrecision?: boolean;
   objective?: "dps" | "value"; baselineDps?: number; baseline?: GearPlanSimulation;
@@ -127,9 +128,11 @@ type RingPairGuards = Map<Choice, { enchantAxis: number; enchants: Set<Choice> }
  * strict gap therefore holds for every completion, including shared stock. */
 function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot[], ringSlots: ReadonlySet<string>,
   prices: ExactCommodityPrices, maximumMarginal: (id: number) => number, guards: RingPairGuards, unique: Set<string>) {
-  const allowed = (choice: Choice) => {
+  const allowed = (choice: Choice, owned: boolean) => {
     const e = choice.enhancement;
-    return !choice.retained && (!e || (!e.category && !e.profession && !e.uniqueEquipped &&
+    // An unchanged owned socket or enchant may carry native instance data.
+    // Comparing two explicit purchases removes the same installed effects.
+    return !choice.retained && (!owned || e !== null) && (!e || (!e.category && !e.profession && !e.uniqueEquipped &&
       !unique.has(e.kind + ":" + e.simulationId) && (e.kind !== "gem" || e.consumableItemId === e.simulationId)));
   };
   const priceRange = (choice: Choice) => {
@@ -138,12 +141,12 @@ function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot
   };
   for (const [enchantAxis, axis] of axes.entries()) {
     const { slot, socket } = axis[0], target = slots[slot];
-    if (socket !== null || !ringSlots.has(target.slotType) || target.owned ||
+    if (socket !== null || !ringSlots.has(target.slotType) || target.owned && !(target.allowOwnedChanges && target.ownedItemId) ||
         target.sockets.length !== 1 || target.sockets[0].type !== "14") continue;
     const socketAxis = axes[enchantAxis + 1];
     if (!socketAxis || socketAxis[0].slot !== slot || socketAxis[0].socket !== 0) continue;
-    const gems = socketAxis.filter(c => allowed(c) && combinedRingRatings90(0, c.enhancement?.simulationId ?? 0)).map(priceRange);
-    const enchants = axis.filter(c => allowed(c) && combinedRingRatings90(c.enhancement?.simulationId ?? 0, 0)).map(priceRange);
+    const gems = socketAxis.filter(c => allowed(c, target.owned) && combinedRingRatings90(0, c.enhancement?.simulationId ?? 0)).map(priceRange);
+    const enchants = axis.filter(c => allowed(c, target.owned) && combinedRingRatings90(c.enhancement?.simulationId ?? 0, 0)).map(priceRange);
     const groups = new Map<string, { upper: number; pairs: { gem: Choice; enchant: Choice; lower: number }[] }>();
     for (const gem of gems) for (const enchant of enchants) {
       const key = combinedRingRatings90(enchant.choice.enhancement?.simulationId ?? 0, gem.choice.enhancement?.simulationId ?? 0)!.join(",");
@@ -166,7 +169,8 @@ function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot
  * unit costs strictly less than the first unit it replaces. Identical installed
  * enchants and certified gem pairs preserve combat in every other socket. */
 function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrices, slots: readonly EnhancementSlot[],
-  gemEffect: EnhancementOptimizerInput["purchasedGemEffect"],
+  purchasedGemEffect: EnhancementOptimizerInput["purchasedGemEffect"],
+  ownedGemEffect: EnhancementOptimizerInput["ownedGemEffect"],
   conditional: Map<Choice, { axis: number; enchants: Set<number> }> | undefined,
   ringSlots?: ReadonlySet<string>, pairGuards?: RingPairGuards) {
   const originalAxes = axes.slice();
@@ -189,14 +193,15 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
   // A retained or restricted copy in another position can make this ID unique
   // for the entire loadout, even when the current offer has no such flag.
   const uniqueGems = new Set<number>();
-  if (gemEffect) for (const axis of axes) for (const { enhancement } of axis)
+  if (purchasedGemEffect || ownedGemEffect) for (const axis of axes) for (const { enhancement } of axis)
     if (enhancement?.kind === "gem" && enhancement.uniqueEquipped) uniqueGems.add(enhancement.simulationId);
   const enchantAxes = new Map<number, number>();
   for (const [index, axis] of axes.entries()) if (axis[0].socket === null) enchantAxes.set(axis[0].slot, index);
   let removedGems = false;
   for (const axis of axes) {
     const { socket, slot } = axis[0], target = slots[slot];
-    if (socket !== null && (!gemEffect || target.owned || target.sockets.length !== 1 || target.sockets[socket].type !== "14")) continue;
+    const gemEffect = target.owned ? ownedGemEffect : purchasedGemEffect;
+    if (socket !== null && (!gemEffect || target.sockets.length !== 1 || target.sockets[socket].type !== "14")) continue;
     const byEffect = new Map<number, Choice[]>();
     for (const choice of axis) {
       const e = choice.enhancement;
@@ -348,10 +353,11 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const pairGuards: RingPairGuards | undefined = exact && pairProofAllowed && input.ratingRingSlots?.size ? new Map() : undefined;
   const conditionalAllowed = pairProofAllowed || pricedAxes === "conditional_ring_gems";
   const gemProofAllowed = conditionalAllowed || pricedAxes === "equivalent_gems";
-  const conditional = exact && input.purchasedGemEffect && conditionalAllowed
+  const conditional = exact && (input.purchasedGemEffect || input.ownedGemEffect) && conditionalAllowed
     ? new Map<Choice, {axis: number; enchants: Set<number>}>() : undefined;
   const compact = exact && (gemProofAllowed || pricedAxes === "equivalent_scrolls")
-    ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards) : undefined;
+    ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined,
+        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards) : undefined;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,

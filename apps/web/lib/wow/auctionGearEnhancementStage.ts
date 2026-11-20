@@ -10,6 +10,8 @@ import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
 import { neutralProfessionGloveEnchant, neutralShoulderIllusion, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { ignoresItemContext } from './gearItemModifiers';
+import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -65,6 +67,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   omitNeutralGloveEnchants?: boolean;
   omitShoulderIllusions?: boolean;
   pruneEquivalentRingGems?: boolean;
+  pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
   preview?: boolean;
   includePrecisionContenders?: boolean;
@@ -104,6 +107,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     const equipmentKey=JSON.stringify(finalist.options.map(o=>o.id).sort());
     if(equipmentSets.has(equipmentKey))continue;
     equipmentSets.add(equipmentKey);
+    const ownedGemSlots = new Set<string>();
     const slots: EnhancementSlot[] = [], resolutions = new Map<string, EnhancementResolution>();
     const replaced = new Set(finalist.options.map(o => o.candidate.slotType));
     const removed = new Set(prepareGearLoadout({selections:finalist.options,equipment:input.equipment,loadout:input.loadout,specId:input.specId}).removedSlots);
@@ -178,6 +182,13 @@ export async function evaluateAuctionEnhancementStage(input: {
             slotType === 'HANDS' && obj(item.inventory_type).type === 'HAND';
           const bareShoulder = unenchanted && input.exhaustive && input.omitShoulderIllusions &&
             slotType === 'SHOULDER' && obj(item.inventory_type).type === 'SHOULDER' && target.inventoryType === 3;
+          // Both paid edits replace this exact socket with a bare gem ID. They
+          // preserve every other socket, item bonus and installed enhancement.
+          const neck = slotType === 'NECK' && target.inventoryType === 2 && obj(item.inventory_type).type === 'NECK';
+          const ring = (slotType === 'FINGER_1' || slotType === 'FINGER_2') && target.inventoryType === 11 && obj(item.inventory_type).type === 'FINGER';
+          if (input.pruneOwnedJewelryGems && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
+              (neck || ring) && target.itemClassId === 4 && target.itemLevel >= 120 && gems.length === 1 && socketColors[0] === 14)
+            ownedGemSlots.add(slotType);
           slot.ownedItemId = itemId;
           slot.allowOwnedChanges = true;
           slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
@@ -227,6 +238,10 @@ export async function evaluateAuctionEnhancementStage(input: {
         const record=auctionEnhancementRecords.find(r=>r.consumableItemId===c.itemId);
         return record?.name ? [[String(c.itemId),record.name]] : [];
       }))});
+    const ratingRingSlots = new Set(finalist.options
+      .filter(option => input.pruneEquivalentRingGems && hasLevel90RingRatings(option, input.engine, input.nativePlayerLevel))
+      .map(option => option.candidate.slotType));
+    for (const slot of ownedGemSlots) if (slot === 'FINGER_1' || slot === 'FINGER_2') ratingRingSlots.add(slot);
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
       character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
@@ -237,9 +252,10 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
-      ratingRingSlots: input.pruneEquivalentRingGems && input.nativePlayerLevel === 90
-        ? new Set(finalist.options.filter(o => hasLevel90RingRatings(o, input.engine, input.nativePlayerLevel)).map(o => o.candidate.slotType))
-        : undefined,
+      ratingRingSlots,
+      ownedGemEffect: ownedGemSlots.size ? (slot: string, id: number, enchantId: number) =>
+        ownedGemSlots.has(slot) && (!enchantId || slot !== 'NECK' && isDirectRingEnchant(enchantId))
+          ? ringGemRepresentative90(id) : undefined : undefined,
       purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
         const host = finalist.options.find(option => option.candidate.slotType === slot);
         return host && purchasedRingGemEffect(host, input.engine, id, enchantId, input.nativePlayerLevel);
