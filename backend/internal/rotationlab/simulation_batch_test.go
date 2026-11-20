@@ -26,6 +26,7 @@ func TestWorkerSimulationBatch(t *testing.T) {
 	// overwrites both slots, even when their order changes between candidates.
 	script := `#!/bin/sh
 set -eu
+test "$GILDRA_SIMC_BATCH_SINGLE_INIT" = 1
 grep -qx 'neck=gildra_candidate,id=1001,source=local' "$1"
 grep -qx 'head=gildra_candidate,id=1002,source=local' "$1"
 printf '%s\n' "$@" > args

@@ -217,6 +217,10 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 	}
 	command := exec.CommandContext(runCtx, e.binary, args...)
 	command.Dir = filepath.Dir(profilePath)
+	if len(candidates) > 1 {
+		// The pinned native build validates each profileset on its simulation instance.
+		command.Env = append(command.Environ(), "GILDRA_SIMC_BATCH_SINGLE_INIT=1")
+	}
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &limitedBuffer{buffer: &stdout, remaining: maxSimCOutputBytes}
 	command.Stderr = &limitedBuffer{buffer: &stderr, remaining: maxSimCOutputBytes}

@@ -1,0 +1,81 @@
+--- a/engine/sim/profileset.cpp
++++ b/engine/sim/profileset.cpp
+@@ -14,6 +14,7 @@
+
+ #ifndef SC_NO_THREADING
+
++#include <cstdlib>
+ #include <future>
+ #include <iostream>
+ #include <memory>
+@@ -103,9 +104,19 @@
+   return s.str();
+ }
+
++// Older binaries ignore the worker hint and retain their normal validation pass.
++bool validate_on_profileset_execution()
++{
++  static const bool enabled = [] {
++    const char* value = std::getenv( "GILDRA_SIMC_BATCH_SINGLE_INIT" );
++    return value && std::string_view( value ) == "1";
++  }();
++  return enabled;
++}
++
+ // Deallocating profile_sim is the responsibility of the caller (i.e., profileset driver or
+ // worker_t)
+-void simulate_profileset( sim_t* parent, profileset::profile_set_t& set, sim_t*& profile_sim )
++void simulate_profileset( sim_t* parent, profileset::profile_set_t& set, sim_t* profile_sim )
+ {
+   // Reset random seed for the profileset sims
+   profile_sim -> seed = 0;
+@@ -124,6 +135,10 @@
+     profile_sim -> progress_bar.set_phase( set.name() );
+   }
+
++  // init() is idempotent. Calling it directly preserves the original initialization
++  // exception; iterate() would turn a child initialization failure into a false return.
++  if ( validate_on_profileset_execution() )
++    profile_sim->init();
+   auto ret = profile_sim -> execute();
+   if ( ret )
+   {
+@@ -496,17 +511,10 @@
+ {
+   if ( m_mode == SEQUENTIAL )
+   {
+-    auto original_opts = parent->control;
+-    parent->control = ptr_set->options();
+-
+     try
+     {
+-      sim_t* profile_sim = new sim_t( parent, 0, ptr_set->name() );
+-
+-      parent->control = original_opts;
+-      simulate_profileset( parent, *ptr_set, profile_sim );
+-
+-      delete profile_sim;
++      auto profile_sim = std::make_unique<sim_t>( parent, 0, ptr_set->options(), ptr_set->name() );
++      simulate_profileset( parent, *ptr_set, profile_sim.get() );
+     }
+     catch ( const std::exception& )
+     {
+@@ -601,11 +609,13 @@
+                util::str_compare_ci( name, "json2" );
+       } );
+
+-      // Test that profileset options are OK, up to the simulation initialization
+-      auto test_sim = std::make_unique<sim_t>();
+-      test_sim->profileset_enabled = true;
+-      test_sim->setup( control );
+-      test_sim->init();
++      if ( !validate_on_profileset_execution() )
++      {
++        auto test_sim = std::make_unique<sim_t>();
++        test_sim->profileset_enabled = true;
++        test_sim->setup( control );
++        test_sim->init();
++      }
+     }
+     catch ( const std::exception& )
+     {
