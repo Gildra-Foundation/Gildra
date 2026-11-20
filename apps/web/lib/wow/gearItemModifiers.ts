@@ -19,10 +19,17 @@ export function validAuctionItemContext(contextId?: number) {
 }
 
 /** Keep the worker's exact options when the pinned parser or modifier validation is unavailable. */
-export function auctionNativeItemOptions(item: {contextId?: number; modifiers?: AuctionModifier[]}, engine: string, omitUnusedScaling = false) {
+export function auctionNativeItemOptions(item: {contextId?: number; modifiers?: AuctionModifier[]}, engine: string, omitUnusedScaling = false, tuning?: readonly number[]) {
   const { contextId, modifiers } = item;
   if (!validAuctionItemContext(contextId) || !ignoresItemContext(engine) || !supportedAuctionModifiers(modifiers ?? [])) return { contextId, modifiers };
+  // Both content_tuning branches in the pinned apply_item_bonus use only
+  // max_level_squish. Leave the drop level and every other modifier intact.
+  const cap = !omitUnusedScaling && tuning?.length === 2 && Number.isSafeInteger(tuning[1]) &&
+    tuning[1] >= 0 && tuning[1] <= 2147483647 && modifiers?.some(m => m.type === 28 && m.value === tuning[0])
+    ? tuning[1] : undefined;
   const native = modifiers?.filter(modifier => (modifier.type < 38 || modifier.type > 51) &&
-    !(omitUnusedScaling && (modifier.type === 9 || modifier.type === 28)));
-  return { contextId: undefined, modifiers: native?.length ? native : undefined };
+    !(omitUnusedScaling && (modifier.type === 9 || modifier.type === 28)) &&
+    !(cap !== undefined && modifier.type === 28));
+  return { contextId: undefined, modifiers: native?.length ? native : undefined,
+    ...(cap !== undefined ? { contentTuningCap: cap } : {}) };
 }

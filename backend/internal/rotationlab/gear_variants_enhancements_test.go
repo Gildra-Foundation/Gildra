@@ -156,6 +156,22 @@ func TestAppliedStatsRequireCompleteNativeVector(t *testing.T) {
 	}
 }
 
+func TestNativeContentTuningBindsTheCapToTheRequestedDBCRow(t *testing.T) {
+	mods := []ItemModifier{{Type: 9, Value: 90}, {Type: 28, Value: 3321}}
+	for _, raw := range []string{"", "null", "[]", "[3321]", "[3321,90,1]", "[3321,null]", "[3321,-1]", "[3321,1.5]", "[3321,2147483648]", "[5381,90]"} {
+		if got := nativeContentTuningV1("18428cd", mods, json.RawMessage(raw)); got != nil {
+			t.Fatalf("accepted %q: %v", raw, got)
+		}
+	}
+	raw := json.RawMessage("[3321,90]")
+	if got := nativeContentTuningV1("18428cd", mods, raw); got == nil || *got != [2]int{3321, 90} {
+		t.Fatalf("lost native cap: %v", got)
+	}
+	if nativeContentTuningV1("18428cf", mods, raw) != nil || nativeContentTuningV1("18428cd", nil, raw) != nil {
+		t.Fatal("unbound native evidence")
+	}
+}
+
 func TestNativeScalingInputsRequireCompleteAuditedEvidence(t *testing.T) {
 	for _, raw := range []string{"", "null", "[]", "[0,0,0]", "[0,0,0,0,0]", "[0,null,0,0]", "[0,-1,0,0]", "[0,1.5,0,0]", "[0,2147483648,0,0]"} {
 		if nativeScalingInputsV1("18428cd", json.RawMessage(raw)) != nil {

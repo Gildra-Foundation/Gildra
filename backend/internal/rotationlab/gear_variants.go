@@ -59,6 +59,7 @@ type GearVariantMetadata struct {
 	SetID                   int                     `json:"setId"`
 	NativeCraftedSymmetryV1 *[]int                  `json:"nativeCraftedSymmetryV1,omitempty"`
 	NativeSuffixProgramV1   string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeContentTuningV1   *[2]int                 `json:"nativeContentTuningV1,omitempty"`
 	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
 	AppliedStatsV1          []float64               `json:"appliedStatsV1,omitempty"`
 	NativeNoItemEffects     bool                    `json:"nativeNoItemEffects,omitempty"`
@@ -316,6 +317,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 				bonuses := append([]int{}, v.Change.BonusIDs...)
 				result.NativeCraftedSymmetryV1 = &bonuses
 			}
+			result.NativeContentTuningV1 = nativeContentTuningV1(r.Git, v.Change.Modifiers, item["gildra_content_tuning_v1"])
 			result.NativeScalingInputsV1 = nativeScalingInputsV1(r.Git, item["gildra_scaling_inputs_v1"])
 			if result.NativeScalingInputsV1 != nil {
 				result.NativeSuffixProgramV1 = nativeSuffixProgramV1(v.Change.BonusIDs, item["gildra_suffix_program_v1"])
@@ -410,6 +412,25 @@ func nativeCraftedSymmetryV1(revision string, modifiers []ItemModifier, raw json
 func auditedItemRevision(revision string) bool {
 	const audited = "18428cd3902412abc8ee274d19567d603e674e66"
 	return len(revision) >= 7 && strings.HasPrefix(audited, revision)
+}
+
+// Both content-tuning readers in the pinned item parser use only a known
+// row's positive level cap. Bind the reported cap to the requested tuning ID.
+func nativeContentTuningV1(revision string, modifiers []ItemModifier, raw json.RawMessage) *[2]int {
+	if len(raw) == 0 || !auditedItemRevision(revision) {
+		return nil
+	}
+	var pair []*int
+	if json.Unmarshal(raw, &pair) != nil || len(pair) != 2 || pair[0] == nil || pair[1] == nil ||
+		*pair[0] <= 0 || *pair[1] < 0 || *pair[1] > 2147483647 {
+		return nil
+	}
+	for _, m := range modifiers {
+		if m.Type == 28 && m.Value == *pair[0] {
+			return &[2]int{m.Value, *pair[1]}
+		}
+	}
+	return nil
 }
 
 // SimC reports an abbreviated revision. Only this revision's local item parser

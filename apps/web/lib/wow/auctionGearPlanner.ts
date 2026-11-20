@@ -338,11 +338,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // can assign one ordinal to lots that the worker parses identically.
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
   const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
-    input.reuseAppliedStats ? (input.groupCraftedEquipment ? 3 : 1) : undefined;
-  if (grouping !== undefined && grouping !== 1 && grouping !== 2 && grouping !== 3) throw new Error("invalid_search_checkpoint");
+    input.reuseAppliedStats ? (input.groupCraftedEquipment ? 4 : 1) : undefined;
+  if (grouping !== undefined && grouping !== 1 && grouping !== 2 && grouping !== 3 && grouping !== 4) throw new Error("invalid_search_checkpoint");
   const groupEngine = grouping && engine && ignoresItemContext(engine) ? engine : undefined;
   const groups = auctionEffectGroups(options, slots, option =>
-    auctionEffectGroupKey(option, groupEngine, grouping === 2 || grouping === 3, grouping === 3));
+    auctionEffectGroupKey(option, groupEngine, (grouping ?? 0) >= 2, grouping === 4 ? "tuning-cap" : grouping === 3));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));
@@ -351,7 +351,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   let checkpoint: AuctionGearAssemblyCheckpoint, calls = 0;
   let replayLegacyCandidates = false;
   if (input.checkpoint) {
-    requireCheckpoint(inputKey, input.checkpoint, grouping === 3 ? 4 : 3);
+    requireCheckpoint(inputKey, input.checkpoint, (grouping ?? 0) >= 3 ? 4 : 3);
     const { simulationCache, ...state } = input.checkpoint;
     checkpoint = { ...structuredClone(state), simulationCache: cloneCache(simulationCache, state.baseline.engine) };
     checkpoint.baseline = validSimulation(checkpoint.baseline);
@@ -382,7 +382,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: groupEngine && grouping === 3 ? 4 : 3, inputKey, ...(groupEngine ? { nativeLotGroups: grouping } : {}), cursor: slots.map(() => 0), exhausted: false,
+    checkpoint = { version: groupEngine && (grouping ?? 0) >= 3 ? 4 : 3, inputKey, ...(groupEngine ? { nativeLotGroups: grouping } : {}), cursor: slots.map(() => 0), exhausted: false,
       baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null,
       bestValueConfirmed: null, bestDpsConfirmed: null, simulationCache: cache,
       simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,

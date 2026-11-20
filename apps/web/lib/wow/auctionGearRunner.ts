@@ -1024,7 +1024,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, engine: verifiedEngine, unenchantedHandsId, wornRings });
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, unenchantedHandsId, wornRings });
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {

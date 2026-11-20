@@ -24,6 +24,7 @@ export function auctionVariantChange(offer: AuctionOffer, slot: string) {
 export type ResolvedAuctionVariant = {
   nativeCraftedSymmetryV1?: number[];
   nativeSuffixProgramV1?: string;
+  nativeContentTuningV1?: number[];
   nativeScalingInputsV1?: number[];
   appliedStatsV1?: number[];
   nativeNoItemEffects?: boolean;
@@ -62,6 +63,10 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
         resolved.nativeCraftedSymmetryV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeCraftedSymmetryV1: true } : {}),
       ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
         ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
+      ...(Array.isArray(resolved.nativeContentTuningV1) && resolved.nativeContentTuningV1.length === 2 &&
+        resolved.nativeContentTuningV1.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 2147483647) &&
+        offer.modifiers.some(m => m.type === 28 && m.value === resolved.nativeContentTuningV1![0])
+        ? { nativeContentTuningV1: [...resolved.nativeContentTuningV1] } : {}),
       ...(Array.isArray(resolved.nativeScalingInputsV1) && resolved.nativeScalingInputsV1.length === 4 &&
         resolved.nativeScalingInputsV1.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 2147483647)
         ? { nativeScalingInputsV1: [...resolved.nativeScalingInputsV1] } : {}),

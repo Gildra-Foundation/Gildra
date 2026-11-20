@@ -51,6 +51,16 @@ check("crafted symmetry stays bound to the ordered bonuses measured by the worke
   assert.equal(resolvedAuctionVariant(listing, native, engine).resolution.nativeCraftedSymmetryV1, true);
   assert.equal(resolvedAuctionVariant({...listing,bonusIds:[1,2]}, native, engine).resolution.nativeCraftedSymmetryV1, undefined);
 });
+check("resolved content tuning must match the listing and carry a complete native cap", () => {
+  const listing = {...offer, modifiers: [{type: 28, value: 3321}]};
+  const resolved = proof => resolvedAuctionVariant(listing, {...metadata, key: auctionVariantKey(listing),
+    nativeContentTuningV1: proof}, engine).resolution.nativeContentTuningV1;
+  assert.deepEqual(resolved([3321, 90]), [3321, 90]);
+  assert.deepEqual(resolved([3321, 0]), [3321, 0]);
+  for (const bad of [[5381, 90], [3321], [3321, -1], [3321, null], [3321, 1.2], undefined]) {
+    assert.equal(resolved(bad), undefined);
+  }
+});
 check("exact native weapon and verified effect facts survive variant resolution", () => {
   const variant = resolvedAuctionVariant(offer, metadata, engine);
   assert.deepEqual(variant.resolution.weapon, weapon);

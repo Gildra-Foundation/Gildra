@@ -138,7 +138,7 @@
      {
        continue;
      }
-@@ -393,6 +507,59 @@
+@@ -393,6 +507,66 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -192,13 +192,20 @@
 +    slotnode[ "unknown_bonus_count" ] = unknown_bonuses;
 +    slotnode[ "redirected_stats_known" ] = item.parsed.redirect_item_id == 0 ||
 +      p.dbc->item( item.parsed.redirect_item_id ).id != 0;
-+    slotnode[ "content_tuning_known" ] = item.parsed.content_tuning_id == 0 ||
-+      p.dbc->content_tuning( item.parsed.content_tuning_id ).id != 0;
++    const auto& tuning = p.dbc->content_tuning( item.parsed.content_tuning_id );
++    slotnode[ "content_tuning_known" ] = item.parsed.content_tuning_id == 0 || tuning.id != 0;
++    if ( tuning.id && tuning.id == item.parsed.content_tuning_id )
++    {
++      auto pair = slotnode[ "gildra_content_tuning_v1" ];
++      pair.make_array();
++      pair.add() = tuning.id;
++      pair.add() = std::max( 0, tuning.max_level_squish );
++    }
 +
  
      for ( size_t i = 0; i < std::size( item.parsed.data.stat_type_e ); i++ )
      {
-@@ -1372,6 +1539,37 @@
+@@ -1372,6 +1546,37 @@
    }
  }
 -
@@ -237,7 +244,7 @@
  void print_json_pretty( FILE* o, const sim_t& sim, const ::report::json::report_configuration_t& report_configuration )
  {
    Document doc;
-@@ -1403,7 +1601,8 @@
+@@ -1403,7 +1608,8 @@
      root[ "git_branch" ] = git_info::branch();
    }
 -

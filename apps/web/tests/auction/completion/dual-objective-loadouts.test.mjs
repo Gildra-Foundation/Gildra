@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {assembleAuctionGear,captureAuctionGearIncumbents,searchAuctionGearOptions} from '../../../lib/wow/auctionGearPlanner.ts';
-import {auctionAppliedStatsKey,auctionDominatedArmorOptions} from '../../../lib/wow/auctionGearEffects.ts';
+import {auctionAppliedStatsKey,auctionDominatedArmorOptions,auctionEffectGroupKey} from '../../../lib/wow/auctionGearEffects.ts';
 import {createAuctionGearEnhancedLoadoutIterator} from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import {auctionGearResults,auctionGearLoadoutComparison} from '../../../lib/wow/auctionGearResult.ts';
 const measurement=(dps,dpsError=1)=>({dps,dpsError,confidence:95,iterations:750,engine:'SimulationCraft dual-objective fixture'});
@@ -290,7 +290,7 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  const old=await finish(h,partial.checkpoint);
  const fresh=await finish(h);
  assert.equal(old.result.combinationCount,'9');
- assert.equal(fresh.checkpoint.nativeLotGroups,3);
+ assert.equal(fresh.checkpoint.nativeLotGroups,4);
  assert.equal(fresh.checkpoint.version,4);
  assert.equal(old.checkpoint.version,3);
  assert.equal(fresh.result.combinationCount,'4');
@@ -299,6 +299,43 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  assert.deepEqual(ids(fresh.result.bestDpsConfirmed),[91,92]);
  assert.equal(fresh.result.bestDpsConfirmed.spentCopper,40);
  assert.deepEqual(ids(fresh.result.bestValueConfirmed),[91]);
+});
+
+test('content tuning groups preserve both physical rings, cost ties and the old cursor', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd', h = fixture(), options = [];
+  for (const [lot, tuning, cost] of [[51, 3321, 10], [52, 5381, 10], [53, 6257, 25]]) {
+    for (const slot of ['FINGER_1', 'FINGER_2']) {
+      const row = option(lot, slot, cost);
+      row.id = lot + '-' + slot;
+      row.candidate.inventoryType = 11;
+      row.candidate.itemId = 258908;
+      Object.assign(row.candidate.variants[0], {bonusIds: [13668, 13900], modifiers: [{type: 9, value: 90}, {type: 28, value: tuning}],
+        resolution: {engine, nativeContentTuningV1: [tuning, 90]}});
+      options.push(row);
+    }
+  }
+  Object.assign(h.input, {options, selectedSlots: ['FINGER_1', 'FINGER_2'], reuseAppliedStats: true,
+    baseline: {...measurement(1000), engine}, simulate: async rows => ({...measurement(1000 + rows.length * 150 + (rows.length ? 50 : 0)), engine})});
+  const partial = await assembleAuctionGear({...h.input, maxAssignments: 1});
+  // All entries have different type-28 IDs, so v1 and v3 have the same indices.
+  Object.assign(partial.checkpoint, {nativeLotGroups: 3, version: 4});
+  h.input.groupCraftedEquipment = true;
+  const legacy = await finish(h, partial.checkpoint), fresh = await finish(h);
+  assert.equal(legacy.result.combinationCount, '16');
+  assert.equal(fresh.result.combinationCount, '4');
+  for (const field of ['bestDpsConfirmed', 'bestValueConfirmed']) assert.deepEqual(fresh.result[field], legacy.result[field]);
+  assert.deepEqual(ids(fresh.result.bestDpsConfirmed), [51, 52]);
+  assert.deepEqual(ids(fresh.result.bestValueConfirmed), [51]);
+  const key = row => auctionEffectGroupKey(row, engine, true, 'tuning-cap');
+  for (const mutate of [
+    v => {v.resolution.nativeContentTuningV1[1] = 80;}, v => {v.resolution.nativeContentTuningV1[0] = 1;},
+    v => {delete v.resolution.nativeContentTuningV1;}, v => {v.resolution.engine = 'another';},
+    v => {v.modifiers[0].value = 89;}, v => {v.bonusIds.reverse();},
+  ]) {
+    const other = structuredClone(options[2]);
+    mutate(other.candidate.variants[0]);
+    assert.notEqual(key(options[0]), key(other));
+  }
 });
 
 test('a context rejected by the worker stays separate from valid native lots',async()=>{

@@ -5,12 +5,15 @@ import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling = false) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
     const bare = groupUnusedScaling && !option.customization && variant.bonusIds?.length === 0;
-    const item = engine ? auctionNativeItemOptions(variant, engine, bare) : variant;
+    const tuning = groupUnusedScaling === "tuning-cap" && variant.resolution?.engine === engine
+      ? variant.resolution?.nativeContentTuningV1 : undefined;
+    const item = engine ? auctionNativeItemOptions(variant, engine, bare, tuning) : variant;
+    const cap = "contentTuningCap" in item ? [item.contentTuningCap] : [];
     let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
     // Keep certified groups separate from historical and uncertified offers,
     // even when the latter already use ascending crafting modifier values.
@@ -22,11 +25,11 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?:
       if (first && second && first.value !== second.value) {
         modifiers = modifiers.map(m => m === first ? { ...m, value: Math.min(first.value, second.value) } :
           m === second ? { ...m, value: Math.max(first.value, second.value) } : m);
-        return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds, item.contextId ?? 0, modifiers, "crafted-symmetry-v1"];
+        return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds, item.contextId ?? 0, modifiers, "crafted-symmetry-v1", ...cap];
       }
     }
     return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
-      item.contextId ?? 0, modifiers,
+      item.contextId ?? 0, modifiers, ...cap,
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
@@ -161,7 +164,7 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");

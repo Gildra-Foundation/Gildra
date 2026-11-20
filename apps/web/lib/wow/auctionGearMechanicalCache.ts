@@ -150,16 +150,21 @@ function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: 
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; engine: string; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing] }) {
+}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing] }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
-  const gear = native ? native.changes.map(change => ({
-    ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
-      !change.enchantId && !change.gemIds?.length),
-    ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
-      ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
-  })) : request.gearChanges ?? [];
+  const gear = native ? native.changes.map((change, i) => {
+    const option = reuseCandidateInputs ? native.options?.[i] : undefined;
+    const resolution = option?.candidate.variants.find(row => row.key === option.variantKey)?.resolution;
+    const tuning = resolution?.engine === native.engine ? resolution.nativeContentTuningV1 : undefined;
+    return {
+      ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
+        !change.enchantId && !change.gemIds?.length, tuning),
+      ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
+        ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
+    };
+  }) : request.gearChanges ?? [];
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
   let ownedChanges = request.ownedChanges;
