@@ -750,6 +750,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
           simulationConcurrency: enhancementConcurrency,
           get simulationBatchSize() { return enhancementConcurrency === 2 ? context.simulate.batchSize : 0; },
           get simulationOwnedBatch() { return context.simulate.ownedBatch; },
+          recheckBaseline: simSignal => context.simulate([], simSignal, undefined, "finalist"),
           recheck: (selected, configuration, simSignal) => context.simulate(
             customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,

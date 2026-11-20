@@ -27,11 +27,13 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
   currentOrdinal?: string;
   recentMeasurements?: SavedMeasurements[];
   precise?: Record<string, GearPlanSimulation>;
+  preciseBaseline?: GearPlanSimulation;
 };
 type StageInput = Parameters<typeof evaluateAuctionEnhancementStage>[0];
 type Input = Omit<StageInput, "finalists" | "state"> & {
   options: AuctionGearOption[]; selectedSlots?: string[];
   recheck?: (options: AuctionGearOption[], configuration: AuctionEnhancedRecommendation["configuration"], signal: AbortSignal) => Promise<GearPlanSimulation>;
+  recheckBaseline?: (signal: AbortSignal) => Promise<GearPlanSimulation>;
   state?: AuctionGearExhaustiveEnhancementState;
   onState: (state: AuctionGearExhaustiveEnhancementState) => void;
   onUpdate?: (result: AuctionEnhancementStageResult) => Promise<void>;
@@ -54,7 +56,8 @@ function sameLoadout(a: Leader, b: Leader) {
 function validRecheck(result: GearPlanSimulation, original: GearPlanSimulation) {
   return result && result.engine === original.engine && result.confidence === 95 &&
     Number.isFinite(result.dpsError) && result.dpsError >= 0 && Number.isFinite(result.dps) && result.dps > 0 &&
-    Number.isSafeInteger(result.iterations) && result.iterations > original.iterations;
+    Number.isSafeInteger(result.iterations) && result.iterations > original.iterations &&
+    (original.iterations !== 100 || result.iterations === 750);
 }
 function consider(state: Ranking, candidate: Leader, retainPair: boolean) {
   const recommendation = candidate.recommendation;
@@ -164,18 +167,30 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   // the persisted ranking basis, not just this invocation's local old value.
   acceptQuotes();
   restamp(state);
+  const needsBaseline = () => Boolean(input.recheckBaseline && input.baseline.iterations === 100 &&
+    state.measured && !state.preciseBaseline);
+  if (state.preciseBaseline && !validRecheck(state.preciseBaseline, input.baseline)) throw new Error("invalid_enhancement_checkpoint");
   const contenders = (): Leader[] => {
-    if (!input.recheck || state.replay?.length || !state.cursor.exhausted || state.currentOptionIds !== undefined || !state.measured || !state.runnerUp) return [];
-    const pair = [state.measured, state.runnerUp];
-    const [a, b] = pair.map(row => row.recommendation);
-    if (compareGearSimulationResults(a.simulation, b.simulation).uncertainty.significant) return [];
-    const refinedA = state.precise?.[a.configuration.key], refinedB = state.precise?.[b.configuration.key];
-    if (refinedA && refinedB && state.nextMeasured) {
-      const leading = refinedA.dps >= refinedB.dps ? refinedA : refinedB;
-      const next = state.nextMeasured.recommendation.simulation;
-      if (next.dps >= leading.dps || !compareGearSimulationResults(leading, next).uncertainty.significant) pair.push(state.nextMeasured);
+    if (!input.recheck || state.replay?.length || !state.cursor.exhausted || state.currentOptionIds !== undefined || !state.measured) return [];
+    const leaders = new Map<string, Leader>();
+    const add = (leader: Leader) => leaders.set(leader.recommendation.configuration.key, leader);
+    const a = state.measured.recommendation, b = state.runnerUp?.recommendation;
+    if (state.runnerUp && b && !compareGearSimulationResults(a.simulation, b.simulation).uncertainty.significant) {
+      add(state.measured);
+      add(state.runnerUp);
+      const refinedA = state.precise?.[a.configuration.key], refinedB = state.precise?.[b.configuration.key];
+      if (refinedA && refinedB && state.nextMeasured) {
+        const leading = refinedA.dps >= refinedB.dps ? refinedA : refinedB;
+        const next = state.nextMeasured.recommendation.simulation;
+        if (next.dps >= leading.dps || !compareGearSimulationResults(leading, next).uncertainty.significant) add(state.nextMeasured);
+      }
     }
-    return pair;
+    // A cheap value winner can be far below the DPS finalists. Its published
+    // gain and price-per-DPS still need the same native finalist precision.
+    for (const leader of [state.measured, state.dps, state.value]) {
+      if (leader && leader.recommendation.simulation.iterations === 100) add(leader);
+    }
+    return [...leaders.values()];
   };
   const finish = (): { state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult } => {
     const group = contenders();
@@ -185,14 +200,14 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       if (!validRecheck(simulation, leader.recommendation.simulation)) throw new Error("invalid_enhancement_checkpoint");
       return [{ ...leader.recommendation, simulation }];
     });
-    const complete = !state.replay?.length && state.cursor.exhausted && state.currentOptionIds === undefined && group.length === refined.length;
+    const complete = !state.replay?.length && state.cursor.exhausted && state.currentOptionIds === undefined && group.length === refined.length && !needsBaseline();
     let all = recommendations(state, input.objective);
     let finalistRecheck: AuctionEnhancementStageResult["finalistRecheck"];
     if (complete && refined.length) {
       const baselineIndex = group.findIndex(leader => !leader.options.length && !leader.recommendation.configuration.ownedChanges?.length);
-      const baseline = refined[baselineIndex]?.simulation ?? input.baseline;
+      const baseline = state.preciseBaseline ?? refined[baselineIndex]?.simulation ?? input.baseline;
       const confirmed = (row: AuctionEnhancedRecommendation) => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant;
-      const candidates = new Map(all.map(row => [row.configuration.key, baselineIndex < 0 ? row :
+      const candidates = new Map(all.map(row => [row.configuration.key, baseline === input.baseline ? row :
         { ...row, comparison: compareGearSimulationResults(baseline, row.simulation) }]));
       for (const row of refined) {
         row.comparison = compareGearSimulationResults(baseline, row.simulation);
@@ -206,7 +221,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       const tied = [leading, ...comparisons.filter(row => !row.significant).map(entry => entry.row)];
       const preferred = [...tied].sort((a, b) => Number(confirmed(b)) - Number(confirmed(a)) ||
         a.configuration.totalCopper! - b.configuration.totalCopper! || b.simulation.dps - a.simulation.dps)[0];
-      finalistRecheck = { keys: refined.map(row => row.configuration.key), leaderKey: leading.configuration.key,
+      if (comparisons.length) finalistRecheck = { keys: refined.map(row => row.configuration.key), leaderKey: leading.configuration.key,
         indistinguishableKeys: tied.map(row => row.configuration.key), preferredKey: preferred.configuration.key,
         significant: tied.length === 1, marginDps: comparisons[0].marginDps };
       const dearerTies = new Set(tied.filter(row => row.configuration.totalCopper! > preferred.configuration.totalCopper!)
@@ -280,10 +295,21 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       input.onState(state);
     }
     if (state.currentOptionIds === undefined) {
+      if (state.cursor.exhausted && !state.replay?.length && needsBaseline() && input.recheckBaseline) {
+        if (input.shouldYield()) break;
+        const result = await input.recheckBaseline(input.signal);
+        input.signal.throwIfAborted();
+        if (!validRecheck(result, input.baseline)) throw new Error("invalid_simulation_result");
+        state.preciseBaseline = result;
+        input.onState(state);
+        continue;
+      }
       const next = contenders().find(row => !state.precise?.[row.recommendation.configuration.key]);
       if (!next || !input.recheck || input.shouldYield()) break;
       const row = next.recommendation;
-      const simulation = await input.recheck(next.options, row.configuration, input.signal);
+      const originalEquipment = !next.options.length && !row.configuration.ownedChanges?.length;
+      const simulation = originalEquipment && state.preciseBaseline ? state.preciseBaseline :
+        await input.recheck(next.options, row.configuration, input.signal);
       input.signal.throwIfAborted();
       if (simulation.engine !== row.simulation.engine) throw new Error("simulation_version_changed");
       if (!validRecheck(simulation, row.simulation)) throw new Error("invalid_simulation_result");

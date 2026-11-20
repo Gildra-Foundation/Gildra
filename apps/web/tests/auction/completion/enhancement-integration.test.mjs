@@ -561,7 +561,8 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
   assert.equal(new Set(nativeKeys).size,nativeKeys.length,'Continuation must never duplicate a measurement at the same precision');
   if (socketLoser && !synergy) {
     const rechecked=requests.filter(request=>request.precision==='auction-finalist');
-    assert.equal(rechecked.length,3,'All three competitive loadouts receive higher precision');
+    assert.equal(rechecked.filter(row => row.gearChanges?.length).length,3,'All three competitive loadouts receive higher precision');
+    assert.equal(rechecked.filter(row => !row.gearChanges?.length).length,1,'Their improvement is compared with an independent baseline');
     assert.equal(result.enhancementOptimization.finalistRecheck.significant,false);
     for (const key of result.enhancementOptimization.finalistRecheck.keys) {
       assert.equal(result.enhancementOptimization.recommendations.find(row=>row.configuration.key===key).simulation.iterations,750);

@@ -34,7 +34,7 @@ function fixture() {
       input.state.checkpoints.current={nativeFacts:'preserved',key};
       if(h.abortAfterQuotes)throw new DOMException('Aborted','AbortError');
       const spent=options.reduce((sum,o)=>sum+o.costCopper,0),dps=h.scores?.[key]??1000+(options[0]?.candidate.itemId??0)*(h.scale??1);
-      const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:{...simulation(dps),dpsError:h.errors?.[key]??1},
+      const recommendation={label:'synthetic',optionIds:options.map(o=>o.id),purchases:[],consumableNames:{},simulation:{...simulation(dps),iterations:h.iterations??750,dpsError:h.errors?.[key]??1},
         comparison:{deltaDps:dps-1000,candidateDps:dps,uncertainty:{significant:dps>1000}},
         configuration:{key,status:'priced',itemsCopper:spent,totalCopper:spent+cost,fullyEnhanced:false,consumables:[],slots:[],sourceUpdatedAt:input.state.quotes.sourceUpdatedAt}};
       return{complete:!h.partial,status:h.stale?'unavailable':spent+cost>input.budgetCopper?'no_affordable_configuration':'ready',searchLimited:true,recommendations:h.stale||spent+cost>input.budgetCopper?[]:[recommendation],reasons:h.stale?['market_unverified']:[],traversal:'exhaustive'};
@@ -288,4 +288,49 @@ test('a long run of identical dependencies occupies one range and diverse overfl
   const after=await finish(overflow);
   assert.equal(after.recommendations[0].configuration.key,'option-64');
   assert.equal(after.recommendations[0].configuration.totalCopper,135);
+});
+
+test('a distant value finalist gets 750 iterations against the precise baseline and resumes without another fight',async()=>{
+  const h=fixture(), calls=[];
+  h.iterations=100;
+  h.input.baseline={...simulation(1000),iterations:100};
+  h.price=0;
+  h.input.options.forEach((o,i)=>{o.costCopper=[1,500,600][i];});
+  h.scores={baseline:1000,'option-1':1010,'option-2':1100,'option-3':1200};
+  h.input.objective='value';
+  h.input.recheckBaseline=async()=>{calls.push('baseline'); h.slice++; return simulation(1005);};
+  h.input.recheck=async options=>{
+    const key=options[0].id; calls.push(key); h.slice++;
+    return simulation({'option-1':1012,'option-3':1190}[key]);
+  };
+  let result;
+  for(let i=0;i<20;i++){
+    result=(await h.run()).result;
+    h.state=structuredClone(h.state);
+    if(result.complete)break;
+  }
+  assert(result.complete);
+  assert.deepEqual(calls,['baseline','option-3','option-1']);
+  assert.deepEqual(result.recommendations.map(r=>r.configuration.key).join(','),'option-1,option-3');
+  assert.deepEqual(result.recommendations.map(r=>r.comparison.deltaDps).join(','),'7,185');
+  assert(result.recommendations.every(r=>r.simulation.iterations===750));
+  await h.run();assert.equal(calls.length,3);
+});
+
+test('a sole unchanged finalist shares one independently verified baseline fight',async()=>{
+  const h=fixture();
+  h.input.options=[]; h.iterations=100; h.price=0;
+  h.input.baseline={...simulation(1000),iterations:100};
+  h.input.recheck=async()=>assert.fail('unchanged finalist already has its independent measurement');
+  h.input.recheckBaseline=async()=>({...simulation(995),iterations:200});
+  await assert.rejects(finish(h),/invalid_simulation_result/);
+  assert.equal(h.state.preciseBaseline,undefined);
+  let calls=0;
+  h.input.recheckBaseline=async()=>{calls++;return simulation(995);};
+  const result=await finish(h);
+  assert.equal(calls,1);
+  assert.equal(result.recommendations.length,1);
+  assert.equal(result.recommendations[0].simulation.iterations,750);
+  assert.equal(result.recommendations[0].comparison.deltaDps,0);
+  assert.equal(result.finalistRecheck,undefined);
 });
