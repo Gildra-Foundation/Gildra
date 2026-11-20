@@ -292,7 +292,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
       ? (selection, requestSignal) => context.simulate(selection, requestSignal, undefined, "certified-candidate")
       : context.simulate, checkpoint: entry.searchCheckpoint,
     statPriority: context.input.enhancementMode === "equipment",
-    groupCraftedEquipment: fullMarket && context.input.enhancementMode === "equipment",
+    groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
     baseline: entry.retainedBaseline, simulationCache: cache,
     simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
     // The initial response includes baseline plus two native comparisons.
@@ -638,7 +638,9 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
         incumbents: entry.retainedIncumbents,
         reuseAppliedStats: fullMarket,
-        groupCraftedEquipment: fullMarket && context.input.enhancementMode === "equipment",
+        // This pass measures bare gear. The enhancement iterator below receives
+        // every original option and proves its own groups after accounting for sockets.
+        groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
         recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" && (!context.discovery || context.coverage.discoveryComplete)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,

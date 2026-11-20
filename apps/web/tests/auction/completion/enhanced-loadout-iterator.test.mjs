@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {createAuctionGearEnhancedLoadoutIterator as create} from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import {auctionEffectGroupKey} from '../../../lib/wow/auctionGearEffects.ts';
 import {auctionPlanCost} from '../../../lib/wow/auctionGearPlanner.ts';
 import {auctionGearSlots} from '../../../lib/wow/auctionGearSelection.ts';
 const signal=()=>new AbortController().signal;
@@ -262,6 +263,9 @@ test('socketless scaling aliases retain the cheaper enchantable receipt and resu
    socketCount:i===3?1:0,socketBonusId:i===4?99:0,requiredProfessionId:0,requiredProfessionRank:0}};
   return o;
  });
+ // The bare assembly can share one measurement for all four empty-bonus lots.
+ // Its representative alone would discard the socket and socket-bonus variants.
+ assert.equal(new Set(offers.slice(0,4).map(o=>auctionEffectGroupKey(o,engine,true,true))).size,1);
  const input={...base(offers,['WRIST']),engine};
  const old=create({...input,nativeLotGroups:1}),current=create(input);
  const limits={maxAssignments:1,maxResults:1,signal:signal()};
