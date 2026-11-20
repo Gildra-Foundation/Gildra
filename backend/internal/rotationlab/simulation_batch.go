@@ -37,6 +37,8 @@ type batchMeasurement struct {
 	Iterations int     `json:"iterations"`
 	Confidence int     `json:"confidence"`
 	Engine     string  `json:"engine"`
+
+	furyWithoutLeechHealing bool
 }
 
 type batchEngine interface {
@@ -151,7 +153,8 @@ func parseSimulationBatchBudgets(payload []byte, count, expectedIterations, prim
 				Iterations int     `json:"iterations"`
 			} `json:"options"`
 			Players []struct {
-				CollectedData struct {
+				FuryWithoutLeechHealing bool `json:"gildra_fury_without_leech_healing_v1"`
+				CollectedData           struct {
 					DPS struct {
 						Mean  float64  `json:"mean"`
 						Error *float64 `json:"mean_std_dev"`
@@ -191,7 +194,7 @@ func parseSimulationBatchBudgets(payload []byte, count, expectedIterations, prim
 			standardError == nil || *standardError < 0 || iterations != expectedIterations {
 			return errors.New("invalid SimulationCraft batch measurement")
 		}
-		measurements[i] = batchMeasurement{int(math.Round(mean)), mean, *standardError, iterations, confidence, engine}
+		measurements[i] = batchMeasurement{DPS: int(math.Round(mean)), DPSMean: mean, DPSError: *standardError, Iterations: iterations, Confidence: confidence, Engine: engine}
 		return nil
 	}
 	base := sim.Players[0].CollectedData
@@ -215,6 +218,8 @@ func parseSimulationBatchBudgets(payload []byte, count, expectedIterations, prim
 	} else if err := add(0, base.DPS.Mean, base.DPS.Error, iterations); err != nil {
 		return nil, err
 	}
+	// Only the primary actor emitted this evidence. Profileset rows contain scores alone.
+	measurements[0].furyWithoutLeechHealing = sim.Players[0].FuryWithoutLeechHealing
 	for _, row := range sim.Profilesets.Results {
 		// SimC sorts by performance. Restore the request order using the exact
 		// generated name and reject a duplicate, unknown or missing candidate.

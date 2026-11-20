@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
 import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
@@ -67,6 +67,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   omitNeutralGloveEnchants?: boolean;
   omitShoulderIllusions?: boolean;
   omitWristHearthEnchants?: boolean;
+  omitInertFuryLeech?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -108,6 +109,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     const equipmentKey=JSON.stringify(finalist.options.map(o=>o.id).sort());
     if(equipmentSets.has(equipmentKey))continue;
     equipmentSets.add(equipmentKey);
+    const inertFuryLeech = input.exhaustive && input.omitInertFuryLeech && input.specId === 72 && ignoresItemContext(input.engine);
     const ownedGemSlots = new Set<string>();
     const slots: EnhancementSlot[] = [], resolutions = new Map<string, EnhancementResolution>();
     const replaced = new Set(finalist.options.map(o => o.candidate.slotType));
@@ -144,7 +146,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       resolutions.set(slot.slotType,{...resolved,
         enchantChoices:resolved.enchantChoices.filter(e =>
           !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
-          !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine))).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
+          !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine)) &&
+          !(inertFuryLeech && !option.customization && pureArmorLeechEnchant(slot.slotType, target.inventoryType, e.simulationId))).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
     }
     if (unsupported) continue;
     // Retained equipment is not bought again, but its enhancements consume uniqueness limits.
@@ -187,6 +190,7 @@ export async function evaluateAuctionEnhancementStage(input: {
             slotType === 'HANDS' && obj(item.inventory_type).type === 'HAND';
           const bareShoulder = unenchanted && input.exhaustive && input.omitShoulderIllusions &&
             slotType === 'SHOULDER' && obj(item.inventory_type).type === 'SHOULDER' && target.inventoryType === 3;
+          const bareLeechHost = inertFuryLeech && unenchanted && obj(item.inventory_type).type === slotType;
           const bareWrist = unenchanted && input.exhaustive && input.omitWristHearthEnchants &&
             slotType === 'WRIST' && obj(item.inventory_type).type === 'WRIST' && target.inventoryType === 9;
           // Both paid edits replace this exact socket with a bare gem ID. They
@@ -203,7 +207,8 @@ export async function evaluateAuctionEnhancementStage(input: {
             enchantChoices:resolved.enchantChoices.filter(e =>
               !(bareGloves && neutralProfessionGloveEnchant(e.simulationId, input.engine)) &&
               !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
-              !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine))).map(normalized),
+              !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine)) &&
+              !(bareLeechHost && pureArmorLeechEnchant(slotType, target.inventoryType, e.simulationId))).map(normalized),
             gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))};
         } else {
           // Preserve unknown instances and their installed unique limits while

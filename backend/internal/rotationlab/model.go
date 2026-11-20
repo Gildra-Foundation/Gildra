@@ -220,4 +220,6 @@ type SimulationResult struct {
 	BossEvents          []BossEvent          `json:"bossEvents"`
 	Metrics             []Metric             `json:"metrics"`
 	CreatedAt           time.Time            `json:"-"`
+
+	FuryWithoutLeechHealing bool `json:"furyWithoutLeechHealingV1,omitempty"`
 }

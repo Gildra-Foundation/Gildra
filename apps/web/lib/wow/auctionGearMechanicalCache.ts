@@ -53,6 +53,13 @@ export function neutralWristHearthEnchant(id: number, engine: string) {
   return (id === 5970 || id === 6222) && ignoresItemContext(engine);
 }
 
+// Pure leech rating on a bare helm or shoulder. The caller must have an
+// attestation from the unchanged native Fury actor that healing is disabled.
+export function pureArmorLeechEnchant(slot: string, inventory: number, id: number) {
+  if (slot === "HEAD" && inventory === 1) return id === 7958 || id === 7959;
+  return slot === "SHOULDER" && inventory === 3 && (id === 8028 || id === 8029 || id === 8030 || id === 8031);
+}
+
 const verifiedGemSlots = new Set([
   "head", "neck", "shoulder", "back", "chest", "wrist", "hands", "waist", "legs", "feet", "finger1", "finger2",
 ]);

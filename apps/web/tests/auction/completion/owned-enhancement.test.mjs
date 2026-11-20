@@ -135,13 +135,13 @@ test('shoulder illusions cannot improve an unenchanted purchase or an unenchante
       eligible:true, compatibility:{specId:72}, constraints:{requiredLevel:1},
       variants:[{key:'shoulder', itemLevel:270, contextId:0, bonusIds:[], resolution:{effectsVerified:true, effects:[],
         metadataVersion:3, enhancements:{status:'verified', socketColors:[0,0,0], socketCount:0, socketBonusId:0, requiredProfessionId:0, requiredProfessionRank:0}}}]}};
-  const prices = {201315:{ladder:[[10,10]]},243961:{ladder:[[20,10]]}};
-  async function run(owned, installed, revision = engine, enabled = true) {
+  const prices = {201315:{ladder:[[10,10]]},243961:{ladder:[[20,10]]},244018:{ladder:[[30,10]]}};
+  async function run(owned, installed, revision = engine, enabled = true, omitInertFuryLeech = false) {
     const state={checkpoints:{}}, measured=new Set();
     const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
     const shoulder = installed ? {...item,enchantments:[{enchantment_slot:{id:0},enchantment_id:7970}]} : item;
     for(let turn=0;turn<12;turn++) {
-      const result=await evaluateAuctionEnhancementStage({exhaustive:true,omitShoulderIllusions:enabled,
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,omitShoulderIllusions:enabled,omitInertFuryLeech,
         finalists:[{label:'exhaustive',options:owned?[]:[option]}], equipment:{equipped_items:[shoulder]},
         loadout:[{slotType:'SHOULDER',itemId:item.item.id,inventoryType:3,itemSubclassId:4}],selectedSlots:['SHOULDER'],
         specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'shoulder',encounter:{},budgetCopper:1000,
@@ -157,10 +157,12 @@ test('shoulder illusions cannot improve an unenchanted purchase or an unenchante
   }
   for (const owned of [true,false]) {
     const calls = await run(owned,false);
+    assert(calls.has(8028));assert(!(await run(owned,false,engine,true,true)).has(8028));
     assert(calls.has(0));assert(calls.has(7971));assert(!calls.has(6685));
     assert((await run(owned,false,engine,false)).has(6685));
     assert((await run(owned,false,'SimulationCraft 18428cd unknown')).has(6685));
   }
+  assert((await run(true,true,engine,true,true)).has(8028),'An existing shoulder enchant can be replaced');
   assert((await run(true,true)).has(6685),'An illusion can replace an existing combat enchant');
 });
 
@@ -241,4 +243,43 @@ test('hearthstone scrolls can be omitted only when the unchanged wrist is availa
   }
   assert.deepEqual(await measured({equipped:{...item,enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]}}), all);
   assert.deepEqual(await measured({equipped:{...item,enchantments:[{enchantment_slot:{id:0},enchantment_id:369}]}}), all);
+});
+
+test('only a fresh full search with native Fury healing evidence removes pure helm leech', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd', slotType='HEAD', itemId=271456;
+  const item={item:{id:itemId},slot:{type:slotType},inventory_type:{type:'HEAD'},level:{value:270},
+    item_class:{id:4},item_subclass:{id:4},sockets:[],spells:[]};
+  const prices={243948:{ladder:[[10,2]]},243949:{ladder:[[20,2]]}};
+  async function run({evidence,specId=72,revision=engine,historical=false}) {
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision,
+      ...(evidence ? {furyWithoutLeechHealingV1:true} : {})};
+    const seen=new Set();
+    const input={options:[],selectedSlots:[slotType],equipment:{equipped_items:[item]},loadout:[{slotType,itemId,inventoryType:1,itemSubclassId:4}],
+      specId,level:90,region:'eu',engine:revision,profileFingerprint:'leech',encounter:{},budgetCopper:1000,objective:'dps',baseline,
+      simulate:async(_options,_signal,edits)=>{seen.add(edits?.[0]?.enchantId??0);return baseline},
+      quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+      signal:new AbortController().signal,shouldYield:()=>false,onState:()=>{}};
+    let state, historicalKey;
+    if (historical) {
+      // Make an actual pre-capability cursor, then resume with the new worker's baseline.
+      const older={...input,baseline:{...baseline},shouldYield:()=>true};
+      delete older.baseline.furyWithoutLeechHealingV1;
+      state=(await advanceAuctionGearExhaustiveEnhancements(older)).state;
+      historicalKey=state.inputKey;
+      seen.clear();
+    }
+    for (let slice=0;slice<30;slice++) {
+      const step=await advanceAuctionGearExhaustiveEnhancements({...input,state});
+      state=step.state;
+      if (historical) assert.equal(state.inputKey,historicalKey);
+      if (step.result.complete) return seen;
+    }
+    assert.fail('helm receipts did not exhaust');
+  }
+  assert.deepEqual(await run({evidence:true}),new Set([0]));
+  const all=new Set([0,7958,7959]);
+  assert.deepEqual(await run({evidence:false}),all);
+  assert.deepEqual(await run({evidence:true,specId:71}),all);
+  assert.deepEqual(await run({evidence:true,revision:'SimulationCraft 18428cd unknown'}),all);
+  assert.deepEqual(await run({evidence:true,historical:true}),all);
 });

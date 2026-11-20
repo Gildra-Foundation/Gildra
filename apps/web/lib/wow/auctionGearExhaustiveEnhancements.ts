@@ -88,6 +88,7 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
   omitNeutralGloveEnchants?: true;
   omitShoulderIllusions?: true;
   omitWristHearthEnchants?: true;
+  omitInertFuryLeech?: true;
   pruneOwnedJewelryGems?: true;
   rangeCount?: number;
   replay?: OrdinalRange[];
@@ -224,6 +225,12 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     (!input.selectedSlots || input.selectedSlots.includes("SHOULDER"));
   const omitWristHearthEnchants = (!input.state || input.state.omitWristHearthEnchants === true) &&
     (!input.selectedSlots || input.selectedSlots.includes("WRIST"));
+  // The rule version below captures native capabilities separately. A worker
+  // upgrade must not change the identity of a restored, unpruned traversal.
+  const { furyWithoutLeechHealingV1, ...combatBaseline } = input.baseline;
+  const omitInertFuryLeech = input.specId === 72 && furyWithoutLeechHealingV1 === true &&
+    (!input.state || input.state.omitInertFuryLeech === true) &&
+    (!input.selectedSlots || input.selectedSlots.some(slot => slot === "HEAD" || slot === "SHOULDER"));
   const collectReceipts = Boolean(input.finalistKey && input.recheck && input.recheckBaseline && valueBaseline);
   // In a new joint traversal every affordable input needs independent precision,
   // even when it fits in the 64-receipt index. Its screening score cannot exclude it.
@@ -238,9 +245,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const ringRatings = collectReceipts && input.nativePlayerLevel === 90 &&
     input.options.some(option => option.candidate.slotType === "FINGER_1" || option.candidate.slotType === "FINGER_2");
   const byId = new Map(input.options.map(option => [option.id, option]));
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), ...(directPrecision ? ["direct-independent-joint-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(omitShoulderIllusions ? ["bare-shoulder-illusions-v1"] : []), ...(omitWristHearthEnchants ? ["bare-wrist-hearth-v1"] : []), ...(pruneOwnedJewelryGems ? ["owned-jewelry-gems-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), ...(directPrecision ? ["direct-independent-joint-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, combatBaseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(omitShoulderIllusions ? ["bare-shoulder-illusions-v1"] : []), ...(omitWristHearthEnchants ? ["bare-wrist-hearth-v1"] : []), ...(omitInertFuryLeech ? ["bare-fury-leech-v1"] : []), ...(pruneOwnedJewelryGems ? ["owned-jewelry-gems-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
-    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(directPrecision ? {directPrecision:true} : collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), ...(omitShoulderIllusions ? {omitShoulderIllusions:true} : {}), ...(omitWristHearthEnchants ? {omitWristHearthEnchants:true} : {}), ...(pruneOwnedJewelryGems ? {pruneOwnedJewelryGems:true} : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
+    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(directPrecision ? {directPrecision:true} : collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), ...(omitShoulderIllusions ? {omitShoulderIllusions:true} : {}), ...(omitWristHearthEnchants ? {omitWristHearthEnchants:true} : {}), ...(omitInertFuryLeech ? {omitInertFuryLeech:true} : {}), ...(pruneOwnedJewelryGems ? {pruneOwnedJewelryGems:true} : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
   // Validate even an exhausted restored cursor without advancing it. Completed
@@ -598,7 +605,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const pass = state.precisionPass, preciseBaseline = state.preciseBaseline, receipts = state.finalistReceipts;
     const newScreenKeys = new Set<string>();
 
-    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, omitShoulderIllusions, omitWristHearthEnchants, pruneOwnedJewelryGems, pruneEquivalentRingGems: collectReceipts, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
+    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, omitShoulderIllusions, omitWristHearthEnchants, omitInertFuryLeech, pruneOwnedJewelryGems, pruneEquivalentRingGems: collectReceipts, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
       shouldYield: () => input.shouldYield() || (!pass && state.finalistReceipts === "overflow"),
       // At most this many new comparisons can fit before screening must stop.

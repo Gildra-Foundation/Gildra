@@ -85,9 +85,10 @@ function validSimulation(result: GearPlanSimulation, engine?: string) {
       !Number.isInteger(result.iterations) || result.iterations <= 0) throw new Error("invalid_simulation_result");
   if (engine && result.engine !== engine) throw new Error("simulation_version_changed");
   // Worker responses may also contain logs, reports, timelines and spell data.
-  // Only these five validated measurements belong in retained planner state.
+  // Retain the native measurement and the explicit combat capability only.
   return { dps: result.dps, dpsError: result.dpsError, confidence: result.confidence,
-    iterations: result.iterations, engine: result.engine };
+    iterations: result.iterations, engine: result.engine,
+    ...(result.furyWithoutLeechHealingV1 === true ? {furyWithoutLeechHealingV1: true as const} : {}) };
 }
 
 /** Capture before replacing the old offer pool; procurement is redone against current offers on reuse. */

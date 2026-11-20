@@ -29,8 +29,9 @@ func (e *SimCEngine) simulateMeasurement(ctx context.Context, input SimulationIn
 		ID: uuid.NewString(), Status: "completed", Engine: m.Engine,
 		Scenario: input.Scenario, FightLengthSeconds: input.FightLengthSeconds, Targets: input.Targets,
 		DPS: m.DPS, DPSMean: m.DPSMean, DPSError: m.DPSError, Iterations: m.Iterations, Confidence: m.Confidence,
-		BaselineIncluded: &baselineIncluded,
-		ModelNotice:      "SimulationCraft measured the character gear with its maintained default action priority list.",
-		Accuracy:         Accuracy{Mode: "simulationcraft-armory", RotationSource: "simulationcraft-default-apl"},
+		FuryWithoutLeechHealing: input.Armory != nil && input.GearChange == nil && len(input.GearChanges) == 0 && m.furyWithoutLeechHealing,
+		BaselineIncluded:        &baselineIncluded,
+		ModelNotice:             "SimulationCraft measured the character gear with its maintained default action priority list.",
+		Accuracy:                Accuracy{Mode: "simulationcraft-armory", RotationSource: "simulationcraft-default-apl"},
 	}, nil
 }

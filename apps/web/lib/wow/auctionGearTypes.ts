@@ -15,6 +15,7 @@ export type AuctionGearOption = {
   variantKey: string;
 };
 export type GearPlanSimulation = {
+  furyWithoutLeechHealingV1?: true;
   dps: number;
   dpsError: number;
   confidence: number;
