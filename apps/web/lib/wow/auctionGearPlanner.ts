@@ -173,8 +173,11 @@ function requireCheckpoint(key: string, checkpoint: { version: number; inputKey:
   if (checkpoint.version !== version || checkpoint.inputKey !== key) throw new Error("auction_search_changed");
 }
 
+type PreciseSingles = { baseline: GearPlanSimulation; byOption: Map<string, GearPlanSimulation> };
+
 /** Every distinct purchasable option remains visible; repeated native effects share a simulation. */
 export async function searchAuctionGearOptions(input: PlannerInput & {
+  preciseSingles?: PreciseSingles;
   statPriority?: boolean;
   groupCraftedEquipment?: boolean;
   bareEquipmentProofs?: boolean;
@@ -306,20 +309,27 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   }
   save();
   const processed = new Set(evaluationOptions.slice(0, checkpoint.nextOption).map(option => option.id));
+  // Switch the whole visible table to its independently measured baseline together.
+  // Until all existing comparisons are covered, keep the earlier preview visible.
+  const offeredPrecise = input.preciseSingles;
+  const precise = offeredPrecise && options.every(option =>
+    !checkpoint.simulationCache[auctionSelectionEffectKey([option])] || offeredPrecise.byOption.has(option.id))
+    ? offeredPrecise : undefined;
+  const displayBaseline = precise?.baseline ?? checkpoint.baseline;
   const items = options.map<AuctionGearSearchItem>(option => {
     let compatible = true;
     try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { compatible = false; }
-    const simulation = compatible ? checkpoint.simulationCache[auctionSelectionEffectKey([option])] : undefined;
-    const comparison = simulation ? compareGearSimulationResults(checkpoint.baseline, simulation) : null;
+    const simulation = !compatible ? undefined : precise ? precise.byOption.get(option.id) : checkpoint.simulationCache[auctionSelectionEffectKey([option])];
+    const comparison = simulation ? compareGearSimulationResults(displayBaseline, simulation) : null;
     return { ...auctionGearPurchase(option), optionId: option.id, comparison,
-      evaluation: !compatible ? "requires_combination" : !comparison && !processed.has(option.id) ? "pending" :
+      evaluation: !compatible ? "requires_combination" : !comparison && (precise || !processed.has(option.id)) ? "pending" :
         comparison && comparison.deltaDps > 0 && comparison.uncertainty.significant ? "upgrade" :
           comparison && comparison.deltaDps <= 0 && comparison.uncertainty.significant ? "not_upgrade" : "inconclusive" };
   }).sort((a, b) => a.lotCostCopper - b.lotCostCopper || (b.comparison?.deltaDps ?? -Infinity) - (a.comparison?.deltaDps ?? -Infinity) || a.optionId.localeCompare(b.optionId));
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
   return { checkpoint, result: { kind: "search", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
-    budgetCopper: input.budgetCopper, baseline: checkpoint.baseline, items, searchComplete: checkpoint.nextOption === options.length,
+    budgetCopper: input.budgetCopper, baseline: displayBaseline, items, searchComplete: precise ? items.every(item => item.evaluation !== "pending") : checkpoint.nextOption === options.length,
     pendingItems: items.filter(item => item.evaluation === "pending").length, simulations: checkpoint.simulations,
     engine: checkpoint.baseline.engine, searchLimited: false, optionsConsidered: options.length } };
 }
@@ -330,9 +340,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
   groupCraftedEquipment?: boolean;
   bareEquipmentProofs?: boolean;
   recheckEquipment?: PlannerInput["simulate"];
+  preciseSingleCards?: boolean;
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
-}): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint }> {
+}): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint; preciseSingles?: PreciseSingles }> {
   const { options, slots, inputKey, max, maxAssignments } = prepare(input);
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
@@ -393,14 +404,18 @@ export async function assembleAuctionGear(input: PlannerInput & {
   }
   const reuseAppliedStats = input.reuseAppliedStats && options.some(option =>
     option.candidate.variants.some(variant => variant.resolution?.appliedStatsV1));
+  if (!input.checkpoint && input.preciseSingleCards && input.recheckEquipment) checkpoint.preciseSingleCards = true;
+  const preciseSingleCards = !!input.recheckEquipment && checkpoint.preciseSingleCards === true;
+  const singleReplacements = preciseSingleCards ? new Map<string, string>() : undefined;
   const dominated = reuseAppliedStats
-    ? auctionDominatedArmorOptions(options, input.loadout, input.specId, checkpoint.baseline.engine, input.bareEquipmentProofs) : new Set<string>();
+    ? auctionDominatedArmorOptions(options, input.loadout, input.specId, checkpoint.baseline.engine, input.bareEquipmentProofs, singleReplacements) : new Set<string>();
   const dominatedGroups = new Set(flatGroups.filter(group => group.options.every(option => dominated.has(option.id))));
   const save = () => input.onCheckpoint?.(checkpoint);
   // The durable cursor describes only assignments whose measurements have been
   // applied. Enumeration can prepare the next assignments while SimC runs.
   const traversal = { cursor: [...checkpoint.cursor], exhausted: checkpoint.exhausted,
     nextSeed: checkpoint.nextSeed, nextPair: checkpoint.nextPair, combinationsChecked: checkpoint.combinationsChecked };
+  let preciseSingles: PreciseSingles | undefined;
   const directVerification = !!input.recheckEquipment && !checkpoint.exhausted;
   if (checkpoint.nextEquipmentSingle !== undefined && (!Number.isSafeInteger(checkpoint.nextEquipmentSingle) ||
       checkpoint.nextEquipmentSingle < 0 || checkpoint.nextEquipmentSingle > flatGroups.length)) throw new Error("invalid_search_checkpoint");
@@ -691,6 +706,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
       if (pending.size >= window || selections.length >= 256) await commitWindow();
       if (assignments % 256 === 0) await yieldTraversal();
     }
+    // The precise pass buys and measures each eligible single below. A second
+    // 100-iteration fight here has no effect on either verified objective.
+    if (preciseSingleCards && traversal.nextSeed === seeds.length && traversal.nextPair >= previewPairs) {
+      nextEquipmentSingle = flatGroups.length;
+    }
     while (directVerification && !yieldBeforeEnumeration && traversal.nextSeed === seeds.length &&
         traversal.nextPair >= previewPairs && nextEquipmentSingle < flatGroups.length && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
@@ -822,10 +842,19 @@ export async function assembleAuctionGear(input: PlannerInput & {
     for (const best of [checkpoint.best, checkpoint.bestDpsConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestConfirmed]) {
       if (best?.optionIds.length) sets.set(JSON.stringify([...best.optionIds].sort()), optionsFor(best));
     }
+    if (preciseSingleCards) {
+      for (const [index, offer] of cheapestSingles.entries()) {
+        if (!compatibleSingle(index)) continue;
+        const group = flatGroups[index];
+        if (dominatedGroups.has(group) && !group.options.some(o => checkpoint.simulationCache[auctionSelectionEffectKey([o])])) continue;
+        sets.set(JSON.stringify([offer.id]), [offer]);
+      }
+    }
     const measurements = checkpoint.equipmentFinalistMeasurements ??= {};
     const verified = new Map<string, GearPlanSimulation>();
     const finalists = [...sets];
-    const concurrency = input.simulationConcurrency === 2 ? 2 : 1;
+    const concurrency = input.simulationConcurrency === 2
+      ? 2 * (preciseSingleCards ? Math.max(1, input.simulationBatchSize ?? 0) : 1) : 1;
     const independent = input.recheckEquipment;
     const precise = (result: GearPlanSimulation) => {
       const value = validSimulation(result, checkpoint.baseline.engine);
@@ -854,6 +883,22 @@ export async function assembleAuctionGear(input: PlannerInput & {
       const failed = results.find(result => result.status === "rejected");
       if (failed) throw failed.reason;
       if (window.some(([key]) => !verified.has(key))) { complete = false; break; }
+    }
+    const preciseBaseline = verified.get("[]");
+    if (preciseSingleCards && preciseBaseline) {
+      const byOption = new Map<string, GearPlanSimulation>();
+      for (const [index, offer] of cheapestSingles.entries()) {
+        const score = verified.get(JSON.stringify([offer.id]));
+        if (score) for (const option of flatGroups[index].options) byOption.set(option.id, score);
+      }
+      // Proof edges strictly decrease (price, id). Keep each physical lot's own
+      // price and receipt, even when its combat measurement comes from another lot.
+      if (singleReplacements) for (const [id, replacement] of singleReplacements) {
+        let source: string | undefined = replacement;
+        while (source && !byOption.has(source)) source = singleReplacements.get(source);
+        if (source && !byOption.has(id)) byOption.set(id, byOption.get(source)!);
+      }
+      preciseSingles = { baseline: preciseBaseline, byOption };
     }
     if (complete) {
       const baseline = verified.get("[]")!;
@@ -902,7 +947,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   };
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
-  return { checkpoint, result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
+  return { checkpoint, ...(preciseSingles ? { preciseSingles } : {}), result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
     costBreakdown: { itemsCopper: spentCopper, totalCopper: null, coverage: "enhancement_compatibility_unverified" },
     budgetCopper: input.budgetCopper, spentCopper, remainingCopper: input.budgetCopper - spentCopper,
     purchases: selection.map(auctionGearPurchase), removedSlots: input.loadout.filter(i => !final.some(f => f.slotType === i.slotType)).map(i => i.slotType),

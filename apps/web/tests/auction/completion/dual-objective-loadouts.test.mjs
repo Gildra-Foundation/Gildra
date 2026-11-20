@@ -522,6 +522,66 @@ test('full equipment screens individual lots and the preview, then covers every 
   assert.deepEqual(repeated.result,complete.result);
 });
 
+test('full-market item cards reuse independent singles without mixing comparison baselines', async () => {
+  const h = fixture();
+  const rows = [option(1,'HEAD',10), option(2,'CHEST',20), option(3,'WAIST',30), option(4,'WRIST',40)];
+  const key = selected => selected.map(o => o.auctionId).sort().join(',');
+  const screens = [], independent = [];
+  Object.assign(h.input, { options: rows, selectedSlots: rows.map(o => o.candidate.slotType), preciseSingleCards: true,
+    simulate: async selected => {
+      screens.push(key(selected));
+      return { ...measurement(800 + selected.length), iterations: 100 };
+    },
+    recheckEquipment: async selected => {
+      const receipt = key(selected);
+      independent.push(receipt);
+      return measurement(receipt === '1,4' ? 1400 : receipt === '1' ? 1120 : 1000 + selected.length);
+    },
+  });
+  const done = await finish(h, undefined, 2);
+  assert.deepEqual(screens.sort(), ['', '1,2,3,4']);
+  assert.equal(independent.length, 16);
+  assert.equal(new Set(independent).size, 16);
+  assert.deepEqual(ids(done.result.bestDpsConfirmed), [1,4]);
+  assert.deepEqual(ids(done.result.bestValueConfirmed), [1]);
+  const preview = await searchAuctionGearOptions({ ...h.input,
+    maxNewSimulations: 2, simulate: async selected => ({ ...measurement(selected.length ? 980 : 800), iterations: 100 }),
+  });
+  assert.equal(preview.result.baseline.iterations, 100);
+  const cards = await searchAuctionGearOptions({ ...h.input, checkpoint: preview.checkpoint, shouldYield: () => true,
+    preciseSingles: done.preciseSingles, simulate: () => assert.fail('render attempted another battle'),
+  });
+  assert.equal(cards.result.pendingItems, 0);
+  assert.equal(cards.result.baseline.iterations, 750);
+  assert.equal(cards.checkpoint.baseline.iterations, 100);
+  assert(cards.result.items.every(i => i.comparison.baselineDps === 1000));
+  assert.equal(cards.result.items.find(i => i.auctionId === 1).comparison.candidateDps,1120);
+  const pending = await searchAuctionGearOptions({ ...h.input, checkpoint: preview.checkpoint, shouldYield: () => true,
+    preciseSingles: { ...done.preciseSingles, byOption: new Map() },
+  });
+  assert.deepEqual(pending.result.items, preview.result.items);
+  assert.equal(pending.result.baseline.iterations, 100);
+});
+
+test('precise item cards retain every dominated lot and its quoted price', async () => {
+  const h = fixture();
+  const options = [plainOffer(1,101,'BACK',2,4), plainOffer(2,101,'BACK',40,7), plainOffer(3,101,'BACK',2,8)];
+  const measured = [];
+  Object.assign(h.input, { options, selectedSlots:['BACK'], reuseAppliedStats:true, preciseSingleCards:true,
+    simulate: async () => ({...measurement(900), iterations:100}),
+    recheckEquipment: async selection => {
+      measured.push(selection.map(o => o.auctionId));
+      return measurement(selection.length ? 1100 : 1000);
+    } });
+  const done = await finish(h, undefined, 2);
+  assert.deepEqual(measured, [[],[1]]);
+  const cards = await searchAuctionGearOptions({...h.input, baseline:{...measurement(900),iterations:100},
+    preciseSingles:done.preciseSingles, shouldYield:()=>true, simulate:()=>assert.fail('another battle')});
+  assert.equal(cards.result.pendingItems, 0);
+  assert.deepEqual(cards.result.items.map(i => [i.auctionId,i.lotCostCopper,i.comparison.candidateDps]),
+    [[1,2,1100],[3,2,1100],[2,40,1100]]);
+});
+
 test('two finalist lanes keep a successful sibling for retry after a failed measurement', async () => {
   const h = fixture(), initial = await finish(h);
   let saved, active = 0, peak = 0;

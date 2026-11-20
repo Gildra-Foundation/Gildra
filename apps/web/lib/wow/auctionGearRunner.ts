@@ -273,7 +273,8 @@ async function discoverAuctionOptions(entry: AuctionGearSearchEntry, token: stri
 }
 
 async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: AbortSignal,
-  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2, fullMarket = false) {
+  progress: (p: AuctionPlanProgress) => void, shouldYield: () => boolean, maxNewSimulations?: number, verifiedCapacity?: 1 | 2, fullMarket = false,
+  preciseSingles?: Awaited<ReturnType<typeof assembleAuctionGear>>["preciseSingles"]) {
   const context = entry.context;
   const cache = retainAuctionSimulations(entry);
   if (entry.searchCheckpoint) Object.assign(entry.searchCheckpoint.simulationCache, cache);
@@ -291,7 +292,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
     market: context.market, signal, simulate: fullMarket
       ? (selection, requestSignal) => context.simulate(selection, requestSignal, undefined, "certified-candidate")
       : context.simulate, checkpoint: entry.searchCheckpoint,
-    statPriority: context.input.enhancementMode === "equipment",
+    preciseSingles, statPriority: context.input.enhancementMode === "equipment",
     groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
     baseline: entry.retainedBaseline, simulationCache: cache,
     simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
@@ -631,7 +632,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       return cached?.validUntil !== undefined && cached.validUntil > Date.now() ? cached.result : undefined;
     };
     const advanceAssembly = async () => {
-      const { result, checkpoint } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
+      const { result, checkpoint, preciseSingles } = await diagnostics.measureStage("assembly", () => assembleAuctionGear({
         searchId: entry.id, objective: context.input.objective, budgetCopper: context.input.budgetCopper, options,
         selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
@@ -642,6 +643,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         // every original option and proves its own groups after accounting for sockets.
         groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
         bareEquipmentProofs: fullMarket && context.input.enhancementMode !== undefined,
+        preciseSingleCards: fullMarket && options.length === context.options.length,
         recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" &&
           (!context.discovery || context.coverage.discoveryComplete || entry.assemblyCheckpoint?.nextEquipmentSingle !== undefined ||
             entry.assemblyCheckpoint?.equipmentVerification !== undefined)
@@ -654,7 +656,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       signal.throwIfAborted();
       entry.assemblyCheckpoint = checkpoint;
       entry.retainedSimulationCache = checkpoint.simulationCache;
-      const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true);
+      const updatedSearch = await updateAuctionSearchResult(entry, signal, progress, () => true, undefined, undefined, false, preciseSingles);
       const present = (purchase: AuctionGearAssemblyResult["purchases"][number]) => ({ ...purchase,
         currentItem: context.currentBySlot.get(purchase.slotType) });
       const preview = currentPreview();

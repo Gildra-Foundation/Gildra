@@ -124,7 +124,7 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
 /** For every marked offer any legal completion can buy the cheaper equivalent
  * in the same slot. A shared lot or item identity could invalidate that receipt. */
 export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
-  specId: number, engine: string, bareEquipmentProofs = false): Set<string> {
+  specId: number, engine: string, bareEquipmentProofs = false, replacements?: Map<string, string>): Set<string> {
   const itemSlots = new Map<number, string>(), lotSlots = new Map<number, string>();
   const recordSlot = (map: Map<number, string>, id: number, slot: string) => {
     const seen = map.get(id);
@@ -159,7 +159,10 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
   const dominated = new Set<string>();
   for (const [option, key] of keyed) {
     const best = cheapest.get(key)!;
-    if (option.costCopper > best.costCopper || stableTies && option.id !== best.id) dominated.add(option.id);
+    if (option.costCopper > best.costCopper || stableTies && option.id !== best.id) {
+      dominated.add(option.id);
+      replacements?.set(option.id, best.id);
+    }
   }
   return dominated;
 }

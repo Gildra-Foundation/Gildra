@@ -191,6 +191,8 @@ export type AuctionGearAssemblyCheckpoint = {
   equipmentFinalistMeasurements?: Record<string, GearPlanSimulation>;
   /** Next single-effect group needed for preview cards before exact equipment verification. */
   nextEquipmentSingle?: number;
+  /** Single-item cards use the same independent measurements as the exhaustive equipment pass. */
+  preciseSingleCards?: true;
   /** Independent precise traversal, with its own cursor, winners and score cache. */
   equipmentVerification?: Omit<AuctionGearAssemblyCheckpoint, "equipmentVerification">;
   /** Legacy checkpoints without these fields replay cached traversal before claiming completion. */
