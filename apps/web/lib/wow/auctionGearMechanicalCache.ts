@@ -85,7 +85,7 @@ function purchasedRingEnchantChanges(changes: SimcGearChange[], options: Auction
 
 // A purchased item is a complete local replacement in SimC. An omitted gem
 // starts with an empty socket even when the previously worn item had a gem.
-function directJewelryGem(change: SimcGearChange, option: AuctionGearOption, engine: string) {
+function directJewelryGem(change: Pick<SimcGearChange, "slot" | "itemId" | "enchantId" | "gemIds">, option: AuctionGearOption, engine: string) {
   const ring = change.slot === "finger1" || change.slot === "finger2";
   if (!ring && change.slot !== "neck") return;
   if (change.enchantId && (!ring || !ringStatEnchants.has(change.enchantId))) return;
@@ -99,6 +99,16 @@ function directJewelryGem(change: SimcGearChange, option: AuctionGearOption, eng
       meta.socketCount !== 1 || meta.socketBonusId !== 0 || meta.requiredProfessionId !== 0 ||
       meta.socketColors?.length !== 3 || meta.socketColors[0] !== 14 || meta.socketColors[1] !== 0 || meta.socketColors[2] !== 0) return;
   return equivalentGems.get(gem) ?? gem;
+}
+
+/** Certify one ring, gem and enchant using the same host checks as the
+ * independent finalist key. Other enchants keep their original native inputs. */
+export function purchasedRingGemEffect(option: AuctionGearOption, engine: string, gemId: number, enchantId: number) {
+  const slotType = option.candidate.slotType;
+  if (!ignoresItemContext(engine) || (slotType !== "FINGER_1" && slotType !== "FINGER_2") ||
+      enchantId !== 0 && !ringStatEnchants.has(enchantId)) return;
+  return directJewelryGem({ slot: slotType === "FINGER_1" ? "finger1" : "finger2",
+    itemId: option.candidate.itemId, gemIds: [gemId] }, option, engine);
 }
 
 /** The verified gems contribute player-level integer stats. Every eligible

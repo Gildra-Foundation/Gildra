@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { neutralProfessionGloveEnchant } from './auctionGearMechanicalCache';
+import { neutralProfessionGloveEnchant, purchasedRingGemEffect } from './auctionGearMechanicalCache';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -63,6 +63,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
   omitNeutralGloveEnchants?: boolean;
+  pruneEquivalentRingGems?: boolean;
   preview?: boolean;
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
@@ -225,6 +226,10 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationConcurrency:input.simulationConcurrency,
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
+      purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
+        const host = finalist.options.find(option => option.candidate.slotType === slot);
+        return host && purchasedRingGemEffect(host, input.engine, id, enchantId);
+      } : undefined,
       onMeasured: input.onMeasured && ((configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) =>
         input.onMeasured!(configuration, () => describe({ configuration, simulation }))),
       onCheckpoint:(checkpoint:EnhancementCheckpoint)=>{input.state.checkpoints[identity]=checkpoint;},

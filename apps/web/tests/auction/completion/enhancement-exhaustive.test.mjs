@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { optimizeAuctionGearEnhancements } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
+import { purchasedRingGemEffect } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 import { MARKET_MAX_AGE_MS } from '../../../lib/wow/auctionMarket.ts';
 import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { auctionEnhancementCatalogInfo } from '../../../lib/wow/auctionEnhancementCatalog.ts';
@@ -355,5 +356,46 @@ test('owned-only stage admits queued gem edits when the native worker advertises
     const result = await finishStage(h);
     assert(result.complete);
     assert.equal(h.calls.length,21);
+  }
+});
+
+test('strictly cheaper certified ring gems prune whole branches only when substitution is affordable at every position', async () => {
+  const engine='SimulationCraft fixture · 18428cd';
+  const gem = (id, flags={}) => ({key:String(id), simulationId:id, consumableItemId:id, kind:'gem', ...flags});
+  const cheap=130216, dear=153711;
+  async function run({ladder=[[2,2]], restricted={}, own=false, effect=false, otherEnchant=false, legacy=false, installed=false}={}) {
+    const source=stageFixture().input.finalists[0].options[0];
+    const c=source.candidate, variant=c.variants[0];
+    Object.assign(c,{itemClassId:4,inventoryType:11});
+    Object.assign(variant.resolution,{engine,nativeNoItemEffects:!effect});
+    const h=fixture({choices:[gem(cheap,restricted),gem(dear)],slots:2});
+    h.input.slots.forEach((slot,i)=>Object.assign(slot,{slotType:`FINGER_${i+1}`,owned:own,allowOwnedChanges:own}));
+    if(installed) h.input.slots.push({slotType:'NECK',variantKey:'owned-neck',metadataKey:'owned-socket',owned:true,
+      sockets:[{key:'0',type:'14'}],installed:{gems:[gem(cheap,{uniqueEquipped:true})]}});
+    const resolve=h.input.catalog.resolve;
+    if(otherEnchant) h.input.catalog.resolve=slot=>({...resolve(slot),enchantApplicable:true,
+      enchantChoices:[{key:'enchant',kind:'enchant',simulationId:5555,consumableItemId:12}]});
+    h.input.prices.prices={[cheap]:{ladder},[dear]:{ladder:[[5,2]]},12:{ladder:[[1,10]]}};
+    h.input.purchasedGemEffect=(slot,id,enchant)=>purchasedRingGemEffect({...source,candidate:{...c,slotType:slot}},engine,id,enchant);
+    h.input.simulate=async config=>measurement(1000+100*config.slots.filter(s=>s.gemIds[0]).length);
+    const first=legacy ? await optimizeAuctionGearEnhancements({...h.input,purchasedGemEffect:undefined,limits:{configurations:1}}) : undefined;
+    const choices=[];
+    h.input.onMeasured=config=>choices.push(config);
+    return {...await complete(h,first),choices};
+  }
+  const actual=await run(), previous=await run({legacy:true});
+  assert.equal(actual.checkpoint.pricedAxes,'equivalent_gems');
+  assert.equal(actual.checkpoint.exactNextConfiguration,'4');
+  assert.equal(previous.checkpoint.exactNextConfiguration,'9');
+  for(const objective of ['bestValueConfirmed','bestDpsConfirmed'])
+    assert.deepEqual(actual.checkpoint[objective].configuration.slots,previous.checkpoint[objective].configuration.slots);
+  const mixed=await run({otherEnchant:true});
+  assert.equal(mixed.checkpoint.pricedAxes,'conditional_ring_gems');
+  assert.equal(mixed.choices.length,25);
+  assert(mixed.choices.every(row=>row.slots.every(s=>s.gemIds[0]!==dear || s.enchantId===5555)));
+  assert(mixed.choices.some(row=>row.slots.every(s=>s.gemIds[0]===dear && s.enchantId===5555)));
+  for(const flags of [{ladder:[[2,1]]},{ladder:[[2,1],[5,1]]},{ladder:[[2,1],[6,1]]},
+    {restricted:{uniqueEquipped:true}},{restricted:{category:{id:'q',limit:1}}},{effect:true},{own:true},{installed:true}]) {
+    assert.notEqual((await run(flags)).checkpoint.pricedAxes,'equivalent_gems',JSON.stringify(flags));
   }
 });

@@ -524,7 +524,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       const identity = (row: Receipt) => input.finalistKey!(row.optionIds.map(id => byId.get(id)!), row.configuration);
       return identity(a) === identity(b);
     };
-    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
+    const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, pruneEquivalentRingGems: collectReceipts, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
       ...(pass && preciseBaseline ? {
         baseline: preciseBaseline, includePrecisionContenders: false,
