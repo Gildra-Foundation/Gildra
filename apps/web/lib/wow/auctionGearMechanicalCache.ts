@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { GearPlanSimulation } from "./auctionGearTypes";
 import { auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
@@ -29,7 +30,7 @@ const verifiedGemSlots = new Set([
 
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
-  spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly unknown[]; precision?: "finalist";
+  spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
 }, native?: { changes: SimcGearChange[]; engine: string }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
@@ -40,8 +41,13 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
       ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
   })) : request.gearChanges ?? [];
+  // An owned neck edit replaces only the specified prismatic sockets. The
+  // fingerprint identifies the worn item and all untouched sockets.
+  const ownedChanges = reuseCandidateInputs ? request.ownedChanges?.map(change =>
+    change.slotType === "NECK" ? { ...change, gems: change.gems.map(gem =>
+      ({ ...gem, itemId: equivalentGems.get(gem.itemId) ?? gem.itemId })) } : change) : request.ownedChanges;
   const changes = gear.map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
-  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, gearChanges: changes,
+  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, gearChanges: changes,
     actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 

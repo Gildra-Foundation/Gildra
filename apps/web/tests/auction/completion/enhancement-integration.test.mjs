@@ -170,6 +170,22 @@ test('candidate cache reuses verified armor and jewelry gem fights while purchas
   assert.notEqual(nativeKey([192953]),nativeKey([130217])); // Ysemerald name is observable by equipped items
 });
 
+test('owned neck candidate reuse preserves the edited socket, purchase and finalist identities',()=>{
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const edit={slotType:'NECK',itemId:273781,gems:[{index:1,itemId:153712}]};
+  const other={...edit,gems:[{index:1,itemId:130217}]};
+  const key=(change,version=engine,precision)=>auctionGearMechanicalKey('profile',
+    {...request,ownedChanges:[change],precision},{engine:version,changes:[]});
+  assert.equal(key(edit),key(other));
+  assert.equal(edit.gems[0].itemId,153712);
+  assert.notEqual(key(edit),key({...other,gems:[{index:0,itemId:130217}]}));
+  for(const patch of [{slotType:'HEAD'},{itemId:273782},{enchantId:5292}])
+    assert.notEqual(key(edit),key({...other,...patch}));
+  assert.notEqual(key(edit,engine,'finalist'),key(other,engine,'finalist'));
+  assert.notEqual(key(edit,'SimulationCraft other'),key(other,'SimulationCraft other'));
+});
+
 test('serialized continuation retains priced finalists and never repeats already simulated configurations',async()=>{
   const second={...gem,key:'synthetic-second-gem',consumableItemId:950003,simulationId:950003};
   const {input,calls}=fixture({slots:[newSlot()],budgetCopper:1000,limits:{configurations:128,simulations:1,finalists:3},
