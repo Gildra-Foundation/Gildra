@@ -283,3 +283,45 @@ test('only a fresh full search with native Fury healing evidence removes pure he
   assert.deepEqual(await run({evidence:true,revision:'SimulationCraft 18428cd unknown'}),all);
   assert.deepEqual(await run({evidence:true,historical:true}),all);
 });
+
+test('Cradle can stay free on a bare weapon, but removing an installed combat enchant requires a purchase', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const equipped = (slotType, id, installed) => ({
+    item:{id}, slot:{type:slotType}, inventory_type:{type:'TWOHWEAPON'}, level:{value:334},
+    item_class:{id:2}, item_subclass:{id:1}, spells:[], sockets:[],
+    ...(installed ? {enchantments:[{enchantment_slot:{id:0},enchantment_id:installed}]} : {}),
+  });
+  const main = equipped('MAIN_HAND',1001,0), off = equipped('OFF_HAND',1002,7983);
+  const candidate = {itemId:1003,name:'Axe',slotType:'MAIN_HAND',inventoryType:17,itemClassId:2,itemSubclassId:1,
+    eligible:true,compatibility:{specId:72},constraints:{requiredLevel:1},variants:[{key:'axe',itemLevel:334,
+      contextId:0,bonusIds:[],resolution:{effectsVerified:true,effects:[],metadataVersion:3,enhancements:{
+        status:'verified',socketCount:0,socketColors:[0,0,0],socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}}}]};
+  const option = {id:'axe',auctionId:30,costCopper:3,quantity:1,variantKey:'axe',candidate};
+  async function market({items=[main,off], enabled=true, options=[], cheap=[[1,2]], revision=engine}={}) {
+    const state={checkpoints:{}}, choices=new Set();
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for (let step=0;step<50;step++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneCradleEnchants:enabled,
+        finalists:[{label:'exhaustive',options}],equipment:{equipped_items:items},
+        loadout:items.map(i=>({slotType:i.slot.type,itemId:i.item.id,inventoryType:17,itemSubclassId:1})),
+        selectedSlots:items.map(i=>i.slot.type),specId:72,level:90,region:'eu',engine:revision,
+        profileFingerprint:'worldsoul',encounter:{},budgetCopper:100,baseline,state,
+        signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices:{243996:{ladder:cheap},243997:{ladder:[[5,2]]},243998:{ladder:[[8,2]]},243999:{ladder:[[9,2]]}},
+          sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>choices.add(c.slots.map(s=>s.enchantId).join(','))});
+      if (result.complete) return choices;
+    }
+    assert.fail('weapon enchant combinations did not exhaust');
+  }
+  const expected=new Set([0,8008,8009].flatMap(m=>[7983,8006,8008,8009].map(o=>[m,o].join(','))));
+  assert.deepEqual(await market(),expected);
+  assert.deepEqual(await market({options:[option]}),expected);
+  for (const args of [{enabled:false},{revision:'SimulationCraft 18428cd different build'}])
+    assert.equal((await market(args)).size,25);
+  const installed=await market({items:[equipped('MAIN_HAND',1001,8007)]});
+  assert.deepEqual(installed,new Set(['8007','8008','8009']));
+  const both=[equipped('MAIN_HAND',1001,7983),off];
+  for (const cheap of [[[1,1]],[[1,1],[5,1]],[[1,1],[6,1]]])
+    assert((await market({items:both,cheap})).has('8007,8006'),'another hand may consume the last cheap scroll');
+});

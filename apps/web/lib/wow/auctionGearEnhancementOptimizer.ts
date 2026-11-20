@@ -72,6 +72,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   /** Enumerate every supported priced configuration, including partial and bare. */
   exhaustive?: boolean;
   ratingRingSlots?: ReadonlySet<string>;
+  purchasedEnchantEffect?: (slotType: string, id: number) => number | undefined;
   purchasedGemEffect?: (slotType: string, id: number, enchantId: number) => number | undefined;
   ownedGemEffect?: (slotType: string, id: number, enchantId: number) => number | undefined;
   onMeasured?: (configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) => void;
@@ -172,7 +173,8 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
   purchasedGemEffect: EnhancementOptimizerInput["purchasedGemEffect"],
   ownedGemEffect: EnhancementOptimizerInput["ownedGemEffect"],
   conditional: Map<Choice, { axis: number; enchants: Set<number> }> | undefined,
-  ringSlots?: ReadonlySet<string>, pairGuards?: RingPairGuards) {
+  ringSlots?: ReadonlySet<string>, pairGuards?: RingPairGuards,
+  purchasedEnchantEffect?: EnhancementOptimizerInput["purchasedEnchantEffect"]) {
   const originalAxes = axes.slice();
   const lastPrice = new Map<number, number>();
   const maximumMarginal = (id: number) => {
@@ -192,9 +194,13 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
   const dominated = new Set<Choice>();
   // A retained or restricted copy in another position can make this ID unique
   // for the entire loadout, even when the current offer has no such flag.
-  const uniqueGems = new Set<number>();
-  if (purchasedGemEffect || ownedGemEffect) for (const axis of axes) for (const { enhancement } of axis)
-    if (enhancement?.kind === "gem" && enhancement.uniqueEquipped) uniqueGems.add(enhancement.simulationId);
+  const uniqueGems = new Set<number>(), uniqueEnchants = new Set<number>();
+  if (purchasedGemEffect || ownedGemEffect || purchasedEnchantEffect) {
+    for (const axis of axes) for (const { enhancement } of axis) {
+      if (enhancement?.uniqueEquipped)
+        (enhancement.kind === "gem" ? uniqueGems : uniqueEnchants).add(enhancement.simulationId);
+    }
+  }
   const enchantAxes = new Map<number, number>();
   for (const [index, axis] of axes.entries()) if (axis[0].socket === null) enchantAxes.set(axis[0].slot, index);
   let removedGems = false;
@@ -207,6 +213,13 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
       const e = choice.enhancement;
       if (choice.retained || !e || e.category || e.uniqueEquipped || e.profession) continue;
       let effect = e.simulationId;
+      if (socket === null && purchasedEnchantEffect) {
+        const certified = purchasedEnchantEffect(target.slotType, e.simulationId);
+        if (certified !== undefined) {
+          if (uniqueEnchants.has(e.simulationId)) continue;
+          effect = certified;
+        }
+      }
       if (socket !== null) {
         if (e.consumableItemId !== e.simulationId || uniqueGems.has(e.simulationId)) continue;
         const certified = gemEffect?.(target.slotType, e.simulationId, 0);
@@ -357,7 +370,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     ? new Map<Choice, {axis: number; enchants: Set<number>}>() : undefined;
   const compact = exact && (gemProofAllowed || pricedAxes === "equivalent_scrolls")
     ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined,
-        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards) : undefined;
+        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect) : undefined;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,

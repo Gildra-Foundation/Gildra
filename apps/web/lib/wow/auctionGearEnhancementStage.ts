@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
 import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
@@ -68,6 +68,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   omitShoulderIllusions?: boolean;
   omitWristHearthEnchants?: boolean;
   omitInertFuryLeech?: boolean;
+  pruneCradleEnchants?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -110,6 +111,9 @@ export async function evaluateAuctionEnhancementStage(input: {
     if(equipmentSets.has(equipmentKey))continue;
     equipmentSets.add(equipmentKey);
     const inertFuryLeech = input.exhaustive && input.omitInertFuryLeech && input.specId === 72 && ignoresItemContext(input.engine);
+    const cradleSlots = new Set<string>();
+    const eligibleWeapon = (slot: string, itemClass: number) => input.exhaustive && input.pruneCradleEnchants &&
+      ignoresItemContext(input.engine) && itemClass === 2 && (slot === 'MAIN_HAND' || slot === 'OFF_HAND');
     const ownedGemSlots = new Set<string>();
     const slots: EnhancementSlot[] = [], resolutions = new Map<string, EnhancementResolution>();
     const replaced = new Set(finalist.options.map(o => o.candidate.slotType));
@@ -143,8 +147,10 @@ export async function evaluateAuctionEnhancementStage(input: {
         target.inventoryType === 3 && !option.customization;
       const bareWrist = input.exhaustive && input.omitWristHearthEnchants && slot.slotType === 'WRIST' &&
         target.inventoryType === 9 && !option.customization;
+      const bareWeapon = !option.customization && eligibleWeapon(slot.slotType, target.itemClassId);
       resolutions.set(slot.slotType,{...resolved,
         enchantChoices:resolved.enchantChoices.filter(e =>
+          !(bareWeapon && isWorldsoulCradle(e.simulationId)) &&
           !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
           !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine)) &&
           !(inertFuryLeech && !option.customization && pureArmorLeechEnchant(slot.slotType, target.inventoryType, e.simulationId))).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
@@ -186,6 +192,12 @@ export async function evaluateAuctionEnhancementStage(input: {
           // Leaving an originally bare glove unchanged has the same native effect
           // and costs zero. Every purchasable scroll costs strictly positive copper.
           const unenchanted = item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length;
+          const weapon = eligibleWeapon(slotType, target.itemClassId);
+          // A paid overwrite may remove a working enchant, so it cannot be
+          // substituted with free retention unless the original is also inert.
+          const freeCradle = weapon && (unenchanted || rows(item.enchantments).length === 1 &&
+            !!enchant && isWorldsoulCradle(enchant.simulationId));
+          if (weapon && !freeCradle) cradleSlots.add(slotType);
           const bareGloves = unenchanted && input.exhaustive && input.omitNeutralGloveEnchants &&
             slotType === 'HANDS' && obj(item.inventory_type).type === 'HAND';
           const bareShoulder = unenchanted && input.exhaustive && input.omitShoulderIllusions &&
@@ -205,6 +217,7 @@ export async function evaluateAuctionEnhancementStage(input: {
           slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
           resolution = {...resolved,enchantApplicable:resolved.enchantApplicable || Boolean(enchant),
             enchantChoices:resolved.enchantChoices.filter(e =>
+              !(freeCradle && isWorldsoulCradle(e.simulationId)) &&
               !(bareGloves && neutralProfessionGloveEnchant(e.simulationId, input.engine)) &&
               !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine)) &&
               !(bareWrist && neutralWristHearthEnchant(e.simulationId, input.engine)) &&
@@ -266,6 +279,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       ratingRingSlots,
+      purchasedEnchantEffect: cradleSlots.size ? (slot: string, id: number) =>
+        cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined : undefined,
       ownedGemEffect: ownedGemSlots.size ? (slot: string, id: number, enchantId: number) =>
         ownedGemSlots.has(slot) && (!enchantId || slot !== 'NECK' && isDirectRingEnchant(enchantId))
           ? ringGemRepresentative90(id) : undefined : undefined,

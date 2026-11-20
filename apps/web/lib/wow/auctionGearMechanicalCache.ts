@@ -53,6 +53,13 @@ export function neutralWristHearthEnchant(id: number, engine: string) {
   return (id === 5970 || id === 6222) && ignoresItemContext(engine);
 }
 
+// Both Worldsoul Cradle ranks install only a linked healing-barrier aura.
+// The pinned engine gives their drivers no proc flags or custom handler.
+// Aegis has a damaging explosion and is outside this rule.
+export function isWorldsoulCradle(id: number) {
+  return id === 8006 || id === 8007;
+}
+
 // Pure leech rating on a bare helm or shoulder. The caller must have an
 // attestation from the unchanged native Fury actor that healing is disabled.
 export function pureArmorLeechEnchant(slot: string, inventory: number, id: number) {
