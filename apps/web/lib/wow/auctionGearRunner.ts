@@ -696,8 +696,10 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       const ownedByFinalist = new Map<string, readonly OwnedAuctionGearChange[]>();
       const byId = new Map(options.map(option => [option.id, option]));
       const selectedSets = new Set<string>();
-      for (const [label, best] of [["confirmed", checkpoint.bestConfirmed], ["measured", checkpoint.best],
-        ["value", checkpoint.bestValueConfirmed], ["dps", checkpoint.bestDpsConfirmed]] as const) {
+      const leaders = fullMarket && context.input.enhancementMode === "equipment"
+        ? checkpoint.equipmentVerification ?? checkpoint : checkpoint;
+      for (const [label, best] of [["confirmed", leaders.bestConfirmed], ["measured", leaders.best],
+        ["value", leaders.bestValueConfirmed], ["dps", leaders.bestDpsConfirmed]] as const) {
         if (!best || !best.optionIds.length) continue;
         const key = JSON.stringify([...best.optionIds].sort());
         if (selectedSets.has(key)) continue;

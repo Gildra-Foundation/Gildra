@@ -352,8 +352,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
   let replayLegacyCandidates = false;
   if (input.checkpoint) {
     requireCheckpoint(inputKey, input.checkpoint, (grouping ?? 0) >= 3 ? 4 : 3);
-    const { simulationCache, ...state } = input.checkpoint;
-    checkpoint = { ...structuredClone(state), simulationCache: cloneCache(simulationCache, state.baseline.engine) };
+    // The precise pass clones its own state when resumed; keep it separate
+    // from the much more frequently resumed screening cache.
+    const { simulationCache, equipmentVerification, ...state } = input.checkpoint;
+    checkpoint = { ...structuredClone(state), ...(equipmentVerification ? {equipmentVerification} : {}),
+      simulationCache: cloneCache(simulationCache, state.baseline.engine) };
     checkpoint.baseline = validSimulation(checkpoint.baseline);
     if (checkpoint.cursor.length !== slots.length || checkpoint.cursor.some((index, slot) => !Number.isInteger(index) || index < 0 || index >= radices[slot])) throw new Error("invalid_search_checkpoint");
     if (checkpoint.pairScores.length !== flatGroups.length || checkpoint.pairScores.some(score => !Number.isFinite(score) || score <= 0) ||
@@ -800,15 +803,23 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const verified = new Map<string, GearPlanSimulation>();
     const finalists = [...sets];
     const concurrency = input.simulationConcurrency === 2 ? 2 : 1;
-    const recheck = input.recheckEquipment;
+    const independent = input.recheckEquipment;
+    const precise = (result: GearPlanSimulation) => {
+      const value = validSimulation(result, checkpoint.baseline.engine);
+      if (value.iterations !== 750) throw new Error("invalid_finalist_precision");
+      return value;
+    };
+    const recheck = async (selected: AuctionGearOption[], signal: AbortSignal) => precise(await independent(selected, signal));
     for (let offset = 0; offset < finalists.length; offset += concurrency) {
       const window = finalists.slice(offset, offset + concurrency);
       const results = await Promise.allSettled(window.map(async ([key, selected]) => {
         input.signal.throwIfAborted();
         const cached = measurements[key];
-        if (!cached && input.shouldYield?.()) return;
-        const result = validSimulation(cached ?? await recheck(selected, input.signal), checkpoint.baseline.engine);
-        if (result.iterations !== 750) throw new Error("invalid_finalist_precision");
+        if (!cached) {
+          if (calls >= max || input.shouldYield?.()) return;
+          calls++;
+        }
+        const result = cached ? precise(cached) : await recheck(selected, input.signal);
         verified.set(key, result);
         if (!cached) {
           measurements[key] = result;
@@ -823,7 +834,32 @@ export async function assembleAuctionGear(input: PlannerInput & {
     }
     if (complete) {
       const baseline = verified.get("[]")!;
-      leaders = { baseline, best: { optionIds: [], simulation: baseline }, bestConfirmed: null, bestDpsConfirmed: null, bestValueConfirmed: null };
+      // The screening leaders are an early precise result. They cannot bound
+      // other receipts at an independent seed and precision. Reuse the same
+      // procurement, certified branch cuts and tie-breaks for the precise pass.
+      const warm: AuctionGearSimulationCache = {};
+      for (const [key, selected] of sets) warm[auctionSelectionEffectKey(selected)] = verified.get(key)!;
+      const saved = checkpoint.equipmentVerification;
+      if (saved) {
+        precise(saved.baseline);
+        for (const result of Object.values(saved.simulationCache)) precise(result);
+        for (const best of [saved.best, saved.bestConfirmed, saved.bestDpsConfirmed, saved.bestValueConfirmed])
+          if (best) precise(best.simulation);
+      }
+      if (!saved?.exhausted && (calls >= max || input.shouldYield?.())) {
+        complete = false;
+      } else {
+        const verification = await assembleAuctionGear({ ...input, searchId: input.searchId + ":equipment-750",
+          baseline, simulate: recheck, simulationCache: warm, checkpoint: saved, incumbents: undefined,
+          maxNewSimulations: Math.max(1, max - calls), recheckEquipment: undefined,
+          onCheckpoint: state => { checkpoint.equipmentVerification = state; save(); } });
+        checkpoint.equipmentVerification = verification.checkpoint;
+        complete = verification.result.exhaustiveComplete;
+      }
+      const covered = checkpoint.equipmentVerification;
+      leaders = { baseline, best: covered?.best ?? { optionIds: [], simulation: baseline },
+        bestConfirmed: covered?.bestConfirmed ?? null, bestDpsConfirmed: covered?.bestDpsConfirmed ?? null,
+        bestValueConfirmed: covered?.bestValueConfirmed ?? null };
       for (const [key, selected] of sets) if (selected.length) consider(selected, verified.get(key)!, leaders);
     }
   }
@@ -847,7 +883,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     comparison: compareGearSimulationResults(leaders.baseline, leaders.best.simulation), engine: leaders.baseline.engine,
     bestConfirmed: presentConfirmed(leaders.bestConfirmed),
     bestValueConfirmed: presentConfirmed(leaders.bestValueConfirmed), bestDpsConfirmed: presentConfirmed(leaders.bestDpsConfirmed),
-    simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !complete,
+    simulations: checkpoint.simulations + (checkpoint.equipmentVerification?.simulations ?? 0), optionsConsidered: options.length, searchLimited: !complete,
     exhaustiveComplete: complete, combinationsChecked: checkpoint.combinationsChecked,
     ...(checkpoint.proofPrunedAssignments ? { proofPrunedAssignments: checkpoint.proofPrunedAssignments } : {}),
     ...(checkpoint.pruningCounts ? { pruningCounts: checkpoint.pruningCounts } : {}),

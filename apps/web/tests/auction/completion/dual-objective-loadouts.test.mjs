@@ -439,7 +439,7 @@ test('equipment finalists resume at 750 iterations and rank both objectives agai
   const precise = async selected => {
     const key = selected.map(o => o.auctionId).sort().join(',');
     calls.push(key);
-    return measurement({ '': 1050, '3': 1700, '1': 1040, '2,4': 1660 }[key]);
+    return measurement({ '': 1050, '3': 1700, '1': 1040, '2,4': 1660, '1,4': 1850, '2': 1200, '4': 1100 }[key]);
   };
   const paused = await assembleAuctionGear({ ...h.input, checkpoint: initial.checkpoint,
     recheckEquipment: precise, shouldYield: () => calls.length === 1 });
@@ -449,16 +449,47 @@ test('equipment finalists resume at 750 iterations and rank both objectives agai
   assert.deepEqual(calls, ['']);
   const done = await assembleAuctionGear({ ...h.input, checkpoint: structuredClone(paused.checkpoint), recheckEquipment: precise });
   assert.equal(done.result.exhaustiveComplete, true);
-  assert.deepEqual([...calls].sort(), ['', '1', '2,4', '3']);
-  assert.deepEqual(ids(done.result.bestDpsConfirmed), [3]);
-  assert.deepEqual(ids(done.result.bestValueConfirmed), [3]);
+  assert.deepEqual([...calls].sort(), ['', '1', '1,4', '2', '2,4', '3', '4']);
+  assert.deepEqual(ids(done.result.bestDpsConfirmed), [1,4]);
+  assert.deepEqual(ids(done.result.bestValueConfirmed), [1,4]);
   assert.equal(done.result.comparison.baselineDps, 1050);
-  assert.equal(done.result.bestValueConfirmed.comparison.deltaDps, 650);
+  assert.equal(done.result.bestValueConfirmed.comparison.deltaDps, 800);
   assert.equal(done.checkpoint.baseline.iterations, 100);
   assert.deepEqual(done.checkpoint.bestValueConfirmed.optionIds, ['1']);
   const resumed = await assembleAuctionGear({ ...h.input, checkpoint: structuredClone(done.checkpoint),
     recheckEquipment: () => assert.fail('completed finalists must survive a resume') });
   assert.deepEqual(resumed.result, done.result);
+});
+
+test('an independent equipment sweep resumes inside the domain under a one-fight budget', async () => {
+  const h = fixture(), initial = await finish(h);
+  const seen = new Set();
+  const precise = async selected => {
+    const key = selected.map(row => row.id).sort().join(',');
+    assert(!seen.has(key), 'a completed precise fight must survive a restart');
+    seen.add(key);
+    return measurement(key === '1,4' ? 2000 : key ? 1001 : 1000);
+  };
+  let state = initial.checkpoint, partial;
+  for (let step = 0; step < 30; step++) {
+    const previous = seen.size;
+    partial = await assembleAuctionGear({ ...h.input, checkpoint: structuredClone(state), recheckEquipment: precise,
+      maxNewSimulations: 1, maxAssignments: 3, simulationConcurrency: 2, simulationBatchSize: 4 });
+    assert(seen.size - previous <= 1);
+    state = partial.checkpoint;
+    if (partial.result.exhaustiveComplete) break;
+    if (state.equipmentVerification && !state.equipmentVerification.exhausted) {
+      const corrupted = structuredClone(state);
+      corrupted.equipmentVerification.baseline.iterations = 100;
+      await assert.rejects(assembleAuctionGear({ ...h.input, checkpoint: corrupted, recheckEquipment: precise }),
+        /invalid_finalist_precision/);
+    }
+  }
+  assert(partial.result.exhaustiveComplete);
+  assert.equal(seen.size, 7);
+  assert.deepEqual(ids(partial.result.bestDpsConfirmed), [1,4]);
+  assert.deepEqual(ids(partial.result.bestValueConfirmed), [1,4]);
+  assert.equal(partial.result.simulations - initial.result.simulations, seen.size);
 });
 
 test('two finalist lanes keep a successful sibling for retry after a failed measurement', async () => {
