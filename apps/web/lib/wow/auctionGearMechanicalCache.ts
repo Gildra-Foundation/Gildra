@@ -40,16 +40,15 @@ const verifiedGemSlots = new Set([
   "head", "neck", "shoulder", "back", "chest", "wrist", "hands", "waist", "legs", "feet", "finger1", "finger2",
 ]);
 
+const directPrismaticGems = new Set([...equivalentGems.keys(), ...equivalentGems.values()]);
+
 type WornRing = { itemId: number; enchantId: number };
 
 /** Explicit direct enchants on two rings contribute integer ratings based on
  * the player's level. Each host, its gems and its purchase remain in place.
  * Only the score key uses the sorted enchant IDs. */
-export function purchasedRingScoreChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string,
+function purchasedRingEnchantChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string, purchased: readonly number[],
   owned: readonly OwnedAuctionGearChange[] | undefined, wornRings: readonly [WornRing, WornRing] | undefined) {
-  if ((changes.length < 2 && !owned?.length) || !ignoresItemContext(engine)) return;
-  const purchased = [changes.findIndex(c => c.slot === "finger1"), changes.findIndex(c => c.slot === "finger2")];
-  if (purchased.every(index => index < 0)) return;
   const edits = [owned?.findIndex(c => c.slotType === "FINGER_1") ?? -1, owned?.findIndex(c => c.slotType === "FINGER_2") ?? -1];
   const enchants: number[] = [];
   for (const [slot, index] of purchased.entries()) {
@@ -78,6 +77,37 @@ export function purchasedRingScoreChanges(changes: SimcGearChange[], options: Au
     else if (scoreOwned) scoreOwned[edits[slot]] = { ...scoreOwned[edits[slot]], enchantId };
   }
   return { changes: scoreChanges, ownedChanges: scoreOwned };
+}
+
+/** Each certified gem adds player-level integer stats and matches a prismatic
+ * socket. Neither host has a socket bonus or intrinsic effect. The native gem
+ * observers retain the same names, counts and colors. Move only the score key. */
+export function purchasedRingScoreChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string,
+  owned: readonly OwnedAuctionGearChange[] | undefined, wornRings: readonly [WornRing, WornRing] | undefined) {
+  if ((changes.length < 2 && !owned?.length) || !ignoresItemContext(engine)) return;
+  const first = changes.findIndex(c => c.slot === "finger1"), second = changes.findIndex(c => c.slot === "finger2");
+  if (first < 0 && second < 0) return;
+  const enchants = purchasedRingEnchantChanges(changes, options, engine, [first, second], owned, wornRings);
+  if (first < 0 || second < 0 || !changes[first].gemIds?.length || !changes[second].gemIds?.length ||
+      owned?.some(c => c.slotType === "FINGER_1" || c.slotType === "FINGER_2")) return enchants;
+  const gem = (index: number) => {
+    const change = changes[index], gems = change.gemIds;
+    if (gems?.length !== 1 || !directPrismaticGems.has(gems[0]) || (change.enchantId && !ringStatEnchants.has(change.enchantId))) return;
+    const option = options[index], c = option.candidate, variant = c.variants.find(v => v.key === option.variantKey);
+    const r = variant?.resolution, meta = r?.enhancements;
+    if (c.itemId !== change.itemId || c.inventoryType !== 11 || c.itemClassId !== 4 ||
+        !variant || !Number.isSafeInteger(variant.itemLevel) || variant.itemLevel < 10 ||
+        r?.engine !== engine || r.nativeNoItemEffects !== true || meta?.status !== "verified" ||
+        meta.socketCount !== 1 || meta.socketBonusId !== 0 || meta.requiredProfessionId !== 0 ||
+        meta.socketColors?.length !== 3 || meta.socketColors[0] !== 14 || meta.socketColors[1] !== 0 || meta.socketColors[2] !== 0) return;
+    return equivalentGems.get(gems[0]) ?? gems[0];
+  };
+  const a = gem(first), b = gem(second);
+  if (a === undefined || b === undefined || a <= b) return enchants;
+  const scoreChanges = enchants?.changes ?? changes.slice();
+  scoreChanges[first] = { ...scoreChanges[first], gemIds: [b] };
+  scoreChanges[second] = { ...scoreChanges[second], gemIds: [a] };
+  return { changes: scoreChanges, ownedChanges: enchants?.ownedChanges ?? owned };
 }
 
 function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: readonly [WornRing, WornRing]) {

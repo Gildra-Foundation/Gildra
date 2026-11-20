@@ -611,6 +611,41 @@ test('purchased rings share only direct enchant transfers, preserving item slots
   }
 });
 
+test('single prismatic rings reuse certified direct gem permutations only for candidate combat',async()=>{
+  const pinned='SimulationCraft 1210-01 · 18428cd';
+  const ring=(id,slot,gems,enchantId)=>{
+    const row=option(id,slot);row.candidate.inventoryType=11;
+    Object.assign(row.candidate.variants[0],{itemLevel:150,resolution:{engine:pinned,nativeNoItemEffects:true,
+      enhancements:{status:'verified',socketColors:[14,0,0],socketCount:1,socketBonusId:0,requiredProfessionId:0}}});
+    row.customization={gemIds:gems,enchantId};return row;
+  };
+  for(const [name,mutate,shared] of [
+    ['direct',()=>{},true],
+    ['socket bonus',r=>{r.candidate.variants[0].resolution.enhancements.socketBonusId=123;},false],
+    ['second socket',r=>{r.candidate.variants[0].resolution.enhancements.socketCount=2;},false],
+    ['intrinsic effect',r=>{r.candidate.variants[0].resolution.nativeNoItemEffects=false;},false],
+    ['unverified gem',r=>{r.customization.gemIds=[240870];},false],
+    ['low-level host',r=>{r.candidate.variants[0].itemLevel=9;},false],
+    ['proc enchant',r=>{r.customization.enchantId=6550;},false],
+  ]){
+    const {run,state,finishFrom}=fixture({workerEngine:pinned});
+    const first=[ring(501,'FINGER_1',[153710],7964),ring(502,'FINGER_2',[130216],8022)];
+    const other=[ring(502,'FINGER_2',[130215],7964),ring(501,'FINGER_1',[153711],8022)];
+    mutate(other[1]);
+    const sig=signal();await run.concurrency(sig);
+    const pending=Promise.all([run(first,sig,[],'certified-candidate'),run(other,sig,[],'certified-candidate')]);
+    await tick();await finishFrom(0);await pending;
+    const rows=state.requests.flatMap(request=>request.rows);
+    assert.equal(rows.length,shared?1:2,name);
+    assert.deepEqual(rows[0].gearChanges.map(c=>c.gemIds),[[153710],[130216]]);
+    const before=state.requests.length;
+    const final=run(other,sig,[],'finalist');await tick();
+    assert.equal(state.requests.length,before+1);
+    assert.deepEqual(state.requests.at(-1).base.gearChanges.map(c=>c.gemIds),other.map(o=>o.customization.gemIds));
+    await finishFrom(before);assert.equal((await final).iterations,750);
+  }
+});
+
 test('direct enchant transfers between a purchased ring and an explicitly edited worn ring preserve both receipts', async () => {
   const pinned = 'SimulationCraft 1210-01 · 18428cd';
   const equipment = {equipped_items: ['FINGER_1','FINGER_2'].map((slot,index) => ({
