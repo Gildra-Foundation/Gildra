@@ -41,3 +41,23 @@ test('the shopping recommendation respects the independently measured value winn
   assembly.enhancementOptimization.complete = false;
   assert.equal(selected().totalCopper, 200);
 });
+
+test('an early significant bare gain cannot replace a completed independent zero-upgrade result', async () => {
+  const { auctionGearResults, recommendedAuctionGearResult, auctionGearLoadoutComparison } = await import('../../../lib/wow/auctionGearResult.ts');
+  const checked={deltaDps:0,candidateDps:1000,uncertainty:{significant:false}};
+  const noisy={deltaDps:18,candidateDps:1018,uncertainty:{significant:true}};
+  const assembly={purchases:[{slotType:'HEAD',itemId:1,auctionId:2,variantKey:'early'}],spentCopper:200,budgetCopper:500,
+    comparison:noisy,removedSlots:[],enhancementMode:'enhanced',enhancementOptimization:{traversal:'exhaustive',complete:true,
+      verifiedObjectives:{dps:'baseline',value:'baseline'},recommendations:[{configuration:{key:'baseline',status:'priced',
+        itemsCopper:0,totalCopper:0,consumables:[]},purchases:[],comparison:checked}]}};
+  const results=auctionGearResults(assembly);
+  for(const objective of ['dps','value']) {
+    const winner=recommendedAuctionGearResult(results,objective);
+    assert.deepEqual(winner.purchases,[]);
+    assert.equal(winner.totalCopper,0);
+    assert.equal(winner.significant,false);
+  }
+  assert.equal(auctionGearLoadoutComparison(results),null);
+  assembly.enhancementOptimization.complete=false;
+  assert.equal(recommendedAuctionGearResult(auctionGearResults(assembly),'dps').totalCopper,200);
+});

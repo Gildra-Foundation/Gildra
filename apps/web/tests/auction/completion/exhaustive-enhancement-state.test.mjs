@@ -486,6 +486,7 @@ test('independent precision covers more than one private receipt window, across 
   const options = Array.from({length: 78}, (_, i) => ({...h.input.options[0], id: `offer-${i}`,
     auctionId: i + 50, costCopper: i + 1, candidate: {...h.input.options[0].candidate, itemId: 500+i}}));
   h.input.options = options;
+  h.scores = {'offer-0': 985, 'offer-51': 982};
   h.iterations = 100;
   h.input.baseline = {...simulation(1000), iterations: 100};
   h.input.finalistKey = selected => selected[0]?.id ?? 'baseline';
@@ -508,6 +509,7 @@ test('independent precision covers more than one private receipt window, across 
   const result = await run();
   assert.equal(h.state.finalistReceipts, 'overflow');
   assert.equal(nativeInputs.size,78);
+  assert(!h.state.cursor.exhausted, 'Only the prefix seen before the final peak needs a ranking replay');
   assert.equal(result.equipmentChecked,79);
   assert.equal(result.finalistRecheck.leaderKey,'offer-72');
   assert.equal(result.finalistRecheck.preferredKey,'offer-51');

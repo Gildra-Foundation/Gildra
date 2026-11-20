@@ -25,7 +25,7 @@ test('full exact pipeline publishes every distinct enhancement result in order a
   assert.equal(run.summary.equipmentChecked,2,'Both retained equipment and the purchasable replacement were exhaustively evaluated');
   const ordinary=run.requests.filter(request=>request.precision==='auction-candidate');
   assert.equal(ordinary.length,1+21*21,'Owned baseline plus every combination of 20 or no gem and 20 or no scroll');
-  assert.equal(run.summary.counts.native,ordinary.length+4);
+  assert.equal(run.summary.counts.native,2*ordinary.length);
   assert.equal(new Set(run.requests.map(nativeKey)).size,run.requests.length);
   assert.deepEqual(published,expected);
   assert(run.summary.counts.searchWrites<run.summary.counts.stage,'The full job writes fewer search snapshots than enhancement evaluations');
@@ -38,7 +38,8 @@ test('full exact pipeline publishes every distinct enhancement result in order a
   const stage = run.final.result.enhancementOptimization;
   const precise=run.requests.filter(request=>request.precision==='auction-finalist');
   assert.equal(precise.filter(request=>!request.gearChanges?.length).length,1);
-  assert.equal(precise.filter(request=>request.gearChanges?.length).length,3);
+  assert.equal(precise.filter(request=>request.gearChanges?.length).length,21*21);
+  assert.equal(run.diskEntry.data.exhaustiveEnhancementState.precisionPass.phase,'done');
   assert.equal(stage.finalistRecheck.significant,false);
   for(const row of stage.recommendations){
     assert.equal(row.simulation.iterations,stage.finalistRecheck.keys.includes(row.configuration.key)?750:100);

@@ -24,6 +24,7 @@ export type AuctionEnhancedRecommendation = { label: string; configuration: Pric
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
   traversal?: 'exhaustive' | 'preview'; includesOwnedEquipment?: true; equipmentChecked?: number;
   verifiedValueKey?: string;
+  verifiedObjectives?: { dps: string; value: string };
   finalistRecheck?: { keys: string[]; significant: boolean; marginDps: number;
     leaderKey?: string; indistinguishableKeys?: string[]; preferredKey?: string; competingKey?: string };
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };

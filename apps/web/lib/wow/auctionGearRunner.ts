@@ -495,7 +495,7 @@ function withFreshEnhancementQuotes<T extends AuctionGearAssemblyResult>(result:
     catch { return false; }
   });
   if (recommendations.length === enhanced.recommendations.length) return result;
-  return {...result, enhancementOptimization:{...enhanced, recommendations, finalistRecheck: undefined, verifiedValueKey: undefined,
+  return {...result, enhancementOptimization:{...enhanced, recommendations, finalistRecheck: undefined, verifiedValueKey: undefined, verifiedObjectives: undefined,
     status:enhanced.complete ? recommendations.length ? 'ready' : 'unavailable' : 'pending',
     reasons:[...new Set([...enhanced.reasons,'market_unverified'])]}};
 }
