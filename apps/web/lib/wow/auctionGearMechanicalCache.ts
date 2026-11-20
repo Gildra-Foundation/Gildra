@@ -180,7 +180,8 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
-  const gear = native ? native.changes.map((change, i) => {
+  const certifiedRings: { index: number; slot: string; ratings: number[] }[] = [];
+  const gear = native?.changes.map((change, i) => {
     const option = native.options?.[i];
     const variant = option?.candidate.variants.find(row => row.key === option.variantKey);
     const resolution = variant?.resolution;
@@ -220,15 +221,30 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []) &&
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
+    if (ratings) certifiedRings.push({ index: i, slot: change.slot, ratings });
     return {
       ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, curve),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
-      ...(ratings ? { gemIds: undefined, enchantId: undefined, ringRatings90: ratings } : {}),
+      ...(ratings && (change.enchantId || change.gemIds?.some(Boolean)) ? { gemIds: undefined, enchantId: undefined, ringRatings90: ratings } : {}),
     };
-  }) : request.gearChanges ?? [];
+  });
+  // item_t::total_stats adds these integer ratings before player_t sums gear.
+  // Both physical ring slots and every other field remain in the cache key.
+  if (gear && certifiedRings.length === 2) {
+    const [first, second] = certifiedRings;
+    if (first.slot !== second.slot) {
+      const sum = first.ratings.map((amount, axis) => amount + second.ratings[axis]);
+      if (sum.some(Boolean)) {
+        for (const { index, slot } of certifiedRings) {
+          gear[index] = { ...gear[index], gemIds: undefined, enchantId: undefined,
+            ringRatings90: slot === "finger1" ? sum : [0, 0, 0, 0] };
+        }
+      }
+    }
+  }
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
   let ownedChanges = request.ownedChanges;
@@ -250,7 +266,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     });
     ownedChanges = edits.length ? edits : undefined;
   }
-  const changes = gear.map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  const changes = (gear ?? request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
     actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }

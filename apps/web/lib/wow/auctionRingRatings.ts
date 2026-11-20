@@ -36,7 +36,7 @@ export const ringGemRepresentative90 = (id: number) => gems.get(id)?.representat
 
 export function combinedRingRatings90(enchantId: number, gemId: number) {
   const enchant = enchants.get(enchantId), gem = gems.get(gemId);
-  if ((enchantId && !enchant) || (gemId && !gem) || (!enchant && !gem)) return;
+  if ((enchantId && !enchant) || (gemId && !gem)) return;
   const ratings = [0, 0, 0, 0];
   if (enchant) ratings[enchant.axis] += enchant.amount;
   if (gem) ratings[gem.axis] += gem.amount;

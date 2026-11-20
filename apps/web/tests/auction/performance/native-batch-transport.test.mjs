@@ -776,6 +776,15 @@ test('level-90 ring ratings share fights within a precision and preserve the pur
     for (const row of [a, b]) changeHost(row.candidate.variants[0]);
     assert.notEqual(key(a), key(b));
   }
+  const two = (enchant1, gem1, enchant2, gem2) =>
+    [ring(gem1, enchant1), ring(gem2, enchant2, 'FINGER_2')];
+  const a = two(8020, 130218, 7965, 115804);
+  const b = two(8021, 0, 7968, 0);
+  assert.equal(run.finalistKey(a), run.finalistKey(b));
+  assert.equal(run.finalistKey(a), run.finalistKey([...b].reverse()));
+  assert.notEqual(run.finalistKey(a), run.finalistKey(two(8021, 0, 7965, 0)));
+  for (const rows of [a, b]) rows[1].candidate.variants[0].resolution.nativeNoItemEffects = false;
+  assert.notEqual(run.finalistKey(a), run.finalistKey(b));
   for (const level of [89, undefined]) {
     const { run: otherLevel } = fixture({ workerEngine: engine, profile: { level } });
     assert.notEqual(key(withGem, otherLevel), key(enchantOnly, otherLevel));
