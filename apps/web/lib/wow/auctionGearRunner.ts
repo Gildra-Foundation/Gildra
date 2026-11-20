@@ -944,9 +944,14 @@ export function restoreAuctionGearContext(data: ReturnType<typeof snapshotAuctio
   const retryProfessionEquipment = !data.armory.professions && [...savedDiscovery.candidates.values()].some(candidates =>
     candidates.some(candidate => candidate.variants.some(variant => variant.resolution?.enhancements?.status === "verified" &&
       variant.resolution.enhancements.requiredProfessionId > 0)));
-  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference && !retryProfessionEquipment ? savedDiscovery
+  // Earlier reports suppressed a real zero weapon minimum. A saved reference
+  // could have passed without comparing weapon damage to the public preview.
+  const retryWeaponReference = !savedDiscovery.weaponReferenceRevision && [...(savedDiscovery.verifiedReferences ?? [])]
+    .some(id => savedDiscovery.references.get(id)?.weapon);
+  const discovery = savedDiscovery.socketMetadataRevision === 3 && !retryEquippedReference && !retryProfessionEquipment && !retryWeaponReference ? savedDiscovery
     : createAuctionGearDiscovery({ ...data.market, offers: [...data.discovery.offers.values()].flat() }, data.input.budgetCopper);
   discovery.equippedReferenceRevision = 1;
+  discovery.weaponReferenceRevision = 1;
   const coverage = discovery === data.discovery ? data.coverage
     : { ...auctionGearDiscoveryCoverage(discovery), discoveryComplete: false, dataComplete: false };
   const discoveryContext = (slotType: string) => ({

@@ -73,7 +73,7 @@ type GearVariantWeapon struct {
 }
 
 func validGearVariantWeapon(weapon *GearVariantWeapon) bool {
-	if weapon == nil || weapon.MinDamage <= 0 || weapon.MaxDamage < weapon.MinDamage || weapon.DPS <= 0 || weapon.SpeedSeconds <= 0 {
+	if weapon == nil || weapon.MinDamage < 0 || weapon.MaxDamage <= 0 || weapon.MaxDamage < weapon.MinDamage || weapon.DPS <= 0 || weapon.SpeedSeconds <= 0 {
 		return false
 	}
 	for _, value := range []float64{weapon.MinDamage, weapon.MaxDamage, weapon.DPS, weapon.SpeedSeconds} {
@@ -327,7 +327,8 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		result.SetID = n("set_id")
 		_ = json.Unmarshal(item["unique_equipped"], &result.UniqueEquipped)
 		if rawWeapon, present := item["gildra_weapon"]; present {
-			var weapon GearVariantWeapon
+			// Zero is a measured minimum. A missing or null minimum must remain invalid.
+			weapon := GearVariantWeapon{MinDamage: -1}
 			if json.Unmarshal(rawWeapon, &weapon) != nil || !validGearVariantWeapon(&weapon) {
 				result.Error = "item_variant_unverified"
 			} else {

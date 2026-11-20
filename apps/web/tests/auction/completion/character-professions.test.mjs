@@ -86,6 +86,23 @@ test('catalog and native equipment requirements gate ordinary searches, restore 
   }
 });
 
+test('checkpoint repeats verification once for previously accepted weapon references', async () => {
+  const h = await harness();
+  const {entry} = await h.start();
+  const legacy = structuredClone(snapshotAuctionGearContext(entry.context));
+  delete legacy.discovery.weaponReferenceRevision;
+  const id = 327;
+  legacy.discovery.references.set(id, { weapon: { minDamage: 1, maxDamage: 1, dps: 0.4, speedSeconds: 2.5 } });
+  const unaffected = structuredClone(legacy);
+  assert.equal(restoreAuctionGearContext(unaffected).discovery, unaffected.discovery);
+  legacy.discovery.verifiedReferences.add(id);
+  const restored = restoreAuctionGearContext(legacy);
+  assert.notEqual(restored.discovery, legacy.discovery);
+  assert.equal(restored.discovery.verifiedReferences.size, 0);
+  assert.equal(restored.coverage.discoveryComplete, false);
+  assert.equal(restoreAuctionGearContext(snapshotAuctionGearContext(restored)).discovery, restored.discovery);
+});
+
 test('purchased and retained belts quote and simulate an engineering enchant only for its exact skill tier', async () => {
   const {evaluateAuctionEnhancementStage} = await import('../../../lib/wow/auctionGearEnhancementStage.ts');
   const {prepareGearLoadout} = await import('../../../lib/wow/gearSimulation.ts');

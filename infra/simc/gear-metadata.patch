@@ -128,7 +128,7 @@
 +    if ( item.parsed.data.item_class == ITEM_CLASS_WEAPON )
 +    {
 +      const auto* weapon = item.weapon();
-+      if ( weapon && weapon->min_dmg > 0 && weapon->max_dmg >= weapon->min_dmg &&
++      if ( weapon && weapon->min_dmg >= 0 && weapon->max_dmg > 0 && weapon->max_dmg >= weapon->min_dmg &&
 +           weapon->dps > 0 && weapon->swing_time.total_seconds() > 0 )
 +      {
 +        auto weapon_node = slotnode[ "gildra_weapon" ];

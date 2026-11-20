@@ -95,5 +95,5 @@ export function validatedAuctionEnhancementMetadata(value: Pick<ResolvedAuctionV
 
 export function validAuctionWeapon(weapon: GearPlannerWeapon | undefined): weapon is GearPlannerWeapon {
   return Boolean(weapon && [weapon.minDamage, weapon.maxDamage, weapon.dps, weapon.speedSeconds].every(Number.isFinite) &&
-    weapon.minDamage > 0 && weapon.maxDamage >= weapon.minDamage && weapon.dps > 0 && weapon.speedSeconds > 0);
+    weapon.minDamage >= 0 && weapon.maxDamage > 0 && weapon.maxDamage >= weapon.minDamage && weapon.dps > 0 && weapon.speedSeconds > 0);
 }

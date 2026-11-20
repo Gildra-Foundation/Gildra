@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { parseAuctionItemReference, nativeMatchesItemReference } from '../../../lib/wow/auctionItemReference.ts';
+import { validAuctionWeapon } from '../../../lib/wow/auctionItemVariant.ts';
 import { harness, offer, market } from './market-harness.mjs';
 
 function rawReference() {
@@ -61,6 +62,16 @@ test('market: presentation malformed explicit spell array cannot verify effects'
 test('market: presentation native weapon mismatch rejects an item reference', () => {
   const reference = { offer: offer(), itemLevel: 100, requiredLevel: 1, stats: [], weapon };
   assert.equal(nativeMatchesItemReference(reference, { ...native(), weapon: { ...weapon, minDamage: 500, maxDamage: 600 } }), false);
+});
+
+test('market: measured zero weapon minimum survives validation and exposes a reference discrepancy', () => {
+  const measured = { minDamage: 0, maxDamage: 1, dps: 0.5 / 2.6, speedSeconds: 2.6 };
+  const reference = { offer: offer(), itemLevel: 100, requiredLevel: 1, stats: [], weapon: measured };
+  assert.equal(validAuctionWeapon(measured), true);
+  assert.equal(validAuctionWeapon({ ...measured, minDamage: undefined }), false);
+  assert.equal(validAuctionWeapon({ ...measured, maxDamage: 0 }), false);
+  assert.equal(nativeMatchesItemReference(reference, { ...native(), weapon: measured }), true);
+  assert.equal(nativeMatchesItemReference({ ...reference, weapon: { ...measured, minDamage: 1 } }, { ...native(), weapon: measured }), false);
 });
 
 test('market: presentation missing optional native weapon remains backwards compatible', () => {
