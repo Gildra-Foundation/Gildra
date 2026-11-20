@@ -176,6 +176,8 @@ export type AuctionGearAssemblyCheckpoint = {
   baseline: GearPlanSimulation;
   best: { optionIds: string[]; simulation: GearPlanSimulation };
   bestConfirmed: { optionIds: string[]; simulation: GearPlanSimulation } | null;
+  /** Finalist-precision measurements stay separate from screening and survive a yielded turn. */
+  equipmentFinalistMeasurements?: Record<string, GearPlanSimulation>;
   /** Legacy checkpoints without these fields replay cached traversal before claiming completion. */
   bestValueConfirmed?: { optionIds: string[]; simulation: GearPlanSimulation } | null;
   bestDpsConfirmed?: { optionIds: string[]; simulation: GearPlanSimulation } | null;

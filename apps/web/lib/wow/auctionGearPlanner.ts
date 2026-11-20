@@ -297,6 +297,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
 /** Complete effect enumeration with exact procurement, yielding at a persisted assignment. */
 export async function assembleAuctionGear(input: PlannerInput & {
   reuseAppliedStats?: boolean;
+  recheckEquipment?: PlannerInput["simulate"];
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
 }): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint }> {
@@ -382,33 +383,33 @@ export async function assembleAuctionGear(input: PlannerInput & {
     if (!option) throw new Error("invalid_search_checkpoint");
     return option;
   });
-  const bestOptions = () => optionsFor(checkpoint.best);
+  type Leaders = Pick<AuctionGearAssemblyCheckpoint, "baseline" | "best" | "bestConfirmed" | "bestDpsConfirmed" | "bestValueConfirmed">;
   for (const best of [checkpoint.best, checkpoint.bestConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) if (best) {
     auctionPlanLoadout(input.loadout, optionsFor(best), input.specId, slots);
     if (auctionPlanCost(optionsFor(best)) > input.budgetCopper) throw new Error("invalid_search_checkpoint");
   }
-  const confirmed = (simulation: GearPlanSimulation) => {
-    const comparison = compareGearSimulationResults(checkpoint.baseline, simulation);
+  const confirmed = (simulation: GearPlanSimulation, baseline = checkpoint.baseline) => {
+    const comparison = compareGearSimulationResults(baseline, simulation);
     return comparison.deltaDps > 0 && comparison.uncertainty.significant;
   };
   for (const best of [checkpoint.bestConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestDpsConfirmed]) {
     if (best && !confirmed(best.simulation)) throw new Error("invalid_search_checkpoint");
   }
-  const consider = (selection: AuctionGearOption[], simulation: GearPlanSimulation) => {
+  const consider = (selection: AuctionGearOption[], simulation: GearPlanSimulation, leaders: Leaders = checkpoint) => {
     const cost = auctionPlanCost(selection), key = selectionKey(selection);
-    const preferred = (best: typeof checkpoint.best | null) => !best || simulation.dps > best.simulation.dps ||
+    const preferred = (best: typeof leaders.best | null) => !best || simulation.dps > best.simulation.dps ||
       simulation.dps === best.simulation.dps && (cost < auctionPlanCost(optionsFor(best)) ||
         cost === auctionPlanCost(optionsFor(best)) && key < best.optionIds.slice().sort().join("|"));
     const best = { optionIds: selection.map(option => option.id), simulation };
-    if (preferred(checkpoint.best)) checkpoint.best = best;
-    if (confirmed(simulation)) {
-      const previous = checkpoint.bestValueConfirmed ?? null;
+    if (preferred(leaders.best)) leaders.best = best;
+    if (confirmed(simulation, leaders.baseline)) {
+      const previous = leaders.bestValueConfirmed ?? null;
       // Both scores use the same measured whole-set gain and exact lot cost.
-      const value = cost / (simulation.dps - checkpoint.baseline.dps);
-      const priorValue = previous ? auctionPlanCost(optionsFor(previous)) / (previous.simulation.dps - checkpoint.baseline.dps) : Infinity;
-      if (value < priorValue || value === priorValue && preferred(previous)) checkpoint.bestValueConfirmed = best;
-      if (preferred(checkpoint.bestDpsConfirmed ?? null)) checkpoint.bestDpsConfirmed = best;
-      checkpoint.bestConfirmed = input.objective === "value" ? checkpoint.bestValueConfirmed! : checkpoint.bestDpsConfirmed!;
+      const value = cost / (simulation.dps - leaders.baseline.dps);
+      const priorValue = previous ? auctionPlanCost(optionsFor(previous)) / (previous.simulation.dps - leaders.baseline.dps) : Infinity;
+      if (value < priorValue || value === priorValue && preferred(previous)) leaders.bestValueConfirmed = best;
+      if (preferred(leaders.bestDpsConfirmed ?? null)) leaders.bestDpsConfirmed = best;
+      leaders.bestConfirmed = input.objective === "value" ? leaders.bestValueConfirmed! : leaders.bestDpsConfirmed!;
     }
   };
   if (replayLegacyCandidates) {
@@ -715,16 +716,48 @@ export async function assembleAuctionGear(input: PlannerInput & {
     await Promise.all(pending.values());
   }
   save();
-  const selection = bestOptions(), spentCopper = auctionPlanCost(selection);
+  let leaders: Leaders = checkpoint;
+  let complete = checkpoint.exhausted;
+  if (complete && input.recheckEquipment) {
+    const sets = new Map<string, AuctionGearOption[]>([["[]", []]]);
+    for (const best of [checkpoint.best, checkpoint.bestDpsConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestConfirmed]) {
+      if (best?.optionIds.length) sets.set(JSON.stringify([...best.optionIds].sort()), optionsFor(best));
+    }
+    const measurements = checkpoint.equipmentFinalistMeasurements ??= {};
+    const verified = new Map<string, GearPlanSimulation>();
+    for (const [key, selected] of sets) {
+      input.signal.throwIfAborted();
+      let measured = measurements[key];
+      if (!measured) {
+        if (input.shouldYield?.()) { complete = false; break; }
+        measured = await input.recheckEquipment(selected, input.signal);
+      }
+      const result = validSimulation(measured, checkpoint.baseline.engine);
+      if (result.iterations !== 750) throw new Error("invalid_finalist_precision");
+      verified.set(key, result);
+      if (!measurements[key]) {
+        measurements[key] = result;
+        checkpoint.simulations++;
+        save();
+        input.onProgress?.({ phase: "simulating", completed: verified.size, total: sets.size });
+      }
+    }
+    if (complete) {
+      const baseline = verified.get("[]")!;
+      leaders = { baseline, best: { optionIds: [], simulation: baseline }, bestConfirmed: null, bestDpsConfirmed: null, bestValueConfirmed: null };
+      for (const [key, selected] of sets) if (selected.length) consider(selected, verified.get(key)!, leaders);
+    }
+  }
+  const selection = optionsFor(leaders.best), spentCopper = auctionPlanCost(selection);
   const final = auctionPlanLoadout(input.loadout, selection, input.specId, slots);
-  const presentConfirmed = (best: typeof checkpoint.best | null | undefined) => {
+  const presentConfirmed = (best: typeof leaders.best | null | undefined) => {
     if (!best) return null;
     const confirmedOptions = optionsFor(best);
     const confirmedFinal = auctionPlanLoadout(input.loadout, confirmedOptions, input.specId, slots);
     const confirmedCost = auctionPlanCost(confirmedOptions);
     return { purchases: confirmedOptions.map(auctionGearPurchase), spentCopper: confirmedCost, remainingCopper: input.budgetCopper - confirmedCost,
       removedSlots: input.loadout.filter(item => !confirmedFinal.some(final => final.slotType === item.slotType)).map(item => item.slotType),
-      comparison: compareGearSimulationResults(checkpoint.baseline, best.simulation) };
+      comparison: compareGearSimulationResults(leaders.baseline, best.simulation) };
   };
   input.signal.throwIfAborted();
   assertFreshMarket(input.market);
@@ -732,11 +765,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
     costBreakdown: { itemsCopper: spentCopper, totalCopper: null, coverage: "enhancement_compatibility_unverified" },
     budgetCopper: input.budgetCopper, spentCopper, remainingCopper: input.budgetCopper - spentCopper,
     purchases: selection.map(auctionGearPurchase), removedSlots: input.loadout.filter(i => !final.some(f => f.slotType === i.slotType)).map(i => i.slotType),
-    comparison: compareGearSimulationResults(checkpoint.baseline, checkpoint.best.simulation), engine: checkpoint.baseline.engine,
-    bestConfirmed: presentConfirmed(checkpoint.bestConfirmed),
-    bestValueConfirmed: presentConfirmed(checkpoint.bestValueConfirmed), bestDpsConfirmed: presentConfirmed(checkpoint.bestDpsConfirmed),
-    simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !checkpoint.exhausted,
-    exhaustiveComplete: checkpoint.exhausted, combinationsChecked: checkpoint.combinationsChecked,
+    comparison: compareGearSimulationResults(leaders.baseline, leaders.best.simulation), engine: leaders.baseline.engine,
+    bestConfirmed: presentConfirmed(leaders.bestConfirmed),
+    bestValueConfirmed: presentConfirmed(leaders.bestValueConfirmed), bestDpsConfirmed: presentConfirmed(leaders.bestDpsConfirmed),
+    simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !complete,
+    exhaustiveComplete: complete, combinationsChecked: checkpoint.combinationsChecked,
     ...(checkpoint.proofPrunedAssignments ? { proofPrunedAssignments: checkpoint.proofPrunedAssignments } : {}),
     validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };
 }

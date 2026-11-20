@@ -268,3 +268,45 @@ test('an independent armor slot extends a shared ring purchase at its exact stac
   assert.equal(step.result.bestDpsConfirmed.spentCopper, 80);
   assert.deepEqual(ids(step.result.bestDpsConfirmed), [31, 31, 32]);
 });
+
+test('equipment finalists resume at 750 iterations and rank both objectives against the refined baseline', async () => {
+  const h = fixture();
+  const screen = h.input.simulate;
+  h.input.simulate = async selected => ({ ...await screen(selected), iterations: 100 });
+  const initial = await finish(h);
+  const calls = [];
+  const precise = async selected => {
+    const key = selected.map(o => o.auctionId).sort().join(',');
+    calls.push(key);
+    return measurement({ '': 1050, '3': 1700, '1': 1040, '2,4': 1660 }[key]);
+  };
+  const paused = await assembleAuctionGear({ ...h.input, checkpoint: initial.checkpoint,
+    recheckEquipment: precise, shouldYield: () => calls.length === 1 });
+  assert(paused.checkpoint.exhausted);
+  assert.equal(paused.result.exhaustiveComplete, false);
+  assert.equal(paused.result.searchLimited, true);
+  assert.deepEqual(calls, ['']);
+  const done = await assembleAuctionGear({ ...h.input, checkpoint: structuredClone(paused.checkpoint), recheckEquipment: precise });
+  assert.equal(done.result.exhaustiveComplete, true);
+  assert.deepEqual([...calls].sort(), ['', '1', '2,4', '3']);
+  assert.deepEqual(ids(done.result.bestDpsConfirmed), [3]);
+  assert.deepEqual(ids(done.result.bestValueConfirmed), [3]);
+  assert.equal(done.result.comparison.baselineDps, 1050);
+  assert.equal(done.result.bestValueConfirmed.comparison.deltaDps, 650);
+  assert.equal(done.checkpoint.baseline.iterations, 100);
+  assert.deepEqual(done.checkpoint.bestValueConfirmed.optionIds, ['1']);
+  const resumed = await assembleAuctionGear({ ...h.input, checkpoint: structuredClone(done.checkpoint),
+    recheckEquipment: () => assert.fail('completed finalists must survive a resume') });
+  assert.deepEqual(resumed.result, done.result);
+});
+
+test('a short or mismatched final simulation cannot complete the equipment search', async () => {
+  const h = fixture(), initial = await finish(h);
+  for (const [row, reason] of [[{ ...measurement(1000), iterations: 100 }, /invalid_finalist_precision/],
+    [{ ...measurement(1000), engine: 'SimulationCraft other' }, /simulation_version_changed/]]) {
+    const checkpoint = structuredClone(initial.checkpoint);
+    let saved;
+    await assert.rejects(assembleAuctionGear({ ...h.input, checkpoint, recheckEquipment: async () => row, onCheckpoint: state => { saved = state; } }), reason);
+    assert.deepEqual(Object.keys(saved.equipmentFinalistMeasurements ?? {}), []);
+  }
+});
