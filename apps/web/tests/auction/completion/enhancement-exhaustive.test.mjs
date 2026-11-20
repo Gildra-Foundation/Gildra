@@ -48,6 +48,26 @@ test('exact resumes past twelve calls to a winner excluded by the legacy cap',as
   assert.equal(resumed.simulations,0);assert.equal(exact.calls.length,21);
 });
 
+test('unpriced purchases leave bare and installed gems available; legacy ordinals still resume',async()=>{
+  const prices={sourceUpdatedAt:new Date().toISOString(),prices:{8000:{ladder:[[1,1000]]}}};
+  const h=fixture({choices:gems(3),prices,limits:{configurations:1,simulations:1}});
+  const fresh=await complete(h);
+  assert.deepEqual(h.calls.map(c=>c.slots[0].gemIds),[[8000],[0]]);
+  assert.equal(fresh.checkpoint.exactNextConfiguration,'2');
+  assert(fresh.reasons.includes('price_unknown_or_insufficient_quantity'));
+  const old=fixture({choices:gems(3),prices,limits:{configurations:1,simulations:1}});
+  // A pre-compaction v1 cursor just after the purchasable gem, before two missing quotes.
+  const saved={version:1,inputKey:'568285e82ee39d334f563b5945049671c76a0b5fd6f5868ee56cbdadbe802082',
+    exactNextConfiguration:'1',nextConfiguration:0,cache:{}};
+  const resumed=await complete(old,{checkpoint:saved});
+  assert.deepEqual(old.calls.map(c=>c.slots[0].gemIds),[[0]]);
+  assert.equal(resumed.checkpoint.exactNextConfiguration,'4');
+  const owned=fixture({choices:gems(3),prices});
+  Object.assign(owned.input.slots[0],{owned:true,allowOwnedChanges:true,ownedItemId:42,installed:{gems:[gems(3)[2]]}});
+  await complete(owned);
+  assert.deepEqual(owned.calls.map(c=>[c.slots[0].gemIds[0],c.totalCopper]),[[8002,50],[8000,51]]);
+});
+
 test('exact visits 101 compatible choices plus bare and the quick search accepts the same catalog',async()=>{
   const h=fixture({choices:gems(101),limits:{configurations:128,simulations:12}});
   const result=await complete(h);
@@ -247,7 +267,7 @@ test('the real enhancement stage uses the advertised profileset capacity for aff
   const h = stageFixture();
   Object.assign(h.input, {simulationConcurrency: 2, simulationBatchSize: 25});
   await evaluateAuctionEnhancementStage(h.input);
-  assert.equal(h.calls.length, 20, 'all stocked gems fit in one slice before the sparse tail');
+  assert.equal(h.calls.length, 21, 'the twenty stocked gems and the bare slot fit in one slice');
   const result = await finishStage(h);
   assert.equal(h.calls.length, 21);
   assert.equal(result.complete, true);
@@ -267,13 +287,15 @@ test('owned-only stage admits queued gem edits when the native worker advertises
         return {...measurement(1200),engine:h.input.engine};
       }});
     await evaluateAuctionEnhancementStage(h.input);
-    assert.equal(h.calls.length,supported ? 20 : 2);
-    for (const [change] of h.calls) {
+    assert.equal(h.calls.length,supported ? 21 : 2);
+    const gemEdits=h.calls.filter(changes=>changes.length);
+    assert.equal(gemEdits.length,supported ? 20 : 2);
+    for (const [change] of gemEdits) {
       assert.equal(change.itemId,970010);
       assert.equal(change.slotType,'TRINKET_1');
       assert.equal(change.gems[0].index,0);
     }
-    assert.equal(new Set(h.calls.map(([change])=>change.gems[0].itemId)).size,h.calls.length);
+    assert.equal(new Set(gemEdits.map(([change])=>change.gems[0].itemId)).size,gemEdits.length);
     const result = await finishStage(h);
     assert(result.complete);
     assert.equal(h.calls.length,21);
