@@ -364,6 +364,37 @@ test('content tuning groups preserve both physical rings, cost ties and the old 
   }
 });
 
+test('single-item search reuses verified tuning caps per slot and keeps raw receipts on resume', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd';
+  const make = (id, slot, tuning, cap, price) => {
+    const row = option(id,slot,price);
+    row.candidate.itemId = 258908;
+    row.candidate.inventoryType = 11;
+    Object.assign(row.candidate.variants[0], {bonusIds:[13668,13900], modifiers:[{type:28,value:tuning}],
+      resolution:{engine,nativeContentTuningV1:[tuning,cap]}});
+    return row;
+  };
+  const a = make(50,'FINGER_1',3321,90,10), b = make(51,'FINGER_1',5381,90,20);
+  const otherSlot = make(52,'FINGER_2',5381,90,15), otherCap = make(53,'FINGER_1',12,80,10);
+  const uncertified = make(54,'FINGER_1',891,90,10);
+  delete uncertified.candidate.variants[0].resolution.nativeContentTuningV1;
+  for (const concurrency of [1,2]) {
+    let calls = 0;
+    const input = {...fixture().input, selectedSlots:['FINGER_1','FINGER_2'], options:[a,b,otherSlot,otherCap,uncertified],
+      groupCraftedEquipment:true, baseline:{...measurement(1000),engine}, simulationConcurrency:concurrency,
+      simulate:async () => ({...measurement(1000+100*(++calls)),engine})};
+    const first = await searchAuctionGearOptions({...input,maxNewSimulations:1});
+    const resumed = await searchAuctionGearOptions({...input,checkpoint:structuredClone(first.checkpoint)});
+    assert.equal(calls,4);
+    const byLot = new Map(resumed.result.items.map(row=>[row.auctionId,row]));
+    assert.deepEqual(byLot.get(50).comparison,byLot.get(51).comparison);
+    assert.equal(byLot.get(50).lotCostCopper,10);
+    assert.equal(byLot.get(51).lotCostCopper,20);
+    assert.equal(new Set(resumed.result.items.map(row=>row.comparison.candidateDps)).size,4);
+    assert(resumed.result.searchComplete);
+  }
+});
+
 test('a context rejected by the worker stays separate from valid native lots',async()=>{
  const engine='SimulationCraft fixture · 18428cd';
  const h=fixture(),domain=[option(71,'HEAD',30),option(72,'HEAD',5)];

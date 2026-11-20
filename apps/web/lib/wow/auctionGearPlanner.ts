@@ -212,11 +212,11 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   const equivalentLots = new Map<string, string[]>();
   if (input.groupCraftedEquipment && ignoresItemContext(checkpoint.baseline.engine)) {
     for (const option of options) {
-      const variant = option.candidate.variants.find(v => v.key === option.variantKey);
-      if (option.customization || !variant ||
-          (variant.bonusIds?.length !== 0 && variant.resolution?.nativeCraftedSymmetryV1 !== true)) continue;
+      if (option.customization) continue;
       const raw = auctionSelectionEffectKey([option]);
-      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true, true);
+      // Use the same certified native inputs during discovery and assembly.
+      // Each slot and raw offer keeps its own compatibility check and price.
+      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true, "tuning-cap");
       schedulingKeys.set(raw, group);
       const members = equivalentLots.get(group);
       if (members) members.push(raw);
