@@ -54,6 +54,19 @@ test('auction snapshots read the authenticated profession endpoint, preserve unr
   assert.equal(requested.filter(path => path === '/profile/wow/character/realm/test/professions').length, 2);
 });
 
+test('unknown requirements reopen only gear with a possible placement or missing armor metadata', async () => {
+  for (const [subclass, retry] of [[1, false], [4, true], [undefined, true]]) {
+    const item = record();
+    item.tooltip.blocks[0].subclass_id = subclass;
+    item.tooltip.blocks.push({type:'item_requirements',required_skill_id:2504,required_skill_rank:2});
+    const h = await harness({entity:item});
+    const {entry} = await h.start();
+    assert.equal(entry.context.options.length, 0);
+    assert.equal(entry.context.discovery.eligibilityUnverifiedItems.has(item.externalId), retry);
+    assert.equal(entry.context.discovery.catalogRetryAt.has(item.externalId), retry);
+  }
+});
+
 test('catalog and native equipment requirements gate ordinary searches, restore and refresh use the same facts', async () => {
   for (const nativeOnly of [false, true]) {
     for (const [professions, expected, gap] of [[facts, 1, false], [undefined, 0, true], [{complete: true, ranks: {2504: 1}}, 0, false]]) {

@@ -268,8 +268,14 @@ function variantEntity(entity: CatalogGearEntity, offer: AuctionOffer, requiredL
 }
 
 function rememberUnverifiedEligibility(state: AuctionGearDiscovery, itemId: number, candidates: GearCandidate[]) {
-  if (candidates.some(candidate => candidate.rejectionReasons.includes("equip_requirements_unverified") ||
-      candidate.itemClassId < 0 || candidate.itemSubclassId < 0 || candidate.inventoryType < 0)) {
+  const unverified = candidates.some(candidate => {
+    if (candidate.itemClassId < 0 || candidate.itemSubclassId < 0 || candidate.inventoryType < 0) return true;
+    const reasons = candidate.rejectionReasons;
+    // Resolving a profession or reputation cannot change a known slot or armor type.
+    return reasons.includes("equip_requirements_unverified") && !reasons.includes("slot_mismatch") &&
+      !reasons.includes("armor_specialization_mismatch");
+  });
+  if (unverified) {
     state.eligibilityUnverifiedItems.add(itemId);
     state.catalogRetryAt.set(itemId, Date.now() + catalogRetryMs);
   }
