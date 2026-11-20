@@ -45,6 +45,22 @@ export function auctionPlanLoadout(base: GearLoadoutItem[], options: AuctionGear
   return final;
 }
 
+/** Find a conflict among the purchases themselves. Later replacements can repair
+ * a conflict with owned gear, but cannot remove a purchase in this prefix. */
+export function auctionConflictingPurchaseSlot(ordered: AuctionGearOption[], specId: number) {
+  const fixed: GearLoadoutItem[] = [];
+  for (const option of ordered) {
+    fixed.push(candidateLoadoutItem(option.candidate));
+    try { validateGearLoadout(fixed, specId); }
+    catch (error) {
+      if (error instanceof Error && ["unique_equipped_conflict", "offhand_weapon_not_supported", "two_hand_offhand_conflict"].includes(error.message))
+        return option.candidate.slotType;
+      throw error;
+    }
+  }
+  return undefined;
+}
+
 export function auctionGearPurchase(option: AuctionGearOption): AuctionGearPurchase {
   const variant = option.candidate.variants.find(v => v.key === option.variantKey);
   if (!variant) throw new Error("simulation_variant_not_found");
@@ -504,7 +520,6 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const pending = new Map<string, Promise<PromiseSettledResult<GearPlanSimulation>>>();
   const selections: { selection: AuctionGearOption[]; key: string }[] = [];
   const evaluate = (selection: AuctionGearOption[]) => {
-    if (!compatibleSelection(selection)) return true;
     const exact = auctionSelectionEffectKey(selection);
     const equivalent = reuseAppliedStats && auctionAppliedStatsKey(selection, checkpoint.baseline.engine);
     const cachedExact = checkpoint.simulationCache[exact];
@@ -576,7 +591,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       input.signal.throwIfAborted();
       const seed = seeds[traversal.nextSeed].map(index => flatGroups[index]);
       const purchase = seed.some(group => dominatedGroups.has(group)) ? null : await cheapestAuctionEffectSelection(seed, input.budgetCopper, input.signal);
-      if (purchase && !evaluate(purchase.options)) break;
+      if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextSeed++;
       traversal.combinationsChecked++;
       assignments++;
@@ -590,7 +605,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       const first = flatGroups[pair.first], second = flatGroups[pair.second];
       const purchase = dominatedGroups.has(first) || dominatedGroups.has(second) ? null :
         await cheapestAuctionEffectSelection([first, second], input.budgetCopper, input.signal);
-      if (purchase && !evaluate(purchase.options)) break;
+      if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextPair++;
       traversal.combinationsChecked++;
       assignments++;
@@ -634,8 +649,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       const effectSelection: AuctionEffectGroup[] = [];
       let selection: AuctionGearOption[] = [];
       let invalidPrefix = -1;
-      // Only monotone financial/lot constraints can prune an incomplete state.
-      // Unique categories and hand compatibility are checked on the final loadout.
+      // Reuse the receipt of the longest unchanged, affordable prefix.
       for (let index = 0; index < groups.length; index++) {
         const choice = traversal.cursor[index];
         if (choice) effectSelection.push(groups[index][choice - 1]);
@@ -655,7 +669,14 @@ export async function assembleAuctionGear(input: PlannerInput & {
         }
         if (invalidPrefix >= 0) break;
       }
-      if (invalidPrefix < 0 && !evaluate(selection)) break;
+      if (invalidPrefix < 0) {
+        if (compatibleSelection(selection)) {
+          if (!evaluate(selection)) break;
+        } else {
+          const conflict = auctionConflictingPurchaseSlot(chosenGroups.map(group => group.options[0]), input.specId);
+          if (conflict) invalidPrefix = slots.indexOf(conflict);
+        }
+      }
       traversal.combinationsChecked++;
       assignments++;
       advance(invalidPrefix >= 0 ? invalidPrefix : undefined);

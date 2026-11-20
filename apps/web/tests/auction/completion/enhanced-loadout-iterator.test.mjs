@@ -148,6 +148,21 @@ test('two ring aliases charge one whole lot and respect its quantity without uns
  const a=option(1,'FINGER_1',60),b=option(1,'FINGER_2',60);const one=await all(base([a,b],['FINGER_1','FINGER_2'],[],60));assert.equal(one.rows.length,3);assert(!one.rows.some(r=>r.options.length===2));
  const two=await all(base([{...a,quantity:2},{...b,quantity:2}],['FINGER_1','FINGER_2'],[],60));assert.equal(two.rows.length,4);const pair=two.rows.find(r=>r.options.length===2);assert.equal(pair.spentCopper,60);assert.equal(pair.remainingCopper,0);
 });
+test('a resumed conflicting ring pair skips only its remaining suffix',async()=>{
+ const tail=[option(51,'TRINKET_1'),option(52,'TRINKET_1'),option(53,'TRINKET_1')];
+ for(const conflict of ['quantity','category']){
+  const left=option(1,'FINGER_1'),right=option(conflict==='quantity'?1:2,'FINGER_2');
+  if(conflict==='category')for(const row of [left,right])Object.assign(row.candidate.constraints,{limitCategoryId:8,limitQuantity:1});
+  const nextRing=option(3,'FINGER_2');
+  const input=base([left,right,nextRing,...tail],['FINGER_1','FINGER_2','TRINKET_1']);
+  const it=create(input),state={...it.initialState(),cursor:[1,1,1],visited:'17'};
+  const jump=await it.nextBatch(state,{signal:signal(),maxAssignments:1,maxResults:1});
+  assert.deepEqual(jump.loadouts,[]);assert.deepEqual(jump.state.cursor,[1,2,0]);assert.equal(jump.state.visited,'20');
+  const next=await it.nextBatch(JSON.parse(JSON.stringify(jump.state)),{signal:signal(),maxAssignments:1,maxResults:1});
+  assert.deepEqual(next.loadouts[0].options.map(o=>o.id),[left.id,nextRing.id]);
+ }
+});
+
 test('retained unique items and categories are checked only after simultaneous replacements',async()=>{
  const worn=[{slotType:'FINGER_1',itemId:10,inventoryType:11,itemSubclassId:0,uniqueEquipped:true},{slotType:'FINGER_2',itemId:20,inventoryType:11,itemSubclassId:0}];
  const replaceFirst=option(30,'FINGER_1',5),moveUnique=option(10,'FINGER_2',5);moveUnique.candidate.constraints.uniqueEquipped=true;

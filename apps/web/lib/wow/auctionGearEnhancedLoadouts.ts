@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { auctionEffectGroupKey, auctionEffectGroups, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
 import { ignoresItemContext, validAuctionItemContext } from "./gearItemModifiers";
-import { auctionPlanCost, auctionPlanLoadout } from "./auctionGearPlanner";
+import { auctionConflictingPurchaseSlot, auctionPlanCost, auctionPlanLoadout } from "./auctionGearPlanner";
 import { parseAuctionGearSlots } from "./auctionGearSelection";
 import { prepareGearLoadout } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
@@ -128,8 +128,13 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
   async function procure(groups: AuctionEffectGroup[], signal: AbortSignal) {
     if (groups.every(group => group.options.length === 1)) {
       const options = groups.map(group => group.options[0]);
-      const costCopper = auctionPlanCost(options);
-      return costCopper <= input.budgetCopper ? { options, costCopper } : null;
+      try {
+        const costCopper = auctionPlanCost(options);
+        return costCopper <= input.budgetCopper ? { options, costCopper } : null;
+      } catch (error) {
+        if (error instanceof Error && error.message === "auction_quantity_exceeded") return null;
+        throw error;
+      }
     }
     const purchase = await cheapestAuctionEffectSelection(groups, input.budgetCopper, signal);
     purchase?.options.sort((a, b) => slotOrder.get(a.candidate.slotType)! - slotOrder.get(b.candidate.slotType)!);
@@ -170,6 +175,10 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
         }
       } catch (error) {
         if (!(error instanceof Error) || !incompatible.has(error.message)) throw error;
+        if (["unique_equipped_conflict", "offhand_weapon_not_supported", "two_hand_offhand_conflict"].includes(error.message)) {
+          const conflict = auctionConflictingPurchaseSlot(chosen.map(choice => choice.group.options[0]), input.specId);
+          if (conflict) advanceAxis = slotOrder.get(conflict)!;
+        }
       }
       advance(state, advanceAxis); assignments++;
       if (assignments % 128 === 0) await new Promise<void>(resolve => setImmediate(resolve));
