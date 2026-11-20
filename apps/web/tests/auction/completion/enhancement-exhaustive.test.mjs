@@ -68,6 +68,31 @@ test('unpriced purchases leave bare and installed gems available; legacy ordinal
   assert.deepEqual(owned.calls.map(c=>[c.slots[0].gemIds[0],c.totalCopper]),[[8002,50],[8000,51]]);
 });
 
+test('exact prices one unit against the remaining budget and preserves previous priced-axis cursors',async()=>{
+  const prices={sourceUpdatedAt:new Date().toISOString(),prices:{8000:{ladder:[[950,1],[999,2]]},8001:{ladder:[[951,2]]}}};
+  const opts={choices:gems(3),prices,limits:{configurations:1,simulations:1}};
+  const current=fixture(opts);
+  const fresh=await complete(current);
+  assert.deepEqual(current.calls.map(c=>[c.slots[0].gemIds[0],c.totalCopper]),[[8000,1000],[0,50]]);
+  assert.equal(fresh.checkpoint.exactNextConfiguration,'2');
+  assert(fresh.reasons.includes('over_budget'));
+  assert(fresh.reasons.includes('price_unknown_or_insufficient_quantity'));
+
+  const old=fixture(opts);
+  const previous={version:1,pricedAxes:true,inputKey:'04b88171594d257bab8fd3b3f0757090d812a7014296d787bba1645233e4783b',
+    exactNextConfiguration:'1',nextConfiguration:0,cache:{}};
+  const resumed=await complete(old,{checkpoint:previous});
+  assert.deepEqual(old.calls.map(c=>[c.slots[0].gemIds[0],c.totalCopper]),[[0,50]]);
+  assert.equal(resumed.checkpoint.exactNextConfiguration,'3');
+
+  const owned=fixture({...opts,sockets:2});
+  Object.assign(owned.input.slots[0],{owned:true,allowOwnedChanges:true,ownedItemId:42,installed:{gems:[gems(3)[1],null]}});
+  await complete(owned);
+  assert.deepEqual(owned.calls.map(c=>[c.slots[0].gemIds,c.totalCopper]),[
+    [[8001,8000],1000],[[8001,0],50],[[8000,0],1000]
+  ]);
+});
+
 test('exact visits 101 compatible choices plus bare and the quick search accepts the same catalog',async()=>{
   const h=fixture({choices:gems(101),limits:{configurations:128,simulations:12}});
   const result=await complete(h);

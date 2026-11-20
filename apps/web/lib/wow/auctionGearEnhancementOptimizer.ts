@@ -27,7 +27,8 @@ export type PricedEnhancementConfiguration = { key: string; slots: { slotType: s
 export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfiguration: number;
   /** Authoritative decimal cursor for exhaustive traversal; JSON preserves every digit. */
   exactNextConfiguration?: string;
-  pricedAxes?: true;
+  /** Earlier checkpoints compacted only unavailable commodities. */
+  pricedAxes?: true | "within_budget";
   cache: Record<string, GearPlanSimulation>; totalSimulations?: number; traversalSteps?: number; seedSelections?: number[][]; nextSeed?: number; reasons?: string[];
   confirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
   bestValueConfirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
@@ -103,8 +104,10 @@ function validateEnhancement(e: Enhancement, kind: Enhancement["kind"], retained
 export async function optimizeAuctionGearEnhancements(input: EnhancementOptimizerInput): Promise<EnhancementOptimizerResult> {
   const { catalog, character, signal } = input;
   const exact = input.exhaustive === true;
-  // Old ordinals include unpriced choices. Finish those checkpoints with their original axes.
-  const pricedAxes = exact && (!input.checkpoint || input.checkpoint.pricedAxes === true);
+  // A resumed ordinal must use exactly the same choices per socket and enchant.
+  const pricedAxes = exact && (input.checkpoint ? input.checkpoint.pricedAxes : "within_budget");
+  const remainingCopper = input.budgetCopper - input.itemsCopper;
+  let hasUnaffordableChoice = false;
   const parallel = exact && input.simulationConcurrency === 2;
   const batchSize = input.simulationBatchSize ?? 0;
   const windowSize = parallel ? 2 * Math.max(1, batchSize) : 1;
@@ -156,9 +159,20 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       };
       const ranked = new Map(choices.map(choice=>[choice,priceRank(choice)]));
       choices.sort((a,b)=>Number(a.enhancement === null)-Number(b.enhancement === null) || ranked.get(a)!-ranked.get(b)!);
-      // Every new consumable needs at least one purchasable unit. Copies already installed
-      // and empty sockets remain available even when the commodity has no seller.
-      axes.push(pricedAxes ? choices.filter(choice => !choice.enhancement || choice.retained || Number.isFinite(ranked.get(choice))) : choices);
+      if (pricedAxes) {
+        axes.push(choices.filter(choice => {
+          if (!choice.enhancement || choice.retained) return true;
+          const unitCost = ranked.get(choice)!;
+          if (!Number.isFinite(unitCost)) return false;
+          // Additional purchases can only increase the total. The full quantity ladder
+          // still applies to affordable choices when constructing an actual receipt.
+          if (pricedAxes === "within_budget" && unitCost > remainingCopper) {
+            hasUnaffordableChoice = true;
+            return false;
+          }
+          return true;
+        }));
+      } else axes.push(choices);
     };
     if (resolved.enchantApplicable) addAxis(null, resolved.enchantChoices, slot.installed?.enchant ?? null);
     for (const [index, socket] of slot.sockets.entries()) {
@@ -167,11 +181,11 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     }
   }
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
-  const inputKey = hash({ traversal: pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+  const inputKey = hash({ traversal: pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
     prices:exact ? input.prices.prices : input.prices,
     budget:input.budgetCopper, items:input.itemsCopper, objective:input.objective ?? "dps", baselineDps, baseline, identity:input.simulationIdentity, axes });
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
-  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(exact?{exactNextConfiguration:"0",pricedAxes:true as const}:{})};
+  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(exact?{exactNextConfiguration:"0",pricedAxes:"within_budget" as const}:{})};
   if (!Number.isSafeInteger(checkpoint.nextConfiguration) || checkpoint.nextConfiguration < 0) throw new Error("invalid_enhancement_checkpoint");
   if (exact && (typeof checkpoint.exactNextConfiguration !== "string" || checkpoint.exactNextConfiguration.length > 512 ||
     !/^(0|[1-9][0-9]*)$/.test(checkpoint.exactNextConfiguration))) throw new Error("invalid_enhancement_checkpoint");
@@ -220,6 +234,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   }
   if (exact && !marketVerified) return {checkpoint,complete:true,searchLimited:true,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
   if (resolutions.some(r=>!r.verified) || reasons.has("socket_compatibility_unverified")) return {checkpoint,complete:true,searchLimited:true,catalogComplete:catalog.complete,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
+  if (hasUnaffordableChoice) reasons.add("over_budget");
   const completeRules = resolutions.every(r => r.verified && !r.coverageGaps?.length);
   if (!exact && !completeRules) return {checkpoint,complete:true,searchLimited:true,catalogComplete:false,visited,simulations,reasons:[...reasons],configurations,finalists:[]};
   const strides: bigint[] = [];
