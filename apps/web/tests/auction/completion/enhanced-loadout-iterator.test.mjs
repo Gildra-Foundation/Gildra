@@ -208,3 +208,22 @@ test('an over-budget prefix skips its entire suffix while an affordable shared l
  assert(accepted.some(row=>row.options.length===3 && row.spentCopper===100));
  assert(!accepted.some(row=>row.options.some(o=>o.auctionId===1)&&row.options.some(o=>o.auctionId===2)));
 });
+
+test('equivalent native variants share an affordable receipt only inside the same enhancement domain',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const options=[1,2,3,4].map(i=>{
+   const o=option(i,'HEAD',i===2?2:30);
+   o.candidate.itemId=999;
+   const v=o.candidate.variants[0];
+   v.key=o.variantKey='variant-'+i;
+   v.contextId=i;
+   v.resolution={engine:i===4?'other':engine,metadataVersion:3,enhancements:{status:'verified',
+    socketColors:i===3?[14,0,0]:[0,0,0],socketCount:i===3?1:0,socketBonusId:0,requiredProfessionId:0,requiredProfessionRank:0}};
+   return o;
+ });
+ const input=base(options),legacy=await all(input),pinned=await all({...input,engine},{maxAssignments:1,maxResults:1});
+ assert.equal(legacy.total,'5');assert.equal(pinned.total,'4');
+ assert.deepEqual(pinned.rows.slice(1).map(r=>r.options[0].auctionId),[2,3,4]);
+ assert.equal(pinned.rows[1].spentCopper,2);
+ await assert.rejects(create({...input,engine}).nextBatch(legacy.state,{maxAssignments:1,maxResults:1,signal:signal()}),/invalid_search_checkpoint/);
+});

@@ -102,7 +102,8 @@ function addOrdinal(group: PriceGroup, ordinal: string) {
 }
 export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Promise<{ state: AuctionGearExhaustiveEnhancementState; result: AuctionEnhancementStageResult }> {
   input.signal.throwIfAborted();
-  const iterator = createAuctionGearEnhancedLoadoutIterator({ options: input.options, selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
+  const iterator = createAuctionGearEnhancedLoadoutIterator({ options: input.options,
+    engine: !input.state || input.state.cursor?.nativeLotGroups === 1 ? input.engine : undefined, selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
     loadout: input.loadout, equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper });
   const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(input.recheck ? ["finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({

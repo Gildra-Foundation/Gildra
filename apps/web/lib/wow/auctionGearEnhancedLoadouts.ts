@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { auctionEffectGroupKey, auctionEffectGroups, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
+import { ignoresItemContext, validAuctionItemContext } from "./gearItemModifiers";
 import { auctionPlanCost, auctionPlanLoadout } from "./auctionGearPlanner";
 import { parseAuctionGearSlots } from "./auctionGearSelection";
 import { prepareGearLoadout } from "./gearSimulation";
@@ -8,6 +9,7 @@ import type { AuctionGearOption } from "./auctionGearTypes";
 
 export type AuctionGearEnhancedLoadoutInput = {
   loadout: GearLoadoutItem[];
+  engine?: string;
   equipment: Record<string, unknown>;
   specId: number;
   options: AuctionGearOption[];
@@ -17,6 +19,7 @@ export type AuctionGearEnhancedLoadoutInput = {
 /** Points to the next complete assignment. Decimal strings keep large domains exact. */
 export type AuctionGearEnhancedLoadoutState = {
   version: 2;
+  nativeLotGroups?: 1;
   inputKey: string;
   cursor: number[];
   exhausted: boolean;
@@ -52,10 +55,12 @@ const incompatible = new Set([
 
 /** Keep different enhancement domains separate even when the bare native change
  * is identical. Socket order matters for the eventual native gem assignment. */
-function enhancedGroupKey(option: AuctionGearOption) {
+function enhancedGroupKey(option: AuctionGearOption, engine?: string) {
   const variant = option.candidate.variants.find(variant => variant.key === option.variantKey)!;
   const metadata = variant.resolution?.enhancements;
-  return JSON.stringify([auctionEffectGroupKey(option), option.variantKey, option.candidate.itemClassId,
+  const native = engine && variant.resolution?.engine === engine && variant.resolution.metadataVersion === 3 &&
+    metadata?.status === "verified" && validAuctionItemContext(variant.contextId) && !option.customization;
+  return JSON.stringify([auctionEffectGroupKey(option, native ? engine : undefined), native ? null : option.variantKey, option.candidate.itemClassId,
     option.customization?.enchantId, variant.itemLevel, variant.resolution?.metadataVersion, metadata?.status,
     ...(metadata?.status === "verified" ? [metadata.socketColors, metadata.socketCount, metadata.socketBonusId,
       metadata.requiredProfessionId, metadata.requiredProfessionRank,
@@ -79,12 +84,14 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
   const slotOrder = new Map<string, number>(slots.map((slot, index) => [slot, index]));
   const eligible = options.filter(option => slotOrder.has(option.candidate.slotType) && option.candidate.eligible &&
     option.candidate.compatibility.specId === input.specId && option.candidate.variants.some(variant => variant.key === option.variantKey));
-  const choices = auctionEffectGroups(eligible, slots, enhancedGroupKey);
+  const engine = input.engine && ignoresItemContext(input.engine) ? input.engine : undefined;
+  const groupsVersion = engine ? { nativeLotGroups: 1 as const } : {};
+  const choices = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine));
   // Zero keeps the equipped item (or the empty slot). It also emits the empty
   // purchase set, allowing the caller to process the retained-equipment case.
   const radices = choices.map(rows => rows.length + 1);
   const total = radices.reduce((count, radix) => count * BigInt(radix), 1n);
-  const inputKey = createHash("sha256").update(JSON.stringify({ traversal: 3, slots, options, loadout: input.loadout,
+  const inputKey = createHash("sha256").update(JSON.stringify({ traversal: 3, ...groupsVersion, slots, options, loadout: input.loadout,
     equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper })).digest("hex");
   // Each stride counts the suffix assignments below one choice at this slot.
   let suffixCount = total;
@@ -92,7 +99,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     suffixCount /= BigInt(radix);
     return suffixCount;
   });
-  const initialState = (): AuctionGearEnhancedLoadoutState => ({ version: 2, inputKey, cursor: slots.map(() => 0), exhausted: false, visited: "0" });
+  const initialState = (): AuctionGearEnhancedLoadoutState => ({ version: 2, ...groupsVersion, inputKey, cursor: slots.map(() => 0), exhausted: false, visited: "0" });
   const restore = (saved: AuctionGearEnhancedLoadoutState): AuctionGearEnhancedLoadoutState => {
     if (!saved || saved.version !== 2 || saved.inputKey !== inputKey || !Array.isArray(saved.cursor) || saved.cursor.length !== radices.length ||
         saved.cursor.some((index, slot) => !Number.isSafeInteger(index) || index < 0 || index >= radices[slot]) ||
@@ -101,7 +108,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     const ordinal = saved.cursor.reduce((value, index, slot) => value * BigInt(radices[slot]) + BigInt(index), 0n);
     const visited = BigInt(saved.visited);
     if (saved.exhausted ? visited !== total || ordinal !== 0n : visited !== ordinal || visited >= total) throw new Error("invalid_search_checkpoint");
-    return { version: 2, inputKey, cursor: [...saved.cursor], exhausted: saved.exhausted, visited: saved.visited };
+    return { version: 2, ...groupsVersion, inputKey, cursor: [...saved.cursor], exhausted: saved.exhausted, visited: saved.visited };
   };
   const advance = (state: AuctionGearEnhancedLoadoutState, axis: number) => {
     const visited = BigInt(state.visited);
