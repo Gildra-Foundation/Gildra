@@ -982,6 +982,15 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   // Discovery in a fresh context obtains current native metadata over HTTP.
   // Restored metadata is historical: one real native result must validate it.
   let verified = freshMetadata;
+  // A market containing only owned upgrades may have no native item metadata.
+  // Trust a real measurement from this simulator instance before using its cache.
+  let measuredEngine = "";
+  const hands = Array.isArray(armory.equipment.equipped_items)
+    ? armory.equipment.equipped_items.filter(item => item?.slot?.type === "HANDS") : [];
+  const originalGloves = hands.length === 1 ? hands[0] : undefined;
+  const unenchantedHandsId = originalGloves && (originalGloves.enchantments === undefined ||
+    Array.isArray(originalGloves.enchantments) && originalGloves.enchantments.length === 0)
+    ? originalGloves.item?.id : undefined;
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
@@ -993,8 +1002,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}), ...(ownedChanges?.length ? { ownedChanges } : {}),
       ...(mode === "finalist" ? { precision: mode } : {}) };
     simSignal.throwIfAborted();
-    const verifiedEngine = engine();
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: prepared.changes, engine: verifiedEngine });
+    const verifiedEngine = engine() || measuredEngine;
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: prepared.changes, engine: verifiedEngine, unenchantedHandsId });
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {
@@ -1042,10 +1051,13 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
-      if (engine() && simulation.engine !== engine() || shareKey && simulation.engine !== verifiedEngine)
-        throw new Error("simulation_version_changed");
+      const catalogEngine = engine();
+      if ((catalogEngine && simulation.engine !== catalogEngine) ||
+          (measuredEngine && simulation.engine !== measuredEngine) ||
+          (shareKey && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
+      measuredEngine = simulation.engine;
       verified = true;
       return simulation;
     });

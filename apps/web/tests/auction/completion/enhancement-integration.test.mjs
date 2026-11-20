@@ -186,6 +186,31 @@ test('owned neck candidate reuse preserves the edited socket, purchase and final
   assert.notEqual(key(edit,'SimulationCraft other'),key(other,'SimulationCraft other'));
 });
 
+test('candidate glove keys preserve combat enchant removal, gem edits and finalist identity', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const request = {spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const edit = {slotType:'HANDS',itemId:42,gems:[],enchantId:3238};
+  const key = (edits, bareId, precision, revision = engine, changes = []) =>
+    auctionGearMechanicalKey('profile', {...request,ownedChanges:edits,precision},
+      {changes,engine:revision,unenchantedHandsId:bareId});
+  for (const enchantId of [3238,5447,5933,5937,6205]) {
+    const candidate = [{...edit,enchantId}];
+    assert.equal(key(candidate,42),key(undefined,42));
+    assert.equal(key(candidate),key([edit]));
+    assert.notEqual(key(candidate),key(undefined));
+    assert.notEqual(key(candidate,41),key(undefined,41));
+    assert.notEqual(key(candidate,42,'finalist'),key(undefined,42,'finalist'));
+    assert.notEqual(key(candidate,42,undefined,'other'),key(undefined,42,undefined,'other'));
+  }
+  const gem = {index:0,itemId:1234};
+  assert.equal(key([{...edit,gems:[gem]}],42),key([{...edit,gems:[gem],enchantId:undefined}],42));
+  assert.notEqual(key([{...edit,gems:[gem]}],42),key(undefined,42));
+  assert.notEqual(key([{...edit,enchantId:684}],42),key(undefined,42));
+  assert.notEqual(key([{...edit,slotType:'WRIST'}],42),key(undefined,42));
+  const purchased = [{slot:'hands',itemId:99,bonusIds:[]}];
+  assert.notEqual(key([edit],42,undefined,engine,purchased),key(undefined,42,undefined,engine,purchased));
+});
+
 test('serialized continuation retains priced finalists and never repeats already simulated configurations',async()=>{
   const second={...gem,key:'synthetic-second-gem',consumableItemId:950003,simulationId:950003};
   const {input,calls}=fixture({slots:[newSlot()],budgetCopper:1000,limits:{configurations:128,simulations:1,finalists:3},

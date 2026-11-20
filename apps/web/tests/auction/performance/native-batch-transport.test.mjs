@@ -24,7 +24,7 @@ function option(itemId, slotType = 'WRIST') {
     variants: [{ key: 'base', bonusIds: [] }] }, variantKey: 'base' };
 }
 
-function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine,
+function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine,
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
   const state = { capacity: '2', batch: '25', ownedBatch, mixedSlots:false, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
@@ -53,7 +53,7 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
     auctionGearProfileFingerprint, metricsFor: () => createAuctionGearDiagnostics() });
   const armory = { profile: {}, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
-    encounter: {fightLengthSeconds: 120, targets: 1}, engine: () => workerEngine });
+    encounter: {fightLengthSeconds: 120, targets: 1}, engine: () => metadataEngine });
   async function finishFrom(start) {
     for (let i = start; i < state.requests.length; i++) { state.requests[i].finish(); await tick(); }
   }
@@ -258,6 +258,29 @@ test('distinct signals cancel queued and running callers independently and abort
   const results = await all;
   assert.deepEqual(results.map(row => row.status === 'fulfilled' ? row.value.dps : row.reason.name),
     [100.25,'AbortError','AbortError','AbortError','AbortError','AbortError','AbortError',107.25,'AbortError']);
+});
+
+test('an owned-only market validates its engine before sharing glove candidate scores', async () => {
+  const cache = createAuctionGearMechanicalCache();
+  const equipment = {equipped_items:[{item:{id:10},slot:{type:'HANDS'}}]};
+  for (const freshMetadata of [true,false]) {
+    const {run,state,finishFrom} = fixture({cache,equipment,freshMetadata,metadataEngine:'',workerEngine:'SimulationCraft 1210-01 · 18428cd'});
+    const initial = run([],signal());
+    await tick();
+    assert.equal(state.requests.length,1);
+    await finishFrom(0);
+    const baseline = await initial;
+    const edit = id => [{slotType:'HANDS',itemId:10,gems:[],enchantId:id}];
+    // The first measurement was made before an engine was known. A later
+    // check can safely reuse a score only after it matches the native revision.
+    const first = run([],signal(),edit(3238),'certified-candidate');
+    await tick();
+    await finishFrom(1);
+    assert.equal((await first).dps,baseline.dps);
+    const nativeCalls = state.requests.length;
+    assert.equal((await run([],signal(),edit(5937),'certified-candidate')).dps,baseline.dps);
+    assert.equal(state.requests.length,nativeCalls);
+  }
 });
 
 test('mixed-slot candidates share only an advertised worker and retry on rollback', async () => {
