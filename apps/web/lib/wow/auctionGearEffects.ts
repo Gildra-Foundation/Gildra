@@ -5,13 +5,27 @@ import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
     const item = engine ? auctionNativeItemOptions(variant, engine) : variant;
+    let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
+    // Keep certified groups separate from historical and uncertified offers,
+    // even when the latter already use ascending crafting modifier values.
+    const symmetric = craftedSymmetry && !option.customization && engine && ignoresItemContext(engine) &&
+      variant.resolution?.engine === engine && variant.resolution.nativeCraftedSymmetryV1 === true &&
+      validAuctionItemContext(variant.contextId) && supportedAuctionModifiers(modifiers);
+    if (symmetric) {
+      const first = modifiers.find(m => m.type === 29), second = modifiers.find(m => m.type === 30);
+      if (first && second && first.value !== second.value) {
+        modifiers = modifiers.map(m => m === first ? { ...m, value: Math.min(first.value, second.value) } :
+          m === second ? { ...m, value: Math.max(first.value, second.value) } : m);
+        return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds, item.contextId ?? 0, modifiers, "crafted-symmetry-v1"];
+      }
+    }
     return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
-      item.contextId ?? 0, [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value),
+      item.contextId ?? 0, modifiers,
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
@@ -101,10 +115,10 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine), constraints])).digest("hex");
+  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry), constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */

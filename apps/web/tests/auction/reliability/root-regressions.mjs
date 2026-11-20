@@ -45,6 +45,12 @@ const weapon = { minDamage: 2800, maxDamage: 4200, dps: 1000, speedSeconds: 3.5 
 const metadata = { key: auctionVariantKey(offer), itemId: 123, itemLevel: 100, requiredLevel: 1, inventoryType: 17,
   itemClassId: 2, itemSubclassId: 8, quality: 3, uniqueEquipped: false, setId: 0, stats: { strength: 10 },
   weapon, effects: ["Synthetic verified exact effect"], effectsVerified: true };
+check("crafted symmetry stays bound to the ordered bonuses measured by the worker", () => {
+  const listing = {...offer, bonusIds:[2,1], modifiers:[{type:29,value:36},{type:30,value:40}]};
+  const native = {...metadata, key:auctionVariantKey(listing), nativeCraftedSymmetryV1:[2,1]};
+  assert.equal(resolvedAuctionVariant(listing, native, engine).resolution.nativeCraftedSymmetryV1, true);
+  assert.equal(resolvedAuctionVariant({...listing,bonusIds:[1,2]}, native, engine).resolution.nativeCraftedSymmetryV1, undefined);
+});
 check("exact native weapon and verified effect facts survive variant resolution", () => {
   const variant = resolvedAuctionVariant(offer, metadata, engine);
   assert.deepEqual(variant.resolution.weapon, weapon);

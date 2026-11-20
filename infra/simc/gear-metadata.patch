@@ -1,9 +1,43 @@
 --- a/engine/report/json/report_json.cpp
 +++ b/engine/report/json/report_json.cpp
-@@ -379,12 +379,90 @@
+@@ -379,12 +379,124 @@
    } );
  }
 -
++
++// Pinned decode_stats replaces the two crafting placeholders before accumulating
++// their ratings. Only certify two distinct rows with identical unrounded inputs
++// to scaled_stat. The last array position has special handling in stat_value.
++void gildra_crafted_symmetry( JsonOutput node, const item_t& item )
++{
++  const auto& p = item.parsed;
++  const auto& mods = p.crafted_stat_mod;
++  if ( mods.size() != 2 || mods[ 0 ] == mods[ 1 ] || item.parent_slot != SLOT_INVALID ||
++       p.enchant_id || p.addon_id || !p.temporary_enchants.empty() ||
++       range::any_of( p.gem_id, []( auto id ) { return id != 0; } ) )
++    return;
++  const auto size = p.data.stat_type_e.size();
++  std::array<size_t, 2> index{ size, size };
++  for ( size_t i = 0; i < size; ++i )
++    for ( size_t j = 0; j < index.size(); ++j )
++      if ( p.data.stat_type_e[ i ] == mods[ j ] )
++      {
++        if ( index[ j ] != size || i + 1 == size )
++          return;
++        index[ j ] = i;
++      }
++  const auto a = index[ 0 ], b = index[ 1 ];
++  auto socket_mul = [&]( size_t i ) {
++    return i < p.data._dbc_stats_count ? p.data._dbc_stats[ i ].socket_mul : 0.0f;
++  };
++  if ( a == size || b == size || p.data.stat_alloc[ a ] != p.data.stat_alloc[ b ] ||
++       p.stat_val[ a ] != p.stat_val[ b ] || socket_mul( a ) != socket_mul( b ) )
++    return;
++  auto pair = node[ "gildra_crafted_symmetry_v1" ];
++  pair.make_array();
++  pair.add() = mods[ 0 ];
++  pair.add() = mods[ 1 ];
++}
 +
 +// Pinned 18428cd parses context into DUMMY_CONTEXT. Its only mechanical reads of
 +// drop_level/content_tuning are the three handlers in apply_item_bonus. Keep their
@@ -93,7 +127,7 @@
      {
        continue;
      }
-@@ -393,6 +471,58 @@
+@@ -393,6 +505,59 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -112,6 +146,7 @@
 +    {
 +      static_assert( STAT_MAX - STAT_STRENGTH == 46, "Version the applied stat vector when its layout changes" );
 +      gildra_scaling_inputs( slotnode, item );
++      gildra_crafted_symmetry( slotnode, item );
 +      const auto applied_stats = item.total_stats();
 +      auto applied = slotnode[ "gildra_applied_stats_v1" ];
 +      applied.make_array();

@@ -22,6 +22,7 @@ export function auctionVariantChange(offer: AuctionOffer, slot: string) {
   };
 }
 export type ResolvedAuctionVariant = {
+  nativeCraftedSymmetryV1?: number[];
   nativeSuffixProgramV1?: string;
   nativeScalingInputsV1?: number[];
   appliedStatsV1?: number[];
@@ -57,6 +58,8 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
       engine,
       requiredLevel: resolved.requiredLevel,
       stats: resolved.stats,
+      ...(Array.isArray(resolved.nativeCraftedSymmetryV1) && resolved.nativeCraftedSymmetryV1.length === offer.bonusIds.length &&
+        resolved.nativeCraftedSymmetryV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeCraftedSymmetryV1: true } : {}),
       ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
         ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
       ...(Array.isArray(resolved.nativeScalingInputsV1) && resolved.nativeScalingInputsV1.length === 4 &&

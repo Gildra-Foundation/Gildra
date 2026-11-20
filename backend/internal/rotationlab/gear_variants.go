@@ -45,25 +45,26 @@ type GearVariantEnhancements struct {
 }
 
 type GearVariantMetadata struct {
-	MetadataVersion       int                     `json:"metadataVersion"`
-	Enhancements          GearVariantEnhancements `json:"enhancements"`
-	Key                   string                  `json:"key"`
-	ItemID                int                     `json:"itemId"`
-	ItemLevel             int                     `json:"itemLevel"`
-	RequiredLevel         int                     `json:"requiredLevel"`
-	InventoryType         int                     `json:"inventoryType"`
-	ItemClassID           int                     `json:"itemClassId"`
-	ItemSubclassID        int                     `json:"itemSubclassId"`
-	Quality               int                     `json:"quality"`
-	UniqueEquipped        bool                    `json:"uniqueEquipped"`
-	SetID                 int                     `json:"setId"`
-	NativeSuffixProgramV1 string                  `json:"nativeSuffixProgramV1,omitempty"`
-	NativeScalingInputsV1 *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
-	AppliedStatsV1        []float64               `json:"appliedStatsV1,omitempty"`
-	NativeNoItemEffects   bool                    `json:"nativeNoItemEffects,omitempty"`
-	Stats                 map[string]float64      `json:"stats"`
-	Weapon                *GearVariantWeapon      `json:"weapon,omitempty"`
-	Error                 string                  `json:"error,omitempty"`
+	MetadataVersion         int                     `json:"metadataVersion"`
+	Enhancements            GearVariantEnhancements `json:"enhancements"`
+	Key                     string                  `json:"key"`
+	ItemID                  int                     `json:"itemId"`
+	ItemLevel               int                     `json:"itemLevel"`
+	RequiredLevel           int                     `json:"requiredLevel"`
+	InventoryType           int                     `json:"inventoryType"`
+	ItemClassID             int                     `json:"itemClassId"`
+	ItemSubclassID          int                     `json:"itemSubclassId"`
+	Quality                 int                     `json:"quality"`
+	UniqueEquipped          bool                    `json:"uniqueEquipped"`
+	SetID                   int                     `json:"setId"`
+	NativeCraftedSymmetryV1 *[]int                  `json:"nativeCraftedSymmetryV1,omitempty"`
+	NativeSuffixProgramV1   string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
+	AppliedStatsV1          []float64               `json:"appliedStatsV1,omitempty"`
+	NativeNoItemEffects     bool                    `json:"nativeNoItemEffects,omitempty"`
+	Stats                   map[string]float64      `json:"stats"`
+	Weapon                  *GearVariantWeapon      `json:"weapon,omitempty"`
+	Error                   string                  `json:"error,omitempty"`
 }
 type GearVariantWeapon struct {
 	MinDamage    float64 `json:"minDamage"`
@@ -298,6 +299,12 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		if reportVersion == 2 {
 			result.MetadataVersion = 3
 			result.NativeNoItemEffects = string(item["gildra_no_item_effects"]) == "true"
+			if nativeCraftedSymmetryV1(r.Git, v.Change.Modifiers, item["gildra_crafted_symmetry_v1"]) {
+				// Auction variant IDs may sort bonuses. Bind the proof to the exact
+				// order sent to SimC, including an explicitly empty bonus list.
+				bonuses := append([]int{}, v.Change.BonusIDs...)
+				result.NativeCraftedSymmetryV1 = &bonuses
+			}
 			result.NativeScalingInputsV1 = nativeScalingInputsV1(r.Git, item["gildra_scaling_inputs_v1"])
 			if result.NativeScalingInputsV1 != nil {
 				result.NativeSuffixProgramV1 = nativeSuffixProgramV1(v.Change.BonusIDs, item["gildra_suffix_program_v1"])
@@ -367,11 +374,37 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 	return response, nil
 }
 
+func nativeCraftedSymmetryV1(revision string, modifiers []ItemModifier, raw json.RawMessage) bool {
+	if !auditedItemRevision(revision) {
+		return false
+	}
+	var pair []int
+	if json.Unmarshal(raw, &pair) != nil || len(pair) != 2 || pair[0] == pair[1] {
+		return false
+	}
+	var requested [2]int
+	for _, m := range modifiers {
+		if m.Type != 29 && m.Type != 30 {
+			continue
+		}
+		i := m.Type - 29
+		if requested[i] != 0 || (m.Value != 32 && m.Value != 36 && m.Value != 40 && m.Value != 49) {
+			return false
+		}
+		requested[i] = m.Value
+	}
+	return requested[0] != 0 && requested[1] != 0 && requested[0] == pair[0] && requested[1] == pair[1]
+}
+
+func auditedItemRevision(revision string) bool {
+	const audited = "18428cd3902412abc8ee274d19567d603e674e66"
+	return len(revision) >= 7 && strings.HasPrefix(audited, revision)
+}
+
 // SimC reports an abbreviated revision. Only this revision's local item parser
 // was audited for context, drop_level and content_tuning consumers.
 func nativeScalingInputsV1(revision string, raw json.RawMessage) *[4]int {
-	const audited = "18428cd3902412abc8ee274d19567d603e674e66"
-	if len(revision) < 7 || !strings.HasPrefix(audited, revision) {
+	if !auditedItemRevision(revision) {
 		return nil
 	}
 	var inputs []*int

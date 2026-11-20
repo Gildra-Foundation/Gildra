@@ -214,7 +214,8 @@ function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
 }
 
 const auctionFactsKey = (options: AuctionGearOption[]) => JSON.stringify(options.map(option =>
-  [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
+  [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey,
+    ...(option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.nativeCraftedSymmetryV1 ? [true] : [])]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
 
 function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: AuctionGearOption[]) {
   const context = entry.context;
@@ -291,6 +292,7 @@ async function updateAuctionSearchResult(entry: AuctionGearSearchEntry, signal: 
       ? (selection, requestSignal) => context.simulate(selection, requestSignal, undefined, "certified-candidate")
       : context.simulate, checkpoint: entry.searchCheckpoint,
     statPriority: context.input.enhancementMode === "equipment",
+    groupCraftedEquipment: fullMarket && context.input.enhancementMode === "equipment",
     baseline: entry.retainedBaseline, simulationCache: cache,
     simulationConcurrency, simulationBatchSize: context.simulate.batchSize,
     // The initial response includes baseline plus two native comparisons.
@@ -636,6 +638,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
         incumbents: entry.retainedIncumbents,
         reuseAppliedStats: fullMarket,
+        groupCraftedEquipment: fullMarket && context.input.enhancementMode === "equipment",
         recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" && (!context.discovery || context.coverage.discoveryComplete)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,

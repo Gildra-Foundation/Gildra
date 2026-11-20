@@ -161,7 +161,7 @@ export type AuctionGearSearchCheckpoint = {
 };
 export type AuctionGearAssemblyCheckpoint = {
   version: 3;
-  nativeLotGroups?: 1;
+  nativeLotGroups?: 1 | 2;
   inputKey: string;
   /** Next mixed-radix effect-group assignment. Zero keeps the current item. */
   cursor: number[];

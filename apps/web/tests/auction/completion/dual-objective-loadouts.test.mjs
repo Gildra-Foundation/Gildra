@@ -1,7 +1,7 @@
 /** Exact planner and presentation contracts with isolated synthetic measurements. */
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {assembleAuctionGear,captureAuctionGearIncumbents} from '../../../lib/wow/auctionGearPlanner.ts';
+import {assembleAuctionGear,captureAuctionGearIncumbents,searchAuctionGearOptions} from '../../../lib/wow/auctionGearPlanner.ts';
 import {auctionAppliedStatsKey,auctionDominatedArmorOptions} from '../../../lib/wow/auctionGearEffects.ts';
 import {auctionGearResults,auctionGearLoadoutComparison} from '../../../lib/wow/auctionGearResult.ts';
 const measurement=(dps,dpsError=1)=>({dps,dpsError,confidence:95,iterations:750,engine:'SimulationCraft dual-objective fixture'});
@@ -309,4 +309,37 @@ test('a short or mismatched final simulation cannot complete the equipment searc
     await assert.rejects(assembleAuctionGear({ ...h.input, checkpoint, recheckEquipment: async () => row, onCheckpoint: state => { saved = state; } }), reason);
     assert.deepEqual(Object.keys(saved.equipmentFinalistMeasurements ?? {}), []);
   }
+});
+
+test('certified crafted equipment swaps share a group and retain the cheapest physical lot', async () => {
+ const h = fixture(), engine = 'SimulationCraft fixture · 18428cd';
+ const first = option(71, 'HEAD', 30), second = option(72, 'HEAD', 5);
+ for (const [row, a, b] of [[first, 36, 40], [second, 40, 36]]) {
+   row.candidate.itemId = 9876;
+   Object.assign(row.candidate.variants[0], { modifiers: [{type:29, value:a}, {type:30, value:b}],
+     resolution: { engine, nativeCraftedSymmetryV1:true } });
+ }
+ Object.assign(h.input, { options:[first, second], selectedSlots:['HEAD'], reuseAppliedStats:true,
+   baseline:{...measurement(1000),engine}, simulate:async sel=>({...measurement(sel.length ? 1200 : 1000),engine}) });
+ const old = await assembleAuctionGear({...h.input, maxAssignments:1});
+ h.input.groupCraftedEquipment = true;
+ assert.equal((await finish(h, old.checkpoint)).result.combinationCount,'3');
+ const grouped = await finish(h);
+ assert.equal(grouped.result.combinationCount,'2');
+ assert.deepEqual(ids(grouped.result.bestValueConfirmed),[72]);
+ for (const concurrency of [1, 2]) {
+   let calls = 0;
+   const simulate = async () => { calls++; return {...measurement(1200),engine}; };
+   const batch = await searchAuctionGearOptions({...h.input,simulate,simulationConcurrency:concurrency});
+   assert.equal(calls, 1);
+   assert.equal(batch.result.items.length, 2);
+   assert(batch.result.items.every(item => item.comparison.candidateDps === 1200));
+ }
+ for (const changed of [first, second]) {
+   const v = changed.candidate.variants[0]; delete v.resolution.nativeCraftedSymmetryV1;
+   assert.equal((await finish(h)).result.combinationCount,'3');
+   v.resolution.nativeCraftedSymmetryV1 = true;
+ }
+ second.customization = {enchantId:123};
+ assert.equal((await finish(h)).result.combinationCount,'3');
 });

@@ -206,3 +206,18 @@ func TestNativeSuffixProgramBindsOrderedOperandsAndSingleBonus(t *testing.T) {
 		}
 	}
 }
+
+func TestNativeCraftedSymmetryNeedsBothMatchingOrderedRatings(t *testing.T) {
+	modifiers := []ItemModifier{{Type: 30, Value: 40}, {Type: 29, Value: 36}}
+	for _, tc := range []struct {
+		revision, raw string
+		want          bool
+	}{
+		{"18428cd", "[36,40]", true}, {"18428cd", "[40,36]", false}, {"18428cd", "[36,36]", false},
+		{"18428cd", "[36,null]", false}, {"18428cd", "[]", false}, {"other", "[36,40]", false},
+	} {
+		if got := nativeCraftedSymmetryV1(tc.revision, modifiers, []byte(tc.raw)); got != tc.want {
+			t.Fatalf("%+v got %v", tc, got)
+		}
+	}
+}

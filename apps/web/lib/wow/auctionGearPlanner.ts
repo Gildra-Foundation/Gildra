@@ -176,6 +176,7 @@ function requireCheckpoint(key: string, checkpoint: { version: number; inputKey:
 /** Every distinct purchasable option remains visible; repeated native effects share a simulation. */
 export async function searchAuctionGearOptions(input: PlannerInput & {
   statPriority?: boolean;
+  groupCraftedEquipment?: boolean;
   checkpoint?: AuctionGearSearchCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearSearchCheckpoint) => void;
 }): Promise<{ result: AuctionGearSearchResult; checkpoint: AuctionGearSearchCheckpoint }> {
@@ -204,12 +205,38 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
       new Set(order).size !== order.length || order.some(id => typeof id !== "string" || !byId.has(id)))) throw new Error("invalid_search_checkpoint");
   if (order !== undefined) checkpoint.version = 2;
   const evaluationOptions = order ? order.map(id => byId.get(id)!) : options;
+  // Keep a raw lookup for every purchasable offer. Only the scheduling key
+  // is shared so an alias discovered after a yield can reuse a measured lot.
+  const schedulingKeys = new Map<string, string>();
+  const equivalentLots = new Map<string, string[]>();
+  if (input.groupCraftedEquipment && ignoresItemContext(checkpoint.baseline.engine)) {
+    for (const option of options) {
+      const variant = option.candidate.variants.find(v => v.key === option.variantKey);
+      if (option.customization || variant?.resolution?.nativeCraftedSymmetryV1 !== true) continue;
+      const raw = auctionSelectionEffectKey([option]);
+      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true);
+      schedulingKeys.set(raw, group);
+      const members = equivalentLots.get(group);
+      if (members) members.push(raw);
+      else equivalentLots.set(group, [raw]);
+      const cached = checkpoint.simulationCache[raw];
+      if (cached) checkpoint.simulationCache[group] ??= cached;
+    }
+    for (const [raw, group] of schedulingKeys) {
+      if (checkpoint.simulationCache[group]) checkpoint.simulationCache[raw] ??= checkpoint.simulationCache[group];
+    }
+  }
+  const storeSimulation = (key: string, result: GearPlanSimulation) => {
+    checkpoint.simulationCache[key] = result;
+    for (const raw of equivalentLots.get(key) ?? []) checkpoint.simulationCache[raw] = result;
+  };
   const save = () => input.onCheckpoint?.(checkpoint);
   save();
   let assignments = 0;
   while (checkpoint.nextOption < options.length && assignments < maxAssignments && !input.shouldYield?.()) {
     input.signal.throwIfAborted();
-    const option = evaluationOptions[checkpoint.nextOption], key = auctionSelectionEffectKey([option]);
+    const option = evaluationOptions[checkpoint.nextOption], raw = auctionSelectionEffectKey([option]);
+    const key = schedulingKeys.get(raw) ?? raw;
     let compatible = true;
     try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { compatible = false; }
     let simulated = false;
@@ -218,7 +245,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
       if (calls >= max) break;
       const window = input.simulationConcurrency === 2 ? 2 * (input.simulationBatchSize || 1) : 1;
       if (window === 1 || calls + 1 === max) {
-        checkpoint.simulationCache[key] = validSimulation(await input.simulate([option], input.signal), checkpoint.baseline.engine);
+        storeSimulation(key, validSimulation(await input.simulate([option], input.signal), checkpoint.baseline.engine));
         checkpoint.simulations++;
         calls++;
       } else {
@@ -243,7 +270,8 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
           const end = Math.min(options.length, checkpoint.nextOption + maxAssignments - assignments, checkpoint.nextOption + 256);
           for (let index = checkpoint.nextOption + 1; index < end && batch.size < Math.min(window, max - calls); index++) {
             if (signal.aborted || (window === 2 ? yieldingBeforePair : input.shouldYield?.())) break;
-            const next = evaluationOptions[index], nextKey = auctionSelectionEffectKey([next]);
+            const next = evaluationOptions[index], rawNext = auctionSelectionEffectKey([next]);
+            const nextKey = schedulingKeys.get(rawNext) ?? rawNext;
             if (batch.has(nextKey) || checkpoint.simulationCache[nextKey]) continue;
             try { auctionPlanLoadout(input.loadout, [next], input.specId, slots); } catch { continue; }
             submit(next, nextKey);
@@ -253,7 +281,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
           for (const effect of batch.keys()) {
             const result = measured[index++];
             if (result.status !== "fulfilled") continue;
-            checkpoint.simulationCache[effect] = result.value;
+            storeSimulation(effect, result.value);
             checkpoint.simulations++;
             calls++;
           }
@@ -297,6 +325,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
 /** Complete effect enumeration with exact procurement, yielding at a persisted assignment. */
 export async function assembleAuctionGear(input: PlannerInput & {
   reuseAppliedStats?: boolean;
+  groupCraftedEquipment?: boolean;
   recheckEquipment?: PlannerInput["simulate"];
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
@@ -305,9 +334,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
-  const nativeGroups = input.checkpoint ? input.checkpoint.nativeLotGroups === 1 : input.reuseAppliedStats;
+  const nativeGroups = input.checkpoint ? input.checkpoint.nativeLotGroups === 1 || input.checkpoint.nativeLotGroups === 2 : input.reuseAppliedStats;
   const groupEngine = nativeGroups && engine && ignoresItemContext(engine) ? engine : undefined;
-  const groups = auctionEffectGroups(options, slots, option => auctionEffectGroupKey(option, groupEngine));
+  const craftedGroups = input.checkpoint ? input.checkpoint.nativeLotGroups === 2 : input.groupCraftedEquipment === true;
+  const groups = auctionEffectGroups(options, slots, option => auctionEffectGroupKey(option, groupEngine, craftedGroups));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));
@@ -347,7 +377,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 3, inputKey, ...(groupEngine ? { nativeLotGroups: 1 as const } : {}), cursor: slots.map(() => 0), exhausted: false,
+    checkpoint = { version: 3, inputKey, ...(groupEngine ? { nativeLotGroups: craftedGroups ? 2 as const : 1 as const } : {}), cursor: slots.map(() => 0), exhausted: false,
       baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null,
       bestValueConfirmed: null, bestDpsConfirmed: null, simulationCache: cache,
       simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,
