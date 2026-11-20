@@ -400,7 +400,10 @@ export async function continueAuctionGearSearch(entry: AuctionGearSearchEntry, s
     }
     if (!shouldYield()) {
       setAuctionGearPhase(entry, "nextSearchPhase", "simulation");
-      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, entry.latestSearchResult ? 4 : 12);
+      // Accumulate more candidates per full-market batch within the same discovery deadline.
+      const ongoingDiscoverySteps = fullMarket ? 24 : 4;
+      const discoverySteps = entry.latestSearchResult ? ongoingDiscoverySteps : 12;
+      await discoverAuctionOptions(entry, token, signal, progress, discoveryShouldYield, discoverySteps);
     }
     signal.throwIfAborted();
     const result = simulated
