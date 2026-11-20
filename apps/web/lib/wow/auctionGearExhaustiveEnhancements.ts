@@ -251,14 +251,14 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         row.comparison = compareGearSimulationResults(baseline, row.simulation);
         candidates.set(row.configuration.key, row);
       }
-      const byDps = [...refined].sort((a, b) => b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper!);
+      const byDps = [...refined].sort((a, b) => b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper! || a.configuration.key.localeCompare(b.configuration.key));
       const leading = byDps[0];
       // Compare every member directly to the highest refined mean. Overlapping
       // intervals against an intermediate candidate cannot create a chain of ties.
       const comparisons = byDps.slice(1).map(row => ({ row, ...compareGearSimulationResults(leading.simulation, row.simulation).uncertainty }));
       const tied = [leading, ...comparisons.filter(row => !row.significant).map(entry => entry.row)];
       const preferred = [...tied].sort((a, b) => Number(confirmed(b)) - Number(confirmed(a)) ||
-        a.configuration.totalCopper! - b.configuration.totalCopper! || b.simulation.dps - a.simulation.dps)[0];
+        a.configuration.totalCopper! - b.configuration.totalCopper! || b.simulation.dps - a.simulation.dps || a.configuration.key.localeCompare(b.configuration.key))[0];
       if (comparisons.length) finalistRecheck = { keys: refined.map(row => row.configuration.key), leaderKey: leading.configuration.key,
         indistinguishableKeys: tied.map(row => row.configuration.key), preferredKey: preferred.configuration.key,
         significant: tied.length === 1, marginDps: comparisons[0].marginDps };

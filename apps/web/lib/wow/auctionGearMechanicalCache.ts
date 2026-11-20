@@ -99,28 +99,32 @@ function directJewelryGem(change: SimcGearChange, option: AuctionGearOption, eng
 
 /** The verified gems contribute player-level integer stats. Every eligible
  * socket has the same color and no bonus. Moving gems preserves the global
- * counts and all other effects. Canonicalize only the candidate score key. */
+ * counts and all other effects. The purchase and native request keep the original order. */
 export function purchasedJewelryScoreChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string,
-  owned: readonly OwnedAuctionGearChange[] | undefined, wornRings: readonly [WornRing, WornRing] | undefined) {
-  if ((changes.length < 2 && !owned?.length) || !ignoresItemContext(engine)) return;
+  owned: readonly OwnedAuctionGearChange[] | undefined, wornRings: readonly [WornRing, WornRing] | undefined, precision?: "finalist") {
+  if (!ignoresItemContext(engine) || (!precision && changes.length < 2 && !owned?.length)) return;
   const first = changes.findIndex(c => c.slot === "finger1"), second = changes.findIndex(c => c.slot === "finger2");
   if (first < 0 && second < 0) return;
-  const enchants = purchasedRingEnchantChanges(changes, options, engine, [first, second], owned, wornRings);
+  const enchants = !precision ? purchasedRingEnchantChanges(changes, options, engine, [first, second], owned, wornRings) : undefined;
   if (!changes.some(c => c.gemIds?.length)) return enchants;
   const hosts: { index: number; gem: number }[] = [];
   // Fixed host order also covers calls submitting the same purchases in a
   // different order. An unverified host keeps its original customization.
   for (const index of [first, second, changes.findIndex(c => c.slot === "neck")]) {
     if (index < 0 || owned?.some(c => c.slotType === options[index].candidate.slotType)) continue;
+    // At finalist precision share only the tested ordinary purchased rings.
+    // Keep the independent 750-iteration key and every enchant in its slot.
+    if (precision && changes[index].slot === "neck") continue;
     const gem = directJewelryGem(changes[index], options[index], engine);
     if (gem !== undefined) hosts.push({ index, gem });
   }
-  if (hosts.length < 2) return enchants;
+  if (!precision && hosts.length < 2) return enchants;
   const sorted = hosts.map(host => host.gem).sort((a, b) => a - b);
   let scoreChanges = enchants?.changes;
   for (const [i, { index, gem }] of hosts.entries()) {
     // Match the ordinary worker encoding of an empty purchased socket.
-    if (sorted[i] === gem && (gem || !changes[index].gemIds?.length)) continue;
+    const original = precision ? changes[index].gemIds?.[0] ?? 0 : gem;
+    if (sorted[i] === original && (original || !changes[index].gemIds?.length)) continue;
     scoreChanges ??= changes.slice();
     scoreChanges[index] = { ...scoreChanges[index], gemIds: sorted[i] ? [sorted[i]] : undefined };
   }

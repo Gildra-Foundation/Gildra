@@ -611,7 +611,7 @@ test('purchased rings share only direct enchant transfers, preserving item slots
   }
 });
 
-test('single prismatic rings reuse certified direct gem permutations only for candidate combat',async()=>{
+test('candidate gem and enchant transfers keep finalist precision separate',async()=>{
   const pinned='SimulationCraft 1210-01 · 18428cd';
   const ring=(id,slot,gems,enchantId)=>{
     const row=option(id,slot);row.candidate.inventoryType=11;
@@ -644,6 +644,73 @@ test('single prismatic rings reuse certified direct gem permutations only for ca
     assert.deepEqual(state.requests.at(-1).base.gearChanges.map(c=>c.gemIds),other.map(o=>o.customization.gemIds));
     await finishFrom(before);assert.equal((await final).iterations,750);
   }
+});
+
+test('independent finalist scores cover equivalent purchased ring gems while preserving physical purchases', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  const ring = (slot, id, gem, enchantId = 7964) => {
+    const row = option(id, slot);
+    row.candidate.inventoryType = 11;
+    Object.assign(row.candidate.variants[0], {itemLevel: 150, resolution: {engine: pinned, nativeNoItemEffects: true,
+      enhancements: {status: 'verified', socketColors: [14, 0, 0], socketCount: 1, socketBonusId: 0, requiredProfessionId: 0}}});
+    row.customization = {gemIds: gem ? [gem] : undefined, enchantId};
+    return row;
+  };
+  const first = (gem, enchant) => ring('FINGER_1', 501, gem, enchant);
+  const second = gem => ring('FINGER_2', 502, gem);
+  const {run, state, finishFrom} = fixture({workerEngine: pinned});
+  const measure = async (rows, native, mode = 'finalist') => {
+    const count = state.requests.length;
+    const pending = run(rows, signal(), [], mode);
+    await tick();
+    assert.equal(state.requests.length - count, Number(native));
+    if (native) {
+      assert.deepEqual(state.requests.at(-1).base.gearChanges.map(c => c.gemIds), rows.map(r => r.customization.gemIds));
+      await finishFrom(count);
+    }
+    assert.equal((await pending).iterations, mode === 'finalist' ? 750 : 100);
+  };
+  await measure([first(22460)], true, 'certified-candidate');
+  const shared = signal(), before = state.requests.length;
+  const sameFight = Promise.all([run([first(22460)], shared, [], 'finalist'), run([first(22459)], shared, [], 'finalist')]);
+  await tick();
+  assert.equal(state.requests.length - before, 1);
+  assert.deepEqual(state.requests.at(-1).base.gearChanges[0].gemIds, [22460]);
+  await finishFrom(before);
+  const [left, right] = await sameFight;
+  assert.equal(left.iterations, 750);
+  assert.deepEqual({...left}, {...right});
+  await measure([first(22459)], false);
+  await measure([first(130215)], true);
+  await measure([first(22460), second(130215)], true);
+  await measure([second(22459), first(130215)], false);
+  await measure([first(130215, 8022), second(22459)], true);
+  await measure([first(0), second(22459)], true);
+  await measure([first(22460), second(0)], false);
+  const withBonus = first(130216);
+  withBonus.candidate.variants[0].resolution.enhancements.socketBonusId = 555;
+  await measure([first(22459), second(130216)], true);
+  await measure([withBonus, second(22459)], true);
+  await measure([first(240870), second(22459)], true);
+  await measure([first(22459), second(240870)], true);
+});
+
+test('a short worker response cannot populate or satisfy a shared finalist measurement', async () => {
+  const {run, state} = fixture();
+  const shared = signal(), rows = [option(501)];
+  const calls = Promise.allSettled([run(rows, shared, [], 'finalist'), run(rows, shared, [], 'finalist')]);
+  await tick();
+  assert.equal(state.requests.length, 1);
+  state.requests[0].finish({dps: 501, dpsMean: 501.25, dpsError: 0.12, confidence: 95, iterations: 100, engine});
+  for (const result of await calls) {
+    assert.equal(result.status, 'rejected');
+    assert.match(result.reason.message, /invalid_simulation_result/);
+  }
+  const retry = run(rows, shared, [], 'finalist');
+  await tick();
+  assert.equal(state.requests.length, 2);
+  state.requests[1].finish();
+  assert.equal((await retry).iterations, 750);
 });
 
 test('candidate combat groups three purchased jewelry sockets including empty sockets', async () => {

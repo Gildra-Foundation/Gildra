@@ -418,3 +418,16 @@ test('a change of the value leader at finalist precision survives checkpoint rec
   assert.deepEqual([...new Set(checked)].sort(), ['option-1', 'option-2', 'option-3']);
   assert.equal(checked.length, 3);
 });
+
+test('equal precise DPS and cost resolve by receipt key even when screening favored the other purchase', async () => {
+  const h = fixture();
+  h.iterations = 100;
+  h.input.baseline = {...simulation(1000), iterations: 100};
+  h.scores = {baseline: 1000, 'option-1': 1099, 'option-2': 1100, 'option-3': 900};
+  h.input.recheck = async () => simulation(1100);
+  h.input.recheckBaseline = async () => simulation(1000);
+  const result = await finish(h);
+  assert.equal(result.finalistRecheck.leaderKey, 'option-1');
+  assert.equal(result.finalistRecheck.preferredKey, 'option-1');
+  assert.equal(result.verifiedValueKey, 'option-1');
+});

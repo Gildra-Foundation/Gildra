@@ -1018,8 +1018,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
     simSignal.throwIfAborted();
     const verifiedEngine = engine() || measuredEngine;
-    const jewelryScore = mode === "certified-candidate" && selections.length
-      ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings) : undefined;
+    const jewelryScore = mode && selections.length
+      ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings, mode === "finalist" ? mode : undefined) : undefined;
     const scoreChanges = jewelryScore?.changes ?? prepared.changes;
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
@@ -1046,7 +1046,9 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
     const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
-    const share = verified && verifiedEngine.startsWith("SimulationCraft") && mode !== "finalist";
+    // Precision is part of cacheKey. Two finalists can join the same precise
+    // fight under exactly the same conditions as a completed cache hit.
+    const share = verified && verifiedEngine.startsWith("SimulationCraft");
     if (share) for (const entry of pending) {
       if (entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
       // Either proof used by the completed cache also suffices in flight.
@@ -1076,6 +1078,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
+      if (mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
       const catalogEngine = engine();
       if ((catalogEngine && simulation.engine !== catalogEngine) ||
           (measuredEngine && simulation.engine !== measuredEngine) ||
