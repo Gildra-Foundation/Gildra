@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
+import { auctionAppliedStatsKey } from "./auctionGearEffects";
 import { auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
@@ -191,9 +192,21 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       proof?.metadataVersion === 3 && sockets?.status === "verified" && sockets.socketColors?.length === 3 &&
       sockets.socketColors.every(color => color === 0 || color === 14);
     const tuning = reuseCandidateInputs || finalistCap ? proof?.nativeContentTuningV1 : undefined;
+    // For a certified socketless chest the suffix's rounded ratings and
+    // the direct enchant fully determine their contribution to this fight.
+    // Replace only the bonus list in the comparison key. Every other slot,
+    // enchant, modifier, owned edit and the physical purchase stays intact.
+    const chestSuffix = request.precision === "finalist" && change.slot === "chest" && change.enchantId &&
+      option?.candidate.slotType === "CHEST" && sameProgram && proof?.nativeSuffixProgramV1 &&
+      option.customization?.enchantId === change.enchantId && !change.gemIds?.length &&
+      !request.ownedChanges?.some(edit => edit.slotType === "CHEST") &&
+      (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
+      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? [])
+      ? auctionAppliedStatsKey([option], native.engine, "enchanted-suffix") : undefined;
     return {
       ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, curve),
+      ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
     };

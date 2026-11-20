@@ -568,7 +568,7 @@ test('ordinary auction measurements reuse parsed item inputs across lots on the 
   await changed;
 });
 
-test('a direct chest enchant preserves rounded suffix equivalence only for proved candidate fights', async () => {
+test('a direct chest enchant preserves rounded suffix equivalence within each independent precision', async () => {
   const pinned = 'SimulationCraft 1210-01 · 18428cd';
   function chest(suffix, enchantId, workerEngine) {
     const o = armor(suffix, enchantId, workerEngine);
@@ -592,7 +592,7 @@ test('a direct chest enchant preserves rounded suffix equivalence only for prove
     const first = chest(47, enchant, worker), second = chest(70, enchant, worker);
     edit(second, second.candidate.variants[0]);
     for (const [o, mode, expected] of [[first, 'certified-candidate', true], [second, 'certified-candidate', !shouldShare],
-      [first, 'finalist', true], [second, 'finalist', true]]) {
+      [first, 'finalist', true], [second, 'finalist', !shouldShare]]) {
       const before = state.requests.length;
       const result = run([o], signal(), [], mode);
       await tick();
