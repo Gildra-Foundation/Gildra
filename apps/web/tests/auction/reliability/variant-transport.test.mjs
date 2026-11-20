@@ -47,3 +47,31 @@ test("metadata survives a dropped worker connection, retries once and honors can
     await closed;
   }
 });
+
+test("wide metadata requests preserve all rows and retry the same offset on a legacy worker", async t => {
+  const sizes = [], progress = [];
+  let legacy = false;
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    const { variants } = JSON.parse(init.body);
+    sizes.push(variants.length);
+    if (legacy && variants.length > 16) return Response.json({ code: "invalid_variant_request" }, { status: 400 });
+    const headers = { "x-gildra-engine": "simulationcraft" };
+    if (!legacy) headers["x-gildra-variant-batch-limit"] = "64";
+    return Response.json({ engine: "SimulationCraft fixture", variants: variants.map(v => ({ key: v.key, itemId: v.change.itemId })) }, { headers });
+  });
+  const offers = Array.from({ length: 70 }, (_, i) => ({ slot: "head", offer: {
+    auctionId: i + 1, itemId: i + 1, bonusIds: [], modifiers: [], contextId: 0, quantity: 1, buyoutCopper: 1
+  }}));
+  const run = () => resolveAuctionVariants({ spec: "fury-warrior", characterLevel: 81, signal: new AbortController().signal,
+    batchLimit: 64, offers, onProgress: done => progress.push(done) });
+  const wide = await run();
+  assert.equal(wide.batchLimit, 64);
+  assert.deepEqual(sizes.splice(0), [64, 6]);
+  assert.deepEqual(progress.splice(0), [64, 70]);
+  legacy = true;
+  const narrow = await run();
+  assert.equal(narrow.batchLimit, 16);
+  assert.deepEqual([...narrow.variants], [...wide.variants]);
+  assert.deepEqual(sizes, [64, 16, 16, 16, 16, 6]);
+  assert.deepEqual(progress, [16, 32, 48, 64, 70]);
+});

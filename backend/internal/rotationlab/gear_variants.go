@@ -13,11 +13,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Gildra-Foundation/Gildra/backend/internal/httpjson"
 )
+
+const maxVariantBatchSize = 64
 
 type GearVariantRequest struct {
 	Spec           string             `json:"spec"`
@@ -89,7 +92,7 @@ type GearVariantResponse struct {
 var variantKeyPattern = regexp.MustCompile(`^[a-zA-Z0-9:_-]{1,160}$`)
 
 func validateVariantRequest(input GearVariantRequest) error {
-	if _, ok := supportedSpecs[input.Spec]; !ok || input.CharacterLevel < 1 || input.CharacterLevel > 90 || len(input.Variants) < 1 || len(input.Variants) > 16 {
+	if _, ok := supportedSpecs[input.Spec]; !ok || input.CharacterLevel < 1 || input.CharacterLevel > 90 || len(input.Variants) < 1 || len(input.Variants) > maxVariantBatchSize {
 		return errors.New("invalid variant request")
 	}
 	seen := map[string]bool{}
@@ -176,7 +179,7 @@ func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantR
 	if errors.Is(err, errVariantMetadataMissing) {
 		return GearVariantResponse{}, err
 	}
-	if !errors.Is(err, errVariantItemRejected) {
+	if !errors.Is(err, errVariantItemRejected) && !(len(input.Variants) > 1 && errors.Is(err, errVariantReportTooLarge)) {
 		return GearVariantResponse{}, err
 	}
 	if len(input.Variants) == 1 {
@@ -206,6 +209,7 @@ func (e *SimCEngine) resolveVariantBatch(ctx context.Context, input GearVariantR
 }
 
 var errVariantMetadataMissing = errors.New("variant_metadata_worker_upgrade_required")
+var errVariantReportTooLarge = errors.New("variant_report_too_large")
 var errVariantItemRejected = errors.New("variant_item_rejected")
 
 func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantRequest) (GearVariantResponse, error) {
@@ -236,12 +240,16 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 		}
 		return GearVariantResponse{}, fmt.Errorf("resolve items: %w", err)
 	}
-	raw, err := os.ReadFile(report)
+	info, err := os.Stat(report)
 	if err != nil {
 		return GearVariantResponse{}, err
 	}
-	if len(raw) > 32<<20 {
-		return GearVariantResponse{}, errors.New("variant_report_too_large")
+	if info.Size() > 32<<20 {
+		return GearVariantResponse{}, errVariantReportTooLarge
+	}
+	raw, err := os.ReadFile(report)
+	if err != nil {
+		return GearVariantResponse{}, err
 	}
 	return parseVariantReport(raw, input)
 }
@@ -498,6 +506,7 @@ func (h *WorkerHandler) resolveVariants(w http.ResponseWriter, r *http.Request) 
 		writeProblem(w, http.StatusServiceUnavailable, code, code)
 		return
 	}
+	w.Header().Set("X-Gildra-Variant-Batch-Limit", strconv.Itoa(maxVariantBatchSize))
 	w.Header().Set("X-Gildra-Engine", "simulationcraft")
 	httpjson.Write(w, http.StatusOK, httpjson.PrivateNoStore, result)
 }

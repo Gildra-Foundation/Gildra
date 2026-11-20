@@ -14,7 +14,7 @@ import type { AuctionGearOption, AuctionPlanProgress } from "./auctionGearTypes"
 /** Limits bound one continuation's work, never the retained candidate domain. */
 // Align complete 100-ID/four-request waves. Like 500 IDs, 800 needs at most
 // two waves per step, while avoiding a mostly idle second wave on every step.
-const catalogBatch = 800, detailBatch = 8, initialVariantBatch = 4, variantBatch = 8;
+const catalogBatch = 800, initialVariantBatch = 4;
 /** A repaired catalog can join a retained search without retrying on every poll. */
 const catalogRetryMs = 60_000;
 type CatalogPriorityHint = { itemLevel: number; requiredLevel?: number };
@@ -22,6 +22,7 @@ export type AuctionGearDiscovery = {
   /** Older persisted coverage may already have excluded gear with prismatic sockets. */
   socketMetadataRevision?: 3;
   equippedReferenceRevision?: 1;
+  variantBatchLimit?: 16 | 64;
   marketId: string;
   discoveredSnapshotId?: string;
   budgetCopper: number;
@@ -344,6 +345,8 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     }
   }
   for (let step = 0; step < (input.maxSteps ?? 12) && !input.shouldYield?.(); step++) {
+    const batchLimit = state.variantBatchLimit ?? 16;
+    const detailBatch = !input.stopAfterNewCandidates && batchLimit === 64 ? 64 : 8;
     input.signal.throwIfAborted();
     if (warmCandidatesFirst && !state.records.length && state.variantCursor === state.variantKeys.length) {
       warmCandidatesFirst = false;
@@ -364,9 +367,8 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
       state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
-      // Preserve first-result latency, then fill one native request (at most
-      // eight candidate variants plus eight exact reference controls).
-      const size = input.stopAfterNewCandidates ? initialVariantBatch : variantBatch;
+      // Each candidate may also need an exact reference control.
+      const size = input.stopAfterNewCandidates ? initialVariantBatch : batchLimit / 2;
       const keys = state.variantKeys.slice(state.variantCursor, state.variantCursor + size);
       const probes = keys.flatMap(key => {
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
@@ -396,8 +398,9 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       const nativeProbes = probes.filter(({ offer }) => state.verifiedReferences.has(offer.itemId) ||
         (!state.rejectedReferences.has(offer.itemId) && state.references.get(offer.itemId)) || equipped?.has(auctionVariantKey(offer)));
       const resolution = nativeProbes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...nativeProbes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
-        spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
+        batchLimit, spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
       input.signal.throwIfAborted();
+      if (resolution) state.variantBatchLimit = resolution.batchLimit;
       if (resolution?.engine) {
         if (state.engine && state.engine !== resolution.engine) throw new Error("simulation_version_changed");
         state.engine = resolution.engine;

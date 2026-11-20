@@ -6,6 +6,7 @@ export async function resolveAuctionVariants(input: {
     offer: AuctionOffer;
     slot: string;
   }>;
+  batchLimit?: 16 | 64;
   spec: string;
   characterLevel: number;
   signal: AbortSignal;
@@ -14,9 +15,11 @@ export async function resolveAuctionVariants(input: {
   const unique = [...new Map(input.offers.map(v => [auctionVariantKey(v.offer), v])).values()];
   const resolved = new Map<string, ResolvedAuctionVariant>();
   let engine = "";
-  for (let offset = 0; offset < unique.length; offset += 16) {
+  let batchLimit = input.batchLimit ?? 16;
+  let advertisedLimit: 16 | 64 = 16;
+  for (let offset = 0; offset < unique.length;) {
     input.signal.throwIfAborted();
-    const variants = unique.slice(offset, offset + 16).map(v => ({
+    const variants = unique.slice(offset, offset + batchLimit).map(v => ({
       key: auctionVariantKey(v.offer),
       change: auctionVariantChange(v.offer, v.slot)
     }));
@@ -46,6 +49,10 @@ export async function resolveAuctionVariants(input: {
       variants?: ResolvedAuctionVariant[];
       code?: string;
     };
+    if (variants.length > 16 && response.status === 400 && payload.code === "invalid_variant_request") {
+      batchLimit = 16;
+      continue;
+    }
     if (!response.ok || response.headers.get("x-gildra-engine") !== "simulationcraft") throw new Error(payload.code === "variant_metadata_worker_upgrade_required" ? payload.code : "variant_resolution_unavailable");
     if (!Array.isArray(payload.variants) || payload.variants.length !== variants.length) throw new Error("invalid_variant_resolution");
     const expected = new Map(variants.map(v => [v.key, v.change.itemId]));
@@ -59,10 +66,14 @@ export async function resolveAuctionVariants(input: {
       if (!payload.engine.startsWith("SimulationCraft") || engine && engine !== payload.engine) throw new Error("simulation_version_changed");
       engine = payload.engine;
     }
-    input.onProgress?.(Math.min(offset + 16, unique.length), unique.length);
+    advertisedLimit = response.headers.get("x-gildra-variant-batch-limit") === "64" ? 64 : 16;
+    batchLimit = Math.min(batchLimit, advertisedLimit) as 16 | 64;
+    offset += variants.length;
+    input.onProgress?.(offset, unique.length);
   }
   return {
     engine,
+    batchLimit: advertisedLimit,
     variants: resolved
   };
 }

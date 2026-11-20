@@ -1,6 +1,7 @@
 package rotationlab
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -63,7 +64,13 @@ func TestVariantRequestRejectsUnsafeIdentifiersAndOversizedBatches(t *testing.T)
 	if validateVariantRequest(input) == nil {
 		t.Fatal("unsafe slot accepted")
 	}
-	input.Variants = make([]GearVariantInput, 17)
+	input.Variants = nil
+	for i := 0; i <= 64; i++ {
+		input.Variants = append(input.Variants, GearVariantInput{Key: strconv.Itoa(i), Change: GearChange{Slot: "head", ItemID: 123}})
+	}
+	if err := validateVariantRequest(GearVariantRequest{Spec: input.Spec, CharacterLevel: input.CharacterLevel, Variants: input.Variants[:64]}); err != nil {
+		t.Fatal(err)
+	}
 	if validateVariantRequest(input) == nil {
 		t.Fatal("oversized batch accepted")
 	}
