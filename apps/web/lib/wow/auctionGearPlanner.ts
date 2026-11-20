@@ -353,7 +353,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   if (input.checkpoint) {
     requireCheckpoint(inputKey, input.checkpoint, (grouping ?? 0) >= 3 ? 4 : 3);
     // The precise pass clones its own state when resumed; keep it separate
-    // from the much more frequently resumed screening cache.
+    // from the screening cache when copying the outer checkpoint.
     const { simulationCache, equipmentVerification, ...state } = input.checkpoint;
     checkpoint = { ...structuredClone(state), ...(equipmentVerification ? {equipmentVerification} : {}),
       simulationCache: cloneCache(simulationCache, state.baseline.engine) };
@@ -401,6 +401,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // applied. Enumeration can prepare the next assignments while SimC runs.
   const traversal = { cursor: [...checkpoint.cursor], exhausted: checkpoint.exhausted,
     nextSeed: checkpoint.nextSeed, nextPair: checkpoint.nextPair, combinationsChecked: checkpoint.combinationsChecked };
+  const directVerification = !!input.recheckEquipment && !checkpoint.exhausted;
+  if (checkpoint.nextEquipmentSingle !== undefined && (!Number.isSafeInteger(checkpoint.nextEquipmentSingle) ||
+      checkpoint.nextEquipmentSingle < 0 || checkpoint.nextEquipmentSingle > flatGroups.length)) throw new Error("invalid_search_checkpoint");
+  let nextEquipmentSingle = checkpoint.nextEquipmentSingle ?? 0;
   const totalAssignments = BigInt(combinationCount);
   const readCount = (value: string) => {
     if (typeof value !== "string" || value.length > combinationCount.length || !/^(0|[1-9]\d*)$/.test(value) ||
@@ -500,7 +504,9 @@ export async function assembleAuctionGear(input: PlannerInput & {
     }
   }
   save();
-  const yieldBeforeEnumeration = input.shouldYield?.() === true;
+  const screenFinished = directVerification && checkpoint.seedSelections !== null &&
+    checkpoint.nextSeed === checkpoint.seedSelections.length && checkpoint.nextEquipmentSingle === flatGroups.length;
+  const yieldBeforeEnumeration = screenFinished || input.shouldYield?.() === true;
   const groupIndex = new Map(flatGroups.map((group, index) => [group, index]));
   const rankedBySlot = groups.map(slotGroups => slotGroups.map(group => groupIndex.get(group)!)
     .sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b));
@@ -631,6 +637,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     }
     selections.length = 0;
     Object.assign(checkpoint, traversal, { cursor: [...traversal.cursor] });
+    if (directVerification) checkpoint.nextEquipmentSingle = nextEquipmentSingle;
     if (proofPruned > 0n) checkpoint.proofPrunedAssignments = proofPruned.toString();
     if (trackBranches) checkpoint.pruningCounts = {
       substitutionBranches: substitutionBranches.toString(), procurementBranches: procurementBranches.toString(),
@@ -667,8 +674,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
       if (pending.size >= window || selections.length >= 256) await commitWindow();
     }
     const seededSelections = new Set(seeds.map(seed => seed.join(":")));
-    // Test compatible repair pairs and promising pairs before the long Cartesian traversal.
-    while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair < pairs.length && assignments < maxAssignments && !input.shouldYield?.()) {
+    // A screen score never bounds an independent 750-iteration result. Keep a
+    // whole-set preview, then measure the single purchases shown on item cards.
+    // The precise cursor covers all other combinations, including repair pairs.
+    const previewPairs = directVerification ? (seeds.length ? 0 : Math.min(1, pairs.length)) : pairs.length;
+    while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair < previewPairs && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
       const pair = pairs[traversal.nextPair];
       const first = flatGroups[pair.first], second = flatGroups[pair.second];
@@ -677,6 +687,16 @@ export async function assembleAuctionGear(input: PlannerInput & {
       if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextPair++;
       traversal.combinationsChecked++;
+      assignments++;
+      if (pending.size >= window || selections.length >= 256) await commitWindow();
+      if (assignments % 256 === 0) await yieldTraversal();
+    }
+    while (directVerification && !yieldBeforeEnumeration && traversal.nextSeed === seeds.length &&
+        traversal.nextPair >= previewPairs && nextEquipmentSingle < flatGroups.length && assignments < maxAssignments && !input.shouldYield?.()) {
+      input.signal.throwIfAborted();
+      const offer = cheapestSingles[nextEquipmentSingle];
+      if (!dominatedGroups.has(flatGroups[nextEquipmentSingle]) && compatibleSelection([offer]) && !evaluate([offer])) break;
+      nextEquipmentSingle++;
       assignments++;
       if (pending.size >= window || selections.length >= 256) await commitWindow();
       if (assignments % 256 === 0) await yieldTraversal();
@@ -697,7 +717,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     }
     const prefixReceipts: AuctionGearOption[][] = [[]];
     const prefixCosts = [0];
-    while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair === pairs.length && !traversal.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
+    while (!directVerification && !yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair === pairs.length && !traversal.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
       const dominatedAxis = dominatedGroups.size ? traversal.cursor.findIndex((choice, axis) =>
         choice > 0 && dominatedGroups.has(groups[axis][choice - 1])) : -1;
@@ -793,7 +813,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
   }
   save();
   let leaders: Leaders = checkpoint;
-  let complete = checkpoint.exhausted;
+  let coverage = checkpoint;
+  let coverageCount = combinationCount;
+  let complete = checkpoint.exhausted || directVerification && checkpoint.seedSelections !== null &&
+    checkpoint.nextSeed === checkpoint.seedSelections.length && checkpoint.nextEquipmentSingle === flatGroups.length;
   if (complete && input.recheckEquipment) {
     const sets = new Map<string, AuctionGearOption[]>([["[]", []]]);
     for (const best of [checkpoint.best, checkpoint.bestDpsConfirmed, checkpoint.bestValueConfirmed, checkpoint.bestConfirmed]) {
@@ -846,15 +869,18 @@ export async function assembleAuctionGear(input: PlannerInput & {
         for (const best of [saved.best, saved.bestConfirmed, saved.bestDpsConfirmed, saved.bestValueConfirmed])
           if (best) precise(best.simulation);
       }
-      if (!saved?.exhausted && (calls >= max || input.shouldYield?.())) {
+      if (!saved && (calls >= max || input.shouldYield?.())) {
         complete = false;
       } else {
         const verification = await assembleAuctionGear({ ...input, searchId: input.searchId + ":equipment-750",
           baseline, simulate: recheck, simulationCache: warm, checkpoint: saved, incumbents: undefined,
-          maxNewSimulations: Math.max(1, max - calls), recheckEquipment: undefined,
+          maxNewSimulations: Math.max(1, max - calls), shouldYield: calls >= max ? () => true : input.shouldYield,
+          recheckEquipment: undefined,
           onCheckpoint: state => { checkpoint.equipmentVerification = state; save(); } });
         checkpoint.equipmentVerification = verification.checkpoint;
         complete = verification.result.exhaustiveComplete;
+        coverage = verification.checkpoint;
+        coverageCount = verification.result.combinationCount;
       }
       const covered = checkpoint.equipmentVerification;
       leaders = { baseline, best: covered?.best ?? { optionIds: [], simulation: baseline },
@@ -884,10 +910,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
     bestConfirmed: presentConfirmed(leaders.bestConfirmed),
     bestValueConfirmed: presentConfirmed(leaders.bestValueConfirmed), bestDpsConfirmed: presentConfirmed(leaders.bestDpsConfirmed),
     simulations: checkpoint.simulations + (checkpoint.equipmentVerification?.simulations ?? 0), optionsConsidered: options.length, searchLimited: !complete,
-    exhaustiveComplete: complete, combinationsChecked: checkpoint.combinationsChecked,
-    ...(checkpoint.proofPrunedAssignments ? { proofPrunedAssignments: checkpoint.proofPrunedAssignments } : {}),
-    ...(checkpoint.pruningCounts ? { pruningCounts: checkpoint.pruningCounts } : {}),
-    validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };
+    exhaustiveComplete: complete, combinationsChecked: coverage.combinationsChecked,
+    ...(coverage.proofPrunedAssignments ? { proofPrunedAssignments: coverage.proofPrunedAssignments } : {}),
+    ...(coverage.pruningCounts ? { pruningCounts: coverage.pruningCounts } : {}),
+    validCombinations: coverage.validCombinations, combinationCount: coverageCount, combinationKind: "effects" } };
 }
 
 /** Backward-compatible entry point; its result is now an exhaustive resumable search. */

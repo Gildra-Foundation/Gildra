@@ -492,6 +492,36 @@ test('an independent equipment sweep resumes inside the domain under a one-fight
   assert.equal(partial.result.simulations - initial.result.simulations, seen.size);
 });
 
+test('full equipment screens individual lots and the preview, then covers every affordable set at independent precision', async () => {
+  const rows = [option(1,'HEAD',10), option(2,'CHEST',20), option(3,'WAIST',30), option(4,'WRIST',40)];
+  const key = rows => rows.map(o=>o.auctionId).sort().join(',');
+  const expected = Array.from({length:16}, (_, mask) => key(rows.filter((_, i)=>mask & (1<<i)))).sort();
+  const screen = [], verified = [];
+  const h = fixture();
+  Object.assign(h.input, {options:rows, selectedSlots:rows.map(o=>o.candidate.slotType),
+    simulate:async rows=>{screen.push(key(rows)); return {...measurement(1000+rows.length),iterations:100};},
+    recheckEquipment:async rows=>{
+      const ids = key(rows);
+      verified.push(ids);
+      return measurement(ids === '1,4' ? 1400 : ids === '1' ? 1120 : 1000+rows.length);
+    }});
+  const complete = await finish(h, undefined, 2);
+  assert.deepEqual(verified.sort(), expected, 'every physical set here has a distinct native input');
+  assert.deepEqual(screen.sort(), ['', '1', '1,2,3,4', '2', '3', '4']);
+  assert.equal(complete.checkpoint.exhausted,false,'the screening cursor did not certify the full domain');
+  assert(complete.checkpoint.equipmentVerification.exhausted);
+  assert.equal(complete.result.validCombinations,16);
+  assert.equal(complete.result.simulations,verified.length+screen.length);
+  assert.deepEqual(ids(complete.result.bestDpsConfirmed),[1,4]);
+  assert.deepEqual(ids(complete.result.bestValueConfirmed),[1]);
+  const corrupt = structuredClone(complete.checkpoint);
+  corrupt.nextEquipmentSingle = rows.length+1;
+  await assert.rejects(assembleAuctionGear({...h.input,checkpoint:corrupt}),/invalid_search_checkpoint/);
+  const repeated = await assembleAuctionGear({...h.input,checkpoint:complete.checkpoint,
+    simulate:()=>assert.fail('screening repeated'),recheckEquipment:()=>assert.fail('verification repeated')});
+  assert.deepEqual(repeated.result,complete.result);
+});
+
 test('two finalist lanes keep a successful sibling for retry after a failed measurement', async () => {
   const h = fixture(), initial = await finish(h);
   let saved, active = 0, peak = 0;

@@ -9,6 +9,7 @@ import * as gear from "../../../lib/wow/gearSimulation.ts";
 import {auctionGearMechanicalKey, purchasedJewelryScoreChanges,createAuctionGearMechanicalCache} from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import {auctionGearProfileFingerprint} from "../../../lib/wow/auctionGearFingerprint.ts";
 import {assertFreshMarket} from "../../../lib/wow/auctionMarket.ts";
+import {auctionAppliedStatsKey} from "../../../lib/wow/auctionGearEffects.ts";
 import {assembleAuctionGear,searchAuctionGearOptions} from "../../../lib/wow/auctionGearPlanner.ts";
 
 const engine="SimulationCraft native-precision-test";
@@ -22,7 +23,7 @@ function simulator(response){
  const body=stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")),{mode:"strip"});
  let calls=0;
  const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
-  ...gear,auctionGearMechanicalKey, purchasedJewelryScoreChanges,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
+  ...gear,auctionAppliedStatsKey,auctionGearMechanicalKey, purchasedJewelryScoreChanges,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
   fetch:async(_url,request)=>{calls++;const selection=JSON.parse(request.body).gearChanges?.length?1:0;
    return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection,JSON.parse(request.body))};}
  });

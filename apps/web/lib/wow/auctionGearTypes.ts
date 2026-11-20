@@ -189,6 +189,8 @@ export type AuctionGearAssemblyCheckpoint = {
   bestConfirmed: { optionIds: string[]; simulation: GearPlanSimulation } | null;
   /** Finalist-precision measurements stay separate from screening and survive a yielded turn. */
   equipmentFinalistMeasurements?: Record<string, GearPlanSimulation>;
+  /** Next single-effect group needed for preview cards before exact equipment verification. */
+  nextEquipmentSingle?: number;
   /** Independent precise traversal, with its own cursor, winners and score cache. */
   equipmentVerification?: Omit<AuctionGearAssemblyCheckpoint, "equipmentVerification">;
   /** Legacy checkpoints without these fields replay cached traversal before claiming completion. */

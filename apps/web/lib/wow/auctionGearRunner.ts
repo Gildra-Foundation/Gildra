@@ -642,7 +642,9 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         // every original option and proves its own groups after accounting for sockets.
         groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
         bareEquipmentProofs: fullMarket && context.input.enhancementMode !== undefined,
-        recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" && (!context.discovery || context.coverage.discoveryComplete)
+        recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" &&
+          (!context.discovery || context.coverage.discoveryComplete || entry.assemblyCheckpoint?.nextEquipmentSingle !== undefined ||
+            entry.assemblyCheckpoint?.equipmentVerification !== undefined)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
         maxNewSimulations: assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
