@@ -30,6 +30,7 @@ export type AuctionGearResult = {
   enhancement?: AuctionEnhancedRecommendation;
   unresolvedCheaperKey?: string;
   preferredFinalist?: boolean;
+  preferredValueFinalist?: boolean;
 };
 const signature = (purchases: AuctionGearPurchase[]) => JSON.stringify(purchases.map(p => [p.slotType, p.auctionId, p.variantKey]).sort());
 const subtotal = (rows: { quotedCopper: number | null }[]) => rows.some(row => row.quotedCopper === null)
@@ -39,7 +40,10 @@ const significant = (comparison: AuctionGearComparison) => comparison.deltaDps >
 export function auctionGearResults(assembly: AuctionGearAssemblyResult): AuctionGearResult[] {
   const results: AuctionGearResult[] = [];
   const recheck = assembly.enhancementOptimization?.finalistRecheck;
-  const rechecked = assembly.enhancementOptimization?.recommendations.filter(row => recheck?.keys.includes(row.configuration.key)) ?? [];
+  const valueKey = assembly.enhancementOptimization?.complete && assembly.enhancementOptimization.traversal === "exhaustive"
+    ? assembly.enhancementOptimization.verifiedValueKey : undefined;
+  const checked = (key: string) => key === valueKey || recheck?.keys.includes(key);
+  const rechecked = assembly.enhancementOptimization?.recommendations.filter(row => checked(row.configuration.key)) ?? [];
   const preciseKeys = new Map<string, string>();
   const exactEnhancements = assembly.enhancementOptimization?.traversal === "exhaustive";
   for (const plan of [assembly.bestConfirmed, assembly.bestValueConfirmed, assembly.bestDpsConfirmed, assembly]) {
@@ -66,7 +70,7 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
       ? configuration.totalCopper : null;
     const original = [assembly.bestConfirmed, assembly.bestValueConfirmed, assembly.bestDpsConfirmed, assembly].find(plan => plan && signature(plan.purchases) === signature(enhancement.purchases));
     if (preciseKeys.has(configuration.key)) continue;
-    if (recheck?.keys.includes(configuration.key)) preciseKeys.set(configuration.key, `enhanced:${configuration.key}`);
+    if (checked(configuration.key)) preciseKeys.set(configuration.key, `enhanced:${configuration.key}`);
     if (exactEnhancements && original && configuration.consumables.length === 0 &&
         totalCopper === original.spentCopper && enhancement.comparison.candidateDps === original.comparison.candidateDps) continue;
     results.push({ key: `enhanced:${configuration.key}`, kind: "enhanced", purchases: enhancement.purchases,
@@ -75,6 +79,8 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
       significant: significant(enhancement.comparison), fullyEnhanced: configuration.fullyEnhanced,
       removedSlots: enhancement.removedSlots ?? original?.removedSlots ?? [], enhancement });
   }
+  const value = valueKey && results.find(row => row.key === preciseKeys.get(valueKey));
+  if (value && value.totalCopper !== null && value.significant) value.preferredValueFinalist = true;
   if (recheck) {
     const checkedResult = (key: string) => results.find(row => row.key === preciseKeys.get(key));
     const tied = (recheck.indistinguishableKeys ?? (recheck.significant ? [] : recheck.keys))
@@ -91,6 +97,10 @@ export function auctionGearResults(assembly: AuctionGearAssemblyResult): Auction
 
 /** Choose among computed results only; this does not compute a second optimum. */
 export function recommendedAuctionGearResult(results: AuctionGearResult[], objective: AuctionGearObjective): AuctionGearResult | undefined {
+  if (objective === "value") {
+    const value = results.find(row => row.preferredValueFinalist && row.significant && row.totalCopper !== null);
+    if (value) return value;
+  }
   const preferred = results.find(row => row.preferredFinalist && row.totalCopper !== null);
   if (objective === "dps" && preferred && (preferred.significant || !results.some(row => row.significant))) return preferred;
   const confirmedKeys = new Set(results.filter(row => row.significant).map(row => row.key));

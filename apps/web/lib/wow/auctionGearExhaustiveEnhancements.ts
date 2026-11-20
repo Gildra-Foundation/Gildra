@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey, type AuctionGearEnhancedLoadoutState } from "./auctionGearEnhancedLoadouts";
 import { evaluateAuctionEnhancementStage, type AuctionEnhancedRecommendation, type AuctionEnhancementStageResult, type AuctionEnhancementStageState } from "./auctionGearEnhancementStage";
+import { compareAuctionEnhancementValue, trackValuePrecision, type ValuePrecisionContenders } from "./auctionGearEnhancementOptimizer";
 import { auctionEnhancementCatalogInfo } from "./auctionEnhancementCatalog";
 import { exactCommodityPrices } from "./auctionBrowserData";
 import { assertFreshMarket } from "./auctionMarket";
@@ -10,7 +11,7 @@ import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { auctionGearSlots } from "./auctionGearSelection";
 
 type Leader = { recommendation: AuctionEnhancedRecommendation; options: AuctionGearOption[] };
-type Ranking = { measured?: Leader; value?: Leader; dps?: Leader; runnerUp?: Leader; nextMeasured?: Leader };
+type Ranking = { valuePrecision?: ValuePrecisionContenders<Leader>; measured?: Leader; value?: Leader; dps?: Leader; runnerUp?: Leader; nextMeasured?: Leader };
 type OrdinalRange = [first: string, last: string];
 type PriceGroup = Ranking & { ordinals: OrdinalRange[]; checked: number; reasons: string[]; unavailable: boolean };
 type SavedMeasurements = { ordinal: string; cache: Record<string, GearPlanSimulation> };
@@ -92,7 +93,7 @@ function validRecheck(result: GearPlanSimulation, original: GearPlanSimulation) 
     Number.isSafeInteger(result.iterations) && result.iterations > original.iterations &&
     (original.iterations !== 100 || result.iterations === 750);
 }
-function consider(state: Ranking, candidate: Leader, retainPair: boolean, known?: FinalistAliases) {
+function consider(state: Ranking, candidate: Leader, retainPair: boolean, known?: FinalistAliases, valueBaseline?: GearPlanSimulation) {
   const recommendation = candidate.recommendation;
   if (recommendation.configuration.status !== "priced" || recommendation.configuration.totalCopper === null) return;
   if (retainPair && (!state.nextMeasured || betterDps(candidate, state.nextMeasured))) {
@@ -105,6 +106,7 @@ function consider(state: Ranking, candidate: Leader, retainPair: boolean, known?
     }
   } else if (!retainPair && betterDps(candidate, state.measured)) state.measured = candidate;
   if (recommendation.comparison.deltaDps <= 0 || !recommendation.comparison.uncertainty.significant) return;
+  if (valueBaseline) trackValuePrecision(state.valuePrecision ??= {}, candidate, row => row.recommendation, valueBaseline);
   if (betterDps(candidate, state.dps)) state.dps = candidate;
   const score = recommendation.configuration.totalCopper / recommendation.comparison.deltaDps;
   const prior = state.value ? state.value.recommendation.configuration.totalCopper! / state.value.recommendation.comparison.deltaDps : Infinity;
@@ -117,7 +119,7 @@ function recommendations(state: AuctionGearExhaustiveEnhancementState, objective
 function restamp(state: AuctionGearExhaustiveEnhancementState) {
   const sourceUpdatedAt = state.stage.quotes?.sourceUpdatedAt;
   if (!sourceUpdatedAt) return;
-  for (const leader of [state.measured, state.value, state.dps, state.runnerUp, state.nextMeasured]) if (leader) {
+  for (const leader of [state.measured, state.value, state.dps, state.runnerUp, state.nextMeasured, state.valuePrecision?.lower, state.valuePrecision?.upper]) if (leader) {
     leader.recommendation = { ...leader.recommendation, configuration: { ...leader.recommendation.configuration, sourceUpdatedAt } };
   }
 }
@@ -143,7 +145,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     nativeLotGroups: input.state?.cursor?.nativeLotGroups, selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
     loadout: input.loadout, equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper });
   const aliases = input.recheck ? finalistAliases(input.options, input.engine) : undefined;
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const valueBaseline = input.recheck && input.baseline.iterations === 100 ? input.baseline : undefined;
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
     version: 1, inputKey, cursor: iterator.initialState(), stage, equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
@@ -176,7 +179,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         input.onState(state);
         return true;
       }
-      for (const key of ["measured", "value", "dps", "runnerUp", "nextMeasured"] as const) delete state[key];
+      for (const key of ["measured", "value", "dps", "runnerUp", "nextMeasured", "valuePrecision"] as const) delete state[key];
       state.equipmentChecked = 0;
       state.reasons = [];
       state.unavailable = false;
@@ -186,8 +189,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           delete state.priceGroups[key];
           state.rangeCount = (state.rangeCount ?? 0) - group.ordinals.length;
         } else {
-          for (const leader of [group.measured, group.value, group.dps, group.runnerUp, group.nextMeasured])
-            if (leader) consider(state, leader, Boolean(input.recheck), aliases);
+          for (const leader of [group.measured, group.value, group.dps, group.runnerUp, group.nextMeasured, group.valuePrecision?.lower, group.valuePrecision?.upper])
+            if (leader) consider(state, leader, Boolean(input.recheck), aliases, valueBaseline);
           state.equipmentChecked += group.checked;
           state.reasons = [...new Set([...state.reasons, ...group.reasons])];
           state.unavailable ||= group.unavailable;
@@ -221,7 +224,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     }
     // A cheap value winner can be far below the DPS finalists. Its published
     // gain and price-per-DPS still need the same native finalist precision.
-    for (const leader of [state.measured, state.dps, state.value]) {
+    for (const leader of [state.measured, state.dps, state.value, state.valuePrecision?.lower, state.valuePrecision?.upper]) {
       if (leader && leader.recommendation.simulation.iterations === 100) add(leader);
     }
     return [...leaders.values()];
@@ -236,6 +239,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     });
     const complete = !state.replay?.length && state.cursor.exhausted && state.currentOptionIds === undefined && group.length === refined.length && !needsBaseline();
     let all = recommendations(state, input.objective);
+    let verifiedValueKey: string | undefined;
     let finalistRecheck: AuctionEnhancementStageResult["finalistRecheck"];
     if (complete && refined.length) {
       const baselineIndex = group.findIndex(leader => !leader.options.length && !leader.recommendation.configuration.ownedChanges?.length);
@@ -266,12 +270,15 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         const premium = Number(dearerTies.has(a.configuration.key)) - Number(dearerTies.has(b.configuration.key));
         if (premium) return premium;
         if (input.objective === "value" && confirmed(a) && confirmed(b)) {
-          const difference = a.configuration.totalCopper! / a.comparison.deltaDps - b.configuration.totalCopper! / b.comparison.deltaDps;
-          if (difference) return difference;
+          return compareAuctionEnhancementValue(a, b, baseline.dps);
         }
         const preference = Number(b === preferred) - Number(a === preferred);
         return preference || b.simulation.dps - a.simulation.dps || a.configuration.totalCopper! - b.configuration.totalCopper!;
       });
+      if (valueBaseline && baseline.iterations === 750) {
+        const byValue = refined.filter(row => confirmed(row) && !dearerTies.has(row.configuration.key)).sort((a, b) => compareAuctionEnhancementValue(a, b, baseline.dps));
+        verifiedValueKey = byValue[0]?.configuration.key;
+      }
     }
     const fresh = all.filter(row => {
       try { assertFreshMarket({ sourceUpdatedAt: row.configuration.sourceUpdatedAt ?? "" }); return true; }
@@ -284,7 +291,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const reasons = [...state.reasons];
     return { state, result: { traversal: "exhaustive", includesOwnedEquipment:true, equipmentChecked: state.equipmentChecked, complete,
       status: !complete ? "pending" : fresh.length ? "ready" : state.unavailable ? "unavailable" : "no_affordable_configuration",
-      ...(finalistRecheck ? { finalistRecheck } : {}), searchLimited: true, reasons, recommendations: ranked, catalogRevision: auctionEnhancementCatalogInfo.revision } };
+      ...(verifiedValueKey ? { verifiedValueKey } : {}), ...(finalistRecheck ? { finalistRecheck } : {}), searchLimited: true, reasons, recommendations: ranked, catalogRevision: auctionEnhancementCatalogInfo.revision } };
   };
   // An exhausted cursor may be reopened when authoritative prices change. A
   // timestamp refresh alone does not invalidate expensive native measurements.
@@ -391,7 +398,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (acceptQuotes()) break;
     restamp(state);
     const candidates = result.recommendations.map(recommendation => ({ recommendation, options: selected }));
-    for (const candidate of candidates) consider(state, candidate, Boolean(input.recheck), aliases);
+    for (const candidate of candidates) consider(state, candidate, Boolean(input.recheck), aliases, valueBaseline);
     state.reasons = [...new Set([...state.reasons, ...result.reasons])];
     if (result.complete) {
       const ordinal = state.currentOrdinal;
@@ -402,7 +409,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         group.checked++;
         group.unavailable ||= result.status === "unavailable";
         group.reasons = [...new Set([...group.reasons, ...result.reasons])];
-        for (const candidate of candidates) consider(group, candidate, Boolean(input.recheck), aliases);
+        for (const candidate of candidates) consider(group, candidate, Boolean(input.recheck), aliases, valueBaseline);
         if (Object.keys(state.priceGroups).length > maxPriceGroups || state.rangeCount + (state.replay?.length ?? 0) > maxOrdinalRanges) {
           delete state.priceGroups;
           delete state.rangeCount;

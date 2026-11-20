@@ -155,18 +155,27 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
   const gear = native ? native.changes.map((change, i) => {
-    const option = reuseCandidateInputs ? native.options?.[i] : undefined;
+    const option = native.options?.[i];
     const variant = option?.candidate.variants.find(row => row.key === option.variantKey);
     const resolution = variant?.resolution;
     const proof = resolution?.engine === native.engine ? resolution : undefined;
     // The curve depends on the item bonus program. A prepared change may be
     // reordered or rewritten by jewelry normalization before it reaches here.
-    const curve = proof?.nativeDropCurveV1 && option?.candidate.itemId === change.itemId &&
-      variant?.bonusIds.length === change.bonusIds?.length && variant?.bonusIds.every((id, index) => id === change.bonusIds?.[index])
-      ? proof.nativeDropCurveV1 : undefined;
+    const bonuses = variant?.bonusIds;
+    const sameProgram = option?.candidate.itemId === change.itemId && Array.isArray(bonuses) &&
+      bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
+    const curve = reuseCandidateInputs && sameProgram ? proof?.nativeDropCurveV1 : undefined;
+    // A finalist can reuse a previous 750-iteration fight only within its
+    // own precision key. Both native tuning handlers consume the same cap.
+    // Preserve the drop level, gem order, enchant and every other input.
+    const sockets = proof?.enhancements;
+    const finalistCap = request.precision === "finalist" && sameProgram && bonuses.length > 0 &&
+      proof?.metadataVersion === 3 && sockets?.status === "verified" && sockets.socketColors?.length === 3 &&
+      sockets.socketColors.every(color => color === 0 || color === 14);
+    const tuning = reuseCandidateInputs || finalistCap ? proof?.nativeContentTuningV1 : undefined;
     return {
       ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
-        !change.enchantId && !change.gemIds?.length, proof?.nativeContentTuningV1, curve),
+        !change.enchantId && !change.gemIds?.length, tuning, curve),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
     };

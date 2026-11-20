@@ -27,3 +27,17 @@ test('exact search compares a verified gear-only purchase at its actual price wi
   assert.equal(recommendedAuctionGearResult(results, 'dps').totalCopper, 100);
   assert.deepEqual(recommendedAuctionGearResult(results, 'value').removedSlots, ['OFF_HAND']);
 });
+
+test('the shopping recommendation respects the independently measured value winner', async () => {
+  const { auctionGearResults, recommendedAuctionGearResult } = await import('../../../lib/wow/auctionGearResult.ts');
+  const comparison = (gain) => ({candidateDps: 1000 + gain, deltaDps: gain, uncertainty: {significant: true}});
+  const ring = {slotType: 'FINGER_1', auctionId: 1, itemId: 1, variantKey: 'ring'};
+  const assembly = {purchases: [ring], spentCopper: 200, budgetCopper: 400, comparison: comparison(100), removedSlots: [],
+    enhancementMode: 'enhanced', enhancementOptimization: {traversal: 'exhaustive', complete: true, verifiedValueKey: 'one-ring',
+      recommendations: [{configuration: {key: 'one-ring', status: 'priced', itemsCopper: 100, totalCopper: 101,
+        consumables: [{kind: 'gem', quotedCopper: 1}]}, purchases: [{...ring, auctionId: 2}], comparison: comparison(45)}]}};
+  const selected = () => recommendedAuctionGearResult(auctionGearResults(assembly), 'value');
+  assert.equal(selected().totalCopper, 101);
+  assembly.enhancementOptimization.complete = false;
+  assert.equal(selected().totalCopper, 200);
+});

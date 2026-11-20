@@ -22,6 +22,7 @@ export type AuctionEnhancedRecommendation = { label: string; configuration: Pric
   enhancementNames?: { gems: Record<string, string>; enchants: Record<string, string> } };
 export type AuctionEnhancementStageResult = { complete: boolean; status: 'pending' | 'ready' | 'unavailable' | 'no_affordable_configuration';
   traversal?: 'exhaustive' | 'preview'; includesOwnedEquipment?: true; equipmentChecked?: number;
+  verifiedValueKey?: string;
   finalistRecheck?: { keys: string[]; significant: boolean; marginDps: number;
     leaderKey?: string; indistinguishableKeys?: string[]; preferredKey?: string; competingKey?: string };
   searchLimited: boolean; reasons: string[]; recommendations: AuctionEnhancedRecommendation[]; catalogRevision: string };
@@ -198,7 +199,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
       budgetCopper:input.budgetCopper,simulationIdentity:identity,objective:input.objective,baselineDps:input.baseline.dps,baseline:input.baseline,
       signal:input.signal,shouldYield:input.shouldYield,checkpoint:previous,simulationCache:previous?.cache ?? input.priorSimulations,onCacheHit:input.onCacheHit,
-      exhaustive:input.exhaustive,
+      exhaustive:input.exhaustive, valuePrecision: input.exhaustive && input.includePrecisionContenders && input.baseline.iterations === 100,
       simulationConcurrency:input.simulationConcurrency,
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
@@ -216,7 +217,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       return comparison.deltaDps > 0 && comparison.uncertainty.significant;
     });
     const retained = input.exhaustive
-      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed, ...(input.includePrecisionContenders ? [optimized.checkpoint.secondMeasuredDps, optimized.checkpoint.thirdMeasuredDps] : [])].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
+      ? [optimized.checkpoint.bestMeasuredDps,optimized.checkpoint.bestValueConfirmed,optimized.checkpoint.bestDpsConfirmed, ...(input.includePrecisionContenders ? [optimized.checkpoint.secondMeasuredDps, optimized.checkpoint.thirdMeasuredDps, optimized.checkpoint.valuePrecision?.lower, optimized.checkpoint.valuePrecision?.upper] : [])].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : input.includeObjectiveAlternatives
       ? [confirmed, optimized.checkpoint.bestValueConfirmed, optimized.checkpoint.bestDpsConfirmed].filter((candidate): candidate is NonNullable<typeof confirmed> => Boolean(candidate))
       : confirmed ? [confirmed] : [];

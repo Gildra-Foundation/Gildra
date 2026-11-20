@@ -7,6 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { serialize } from 'node:v8';
+import { compareAuctionEnhancementValue, trackValuePrecision } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
 import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
@@ -22,7 +23,7 @@ function fixture() {
   const h={price:10,stale:false,partial:false,stageCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:h.prices ?? {'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,assertFreshMarket,structuredClone,compareGearSimulationResults,
+    createHash,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
@@ -386,4 +387,34 @@ test('equal tuning caps reserve a finalist position for a distinct setup and ret
   for (const row of rows) consider(state, row, true, aliases);
   assert.deepEqual([state.measured, state.runnerUp, state.nextMeasured].map(r => r.recommendation.configuration.key),
     ['a', 'd', 'e']);
+});
+
+test('a change of the value leader at finalist precision survives checkpoint recovery', async () => {
+  const h = fixture();
+  h.price = 0;
+  h.iterations = 100;
+  h.input.objective = 'value';
+  h.input.baseline = {...simulation(1000), iterations: 100, dpsError: 10};
+  h.input.options.forEach((row, i) => { row.costCopper = [100, 200, 400][i]; });
+  h.scores = {baseline: 1000, 'option-1': 1037, 'option-2': 1080, 'option-3': 1150};
+  h.errors = {'option-1': 2, 'option-2': 2, 'option-3': 2};
+  const checked = [];
+  h.input.recheckBaseline = async () => simulation(1000);
+  h.input.recheck = async options => {
+    const id = options[0].id;
+    checked.push(id);
+    return simulation({'option-1': 1043, 'option-2': 1082, 'option-3': 1150}[id]);
+  };
+  let result;
+  for (let i = 0; i < 50; i++) {
+    result = (await h.run()).result;
+    h.state = JSON.parse(JSON.stringify(h.state));
+    if (result.complete) break;
+  }
+  assert.equal(result.complete, true);
+  assert.equal(result.verifiedValueKey, 'option-1');
+  assert.equal(result.recommendations[0].configuration.key, 'option-1');
+  assert.equal(result.recommendations[0].comparison.deltaDps, 43);
+  assert.deepEqual([...new Set(checked)].sort(), ['option-1', 'option-2', 'option-3']);
+  assert.equal(checked.length, 3);
 });
