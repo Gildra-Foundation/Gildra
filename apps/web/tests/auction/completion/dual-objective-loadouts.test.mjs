@@ -99,7 +99,6 @@ test('armor equivalence preserves slot levels, other items, enhancements and inc
    row => row.candidate.constraints.crafted = true,
    row => row.candidate.variants[0].resolution.nativeNoItemEffects = false,
    row => row.candidate.variants[0].resolution.appliedStatsV1.pop(),
-   row => row.candidate.variants[0].resolution.appliedStatsV1[40]++,
    row => row.candidate.variants[0].resolution.enhancements.socketCount++,
    row => row.candidate.variants[0].resolution.engine = 'older engine',
    row => row.customization = { enchantId: 22 },
@@ -107,6 +106,13 @@ test('armor equivalence preserves slot levels, other items, enhancements and inc
    const altered = structuredClone(b);
    alter(altered[0]);
    assert.notEqual(key, auctionAppliedStatsKey(altered, engine));
+ }
+ // A single point of stamina can change Blood DK combat even when two
+ // offers scored identically on Fury. Preserve each native stat independently.
+ for (const index of b[0].candidate.variants[0].resolution.appliedStatsV1.keys()) {
+   const altered = structuredClone(b);
+   altered[0].candidate.variants[0].resolution.appliedStatsV1[index]++;
+   assert.notEqual(key, auctionAppliedStatsKey(altered, engine), `native stat ${index}`);
  }
  assert.notEqual(auctionAppliedStatsKey([...a, option(7, 'TRINKET_1', 10)], engine),
    auctionAppliedStatsKey([...b, option(8, 'TRINKET_1', 10)], engine));
