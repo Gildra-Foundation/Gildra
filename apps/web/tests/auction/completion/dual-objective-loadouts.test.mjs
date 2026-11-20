@@ -218,6 +218,36 @@ test('only the same positively certified standalone suffix program substitutes f
   }
 });
 
+test('bare armor can substitute different certified allocations only after the applied ratings match', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const chest = (id, suffix) => {
+    const row = plainOffer(id,116427,'CHEST',id,0,{engine,nativeScalingInputsV1:[0,0,0,0],nativeSuffixProgramV1:String(id).repeat(64)});
+    const v = row.candidate.variants[0];
+    v.bonusIds = [suffix];
+    v.modifiers = [{type:28,value:1218}];
+    return row;
+  };
+  const a=chest(1,70), b=chest(2,47);
+  const prune = (other, bare = true) => [...auctionDominatedArmorOptions([a,other],[],72,engine,bare)];
+  assert.deepEqual(prune(b),[b.id]);
+  assert.deepEqual(prune(b,false),[]);
+  for (const mutate of [
+    v => v.resolution.appliedStatsV1[27]++,
+    v => v.itemLevel++,
+    v => v.bonusIds.push(68),
+    v => v.bonusIds = [262],
+    v => v.modifiers.push({type:64,value:1}),
+    v => v.resolution.nativeScalingInputsV1[2]++,
+    v => { delete v.resolution.nativeSuffixProgramV1; },
+  ]) {
+    const changed = structuredClone(b);
+    mutate(changed.candidate.variants[0]);
+    assert.deepEqual(prune(changed),[]);
+  }
+  b.customization = {enchantId:1234};
+  assert.deepEqual(prune(b),[]);
+});
+
 test('pinned native lot groups keep affordable receipts and resume each cursor in its original domain',async()=>{
  const engine='SimulationCraft fixture · 18428cd';
  const score=dps=>({...measurement(dps),engine,iterations:100});
@@ -441,7 +471,7 @@ test('bare waist socket substitutes only at equal native inputs and preserves ge
   const run = async reuseAppliedStats => {
     const h=fixture();
     Object.assign(h.input,{options:[cheaper,socketed,shoulder],selectedSlots:['WAIST','SHOULDER'],
-      simulate,recheckEquipment:simulate,compareEmptySockets:true,reuseAppliedStats});
+      simulate,recheckEquipment:simulate,bareEquipmentProofs:true,reuseAppliedStats});
     return (await finish(h)).result;
   };
   const reference = await run(false), reduced = await run(true);

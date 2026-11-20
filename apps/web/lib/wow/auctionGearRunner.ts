@@ -641,7 +641,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         // This pass measures bare gear. The enhancement iterator below receives
         // every original option and proves its own groups after accounting for sockets.
         groupCraftedEquipment: fullMarket && context.input.enhancementMode !== undefined,
-        compareEmptySockets: fullMarket && context.input.enhancementMode === "equipment",
+        bareEquipmentProofs: fullMarket && context.input.enhancementMode === "equipment",
         recheckEquipment: fullMarket && context.input.enhancementMode === "equipment" && (!context.discovery || context.coverage.discoveryComplete)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,

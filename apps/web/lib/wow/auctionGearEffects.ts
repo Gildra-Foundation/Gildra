@@ -35,7 +35,7 @@ const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "
 
 /** A certified substitution must preserve the item identity observable to APLs
  * and the ordered bonus IDs observable to other equipped items' effects. */
-export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: string, compareEmptySockets = false): string | undefined {
+export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: string, bareEquipmentProofs = false): string | undefined {
   const pieces: Array<[string, unknown]> = [];
   let certified = false;
   const pinned = ignoresItemContext(engine);
@@ -49,7 +49,7 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
     // prismatic socket, 13696 does nothing. Neither contributes a combat
     // effect or a cross-item description tag. Without a gem or socket bonus
     // their native stat vectors and all other inputs must still match.
-    const emptySocket = compareEmptySockets && pinned && c.slotType === "WAIST" && c.inventoryType === 6 &&
+    const emptySocket = bareEquipmentProofs && pinned && c.slotType === "WAIST" && c.inventoryType === 6 &&
       v.bonusIds.length === 4 && v.bonusIds[0] === 6652 && v.bonusIds[1] === 13663 && v.bonusIds[3] === 13901 &&
       e?.status === "verified" && e.socketColors?.length === 3 && e.socketColors[1] === 0 && e.socketColors[2] === 0 &&
       ((v.bonusIds[2] === 13695 && e.socketCount === 1 && e.socketColors[0] === 14) ||
@@ -67,9 +67,18 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
       // A legacy stat suffix can carry a different list ID for the exact same
       // ordered DBC operations. Every other bonus keeps its original identity.
       const suffix = r.nativeSuffixProgramV1;
-      const bonuses = certifiedScaling && v.bonusIds.length === 1 && Number.isSafeInteger(v.bonusIds[0]) &&
-        v.bonusIds[0] >= 1 && v.bonusIds[0] <= 500 && typeof suffix === "string" && /^[a-f0-9]{64}$/.test(suffix)
-        ? suffix : emptySocket ? "empty-waist-socket-v1" : v.bonusIds;
+      const verifiedSuffix = certifiedScaling && v.bonusIds.length === 1 && Number.isSafeInteger(v.bonusIds[0]) &&
+        v.bonusIds[0] >= 1 && v.bonusIds[0] <= 500 && typeof suffix === "string" && /^[a-f0-9]{64}$/.test(suffix);
+      let bonuses: string | number[] = emptySocket ? "empty-waist-socket-v1" : v.bonusIds;
+      if (verifiedSuffix) {
+        // On this DBC the certified two-allocation suffixes below 251 only
+        // add secondary ratings. Bare combat consumes their final integer
+        // ratings via item_t::total_stats. Enchants can inspect the original
+        // allocation, so enhanced candidates retain their ordered program.
+        const ratingsOnly = bareEquipmentProofs && v.bonusIds[0] <= 250 &&
+          scaling.every(value => value === 0) && (v.modifiers ?? []).every(m => m.type === 28);
+        bonuses = ratingsOnly ? "bare-secondary-suffix-v1" : suffix;
+      }
       const modifiers = (v.modifiers ?? []).filter(m => (m.type < 38 || m.type > 51) &&
         !(certifiedScaling && (m.type === 9 || m.type === 28))).sort((a, b) => a.type - b.type);
       pieces.push([c.slotType, [c.itemId, c.inventoryType, c.itemSubclassId, v.itemLevel, bonuses,
@@ -87,7 +96,7 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
 /** For every marked offer any legal completion can buy the cheaper equivalent
  * in the same slot. A shared lot or item identity could invalidate that receipt. */
 export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
-  specId: number, engine: string, compareEmptySockets = false): Set<string> {
+  specId: number, engine: string, bareEquipmentProofs = false): Set<string> {
   const itemSlots = new Map<number, string>(), lotSlots = new Map<number, string>();
   const recordSlot = (map: Map<number, string>, id: number, slot: string) => {
     const seen = map.get(id);
@@ -108,7 +117,8 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
     if (!candidate.eligible || candidate.compatibility.specId !== specId ||
         lotSlots.get(auctionId) !== candidate.slotType || itemSlots.get(candidate.itemId) !== candidate.slotType) continue;
     const keys = new Set([auctionAppliedStatsKey([option], engine)]);
-    if (compareEmptySockets && candidate.slotType === "WAIST")
+    if (bareEquipmentProofs && (candidate.slotType === "WAIST" ||
+        candidate.variants.some(v => v.key === option.variantKey && v.resolution?.nativeSuffixProgramV1)))
       keys.add(auctionAppliedStatsKey([option], engine, true));
     for (const key of keys) {
       if (!key) continue;

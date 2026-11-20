@@ -177,7 +177,7 @@ function requireCheckpoint(key: string, checkpoint: { version: number; inputKey:
 export async function searchAuctionGearOptions(input: PlannerInput & {
   statPriority?: boolean;
   groupCraftedEquipment?: boolean;
-  compareEmptySockets?: boolean;
+  bareEquipmentProofs?: boolean;
   checkpoint?: AuctionGearSearchCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearSearchCheckpoint) => void;
 }): Promise<{ result: AuctionGearSearchResult; checkpoint: AuctionGearSearchCheckpoint }> {
@@ -328,7 +328,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
 export async function assembleAuctionGear(input: PlannerInput & {
   reuseAppliedStats?: boolean;
   groupCraftedEquipment?: boolean;
-  compareEmptySockets?: boolean;
+  bareEquipmentProofs?: boolean;
   recheckEquipment?: PlannerInput["simulate"];
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
@@ -391,7 +391,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const reuseAppliedStats = input.reuseAppliedStats && options.some(option =>
     option.candidate.variants.some(variant => variant.resolution?.appliedStatsV1));
   const dominated = reuseAppliedStats
-    ? auctionDominatedArmorOptions(options, input.loadout, input.specId, checkpoint.baseline.engine, input.compareEmptySockets) : new Set<string>();
+    ? auctionDominatedArmorOptions(options, input.loadout, input.specId, checkpoint.baseline.engine, input.bareEquipmentProofs) : new Set<string>();
   const dominatedGroups = new Set(flatGroups.filter(group => group.options.every(option => dominated.has(option.id))));
   const save = () => input.onCheckpoint?.(checkpoint);
   // The durable cursor describes only assignments whose measurements have been
