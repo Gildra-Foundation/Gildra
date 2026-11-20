@@ -19,9 +19,10 @@ export function validAuctionItemContext(contextId?: number) {
 }
 
 /** Keep the worker's exact options when the pinned parser or modifier validation is unavailable. */
-export function auctionNativeItemOptions(item: {contextId?: number; modifiers?: AuctionModifier[]}, engine: string) {
+export function auctionNativeItemOptions(item: {contextId?: number; modifiers?: AuctionModifier[]}, engine: string, omitUnusedScaling = false) {
   const { contextId, modifiers } = item;
   if (!validAuctionItemContext(contextId) || !ignoresItemContext(engine) || !supportedAuctionModifiers(modifiers ?? [])) return { contextId, modifiers };
-  const native = modifiers?.filter(modifier => modifier.type < 38 || modifier.type > 51);
+  const native = modifiers?.filter(modifier => (modifier.type < 38 || modifier.type > 51) &&
+    !(omitUnusedScaling && (modifier.type === 9 || modifier.type === 28)));
   return { contextId: undefined, modifiers: native?.length ? native : undefined };
 }

@@ -440,6 +440,7 @@ test('ordinary auction measurements reuse parsed item inputs across lots on the 
   const {state, run} = fixture({workerEngine: 'SimulationCraft 1210-01 · 18428cd'});
   const first = option(240948, 'NECK');
   const variant = first.candidate.variants[0];
+  variant.bonusIds = [9042];
   variant.contextId = 13;
   variant.modifiers = [{type: 28, value: 1218}, {type: 40, value: 123}];
   const second = structuredClone(first);

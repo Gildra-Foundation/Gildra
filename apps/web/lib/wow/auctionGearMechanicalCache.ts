@@ -31,10 +31,13 @@ const verifiedGemSlots = new Set([
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly unknown[]; precision?: "finalist";
 }, native?: { changes: SimcGearChange[]; engine: string }) {
-  const reuseGems = native && !request.precision && ignoresItemContext(native.engine);
+  const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
+  // Local replacements carry no Azerite powers. An empty bonus list cannot run
+  // a scaling handler, including through automatic enchants in this pinned DBC.
   const gear = native ? native.changes.map(change => ({
-    ...change, ...auctionNativeItemOptions(change, native.engine),
-    ...(reuseGems && change.gemIds?.length && verifiedGemSlots.has(change.slot)
+    ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
+      !change.enchantId && !change.gemIds?.length),
+    ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
       ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
   })) : request.gearChanges ?? [];
   const changes = gear.map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));

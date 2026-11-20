@@ -1,0 +1,38 @@
+"""Check indirect bonus lists for bare local replacements against pinned SimC DBC tables."""
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+root = Path(sys.argv[1])
+bonuses = defaultdict(list)
+rows = (root / 'item_bonus.inc').read_text().splitlines()
+for line in rows:
+    if line.startswith('  {'):
+        _, list_id, kind, value, _, _, _, _ = map(int, re.findall(r'-?\d+', line))
+        bonuses[list_id].append((kind, value))
+assert sum(map(len, bonuses.values())) == 20226
+
+# Automatic weapon oils and socket bonuses can reach apply_item_bonus via
+# ITEM_ENCHANTMENT_APPLY_BONUS even when the replacement has no bonus_id.
+enchantments = 0
+applied = set()
+for line in (root / 'spell_item_enchantment.inc').read_text().splitlines():
+    if line.startswith('  {'):
+        kinds, _, props = re.findall(r'\{\s*([\d, -]+)\}', line)[:3]
+        for kind, prop in zip(map(int, kinds.split(',')), map(int, props.split(',')), strict=True):
+            if kind == 11:
+                applied.add(prop)
+        enchantments += 1
+assert enchantments == 5342 and applied
+visited = set()
+while applied:
+    list_id = applied.pop()
+    if list_id in visited:
+        continue
+    visited.add(list_id)
+    for kind, value in bonuses.get(list_id, []):
+        assert kind not in (13, 49, 51), (list_id, kind)
+        if kind == 50:
+            applied.add(value)
+print(f'Checked {enchantments} enchantments and {len(visited)} reachable bonus lists')

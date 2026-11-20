@@ -136,6 +136,21 @@ test('actual mechanical cache separates paid customization and encounter identit
   assert.equal(cache.get(key,'SimulationCraft synthetic-enhancements').dps,1234);
 });
 
+test('empty-bonus local candidates omit unused scaling inputs from the measurement key',()=>{
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const key=(change,version=engine,precision)=>auctionGearMechanicalKey('profile',{...request,precision},
+    {engine:version,changes:[{slot:'off_hand',itemId:260904,bonusIds:[],...change}]});
+  const modifiers=[{type:9,value:80},{type:28,value:3615}];
+  assert.equal(key({modifiers}),key({}));
+  for (const extra of [{bonusIds:[9042]},{gemIds:[130215]},{enchantId:7997},{contextId:-1}])
+    assert.notEqual(key({...extra,modifiers}),key(extra));
+  assert.notEqual(key({modifiers},'SimulationCraft other'),key({},'SimulationCraft other'));
+  assert.notEqual(key({modifiers},engine,'finalist'),key({},engine,'finalist'));
+  assert.notEqual(key({modifiers:[{type:9,value:999}]}),key({}));
+  assert.notEqual(key({modifiers:[...modifiers,{type:64,value:123}]}),key({}));
+});
+
 test('candidate cache reuses verified armor and jewelry gem fights while purchases and finalists keep their actual IDs',()=>{
   const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
   const engine='SimulationCraft 1210-01 · 18428cd';
