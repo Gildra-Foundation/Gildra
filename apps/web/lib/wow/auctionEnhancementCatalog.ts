@@ -172,6 +172,38 @@ export function lookupInstalled(kind: Enhancement["kind"], simulationId: number)
   return {verified:true,enhancement:r};
 }
 
+// Only item restrictions from the pinned catalog belong in this index. Character
+// eligibility and the equipped item's on-use effects are checked on every call.
+const supportedRecords = auctionEnhancementRecords.filter(r => r.categoryKnown && !r.restrictionReason);
+const catalogEnchants = supportedRecords.filter(r => r.kind === "enchant");
+const prismaticGems = supportedRecords.filter(r => r.kind === "gem" && r.color === 14);
+type ItemEnchantRules = { applicable: boolean; choices: EnhancementRecord[] };
+const itemEnchantRules = new Map<string, ItemEnchantRules>();
+
+function enchantsForItem(target: EnhancementTarget): ItemEnchantRules | null {
+  const { itemClassId, itemSubclassId, inventoryType, itemLevel } = target;
+  const key = [itemClassId, itemSubclassId, inventoryType, itemLevel].join("/");
+  const cached = itemEnchantRules.get(key);
+  if (cached !== undefined) return cached;
+  const inventoryBit = 2 ** inventoryType, subclassBit = 2 ** itemSubclassId;
+  const matches = (rule: { itemClassId?: number; inventoryMask?: number; subclassMask?: number }) =>
+    rule.itemClassId === itemClassId && (rule.inventoryMask === 0 || ((rule.inventoryMask ?? 0) & inventoryBit) !== 0)
+      && (rule.subclassMask === 0 || ((rule.subclassMask ?? 0) & subclassBit) !== 0);
+  let applicable = false;
+  for (const rule of snapshot.nativeRules) {
+    if (!matches(rule)) continue;
+    const payload = enchant.get(rule.enchantId)?.payload;
+    const min = num(payload ?? {}, "ItemLevelMin"), max = num(payload ?? {}, "ItemLevelMax");
+    if (!Number.isSafeInteger(min) || min < 0 || !Number.isSafeInteger(max) || max < 0 || (max > 0 && max < min)) return null;
+    if (itemLevel >= min && (max === 0 || itemLevel <= max)) applicable = true;
+  }
+  const choices = catalogEnchants.filter(r => matches(r) && itemLevel >= r.minItemLevel && (r.maxItemLevel === 0 || itemLevel <= r.maxItemLevel));
+  const result = { applicable, choices };
+  if (itemEnchantRules.size >= 512) itemEnchantRules.delete(itemEnchantRules.keys().next().value!);
+  itemEnchantRules.set(key, result);
+  return result;
+}
+
 /** Returns choices, not equipment-wide certification. Caller must enforce category/unique limits
  * across retained AND new enhancements and apply prices to the same simulation IDs. */
 export function resolveExactEnhancements(target: EnhancementTarget, character: EnhancementCharacter): EnhancementResolution {
@@ -184,29 +216,14 @@ export function resolveExactEnhancements(target: EnhancementTarget, character: E
     { complete: true, ranks: Object.fromEntries(character.professions.map(p => [p.id, p.rank])) });
   const eligible = (record: EnhancementRecord) => record.profession
     ? professionEligibility(professions, record.profession.id, record.profession.rank) : "eligible";
-  const source = auctionEnhancementRecords.filter(r=>r.categoryKnown && !r.restrictionReason
-    && character.level>=r.requiredLevel && target.itemLevel>=r.minItemLevel && (r.maxItemLevel===0||target.itemLevel<=r.maxItemLevel));
-  const enchants = source.filter(r=>r.kind==="enchant" && r.itemClassId===target.itemClassId
-    && (r.inventoryMask===0 || ((r.inventoryMask??0)&(2**target.inventoryType))!==0)
-    && (r.subclassMask===0 || ((r.subclassMask??0)&(2**target.itemSubclassId))!==0));
-  const nativeApplicable = snapshot.nativeRules.filter(r=>r.itemClassId===target.itemClassId
-    && (r.inventoryMask===0||(r.inventoryMask&(2**target.inventoryType))!==0)
-    && (r.subclassMask===0||(r.subclassMask&(2**target.itemSubclassId))!==0));
-  // A negative answer needs the full native table and valid bounds for every matching rule.
   if (snapshot.nativeRules.length !== snapshot.nativeRulesSource.rowCount) return {verified:false,reason:"enchant_applicability_unknown"};
-  let enchantApplicable = false;
-  for (const rule of nativeApplicable) {
-    const payload = enchant.get(rule.enchantId)?.payload;
-    const min = num(payload ?? {}, "ItemLevelMin"), max = num(payload ?? {}, "ItemLevelMax");
-    if (!Number.isSafeInteger(min) || min < 0 || !Number.isSafeInteger(max) || max < 0 || (max > 0 && max < min)) {
-      return {verified:false,reason:"enchant_applicability_unknown"};
-    }
-    if (target.itemLevel >= min && (max === 0 || target.itemLevel <= max)) enchantApplicable = true;
-  }
-  const gems = target.socketColors.includes(14) ? source.filter(r=>r.kind==="gem"&&r.color===14) : [];
+  const rules = enchantsForItem(target);
+  if (!rules) return {verified:false,reason:"enchant_applicability_unknown"};
+  const enchantApplicable = rules.applicable;
   const coverageGaps: CoverageGap[] = [];
   const factionKnown = character.faction === "HORDE" || character.faction === "ALLIANCE";
   const usable = (r: EnhancementRecord) => {
+    if (!(character.level >= r.requiredLevel)) return false;
     const skill = eligible(r);
     if (skill === "insufficient" || (r.requiredFaction && factionKnown && r.requiredFaction !== character.faction)
       || (r.requiresNoOnUseEffect && target.hasOnUseEffect === true)) return false;
@@ -217,8 +234,9 @@ export function resolveExactEnhancements(target: EnhancementTarget, character: E
     for (const gap of unknown) if (!coverageGaps.includes(gap)) coverageGaps.push(gap);
     return unknown.length === 0;
   };
-  const enchantChoices = enchants.filter(usable);
-  const availableGems = gems.filter(usable);
+  const enchantChoices = rules.choices.filter(usable);
+  const availableGems = target.socketColors.includes(14) ? prismaticGems.filter(r => target.itemLevel >= r.minItemLevel &&
+    (r.maxItemLevel === 0 || target.itemLevel <= r.maxItemLevel) && usable(r)) : [];
   if (enchantApplicable && !enchantChoices.length) coverageGaps.push("no_supported_enchant");
   const gemChoices: Record<string,EnhancementRecord[]> = {};
   target.socketColors.forEach((color,i)=>{if(color===14) gemChoices[String(i)]=availableGems;});
