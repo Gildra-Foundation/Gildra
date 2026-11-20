@@ -54,6 +54,20 @@ function fixture(source, items = 376, lotsPerItem = 2) {
   return { api, state, input, counts, offers, finish };
 }
 
+test('failed and absent references preserve coverage while only eligible native probes are sent', async () => {
+  const h = fixture(current, 3, 1);
+  h.state.references.set(1, null);
+  h.state.rejectedReferences.add(2);
+  await h.finish();
+  assert.deepEqual(h.counts.probes, [2]); // one candidate and its reference
+  assert.deepEqual([...h.state.verifiedReferences], [3]);
+  assert.deepEqual([...h.state.rejectedReferences].sort(), [1, 2]);
+  assert.equal(h.state.rejectedVariants.size, 2);
+  assert.equal(h.state.referenceRejectedVariants.size, 2);
+  assert.equal(h.api.auctionGearDiscoveryCoverage(h.state).dataComplete, false);
+  assert.deepEqual(Array.from(h.api.auctionGearDiscoveryOptions(h.state), o => o.candidate.itemId), [3]);
+});
+
 test('larger continuation batches preserve every lot and exact-reference verification', async () => {
   const after = fixture(current);
   await after.finish();

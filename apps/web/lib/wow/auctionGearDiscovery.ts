@@ -389,7 +389,13 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         return [{ offer: reference.offer, slot: probes.find(probe => probe.offer.itemId === id)!.slot }];
       });
       const simcSlot = (slot: string) => ({ FINGER_1: "finger1", FINGER_2: "finger2", TRINKET_1: "trinket1", TRINKET_2: "trinket2" }[slot] ?? slot.toLowerCase());
-      const resolution = probes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...probes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
+      // A failed base reference can only be rescued by the exact equipped instance.
+      // Keep the original probes for coverage, rejection bookkeeping and timed retries.
+      const equipped = input.equipment && ids.some(id => !state.verifiedReferences.has(id))
+        ? new Map(equippedAuctionReferences(input.equipment).map(reference => [auctionVariantKey(reference.offer), reference])) : undefined;
+      const nativeProbes = probes.filter(({ offer }) => state.verifiedReferences.has(offer.itemId) ||
+        (!state.rejectedReferences.has(offer.itemId) && state.references.get(offer.itemId)) || equipped?.has(auctionVariantKey(offer)));
+      const resolution = nativeProbes.length ? await measure("variants", () => resolveAuctionVariants({ offers: [...references, ...nativeProbes].map(probe => ({ offer: probe.offer, slot: simcSlot(probe.slot) })),
         spec: input.spec, characterLevel: input.characterLevel, signal: input.signal })) : null;
       input.signal.throwIfAborted();
       if (resolution?.engine) {
@@ -406,11 +412,10 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
           state.referenceRetryAt.set(id, Date.now() + AUCTION_ITEM_REFERENCE_TTL_MS);
         }
       }
-      const equipped = input.equipment && ids.some(id => state.rejectedReferences.has(id))
-        ? new Map(equippedAuctionReferences(input.equipment).map(reference => [auctionVariantKey(reference.offer), reference])) : undefined;
+      const instanceReferences = ids.some(id => state.rejectedReferences.has(id)) ? equipped : undefined;
       for (const probe of probes) {
         const key = auctionVariantKey(probe.offer), metadata = resolution?.variants.get(key);
-        const instance = equipped?.get(key);
+        const instance = instanceReferences?.get(key);
         const instanceVerified = instance && nativeMatchesItemReference(instance, metadata, true);
         if (!metadata || metadata.error || (!state.verifiedReferences.has(probe.offer.itemId) && !instanceVerified) || metadata.itemLevel > 1000 ||
             metadata.requiredLevel === 0 && (state.references.get(probe.offer.itemId)?.requiredLevel ?? 0) > 0) {
