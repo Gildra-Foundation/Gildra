@@ -10,6 +10,7 @@ import type { AuctionGearOption } from "./auctionGearTypes";
 export type AuctionGearEnhancedLoadoutInput = {
   loadout: GearLoadoutItem[];
   engine?: string;
+  nativeLotGroups?: 1 | 2;
   equipment: Record<string, unknown>;
   specId: number;
   options: AuctionGearOption[];
@@ -19,7 +20,7 @@ export type AuctionGearEnhancedLoadoutInput = {
 /** Points to the next complete assignment. Decimal strings keep large domains exact. */
 export type AuctionGearEnhancedLoadoutState = {
   version: 2;
-  nativeLotGroups?: 1;
+  nativeLotGroups?: 1 | 2;
   inputKey: string;
   cursor: number[];
   exhausted: boolean;
@@ -55,12 +56,16 @@ const incompatible = new Set([
 
 /** Keep different enhancement domains separate even when the bare native change
  * is identical. Socket order matters for the eventual native gem assignment. */
-function enhancedGroupKey(option: AuctionGearOption, engine?: string) {
+function enhancedGroupKey(option: AuctionGearOption, engine: string | undefined, groupScaling: boolean) {
   const variant = option.candidate.variants.find(variant => variant.key === option.variantKey)!;
   const metadata = variant.resolution?.enhancements;
   const native = engine && variant.resolution?.engine === engine && variant.resolution.metadataVersion === 3 &&
     metadata?.status === "verified" && validAuctionItemContext(variant.contextId) && !option.customization;
-  return JSON.stringify([auctionEffectGroupKey(option, native ? engine : undefined), native ? null : option.variantKey, option.candidate.itemClassId,
+  // With no socket or supplied bonus list, the pinned enchant table cannot
+  // introduce a handler for drop level or content tuning (verify-unused-scaling.py).
+  const socketless = native && metadata.socketCount === 0 && metadata.socketBonusId === 0 &&
+    Array.isArray(metadata.socketColors) && metadata.socketColors.length === 3 && metadata.socketColors.every(color => color === 0);
+  return JSON.stringify([auctionEffectGroupKey(option, native ? engine : undefined, false, groupScaling && !!socketless), native ? null : option.variantKey, option.candidate.itemClassId,
     option.customization?.enchantId, variant.itemLevel, variant.resolution?.metadataVersion, metadata?.status,
     ...(metadata?.status === "verified" ? [metadata.socketColors, metadata.socketCount, metadata.socketBonusId,
       metadata.requiredProfessionId, metadata.requiredProfessionRank,
@@ -85,8 +90,10 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
   const eligible = options.filter(option => slotOrder.has(option.candidate.slotType) && option.candidate.eligible &&
     option.candidate.compatibility.specId === input.specId && option.candidate.variants.some(variant => variant.key === option.variantKey));
   const engine = input.engine && ignoresItemContext(input.engine) ? input.engine : undefined;
-  const groupsVersion = engine ? { nativeLotGroups: 1 as const } : {};
-  const choices = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine));
+  const version = input.nativeLotGroups ?? 2;
+  if (version !== 1 && version !== 2) throw new Error("invalid_search_checkpoint");
+  const groupsVersion = engine ? { nativeLotGroups: version } : {};
+  const choices = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine, groupsVersion.nativeLotGroups === 2));
   // Zero keeps the equipped item (or the empty slot). It also emits the empty
   // purchase set, allowing the caller to process the retained-equipment case.
   const radices = choices.map(rows => rows.length + 1);

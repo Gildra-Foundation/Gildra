@@ -249,3 +249,28 @@ test('equivalent native variants share an affordable receipt only inside the sam
  assert.equal(pinned.rows[1].spentCopper,2);
  await assert.rejects(create({...input,engine}).nextBatch(legacy.state,{maxAssignments:1,maxResults:1,signal:signal()}),/invalid_search_checkpoint/);
 });
+
+test('socketless scaling aliases retain the cheaper enchantable receipt and resume legacy ordinals',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const offers=[1,2,3,4,5].map(i=>{
+  const o=option(i,'WRIST',i===2?10:35);
+  o.candidate.itemId=41116;
+  const v=o.candidate.variants[0];v.key=o.variantKey='version-'+i;
+  v.modifiers=[{type:28,value:100+i}];
+  if(i===5)v.bonusIds=[123];
+  v.resolution={engine,metadataVersion:3,enhancements:{status:'verified',socketColors:i===3?[14,0,0]:[0,0,0],
+   socketCount:i===3?1:0,socketBonusId:i===4?99:0,requiredProfessionId:0,requiredProfessionRank:0}};
+  return o;
+ });
+ const input={...base(offers,['WRIST']),engine};
+ const old=create({...input,nativeLotGroups:1}),current=create(input);
+ const limits={maxAssignments:1,maxResults:1,signal:signal()};
+ const partial=await old.nextBatch(old.initialState(),limits);
+ assert.equal(partial.state.nativeLotGroups,1);
+ assert.equal(old.totalAssignments,'6');assert.equal(current.totalAssignments,'5');
+ await assert.rejects(current.nextBatch(partial.state,limits),/invalid_search_checkpoint/);
+ assert.equal((await old.nextBatch(partial.state,limits)).loadouts[0].options[0].auctionId,1);
+ const result=await all(input,limits);
+ assert.deepEqual(result.rows.slice(1).map(r=>r.options[0].auctionId),[2,3,4,5]);
+ assert.equal(result.rows[1].spentCopper,10);
+});
