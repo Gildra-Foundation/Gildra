@@ -31,7 +31,7 @@ import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { auctionGearMechanicalCache, auctionGearMechanicalKey } from "./auctionGearMechanicalCache";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, purchasedRingScoreChanges } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
@@ -1015,11 +1015,15 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     assertFreshMarket(market);
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
-    const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}), ...(ownedChanges?.length ? { ownedChanges } : {}),
-      ...(mode === "finalist" ? { precision: mode } : {}) };
     simSignal.throwIfAborted();
     const verifiedEngine = engine() || measuredEngine;
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: prepared.changes, engine: verifiedEngine, unenchantedHandsId, wornRings });
+    const ringScore = mode === "certified-candidate" && selections.length
+      ? purchasedRingScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings) : undefined;
+    const scoreChanges = ringScore?.changes ?? prepared.changes;
+    const scoreOwned = ringScore?.ownedChanges ?? ownedChanges;
+    const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
+      ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, engine: verifiedEngine, unenchantedHandsId, wornRings });
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     if (mode === "certified-candidate" && selections.length) {
@@ -1032,7 +1036,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       if (proof) {
         // A proved chest enchant is already in the score key. Preserve the
         // original ordered bonus list and scaling inputs on every other edit.
-        const customized = prepared.changes.filter((change, i) => !(withChest && i === chest) && (change.enchantId || change.gemIds?.length))
+        const customized = scoreChanges.filter((change, i) => !(withChest && i === chest) && (change.enchantId || change.gemIds?.length))
           .map(change => [change.slot, change.itemId, change.bonusIds, change.enchantId, change.gemIds,
             change.modifiers?.filter(m => m.type < 38 || m.type > 51) ?? []]);
         equivalentKey = auctionGearMechanicalKey(fingerprint, { ...request, gearChanges: [{ appliedStats: proof }, ...customized] });

@@ -8,7 +8,7 @@ import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagno
 import { auctionAppliedStatsKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
-import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { auctionGearMechanicalKey, purchasedRingScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { nativeGearSimulationMeasurement, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 
@@ -49,7 +49,7 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
     } finally { state.active--; }
   };
   const create = vm.runInNewContext(code, { fetch, process, AbortSignal, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
-    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
+    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedRingScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => createAuctionGearDiagnostics() });
   const armory = { profile: {}, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
@@ -533,5 +533,85 @@ test('a direct chest enchant preserves rounded suffix equivalence only for prove
       if (expected) state.requests.at(-1).finish();
       assert.equal((await result).iterations, mode === 'finalist' ? 750 : 100);
     }
+  }
+});
+
+test('purchased rings share only direct enchant transfers, preserving item slots, gems and independent finalists', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  function ring(itemId, slot, enchantId, gemId) {
+    const row = option(itemId, slot);
+    row.candidate.inventoryType = 11;
+    row.candidate.itemSubclassId = 0;
+    Object.assign(row.candidate.variants[0], { itemLevel: 125, resolution: { engine: pinned,
+      nativeNoItemEffects: true, enhancements: { status: 'verified', socketCount: 1, socketColors: [14,0,0] } } });
+    row.customization = { enchantId, gemIds: [gemId] };
+    return row;
+  }
+  for (const [label, change, aliases] of [
+    ['same two items', () => {}, true],
+    ['different gem', o => { o.customization.gemIds = [240877]; }, false],
+    ['another host item', o => { o.candidate.itemId++; }, false],
+    ['lower level', o => { o.candidate.variants[0].itemLevel = 119; }, false],
+    ['unverified effect', o => { delete o.candidate.variants[0].resolution.nativeNoItemEffects; }, false],
+    ['proc enchant', o => { o.customization.enchantId = 6550; }, false],
+  ]) {
+    const {run,state} = fixture({workerEngine:pinned});
+    const first = [ring(258908,'FINGER_1',7964,240869),ring(240947,'FINGER_2',8022,115804)];
+    const reverse = [ring(240947,'FINGER_2',7964,115804),ring(258908,'FINGER_1',8022,240869)];
+    change(reverse[1]);
+    for (const [rows, mode, native] of [[first,'certified-candidate',true],[reverse,'certified-candidate',!aliases],
+      [first,'finalist',true],[reverse,'finalist',true]]) {
+      const before = state.requests.length;
+      const result = run(rows,signal(),[],mode);
+      await tick();
+      assert.equal(state.requests.length - before, Number(native), label);
+      if (native) {
+        const request = state.requests.at(-1);
+        // The worker receives the caller's exact paid enhancements.
+        assert.deepEqual(request.base.gearChanges.map(c => c.enchantId), rows.map(o => o.customization.enchantId));
+        request.finish();
+      }
+      assert.equal((await result).iterations, mode === 'finalist' ? 750 : 100);
+    }
+  }
+});
+
+test('direct enchant transfers between a purchased ring and an explicitly edited worn ring preserve both receipts', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  const equipment = {equipped_items: ['FINGER_1','FINGER_2'].map((slot,index) => ({
+    slot:{type:slot}, item:{id:500+index}, inventory_type:{type:'FINGER'}, level:{value:150},
+    sockets:[{socket_type:{type:'PRISMATIC'}}],
+  }))};
+  for (const purchasedSlot of ['FINGER_1','FINGER_2']) {
+    const wornSlot = purchasedSlot === 'FINGER_1' ? 'FINGER_2' : 'FINGER_1';
+    const worn = equipment.equipped_items.find(i=>i.slot.type===wornSlot);
+    const {run,state} = fixture({workerEngine:pinned,equipment});
+    const offer = option(258908,purchasedSlot);
+    offer.candidate.inventoryType = 11;
+    Object.assign(offer.candidate.variants[0],{itemLevel:130,resolution:{engine:pinned,nativeNoItemEffects:true,
+      enhancements:{status:'verified',socketColors:[14,0,0],socketCount:1}}});
+    async function measure(a,b,gem,mode,native) {
+      const before = state.requests.length;
+      const owned = [{slotType:wornSlot,itemId:worn.item.id,enchantId:b,gems:[{index:0,itemId:gem}]}];
+      const selection = {...offer,customization:{enchantId:a,gemIds:[115804]}};
+      const result = run([selection],signal(),owned,mode);
+      await tick();
+      assert.equal(state.requests.length - before, Number(native));
+      if (native) {
+        const request = state.requests.at(-1);
+        assert.equal(request.base.gearChanges[0].enchantId,a);
+        const equipped = request.base.armory.equipment.equipped_items.find(i=>i.slot.type===wornSlot);
+        assert.equal(equipped.enchantments[0].enchantment_id,b);
+        assert.equal(equipped.sockets[0].item.id,gem);
+        request.finish();
+      }
+      return result;
+    }
+    const first = await measure(8022,7964,240869,'certified-candidate',true);
+    assert.deepEqual(first,await measure(7964,8022,240869,'certified-candidate',false));
+    await measure(7964,8022,240870,'certified-candidate',true);
+    await measure(6550,8022,240869,'certified-candidate',true);
+    assert.equal((await measure(8022,7964,240869,'finalist',true)).iterations,750);
+    assert.equal((await measure(7964,8022,240869,'finalist',true)).iterations,750);
   }
 });

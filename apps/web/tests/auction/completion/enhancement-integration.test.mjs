@@ -17,7 +17,7 @@ import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/aucti
 import { auctionSelectionEffectKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { auctionEnhancementCatalogInfo, auctionEnhancementRecords, resolveExactEnhancements } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { prepareGearLoadout, nativeGearSimulationMeasurement } from '../../../lib/wow/gearSimulation.ts';
-import { auctionGearMechanicalKey, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { auctionGearMechanicalKey, purchasedRingScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 
 // Synthetic rules and quotes, never live catalogue claims. The optimizer,
 // equipment preparation and native mechanical cache are production modules.
@@ -460,7 +460,7 @@ for (const fixtureCase of ['winning bare set','two unverified bare leaders must 
       assert(requests.length-before<=8,'Exact enhancement continuation retains its total eight-native budget');
       stagePeaks.push(stagePeak);stageOutputs.push(result.result);return result;
     },
-    auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey,
+    auctionGearProfileFingerprint,auctionGearVariantSelectionKey,auctionGearMechanicalKey, purchasedRingScoreChanges,
     auctionGearMechanicalCache:createAuctionGearMechanicalCache(),assertFreshMarket,
     Map,Set,Object,Number,JSON,Date,AbortSignal,process,
     scheduleAuctionGearSearchSave:()=>{},flushAuctionGearSearch:async()=>{flushes++;},flushPendingAuctionGearSearch:async()=>{flushes++;},

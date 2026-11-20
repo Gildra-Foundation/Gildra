@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
-import type { GearPlanSimulation } from "./auctionGearTypes";
+import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
@@ -41,6 +41,44 @@ const verifiedGemSlots = new Set([
 ]);
 
 type WornRing = { itemId: number; enchantId: number };
+
+/** Explicit direct enchants on two rings contribute integer ratings based on
+ * the player's level. Each host, its gems and its purchase remain in place.
+ * Only the score key uses the sorted enchant IDs. */
+export function purchasedRingScoreChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string,
+  owned: readonly OwnedAuctionGearChange[] | undefined, wornRings: readonly [WornRing, WornRing] | undefined) {
+  if ((changes.length < 2 && !owned?.length) || !ignoresItemContext(engine)) return;
+  const purchased = [changes.findIndex(c => c.slot === "finger1"), changes.findIndex(c => c.slot === "finger2")];
+  if (purchased.every(index => index < 0)) return;
+  const edits = [owned?.findIndex(c => c.slotType === "FINGER_1") ?? -1, owned?.findIndex(c => c.slotType === "FINGER_2") ?? -1];
+  const enchants: number[] = [];
+  for (const [slot, index] of purchased.entries()) {
+    const edit = edits[slot] >= 0 ? owned?.[edits[slot]] : undefined;
+    const enchant = index >= 0 ? changes[index].enchantId : edit?.enchantId;
+    if (!enchant || !ringStatEnchants.has(enchant)) return;
+    if (index >= 0) {
+      if (edit) return;
+      const option = options[index], candidate = option.candidate;
+      const variant = candidate.variants.find(row => row.key === option.variantKey);
+      if (candidate.inventoryType !== 11 || candidate.itemClassId !== 4 || !variant ||
+          !Number.isSafeInteger(variant.itemLevel) || variant.itemLevel < 120 ||
+          variant.resolution?.engine !== engine || variant.resolution.nativeNoItemEffects !== true ||
+          variant.resolution.enhancements?.status !== "verified") return;
+    } else if (!edit || wornRings?.[slot].itemId !== edit.itemId) {
+      return;
+    }
+    enchants.push(enchant);
+  }
+  if (enchants[0] <= enchants[1]) return;
+  const scoreChanges = changes.slice();
+  const scoreOwned = owned?.slice();
+  for (const [slot, index] of purchased.entries()) {
+    const enchantId = enchants[1 - slot];
+    if (index >= 0) scoreChanges[index] = { ...changes[index], enchantId };
+    else if (scoreOwned) scoreOwned[edits[slot]] = { ...scoreOwned[edits[slot]], enchantId };
+  }
+  return { changes: scoreChanges, ownedChanges: scoreOwned };
+}
 
 function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: readonly [WornRing, WornRing]) {
   const ids = rings.map(ring => ring.enchantId);
