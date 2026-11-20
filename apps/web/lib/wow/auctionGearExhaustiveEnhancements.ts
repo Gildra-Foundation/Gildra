@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { createAuctionGearEnhancedLoadoutIterator, type AuctionGearEnhancedLoadoutState } from "./auctionGearEnhancedLoadouts";
+import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey, type AuctionGearEnhancedLoadoutState } from "./auctionGearEnhancedLoadouts";
 import { evaluateAuctionEnhancementStage, type AuctionEnhancedRecommendation, type AuctionEnhancementStageResult, type AuctionEnhancementStageState } from "./auctionGearEnhancementStage";
 import { auctionEnhancementCatalogInfo } from "./auctionEnhancementCatalog";
 import { exactCommodityPrices } from "./auctionBrowserData";
@@ -46,12 +46,45 @@ const betterDps = (candidate: Leader, previous?: Leader) => !previous || candida
   (candidate.recommendation.configuration.totalCopper! < previous.recommendation.configuration.totalCopper! ||
     candidate.recommendation.configuration.totalCopper === previous.recommendation.configuration.totalCopper &&
     candidate.recommendation.configuration.key < previous.recommendation.configuration.key);
+type FinalistAliases = { engine: string; byOption: Map<string, string> };
+function finalistAliases(options: AuctionGearOption[], engine: string): FinalistAliases {
+  const groups = new Map<string, AuctionGearOption[]>();
+  for (const option of options) {
+    const key = enhancedFinalistOptionKey(option, engine);
+    if (key === undefined) continue;
+    const group = groups.get(key);
+    if (group) group.push(option);
+    else groups.set(key, [option]);
+  }
+  const byOption = new Map<string, string>();
+  for (const [key, group] of groups) {
+    if (group.some(option => option.variantKey !== group[0].variantKey))
+      for (const option of group) byOption.set(option.id, key);
+  }
+  return { engine, byOption };
+}
 // Distinct lots can buy identical gear. Their price determines which receipt to
 // keep, but a second receipt cannot be an independent simulation finalist.
-function sameLoadout(a: Leader, b: Leader) {
-  const identity = (row: Leader) => JSON.stringify([row.options.map(option => [option.candidate.slotType, option.candidate.itemId, option.variantKey]).sort(),
-    row.recommendation.configuration.slots.map(slot => [slot.slotType, slot.variantKey, slot.enchantId, slot.gemIds]).sort()]);
-  return a.recommendation.configuration.key === b.recommendation.configuration.key || identity(a) === identity(b);
+function sameLoadout(a: Leader, b: Leader, known?: FinalistAliases) {
+  if (a.recommendation.configuration.key === b.recommendation.configuration.key) return true;
+  const identity = (row: Leader) => {
+    const aliases = new Map<string, { raw: string; key: string }>();
+    const purchased = row.options.map(option => {
+      const slot = option.candidate.slotType;
+      const key = known?.engine === row.recommendation.simulation.engine ? known?.byOption.get(option.id) : undefined;
+      if (key !== undefined) {
+        aliases.set(slot, { raw: option.variantKey, key });
+        return [slot, option.candidate.itemId, [key]];
+      }
+      return [slot, option.candidate.itemId, option.variantKey];
+    }).sort();
+    const slots = row.recommendation.configuration.slots.map(slot => {
+      const alias = aliases.get(slot.slotType);
+      return [slot.slotType, alias?.raw === slot.variantKey ? [alias.key] : slot.variantKey, slot.enchantId, slot.gemIds];
+    }).sort();
+    return JSON.stringify([purchased, slots, row.recommendation.configuration.ownedChanges]);
+  };
+  return identity(a) === identity(b);
 }
 function validRecheck(result: GearPlanSimulation, original: GearPlanSimulation) {
   return result && result.engine === original.engine && result.confidence === 95 &&
@@ -59,12 +92,12 @@ function validRecheck(result: GearPlanSimulation, original: GearPlanSimulation) 
     Number.isSafeInteger(result.iterations) && result.iterations > original.iterations &&
     (original.iterations !== 100 || result.iterations === 750);
 }
-function consider(state: Ranking, candidate: Leader, retainPair: boolean) {
+function consider(state: Ranking, candidate: Leader, retainPair: boolean, known?: FinalistAliases) {
   const recommendation = candidate.recommendation;
   if (recommendation.configuration.status !== "priced" || recommendation.configuration.totalCopper === null) return;
   if (retainPair && (!state.nextMeasured || betterDps(candidate, state.nextMeasured))) {
     const top = [state.measured, state.runnerUp, state.nextMeasured].filter((leader): leader is Leader => Boolean(leader));
-    const duplicate = top.findIndex(leader => sameLoadout(candidate, leader));
+    const duplicate = top.findIndex(leader => sameLoadout(candidate, leader, known));
     if (duplicate < 0 || betterDps(candidate, top[duplicate])) {
       if (duplicate >= 0) top.splice(duplicate, 1);
       top.push(candidate);
@@ -109,7 +142,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     engine: !input.state || input.state.cursor?.nativeLotGroups ? input.engine : undefined,
     nativeLotGroups: input.state?.cursor?.nativeLotGroups, selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
     loadout: input.loadout, equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper });
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(input.recheck ? ["finalist-precision-v2"] : [])]);
+  const aliases = input.recheck ? finalistAliases(input.options, input.engine) : undefined;
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, input.baseline, auctionEnhancementCatalogInfo.revision, ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
     version: 1, inputKey, cursor: iterator.initialState(), stage, equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
@@ -153,7 +187,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           state.rangeCount = (state.rangeCount ?? 0) - group.ordinals.length;
         } else {
           for (const leader of [group.measured, group.value, group.dps, group.runnerUp, group.nextMeasured])
-            if (leader) consider(state, leader, Boolean(input.recheck));
+            if (leader) consider(state, leader, Boolean(input.recheck), aliases);
           state.equipmentChecked += group.checked;
           state.reasons = [...new Set([...state.reasons, ...group.reasons])];
           state.unavailable ||= group.unavailable;
@@ -357,7 +391,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     if (acceptQuotes()) break;
     restamp(state);
     const candidates = result.recommendations.map(recommendation => ({ recommendation, options: selected }));
-    for (const candidate of candidates) consider(state, candidate, Boolean(input.recheck));
+    for (const candidate of candidates) consider(state, candidate, Boolean(input.recheck), aliases);
     state.reasons = [...new Set([...state.reasons, ...result.reasons])];
     if (result.complete) {
       const ordinal = state.currentOrdinal;
@@ -368,7 +402,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         group.checked++;
         group.unavailable ||= result.status === "unavailable";
         group.reasons = [...new Set([...group.reasons, ...result.reasons])];
-        for (const candidate of candidates) consider(group, candidate, Boolean(input.recheck));
+        for (const candidate of candidates) consider(group, candidate, Boolean(input.recheck), aliases);
         if (Object.keys(state.priceGroups).length > maxPriceGroups || state.rangeCount + (state.replay?.length ?? 0) > maxOrdinalRanges) {
           delete state.priceGroups;
           delete state.rangeCount;

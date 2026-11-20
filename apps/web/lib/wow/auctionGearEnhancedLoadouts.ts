@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { auctionEffectGroupKey, auctionEffectGroups, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
-import { ignoresItemContext, validAuctionItemContext } from "./gearItemModifiers";
+import { auctionNativeItemOptions, ignoresItemContext, validAuctionItemContext } from "./gearItemModifiers";
 import { auctionConflictingPurchaseSlot, auctionPlanCost, auctionPlanLoadout } from "./auctionGearPlanner";
 import { parseAuctionGearSlots } from "./auctionGearSelection";
 import { prepareGearLoadout } from "./gearSimulation";
@@ -56,7 +56,7 @@ const incompatible = new Set([
 
 /** Keep different enhancement domains separate even when the bare native change
  * is identical. Socket order matters for the eventual native gem assignment. */
-function enhancedGroupKey(option: AuctionGearOption, engine: string | undefined, version?: 1 | 2 | 3) {
+function enhancedGroupKey(option: AuctionGearOption, engine: string | undefined, version?: 1 | 2 | 3, compareFinalists = false) {
   const variant = option.candidate.variants.find(variant => variant.key === option.variantKey)!;
   const metadata = variant.resolution?.enhancements;
   const native = engine && variant.resolution?.engine === engine && variant.resolution.metadataVersion === 3 &&
@@ -67,13 +67,31 @@ function enhancedGroupKey(option: AuctionGearOption, engine: string | undefined,
     Array.isArray(metadata.socketColors) && metadata.socketColors.length === 3 && metadata.socketColors.every(color => color === 0);
   // Ordinary prismatic gems and enchants cannot introduce another scaling
   // handler via this DBC's enchantment programs (verify-unused-scaling.py).
-  const curve = version === 3 && native && variant.resolution?.nativeDropCurveV1 &&
-    Array.isArray(metadata.socketColors) && metadata.socketColors.length === 3 && metadata.socketColors.every(c => c === 0 || c === 14);
-  return JSON.stringify([auctionEffectGroupKey(option, native ? engine : undefined, false, curve ? "drop-curve" : version !== 1 && !!socketless), native ? null : option.variantKey, option.candidate.itemClassId,
+  const prismatic = native && Array.isArray(metadata.socketColors) && metadata.socketColors.length === 3 &&
+    metadata.socketColors.every(color => color === 0 || color === 14);
+  const curve = version === 3 && prismatic && variant.resolution?.nativeDropCurveV1;
+  const cap = compareFinalists && prismatic && variant.bonusIds.length > 0 && variant.resolution?.nativeContentTuningV1;
+  const scaling = curve ? "drop-curve" : cap ? "tuning-cap" : version !== 1 && !!socketless;
+  return JSON.stringify([auctionEffectGroupKey(option, native ? engine : undefined, false, scaling), native ? null : option.variantKey, option.candidate.itemClassId,
     option.customization?.enchantId, variant.itemLevel, variant.resolution?.metadataVersion, metadata?.status,
     ...(metadata?.status === "verified" ? [metadata.socketColors, metadata.socketCount, metadata.socketBonusId,
       metadata.requiredProfessionId, metadata.requiredProfessionRank,
       variant.resolution?.effectsVerified === true && variant.resolution.effects?.length === 0] : [])]);
+}
+
+/** Both native scaling handlers read only the resolved cap. This identity
+ * is for combat comparisons. Keep every receipt in the traversal so equal-price
+ * configurations still use their original tie-break keys. */
+export function enhancedFinalistOptionKey(option: AuctionGearOption, engine: string) {
+  const variant = option.candidate.variants.find(v => v.key === option.variantKey);
+  const resolution = variant?.resolution;
+  if (!variant || !resolution?.nativeContentTuningV1 || resolution.engine !== engine || !variant.bonusIds?.length ||
+      option.customization || resolution.metadataVersion !== 3 || resolution.enhancements?.status !== "verified") return;
+  const colors = resolution.enhancements.socketColors;
+  if (colors?.length !== 3 || !colors.every(color => color === 0 || color === 14)) return;
+  const native = auctionNativeItemOptions(variant, engine, false, resolution.nativeContentTuningV1);
+  if (!("contentTuningCap" in native)) return;
+  return enhancedGroupKey(option, engine, 3, true);
 }
 
 /** Traverse mechanical equipment choices. Allocate purchasable lots jointly for

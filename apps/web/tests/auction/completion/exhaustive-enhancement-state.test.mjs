@@ -7,7 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { serialize } from 'node:v8';
-import { createAuctionGearEnhancedLoadoutIterator } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { readAuctionState, writeAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
@@ -22,7 +22,7 @@ function fixture() {
   const h={price:10,stale:false,partial:false,stageCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:h.prices ?? {'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,createAuctionGearEnhancedLoadoutIterator,assertFreshMarket,structuredClone,compareGearSimulationResults,
+    createHash,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
@@ -360,4 +360,30 @@ test('two enhanced finalist lanes preserve a successful sibling across retry',as
   assert.equal(result.complete,true);
   assert.deepEqual(calls,['baseline','option-3','option-3']);
   assert.equal(result.recommendations[0].simulation.iterations,750);
+});
+
+test('equal tuning caps reserve a finalist position for a distinct setup and retain slot-specific gems', () => {
+  const { consider, finalistAliases } = vm.runInNewContext(code + ';({consider, finalistAliases})', { enhancedFinalistOptionKey });
+  const engine = 'SimulationCraft fixture · 18428cd';
+  function candidate(id, tuning, gem, dps, cap = 90) {
+    const option = fixture().input.options[0];
+    option.id = id;
+    option.variantKey = id;
+    Object.assign(option.candidate.variants[0], {key: id, bonusIds: [6652, 13668, 13901],
+      modifiers: [{type: 9, value: 90}, {type: 28, value: tuning}],
+      resolution: {engine, metadataVersion: 3, nativeContentTuningV1: [tuning, cap],
+        enhancements: {status: 'verified', socketColors: [14, 0, 0], socketCount: 1, socketBonusId: 0}}});
+    const configuration = {key: id, status: 'priced', totalCopper: gem ? 110 : 100,
+      slots: [{slotType: 'HEAD', variantKey: id, enchantId: 0, gemIds: [gem]}]};
+    return {options: [option], recommendation: {configuration, simulation: {...simulation(dps), engine},
+      comparison: {deltaDps: dps - 1000, uncertainty: {significant: true}}}};
+  }
+  const state = {};
+  const rows = [candidate('b', 3321, 130215, 1020), candidate('a', 5381, 130215, 1020),
+    candidate('c', 3084, 130215, 1020), candidate('d', 3321, 0, 1018),
+    candidate('e', 3084, 130215, 1017, 80)];
+  const aliases = finalistAliases(rows.flatMap(row => row.options), engine);
+  for (const row of rows) consider(state, row, true, aliases);
+  assert.deepEqual([state.measured, state.runnerUp, state.nextMeasured].map(r => r.recommendation.configuration.key),
+    ['a', 'd', 'e']);
 });

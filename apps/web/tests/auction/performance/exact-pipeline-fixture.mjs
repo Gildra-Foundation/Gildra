@@ -14,7 +14,7 @@ import * as slots from '../../../lib/wow/auctionGearSelection.ts';
 import * as diagnostics from '../../../lib/wow/auctionGearDiagnostics.ts';
 import { compareGearSimulationResults, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 import { auctionSelectionEffectKey } from '../../../lib/wow/auctionGearEffects.ts';
-import { createAuctionGearEnhancedLoadoutIterator } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
+import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { auctionEnhancementCatalogInfo } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { customizedAuctionGearOptions, ownedAuctionGearChanges, applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
@@ -68,7 +68,7 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, onEn
     snapshotAuctionGearContext:context=>runner.snapshotAuctionGearContext(context),restoreAuctionGearContext:data=>runner.restoreAuctionGearContext(data)});
   const quote=async(_region,ids)=>({prices:Object.fromEntries(ids.filter(id=>stockedConsumables.has(id)).map(id=>[String(id),{ladder:[[10,100]]}])),
     sourceUpdatedAt:fixture.state.market.sourceUpdatedAt,fetchedAt:fixture.state.market.fetchedAt});
-  const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,createAuctionGearEnhancedLoadoutIterator,compareGearSimulationResults,
+  const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareGearSimulationResults,
     evaluateAuctionEnhancementStage:input=>measure('stage',()=>evaluateAuctionEnhancementStage({...input,quote})),
     auctionEnhancementCatalogInfo,exactCommodityPrices:quote,assertFreshMarket,auctionGearSlots:slots.auctionGearSlots});
   const requests=[], publications=[];
