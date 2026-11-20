@@ -278,3 +278,39 @@ test('socketless scaling aliases retain the cheaper enchantable receipt and resu
  assert.deepEqual(result.rows.slice(1).map(r=>r.options[0].auctionId),[2,3,4,5]);
  assert.equal(result.rows[1].spentCopper,10);
 });
+
+test('verified drop curves keep both ring receipts and enhancement domains across cursor versions', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd';
+  const options = [];
+  for (const slot of ['FINGER_1', 'FINGER_2']) {
+    for (const [lot, cost, drop, level] of [[51, 20, 81, 133], [52, 10, 82, 133], [53, 30, 90, 253]]) {
+      const row = option(lot, slot, cost);
+      row.candidate.itemId = 258910;
+      Object.assign(row.candidate.variants[0], {
+        bonusIds: [13668, 13900], itemLevel: level, modifiers: [{type: 9, value: drop}],
+        resolution: {engine, metadataVersion: 3, nativeDropCurveV1: [drop, 0, level],
+          enhancements: {status: 'verified', socketColors: [14, 0, 0], socketCount: 1, socketBonusId: 0}}
+      });
+      options.push(row);
+    }
+  }
+  const input = {...base(options, ['FINGER_1', 'FINGER_2']), engine};
+  const old = create({...input, nativeLotGroups: 2});
+  const current = create(input);
+  assert.equal(old.totalAssignments, '16');
+  assert.equal(current.totalAssignments, '9');
+  const limits = {maxAssignments: 1, maxResults: 1, signal: signal()};
+  const first = await old.nextBatch(old.initialState(), limits);
+  assert.equal(first.state.nativeLotGroups, 2);
+  await assert.rejects(current.nextBatch(first.state, limits), /invalid_search_checkpoint/);
+  const {rows} = await all(input, limits);
+  const pair = rows.find(r => r.options.length === 2 && r.options.every(o => o.candidate.variants[0].itemLevel === 133));
+  assert.deepEqual(pair.options.map(o => o.auctionId).sort(), [51, 52]);
+  assert.equal(pair.spentCopper, 30);
+  const variant = options[0].candidate.variants[0];
+  variant.resolution.enhancements.socketColors = [1, 0, 0];
+  assert.equal(create(input).totalAssignments, '12');
+  variant.resolution.enhancements.socketColors = [14, 0, 0];
+  variant.resolution.nativeDropCurveV1[0] = 82;
+  assert.equal(create(input).totalAssignments, '12');
+});

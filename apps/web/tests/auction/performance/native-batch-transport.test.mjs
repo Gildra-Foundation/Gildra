@@ -721,3 +721,20 @@ test('direct enchant transfers between a purchased ring and an explicitly edited
     assert.equal((await measure(7964,8022,240869,'finalist',true)).iterations,750);
   }
 });
+
+test('mechanical cache binds a drop curve to the actual prepared item and ordered bonus list', () => {
+  const engine = 'SimulationCraft fixture · 18428cd';
+  const getKey = (drop, changeOverrides = {}, requestOverrides = {}) => {
+    const modifiers = [{type: 9, value: drop}];
+    const change = {slot: 'finger1', itemId: 258910, bonusIds: [13668, 13900], modifiers, ...changeOverrides};
+    const option = {variantKey: 'lot', candidate: {itemId: 258910, slotType: 'FINGER_1', variants: [{
+      key: 'lot', bonusIds: [13668, 13900], modifiers, resolution: {engine, nativeDropCurveV1: [drop, 0, 133]}}]}};
+    const request = {spec: 'fury-warrior', scenario: 'single-target', targets: 1, fightLengthSeconds: 120, ...requestOverrides};
+    return auctionGearMechanicalKey('profile', request, {engine, changes: [change], options: [option]});
+  };
+  assert.equal(getKey(81), getKey(82));
+  for (const rewritten of [{itemId: 258911}, {bonusIds: [13900, 13668]}, {bonusIds: [13668]}]) {
+    assert.notEqual(getKey(81, rewritten), getKey(82, rewritten));
+  }
+  assert.notEqual(getKey(81, {}, {precision: 'finalist'}), getKey(82, {}, {precision: 'finalist'}));
+});

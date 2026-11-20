@@ -156,11 +156,17 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   // a scaling handler, including through automatic enchants in this pinned DBC.
   const gear = native ? native.changes.map((change, i) => {
     const option = reuseCandidateInputs ? native.options?.[i] : undefined;
-    const resolution = option?.candidate.variants.find(row => row.key === option.variantKey)?.resolution;
-    const tuning = resolution?.engine === native.engine ? resolution.nativeContentTuningV1 : undefined;
+    const variant = option?.candidate.variants.find(row => row.key === option.variantKey);
+    const resolution = variant?.resolution;
+    const proof = resolution?.engine === native.engine ? resolution : undefined;
+    // The curve depends on the item bonus program. A prepared change may be
+    // reordered or rewritten by jewelry normalization before it reaches here.
+    const curve = proof?.nativeDropCurveV1 && option?.candidate.itemId === change.itemId &&
+      variant?.bonusIds.length === change.bonusIds?.length && variant?.bonusIds.every((id, index) => id === change.bonusIds?.[index])
+      ? proof.nativeDropCurveV1 : undefined;
     return {
       ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
-        !change.enchantId && !change.gemIds?.length, tuning),
+        !change.enchantId && !change.gemIds?.length, proof?.nativeContentTuningV1, curve),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
     };

@@ -7,7 +7,7 @@ export type AuctionModifier = {
   value: number;
 };
 export { supportedAuctionModifiers } from "./gearItemModifiers";
-import { supportedAuctionModifiers } from "./gearItemModifiers";
+import { supportedAuctionModifiers, verifiedAuctionDropCurve } from "./gearItemModifiers";
 export function auctionVariantKey(offer: Pick<AuctionOffer, "itemId" | "contextId" | "bonusIds" | "modifiers">) {
   return "auction:" + createHash("sha256").update(JSON.stringify([offer.itemId, offer.contextId, [...offer.bonusIds].sort((a, b) => a - b), [...offer.modifiers].sort((a, b) => a.type - b.type)])).digest("hex").slice(0, 32);
 }
@@ -25,6 +25,7 @@ export type ResolvedAuctionVariant = {
   nativeCraftedSymmetryV1?: number[];
   nativeSuffixProgramV1?: string;
   nativeContentTuningV1?: number[];
+  nativeDropCurveV1?: number[];
   nativeScalingInputsV1?: number[];
   appliedStatsV1?: number[];
   nativeNoItemEffects?: boolean;
@@ -63,6 +64,8 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
         resolved.nativeCraftedSymmetryV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeCraftedSymmetryV1: true } : {}),
       ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
         ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
+      ...(Array.isArray(resolved.nativeDropCurveV1) && verifiedAuctionDropCurve(offer.modifiers, resolved.nativeDropCurveV1) === resolved.itemLevel
+        ? { nativeDropCurveV1: [...resolved.nativeDropCurveV1] } : {}),
       ...(Array.isArray(resolved.nativeContentTuningV1) && resolved.nativeContentTuningV1.length === 2 &&
         resolved.nativeContentTuningV1.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 2147483647) &&
         offer.modifiers.some(m => m.type === 28 && m.value === resolved.nativeContentTuningV1![0])

@@ -59,6 +59,7 @@ type GearVariantMetadata struct {
 	SetID                   int                     `json:"setId"`
 	NativeCraftedSymmetryV1 *[]int                  `json:"nativeCraftedSymmetryV1,omitempty"`
 	NativeSuffixProgramV1   string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeDropCurveV1       *[3]int                 `json:"nativeDropCurveV1,omitempty"`
 	NativeContentTuningV1   *[2]int                 `json:"nativeContentTuningV1,omitempty"`
 	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
 	AppliedStatsV1          []float64               `json:"appliedStatsV1,omitempty"`
@@ -303,6 +304,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 			continue
 		}
 		n := func(key string) int { var value int; _ = json.Unmarshal(item[key], &value); return value }
+		result.ItemLevel = n("ilevel")
 		reportVersion := n("gildra_metadata_version")
 		if reportVersion != 1 && reportVersion != 2 {
 			return GearVariantResponse{}, errVariantMetadataMissing
@@ -317,6 +319,7 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 				bonuses := append([]int{}, v.Change.BonusIDs...)
 				result.NativeCraftedSymmetryV1 = &bonuses
 			}
+			result.NativeDropCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_drop_curve_v1"])
 			result.NativeContentTuningV1 = nativeContentTuningV1(r.Git, v.Change.Modifiers, item["gildra_content_tuning_v1"])
 			result.NativeScalingInputsV1 = nativeScalingInputsV1(r.Git, item["gildra_scaling_inputs_v1"])
 			if result.NativeScalingInputsV1 != nil {
@@ -338,7 +341,6 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		_ = json.Unmarshal(item["content_tuning_known"], &tuningKnown)
 		var redirectedKnown bool
 		_ = json.Unmarshal(item["redirected_stats_known"], &redirectedKnown)
-		result.ItemLevel = n("ilevel")
 		result.RequiredLevel = n("required_level")
 		result.InventoryType = n("inventory_type")
 		result.ItemClassID = n("item_class")
@@ -416,6 +418,29 @@ func auditedItemRevision(revision string) bool {
 
 // Both content-tuning readers in the pinned item parser use only a known
 // row's positive level cap. Bind the reported cap to the requested tuning ID.
+func nativeDropCurveV1(revision string, modifiers []ItemModifier, level int, raw json.RawMessage) *[3]int {
+	if len(raw) == 0 || !auditedItemRevision(revision) || level < 1 {
+		return nil
+	}
+	var values []*int
+	if json.Unmarshal(raw, &values) != nil || len(values) != 3 || values[0] == nil || values[1] == nil || values[2] == nil {
+		return nil
+	}
+	drop, tuning := 0, 0
+	for _, m := range modifiers {
+		switch m.Type {
+		case 9:
+			drop = m.Value
+		case 28:
+			tuning = m.Value
+		}
+	}
+	if drop < 1 || drop > 90 || *values[0] != drop || *values[1] != tuning || *values[2] != level {
+		return nil
+	}
+	return &[3]int{drop, tuning, level}
+}
+
 func nativeContentTuningV1(revision string, modifiers []ItemModifier, raw json.RawMessage) *[2]int {
 	if len(raw) == 0 || !auditedItemRevision(revision) {
 		return nil

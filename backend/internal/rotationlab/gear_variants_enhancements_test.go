@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func enhancementReport(t *testing.T, edits func(map[string]any)) GearVariantMetadata {
+func enhancementReport(t *testing.T, edits func(map[string]any), modifiers ...ItemModifier) GearVariantMetadata {
 	t.Helper()
 	item := map[string]any{"gildra_metadata_version": 2, "id": 123, "ilevel": 133, "required_level": 80, "item_class": 4, "item_subclass": 4, "inventory_type": 1, "quality": 3, "content_tuning_known": true, "redirected_stats_known": true, "unknown_bonus_count": 0, "crit_rating": 20,
 		"socket_colors": []int{7, 24, 0}, "socket_bonus_id": 321, "required_profession_id": 202, "required_profession_rank": 50}
@@ -15,7 +15,7 @@ func enhancementReport(t *testing.T, edits func(map[string]any)) GearVariantMeta
 	if err != nil {
 		t.Fatal(err)
 	}
-	input := GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81, Variants: []GearVariantInput{{Key: "exact:123", Change: GearChange{Slot: "head", ItemID: 123}}}}
+	input := GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 81, Variants: []GearVariantInput{{Key: "exact:123", Change: GearChange{Slot: "head", ItemID: 123, Modifiers: modifiers}}}}
 	result, err := parseVariantReport(raw, input)
 	if err != nil {
 		t.Fatal(err)
@@ -235,5 +235,22 @@ func TestNativeCraftedSymmetryNeedsBothMatchingOrderedRatings(t *testing.T) {
 		if got := nativeCraftedSymmetryV1(tc.revision, modifiers, []byte(tc.raw)); got != tc.want {
 			t.Fatalf("%+v got %v", tc, got)
 		}
+	}
+}
+
+func TestDropCurveReportBindsDropTuningAndResolvedLevel(t *testing.T) {
+	mods := []ItemModifier{{Type: 9, Value: 81}, {Type: 28, Value: 3321}}
+	for _, raw := range []string{"[82,3321,133]", "[81,3333,133]", "[81,3321,134]", "[81,3321,null]", "[81,3321]", "[81,3321,133,0]"} {
+		if proof := nativeDropCurveV1("18428cd", mods, 133, json.RawMessage(raw)); proof != nil {
+			t.Fatalf("accepted mismatched curve %s: %v", raw, proof)
+		}
+	}
+	valid := json.RawMessage("[81,3321,133]")
+	if nativeDropCurveV1("18428cf", mods, 133, valid) != nil {
+		t.Fatal("accepted curve from unverified revision")
+	}
+	report := enhancementReport(t, func(item map[string]any) { item["gildra_drop_curve_v1"] = valid }, mods...)
+	if report.NativeDropCurveV1 == nil || *report.NativeDropCurveV1 != [3]int{81, 3321, 133} {
+		t.Fatalf("missing curve in published variant metadata: %+v", report)
 	}
 }

@@ -1,16 +1,17 @@
 --- a/engine/report/json/report_json.cpp
 +++ b/engine/report/json/report_json.cpp
-@@ -2,6 +2,8 @@
+@@ -2,6 +2,9 @@
  // Dedmonwakeen's Raid DPS/TPS Simulator.
  // Send questions to natehieter@gmail.com
  // ==========================================================================
 +
 +#include <cstdlib>
++#include "dbc/item_scaling.hpp"
 -
 +
  #include "interfaces/sc_js.hpp"
  #include "rapidjson/document.h"
-@@ -379,12 +381,124 @@
+@@ -379,12 +382,175 @@
    } );
  }
 -
@@ -48,6 +49,57 @@
 +  pair.make_array();
 +  pair.add() = mods[ 0 ];
 +  pair.add() = mods[ 1 ];
++}
++
++// The only drop/tuning reader in these bonus lists is one type-51 curve.
++// Equal rounded outputs write the same item level and scaling flag. The other
++// accepted entries add sockets or are ignored by the pinned item parser.
++void gildra_drop_curve( JsonOutput node, const item_t& item )
++{
++  const auto& parsed = item.parsed;
++  if ( !parsed.drop_level || parsed.data.item_class != ITEM_CLASS_ARMOR || item.parent_slot != SLOT_INVALID )
++    return;
++  const auto& dbc = *item.player->dbc;
++  int config_id = 0;
++  for ( auto id : parsed.bonus_id )
++  {
++    auto entries = dbc.item_bonus( id );
++    if ( entries.empty() ) return;
++    for ( const auto& entry : entries )
++    {
++      switch ( entry.type )
++      {
++        case ITEM_BONUS_SCALE_CONFIG_2:
++          if ( config_id || entry.value_1 <= 0 ) return;
++          config_id = entry.value_1;
++          break;
++        case ITEM_BONUS_SOCKET:
++        case 26:
++        case 27:
++        case 47:
++          break;
++        default:
++          return;
++      }
++    }
++  }
++  if ( !config_id ) return;
++  const auto configs = item_scaling_config_data_t::find( config_id, dbc.ptr );
++  if ( configs.empty() ) return;
++  const auto offsets = item_offset_curve_data_t::find( configs[ 0 ].item_offset_curve_id, dbc.ptr );
++  if ( offsets.empty() ) return;
++  auto drop = parsed.drop_level;
++  const auto& tuning = dbc.content_tuning( parsed.content_tuning_id );
++  if ( parsed.content_tuning_id && tuning.id != parsed.content_tuning_id ) return;
++  if ( tuning.max_level_squish > 0 ) drop = std::min( drop, static_cast<unsigned>( tuning.max_level_squish ) );
++  const auto& offset = offsets[ 0 ];
++  const int level = as<int>( util::round( item_database::curve_point_value( dbc, offset.curve_id, drop ) ) ) + offset.offset;
++  if ( level <= 0 || level != as<int>( parsed.data.level ) || !parsed.has_midnight_scaling ) return;
++  auto proof = node[ "gildra_drop_curve_v1" ];
++  proof.make_array();
++  proof.add() = parsed.drop_level;
++  proof.add() = parsed.content_tuning_id;
++  proof.add() = level;
 +}
 +
 +// Pinned 18428cd parses context into DUMMY_CONTEXT. Its only mechanical reads of
@@ -138,7 +190,7 @@
      {
        continue;
      }
-@@ -393,6 +507,66 @@
+@@ -393,6 +559,67 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -157,6 +209,7 @@
 +    {
 +      static_assert( STAT_MAX - STAT_STRENGTH == 46, "Version the applied stat vector when its layout changes" );
 +      gildra_scaling_inputs( slotnode, item );
++      gildra_drop_curve( slotnode, item );
 +      gildra_crafted_symmetry( slotnode, item );
 +      const auto applied_stats = item.total_stats();
 +      auto applied = slotnode[ "gildra_applied_stats_v1" ];
@@ -205,7 +258,7 @@
  
      for ( size_t i = 0; i < std::size( item.parsed.data.stat_type_e ); i++ )
      {
-@@ -1372,6 +1546,37 @@
+@@ -1372,6 +1599,37 @@
    }
  }
 -
@@ -244,7 +297,7 @@
  void print_json_pretty( FILE* o, const sim_t& sim, const ::report::json::report_configuration_t& report_configuration )
  {
    Document doc;
-@@ -1403,7 +1608,8 @@
+@@ -1403,7 +1661,8 @@
      root[ "git_branch" ] = git_info::branch();
    }
 -

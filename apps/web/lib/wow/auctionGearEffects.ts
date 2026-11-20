@@ -5,15 +5,18 @@ import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" = false) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
     const bare = groupUnusedScaling && !option.customization && variant.bonusIds?.length === 0;
-    const tuning = groupUnusedScaling === "tuning-cap" && variant.resolution?.engine === engine
-      ? variant.resolution?.nativeContentTuningV1 : undefined;
-    const item = engine ? auctionNativeItemOptions(variant, engine, bare, tuning) : variant;
-    const cap = "contentTuningCap" in item ? [item.contentTuningCap] : [];
+    const resolution = engine && variant.resolution?.engine === engine ? variant.resolution : undefined;
+    const curve = groupUnusedScaling === "drop-curve" ? resolution?.nativeDropCurveV1 : undefined;
+    const tuning = typeof groupUnusedScaling === "string" && resolution
+      ? resolution.nativeContentTuningV1 : undefined;
+    const item = engine ? auctionNativeItemOptions(variant, engine, bare, tuning, curve) : variant;
+    const cap = "dropCurveLevel" in item && item.dropCurveLevel !== undefined ? ["drop-curve-v1", item.dropCurveLevel] :
+      "contentTuningCap" in item ? [item.contentTuningCap] : [];
     let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
     // Keep certified groups separate from historical and uncertified offers,
     // even when the latter already use ascending crafting modifier values.
@@ -164,7 +167,7 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");

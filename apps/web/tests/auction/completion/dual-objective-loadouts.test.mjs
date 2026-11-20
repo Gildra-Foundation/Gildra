@@ -316,7 +316,7 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  const old=await finish(h,partial.checkpoint);
  const fresh=await finish(h);
  assert.equal(old.result.combinationCount,'9');
- assert.equal(fresh.checkpoint.nativeLotGroups,4);
+ assert.equal(fresh.checkpoint.nativeLotGroups,5);
  assert.equal(fresh.checkpoint.version,4);
  assert.equal(old.checkpoint.version,3);
  assert.equal(fresh.result.combinationCount,'4');
@@ -583,4 +583,34 @@ test('bare waist socket substitutes only at equal native inputs and preserves ge
   const withSocket = batch.loadouts.filter(row => row.options.includes(socketed));
   assert.deepEqual(withSocket.map(row => row.options.map(o=>o.auctionId).sort().join(',')).sort(), ['2','2,3']);
   assert(withSocket.every(row => row.remainingCopper === 100-row.options.reduce((sum,o)=>sum+o.costCopper,0)));
+});
+
+test('bare assembly keeps an old tuning-cap cursor when a later worker supplies the drop curve', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd', h = fixture(), options = [];
+  for (const slot of ['FINGER_1', 'FINGER_2']) {
+    for (const [lot, drop, cost] of [[51, 81, 10], [52, 82, 11], [53, 83, 19]]) {
+      const row = option(lot, slot, cost);
+      row.id = lot + '-' + slot;
+      row.candidate.itemId = 258910;
+      row.candidate.inventoryType = 11;
+      Object.assign(row.candidate.variants[0], {bonusIds: [13668, 13900], itemLevel: 133,
+        modifiers: [{type: 9, value: drop}], resolution: {engine}});
+      options.push(row);
+    }
+  }
+  Object.assign(h.input, {options, selectedSlots: ['FINGER_1','FINGER_2'], reuseAppliedStats: true,
+    groupCraftedEquipment: true, baseline: {...measurement(1000), engine},
+    simulate: async rows => ({...measurement(1000 + rows.length * 150 + (rows.length ? 50 : 0)), engine})});
+  const partial = await assembleAuctionGear({...h.input, maxAssignments: 1});
+  partial.checkpoint.nativeLotGroups = 4;
+  for (const row of options) {
+    const variant = row.candidate.variants[0];
+    variant.resolution.nativeDropCurveV1 = [variant.modifiers[0].value, 0, 133];
+  }
+  const legacy = await finish(h, partial.checkpoint), current = await finish(h);
+  assert.equal(legacy.result.combinationCount, '16');
+  assert.equal(current.result.combinationCount, '4');
+  assert.deepEqual(ids(current.result.bestDpsConfirmed), [51, 52]);
+  assert.deepEqual(current.result.bestValueConfirmed, legacy.result.bestValueConfirmed);
+  assert.deepEqual(current.result.bestDpsConfirmed, legacy.result.bestDpsConfirmed);
 });
