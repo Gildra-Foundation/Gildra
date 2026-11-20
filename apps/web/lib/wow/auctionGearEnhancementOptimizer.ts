@@ -253,7 +253,8 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     const categories = new Map<string,{count:number;limit:number}>();
     const identities = new Map<string,{count:number;unique:boolean}>();
     let valid = true, pruneAxis = 0;
-    const partialQuantities = new Map<number,number>();
+    let partialCost = input.itemsCopper;
+    const purchases = new Map<number, { quantity: number; cost: number }>();
     // Higher radix digits form a fixed suffix. If that suffix alone is impossible,
     // skip ALL assignments of lower digits instead of spending the bounded budget on them.
     for (let axis = selected.length - 1; axis >= 0; axis--) {
@@ -270,20 +271,25 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
         previous.count++; previous.limit = Math.min(previous.limit,e.category.limit); categories.set(e.category.id,previous);
         if (previous.count > previous.limit) valid = false;
       }
-      if (e && !retained) partialQuantities.set(e.consumableItemId,(partialQuantities.get(e.consumableItemId) ?? 0)+1);
-      let partialCost = input.itemsCopper;
-      for (const [itemId, quantity] of partialQuantities) {
-        const quote = commodityPrices.cost(itemId,quantity);
-        if (quote === null) { configurationReasons.add("price_unknown_or_insufficient_quantity"); valid = false; break; }
-        partialCost += quote;
-        if (!Number.isSafeInteger(partialCost)) throw new Error("invalid_budget");
+      if (e && !retained) {
+        const previous = purchases.get(e.consumableItemId);
+        const quantity = (previous?.quantity ?? 0) + 1;
+        const cost = commodityPrices.cost(e.consumableItemId, quantity);
+        if (cost === null) {
+          configurationReasons.add("price_unknown_or_insufficient_quantity");
+          valid = false;
+        } else {
+          // Replace only this consumable's total at its new quantity tier.
+          partialCost = (partialCost - (previous?.cost ?? 0)) + cost;
+          if (!Number.isSafeInteger(partialCost)) throw new Error("invalid_budget");
+          purchases.set(e.consumableItemId, { quantity, cost });
+        }
       }
       if (partialCost > input.budgetCopper) { valid = false; configurationReasons.add("over_budget"); }
       if (!valid) { pruneAxis = axis; break; }
     }
     if (!valid) return { valid: false, pruneAxis };
     const configurationSlots = slots.map(slot=>({slotType:slot.slotType,variantKey:slot.variantKey,enchantId:0,gemIds:slot.sockets.map(()=>0)}));
-    const quantities = new Map<number,number>();
     const kinds = new Map<number, Enhancement["kind"]>();
     const ownedChanges = new Map<string, OwnedAuctionGearChange>();
     for (const choice of selected) {
@@ -300,11 +306,10 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
         }
         if (kinds.has(e.consumableItemId) && kinds.get(e.consumableItemId) !== e.kind) throw new Error("invalid_enhancement_catalog");
         kinds.set(e.consumableItemId,e.kind);
-        quantities.set(e.consumableItemId,(quantities.get(e.consumableItemId) ?? 0)+1);
       }
     }
     const fullyEnhanced = completeRules && selected.every(c=>c.enhancement !== null || (slots[c.slot].owned && !slots[c.slot].allowOwnedChanges));
-    const consumables = [...quantities].sort(([a],[b])=>a-b).map(([itemId,quantity])=>{
+    const consumables = [...purchases].sort(([a],[b])=>a-b).map(([itemId,{quantity}])=>{
       const quote = commodityPrices.quote(itemId,quantity);
       return {itemId,kind:kinds.get(itemId)!,quantity,quotedCopper:quote.totalCopper,levels:quote.levels,missingQuantity:quote.missingQuantity};
     });
