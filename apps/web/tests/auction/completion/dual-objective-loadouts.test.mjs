@@ -243,3 +243,28 @@ test('a context rejected by the worker stays separate from valid native lots',as
    simulate:async sel=>({...measurement(1000+sel.length*100),engine})});
  assert.equal((await finish(h)).result.combinationCount,'3');
 });
+
+test('an independent armor slot extends a shared ring purchase at its exact stack price', async () => {
+  const ring = option(31, 'FINGER_1', 50);
+  ring.quantity = 2;
+  ring.candidate.inventoryType = 11;
+  const second = { ...ring, id: '31-finger2', candidate: { ...ring.candidate, slotType: 'FINGER_2' } };
+  const head = option(32, 'HEAD', 30), wrist = option(33, 'WRIST', 1);
+  wrist.candidate.inventoryType = 9;
+  const tried = new Set();
+  const h = fixture('dps');
+  Object.assign(h.input, {
+    options: [ring, second, head, wrist], selectedSlots: ['HEAD', 'FINGER_2', 'WRIST', 'FINGER_1'],
+    budgetCopper: 80, baseline: measurement(1000), maxAssignments: 3,
+    simulate: async selected => {
+      const ids = selected.map(o => o.id);
+      tried.add(ids.join('/'));
+      return measurement(1000 + selected.length * 100 + Number(ids.includes(head.id)) * 10);
+    },
+  });
+  const step = await finish(h);
+  assert.ok(tried.has('31/31-finger2/32'));
+  assert.ok(!tried.has('31/31-finger2/32/33'));
+  assert.equal(step.result.bestDpsConfirmed.spentCopper, 80);
+  assert.deepEqual(ids(step.result.bestDpsConfirmed), [31, 31, 32]);
+});

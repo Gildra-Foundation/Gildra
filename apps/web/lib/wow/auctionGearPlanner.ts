@@ -615,7 +615,19 @@ export async function assembleAuctionGear(input: PlannerInput & {
     // Adjacent cursor positions share their leading choices. Reuse only the
     // exact receipt for an unchanged prefix in this immutable offer pool.
     const previousChoices: number[] = [];
+    // A globally exclusive lot cannot contribute to the price of another slot.
+    const seenLots = new Set<number>(), repeatedLots = new Set<number>();
+    for (const option of options) {
+      if (seenLots.has(option.auctionId)) repeatedLots.add(option.auctionId);
+      seenLots.add(option.auctionId);
+    }
+    const independentOffers = new Map<AuctionEffectGroup, AuctionGearOption>();
+    for (const [index, group] of flatGroups.entries()) {
+      if (group.options.every(option => !repeatedLots.has(option.auctionId)))
+        independentOffers.set(group, cheapestSingles[index]);
+    }
     const prefixReceipts: AuctionGearOption[][] = [[]];
+    const prefixCosts = [0];
     while (!yieldBeforeEnumeration && traversal.nextSeed === seeds.length && traversal.nextPair === pairs.length && !traversal.exhausted && assignments < maxAssignments && !input.shouldYield?.()) {
       input.signal.throwIfAborted();
       const dominatedAxis = dominatedGroups.size ? traversal.cursor.findIndex((choice, axis) =>
@@ -648,24 +660,38 @@ export async function assembleAuctionGear(input: PlannerInput & {
       }
       const effectSelection: AuctionEffectGroup[] = [];
       let selection: AuctionGearOption[] = [];
-      let invalidPrefix = -1;
+      let costCopper = 0, invalidPrefix = -1;
       // Reuse the receipt of the longest unchanged, affordable prefix.
       for (let index = 0; index < groups.length; index++) {
         const choice = traversal.cursor[index];
         if (choice) effectSelection.push(groups[index][choice - 1]);
         if (previousChoices[index] === choice) {
           selection = prefixReceipts[index + 1];
+          costCopper = prefixCosts[index + 1];
           continue;
         }
         previousChoices.length = index;
         if (choice) {
-          const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
-          if (!purchase) invalidPrefix = index;
-          else selection = purchase.options;
+          const offer = independentOffers.get(groups[index][choice - 1]);
+          if (offer && effectSelection.length <= 16) {
+            if (offer.costCopper > input.budgetCopper - costCopper) invalidPrefix = index;
+            else {
+              costCopper += offer.costCopper;
+              selection = [...selection, offer];
+            }
+          } else {
+            const purchase = await cheapestAuctionEffectSelection(effectSelection, input.budgetCopper, input.signal);
+            if (!purchase) invalidPrefix = index;
+            else {
+              selection = purchase.options;
+              costCopper = purchase.costCopper;
+            }
+          }
         }
         if (invalidPrefix < 0) {
           previousChoices.push(choice);
           prefixReceipts[index + 1] = selection;
+          prefixCosts[index + 1] = costCopper;
         }
         if (invalidPrefix >= 0) break;
       }
