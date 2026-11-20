@@ -152,6 +152,7 @@ test('equivalent purchases prune complete continuations with the same winners, i
     assert.equal(step.result.combinationCount, '32');
     assert.equal(step.result.validCombinations, 16);
     assert.equal(step.result.proofPrunedAssignments, '16');
+    assert.equal(step.result.pruningCounts.substitutionBranches, '2');
     assert.equal(control.step.result.validCombinations, 32);
     assert(measured.every(selection => !selection.includes(2) && !selection.includes(3)));
   }
@@ -160,6 +161,31 @@ test('equivalent purchases prune complete continuations with the same winners, i
     maxAssignments: 1, simulate: async selection => measurement(1000 + selection.reduce((sum,row) => sum+row.candidate.itemId, 0))});
   const resumed = await run(true, true, structuredClone(partial.checkpoint));
   assert.deepEqual(resumed.step.result.bestDpsConfirmed, control.step.result.bestDpsConfirmed);
+});
+
+test('canonical branch counts include only the unvisited suffix and survive resume', async () => {
+  const empty = { substitutionBranches: '0', procurementBranches: '0', procurementAssignments: '0',
+    equipConflictBranches: '0', equipConflictAssignments: '0' };
+  for (const reason of ['procurement', 'equipConflict']) {
+    const h = fixture(), slots = ['BACK','CHEST','HEAD','WAIST'];
+    h.input.selectedSlots = slots;
+    h.input.options = slots.map((slot, i) => option(i + 1, slot, reason === 'procurement' && i < 2 ? 60 : 1));
+    if (reason === 'equipConflict') for (const row of h.input.options.slice(0, 2))
+      row.candidate.constraints.limitCategoryId = 9;
+    const complete = await finish(h, undefined, 100);
+    // At 1110, the first two purchases rule out 1110 and 1111. Earlier
+    // suffixes 1100 and 1101 are outside this checkpoint's remaining domain.
+    const checkpoint = {...structuredClone(complete.checkpoint), cursor: [1,1,1,0], exhausted: false,
+      seedSelections: [], nextSeed: 0, pruningCounts: {...empty}};
+    const step = await assembleAuctionGear({...h.input,checkpoint,maxAssignments: 1});
+    const expected = {...empty, [reason+'Branches']: '1', [reason+'Assignments']: '2'};
+    assert.deepEqual(step.result.pruningCounts,expected);
+    assert.deepEqual((await finish(h,step.checkpoint)).result.pruningCounts,expected);
+    delete checkpoint.pruningCounts;
+    assert.equal((await finish(h,checkpoint)).result.pruningCounts,undefined);
+    checkpoint.pruningCounts = {...empty, [reason+'Branches']: '3', [reason+'Assignments']: '2'};
+    await assert.rejects(() => finish(h,checkpoint),/invalid_search_checkpoint/);
+  }
 });
 
 test('a witness may not reuse a shared lot, conflict with another slot, or use a different spec', () => {

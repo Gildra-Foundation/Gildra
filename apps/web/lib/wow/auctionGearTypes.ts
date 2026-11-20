@@ -112,6 +112,15 @@ export type AuctionGearSearchResult = {
   searchLimited: boolean;
   optionsConsidered: number;
 };
+/** Counts in the canonical gear cursor. A prefix includes its current assignment
+ * and all remaining suffixes, including any previously examined during warmup. */
+export type AuctionGearPruningCounts = {
+  substitutionBranches: string;
+  procurementBranches: string;
+  procurementAssignments: string;
+  equipConflictBranches: string;
+  equipConflictAssignments: string;
+};
 export type AuctionGearAssemblyResult = AuctionGearPlan & {
   kind: "assembly";
   enhancementMode?: import("./auctionGearEnhancementMode").AuctionGearEnhancementMode;
@@ -131,6 +140,8 @@ export type AuctionGearAssemblyResult = AuctionGearPlan & {
   combinationsChecked: number;
   /** Cartesian assignments skipped by a certified substitution, before budget/equip checks. */
   proofPrunedAssignments?: string;
+  /** Absent for a legacy cursor whose historical branch counts are unknown. */
+  pruningCounts?: AuctionGearPruningCounts;
   validCombinations: number;
   combinationKind: "effects";
   /** Exact effect-choice Cartesian upper bound, including incompatible and over-budget states. */
@@ -186,5 +197,7 @@ export type AuctionGearAssemblyCheckpoint = {
   combinationsChecked: number;
   /** Cartesian assignments skipped by a certified substitution, before budget/equip checks. */
   proofPrunedAssignments?: string;
+  /** Absent for a legacy cursor whose historical branch counts are unknown. */
+  pruningCounts?: AuctionGearPruningCounts;
   validCombinations: number;
 };

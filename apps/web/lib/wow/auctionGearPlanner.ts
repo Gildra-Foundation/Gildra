@@ -376,7 +376,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       checkpoint.bestValueConfirmed = null; checkpoint.bestDpsConfirmed = null;
       checkpoint.cursor.fill(0); checkpoint.exhausted = false;
       checkpoint.nextPair = 0; checkpoint.nextSeed = 0;
-      checkpoint.combinationsChecked = 0; checkpoint.validCombinations = 0; delete checkpoint.proofPrunedAssignments;
+      checkpoint.combinationsChecked = 0; checkpoint.validCombinations = 0; delete checkpoint.proofPrunedAssignments; delete checkpoint.pruningCounts;
     }
   } else {
     const cache = cloneCache(input.simulationCache);
@@ -398,10 +398,35 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // applied. Enumeration can prepare the next assignments while SimC runs.
   const traversal = { cursor: [...checkpoint.cursor], exhausted: checkpoint.exhausted,
     nextSeed: checkpoint.nextSeed, nextPair: checkpoint.nextPair, combinationsChecked: checkpoint.combinationsChecked };
-  const savedPruned = checkpoint.proofPrunedAssignments ?? "0";
-  if (typeof savedPruned !== "string" || savedPruned.length > combinationCount.length || !/^(0|[1-9]\d*)$/.test(savedPruned) ||
-      BigInt(savedPruned) > BigInt(combinationCount)) throw new Error("invalid_search_checkpoint");
-  let proofPruned = BigInt(savedPruned);
+  const totalAssignments = BigInt(combinationCount);
+  const readCount = (value: string) => {
+    if (typeof value !== "string" || value.length > combinationCount.length || !/^(0|[1-9]\d*)$/.test(value) ||
+        BigInt(value) > totalAssignments) throw new Error("invalid_search_checkpoint");
+    return BigInt(value);
+  };
+  let proofPruned = readCount(checkpoint.proofPrunedAssignments ?? "0");
+  const savedCounts = checkpoint.pruningCounts;
+  if (savedCounts !== undefined && (!savedCounts || typeof savedCounts !== "object"))
+    throw new Error("invalid_search_checkpoint");
+  const trackBranches = savedCounts !== undefined ||
+    (!traversal.exhausted && traversal.cursor.every(choice => choice === 0) && proofPruned === 0n);
+  let substitutionBranches = savedCounts ? readCount(savedCounts.substitutionBranches) : 0n;
+  let procurementBranches = savedCounts ? readCount(savedCounts.procurementBranches) : 0n;
+  let procurementAssignments = savedCounts ? readCount(savedCounts.procurementAssignments) : 0n;
+  let equipConflictBranches = savedCounts ? readCount(savedCounts.equipConflictBranches) : 0n;
+  let equipConflictAssignments = savedCounts ? readCount(savedCounts.equipConflictAssignments) : 0n;
+  if (substitutionBranches > proofPruned || procurementBranches > procurementAssignments ||
+      equipConflictBranches > equipConflictAssignments || proofPruned + procurementAssignments + equipConflictAssignments > totalAssignments)
+    throw new Error("invalid_search_checkpoint");
+  const suffixSize = Array<bigint>(radices.length).fill(1n);
+  for (let axis = radices.length - 2; axis >= 0; axis--)
+    suffixSize[axis] = suffixSize[axis + 1] * BigInt(radices[axis + 1]);
+  const remainingInBranch = (axis: number) => {
+    let remaining = suffixSize[axis];
+    for (let i = axis + 1; i < radices.length; i++)
+      if (traversal.cursor[i]) remaining -= BigInt(traversal.cursor[i]) * suffixSize[i];
+    return remaining;
+  };
   const advance = (from = traversal.cursor.length - 1) => {
     for (let index = from; index >= 0; index--) {
       if (++traversal.cursor[index] < radices[index]) {
@@ -604,6 +629,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
     selections.length = 0;
     Object.assign(checkpoint, traversal, { cursor: [...traversal.cursor] });
     if (proofPruned > 0n) checkpoint.proofPrunedAssignments = proofPruned.toString();
+    if (trackBranches) checkpoint.pruningCounts = {
+      substitutionBranches: substitutionBranches.toString(), procurementBranches: procurementBranches.toString(),
+      procurementAssignments: procurementAssignments.toString(), equipConflictBranches: equipConflictBranches.toString(),
+      equipConflictAssignments: equipConflictAssignments.toString(),
+    };
     if (measured.length) {
       input.onProgress?.({ phase: "simulating", completed: calls, total: max });
       save();
@@ -671,10 +701,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
       if (dominatedAxis >= 0) {
         // A resume may already be partway through this suffix. Count only its
         // remaining cursor positions, regardless of warmup order or budget.
-        let remaining = 1n;
-        for (let axis = dominatedAxis + 1; axis < radices.length; axis++)
-          remaining = remaining * BigInt(radices[axis]) - BigInt(traversal.cursor[axis]);
-        proofPruned += remaining;
+        proofPruned += remainingInBranch(dominatedAxis);
+        substitutionBranches++;
         advance(dominatedAxis);
         assignments++;
         if (assignments % 256 === 0) await yieldTraversal();
@@ -731,12 +759,22 @@ export async function assembleAuctionGear(input: PlannerInput & {
         }
         if (invalidPrefix >= 0) break;
       }
+      if (trackBranches && invalidPrefix >= 0) {
+        procurementBranches++;
+        procurementAssignments += remainingInBranch(invalidPrefix);
+      }
       if (invalidPrefix < 0) {
         if (compatibleSelection(selection)) {
           if (!evaluate(selection)) break;
         } else {
           const conflict = auctionConflictingPurchaseSlot(chosenGroups.map(group => group.options[0]), input.specId);
-          if (conflict) invalidPrefix = slots.indexOf(conflict);
+          if (conflict) {
+            invalidPrefix = slots.indexOf(conflict);
+            if (trackBranches && invalidPrefix >= 0) {
+              equipConflictBranches++;
+              equipConflictAssignments += remainingInBranch(invalidPrefix);
+            }
+          }
         }
       }
       traversal.combinationsChecked++;
@@ -812,6 +850,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     simulations: checkpoint.simulations, optionsConsidered: options.length, searchLimited: !complete,
     exhaustiveComplete: complete, combinationsChecked: checkpoint.combinationsChecked,
     ...(checkpoint.proofPrunedAssignments ? { proofPrunedAssignments: checkpoint.proofPrunedAssignments } : {}),
+    ...(checkpoint.pruningCounts ? { pruningCounts: checkpoint.pruningCounts } : {}),
     validCombinations: checkpoint.validCombinations, combinationCount, combinationKind: "effects" } };
 }
 
