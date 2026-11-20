@@ -125,3 +125,41 @@ test('bare worn gloves skip profession-only purchases and keep socket upgrades a
     assert(calls.some(row=>row.enchantId===5444));
   }
 });
+
+test('shoulder illusions cannot improve an unenchanted purchase or an unenchanted owned shoulder', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const item = {item:{id:271454}, slot:{type:'SHOULDER'}, inventory_type:{type:'SHOULDER'},
+    level:{value:270}, item_class:{id:4}, item_subclass:{id:4}, spells:[], sockets:[]};
+  const option = {id:'new-shoulder', auctionId:18, costCopper:200, quantity:1, variantKey:'shoulder',
+    candidate:{itemId:237924, name:'Shoulder', slotType:'SHOULDER', inventoryType:3, itemClassId:4, itemSubclassId:4,
+      eligible:true, compatibility:{specId:72}, constraints:{requiredLevel:1},
+      variants:[{key:'shoulder', itemLevel:270, contextId:0, bonusIds:[], resolution:{effectsVerified:true, effects:[],
+        metadataVersion:3, enhancements:{status:'verified', socketColors:[0,0,0], socketCount:0, socketBonusId:0, requiredProfessionId:0, requiredProfessionRank:0}}}]}};
+  const prices = {201315:{ladder:[[10,10]]},243961:{ladder:[[20,10]]}};
+  async function run(owned, installed, revision = engine, enabled = true) {
+    const state={checkpoints:{}}, measured=new Set();
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    const shoulder = installed ? {...item,enchantments:[{enchantment_slot:{id:0},enchantment_id:7970}]} : item;
+    for(let turn=0;turn<12;turn++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,omitShoulderIllusions:enabled,
+        finalists:[{label:'exhaustive',options:owned?[]:[option]}], equipment:{equipped_items:[shoulder]},
+        loadout:[{slotType:'SHOULDER',itemId:item.item.id,inventoryType:3,itemSubclassId:4}],selectedSlots:['SHOULDER'],
+        specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'shoulder',encounter:{},budgetCopper:1000,
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async(options,_signal,edits)=>{
+          measured.add(options[0]?.customization?.enchantId ?? edits?.[0]?.enchantId ?? 0);
+          return baseline;
+        }});
+      if(result.complete)return measured;
+    }
+    assert.fail('shoulder fixture did not finish');
+  }
+  for (const owned of [true,false]) {
+    const calls = await run(owned,false);
+    assert(calls.has(0));assert(calls.has(7971));assert(!calls.has(6685));
+    assert((await run(owned,false,engine,false)).has(6685));
+    assert((await run(owned,false,'SimulationCraft 18428cd unknown')).has(6685));
+  }
+  assert((await run(true,true)).has(6685),'An illusion can replace an existing combat enchant');
+});

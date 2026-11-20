@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { neutralProfessionGloveEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { neutralProfessionGloveEnchant, neutralShoulderIllusion, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -63,6 +63,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   includeObjectiveAlternatives?: boolean;
   exhaustive?: boolean;
   omitNeutralGloveEnchants?: boolean;
+  omitShoulderIllusions?: boolean;
   pruneEquivalentRingGems?: boolean;
   nativePlayerLevel?: number;
   preview?: boolean;
@@ -131,8 +132,10 @@ export async function evaluateAuctionEnhancementStage(input: {
       const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash(variant.resolution?.metadataVersion===3 ? [target,metadata,3] : [target,metadata]),owned:false,
         sockets:metadata.socketColors.flatMap((color,index)=>color ? [{key:String(index),type:String(color)}] : [])};
       slots.push(slot);
+      const bareShoulder = input.exhaustive && input.omitShoulderIllusions && slot.slotType === 'SHOULDER' &&
+        target.inventoryType === 3 && !option.customization;
       resolutions.set(slot.slotType,{...resolved,
-        enchantChoices:resolved.enchantChoices.map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
+        enchantChoices:resolved.enchantChoices.filter(e => !bareShoulder || !neutralShoulderIllusion(e.simulationId, input.engine)).map(normalized),gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))});
     }
     if (unsupported) continue;
     // Retained equipment is not bought again, but its enhancements consume uniqueness limits.
@@ -170,14 +173,18 @@ export async function evaluateAuctionEnhancementStage(input: {
         if (resolved.verified) {
           // Leaving an originally bare glove unchanged has the same native effect
           // and costs zero. Every purchasable scroll costs strictly positive copper.
-          const bareGloves = input.exhaustive && input.omitNeutralGloveEnchants && slotType === 'HANDS' &&
-            obj(item.inventory_type).type === 'HAND' && (item.enchantments === undefined ||
-              Array.isArray(item.enchantments) && !item.enchantments.length);
+          const unenchanted = item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length;
+          const bareGloves = unenchanted && input.exhaustive && input.omitNeutralGloveEnchants &&
+            slotType === 'HANDS' && obj(item.inventory_type).type === 'HAND';
+          const bareShoulder = unenchanted && input.exhaustive && input.omitShoulderIllusions &&
+            slotType === 'SHOULDER' && obj(item.inventory_type).type === 'SHOULDER' && target.inventoryType === 3;
           slot.ownedItemId = itemId;
           slot.allowOwnedChanges = true;
           slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
           resolution = {...resolved,enchantApplicable:resolved.enchantApplicable || Boolean(enchant),
-            enchantChoices:resolved.enchantChoices.filter(e => !bareGloves || !neutralProfessionGloveEnchant(e.simulationId, input.engine)).map(normalized),
+            enchantChoices:resolved.enchantChoices.filter(e =>
+              !(bareGloves && neutralProfessionGloveEnchant(e.simulationId, input.engine)) &&
+              !(bareShoulder && neutralShoulderIllusion(e.simulationId, input.engine))).map(normalized),
             gemChoices:Object.fromEntries(Object.entries(resolved.gemChoices).map(([key,choices])=>[key,choices.map(normalized)]))};
         } else {
           // Preserve unknown instances and their installed unique limits while

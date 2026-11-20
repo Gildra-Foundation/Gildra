@@ -35,6 +35,18 @@ export function neutralProfessionGloveEnchant(id: number, engine: string) {
   return ignoresItemContext(engine) && professionGloveEnchants.has(id);
 }
 
+// These permanent shoulder enchants install a dummy aura with no native proc,
+// combat stat or registered effect. Their visual spell cannot change a fight.
+const shoulderIllusions = new Set([
+  6671, 6673, 6674, 6679, 6680, 6681, 6682, 6683, 6684, 6685, 6686, 6687, 6688, 6689, 6690,
+  6819, 6820, 6821, 6907, 6908, 6909, 7425, 7426, 7427, 7428, 7429, 7430, 7431, 7432, 7433,
+  7434, 7435, 7436, 8042, 8043, 8044, 8045, 8046, 8047, 8649, 8650, 8651,
+]);
+
+export function neutralShoulderIllusion(id: number, engine: string) {
+  return ignoresItemContext(engine) && shoulderIllusions.has(id);
+}
+
 const verifiedGemSlots = new Set([
   "head", "neck", "shoulder", "back", "chest", "wrist", "hands", "waist", "legs", "feet", "finger1", "finger2",
 ]);
