@@ -5,11 +5,12 @@ import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
-    const item = engine ? auctionNativeItemOptions(variant, engine) : variant;
+    const bare = groupUnusedScaling && !option.customization && variant.bonusIds?.length === 0;
+    const item = engine ? auctionNativeItemOptions(variant, engine, bare) : variant;
     let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
     // Keep certified groups separate from historical and uncertified offers,
     // even when the latter already use ascending crafting modifier values.
@@ -115,10 +116,10 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry), constraints])).digest("hex");
+  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */

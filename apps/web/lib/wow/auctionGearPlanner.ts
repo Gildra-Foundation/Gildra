@@ -212,9 +212,10 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
   if (input.groupCraftedEquipment && ignoresItemContext(checkpoint.baseline.engine)) {
     for (const option of options) {
       const variant = option.candidate.variants.find(v => v.key === option.variantKey);
-      if (option.customization || variant?.resolution?.nativeCraftedSymmetryV1 !== true) continue;
+      if (option.customization || !variant ||
+          (variant.bonusIds?.length !== 0 && variant.resolution?.nativeCraftedSymmetryV1 !== true)) continue;
       const raw = auctionSelectionEffectKey([option]);
-      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true);
+      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true, true);
       schedulingKeys.set(raw, group);
       const members = equivalentLots.get(group);
       if (members) members.push(raw);
@@ -334,10 +335,12 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
-  const nativeGroups = input.checkpoint ? input.checkpoint.nativeLotGroups === 1 || input.checkpoint.nativeLotGroups === 2 : input.reuseAppliedStats;
-  const groupEngine = nativeGroups && engine && ignoresItemContext(engine) ? engine : undefined;
-  const craftedGroups = input.checkpoint ? input.checkpoint.nativeLotGroups === 2 : input.groupCraftedEquipment === true;
-  const groups = auctionEffectGroups(options, slots, option => auctionEffectGroupKey(option, groupEngine, craftedGroups));
+  const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
+    input.reuseAppliedStats ? (input.groupCraftedEquipment ? 3 : 1) : undefined;
+  if (grouping !== undefined && grouping !== 1 && grouping !== 2 && grouping !== 3) throw new Error("invalid_search_checkpoint");
+  const groupEngine = grouping && engine && ignoresItemContext(engine) ? engine : undefined;
+  const groups = auctionEffectGroups(options, slots, option =>
+    auctionEffectGroupKey(option, groupEngine, grouping === 2 || grouping === 3, grouping === 3));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));
@@ -346,7 +349,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   let checkpoint: AuctionGearAssemblyCheckpoint, calls = 0;
   let replayLegacyCandidates = false;
   if (input.checkpoint) {
-    requireCheckpoint(inputKey, input.checkpoint, 3);
+    requireCheckpoint(inputKey, input.checkpoint, grouping === 3 ? 4 : 3);
     const { simulationCache, ...state } = input.checkpoint;
     checkpoint = { ...structuredClone(state), simulationCache: cloneCache(simulationCache, state.baseline.engine) };
     checkpoint.baseline = validSimulation(checkpoint.baseline);
@@ -377,7 +380,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 3, inputKey, ...(groupEngine ? { nativeLotGroups: craftedGroups ? 2 as const : 1 as const } : {}), cursor: slots.map(() => 0), exhausted: false,
+    checkpoint = { version: groupEngine && grouping === 3 ? 4 : 3, inputKey, ...(groupEngine ? { nativeLotGroups: grouping } : {}), cursor: slots.map(() => 0), exhausted: false,
       baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null,
       bestValueConfirmed: null, bestDpsConfirmed: null, simulationCache: cache,
       simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,

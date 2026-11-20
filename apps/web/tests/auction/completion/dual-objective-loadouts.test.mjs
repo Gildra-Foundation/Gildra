@@ -234,6 +234,36 @@ test('pinned native lot groups keep affordable receipts and resume each cursor i
  assert.deepEqual(ids(resumed.result.bestValueConfirmed),[72]);
 });
 
+test('empty-bonus grouping keeps both physical rings and preserves a partially traversed v2 cursor',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const h=fixture(),domain=[];
+ for(const [lot,cost] of [[91,10],[92,30]]) for(const slot of ['FINGER_1','FINGER_2']){
+   const row=option(lot,slot,cost);
+   row.id=lot+'-'+slot;
+   row.candidate.itemId=30422;
+   row.candidate.variants[0].modifiers=[{type:28,value:lot}];
+   domain.push(row);
+ }
+ Object.assign(h.input,{options:domain,selectedSlots:['FINGER_1','FINGER_2'],reuseAppliedStats:true,
+   baseline:{...measurement(1000),engine},simulate:async sel=>({...measurement(1000+sel.length*200),engine})});
+ const partial=await assembleAuctionGear({...h.input,maxAssignments:1});
+ // Versions 1 and 2 use identical groups for these non-crafted rings.
+ partial.checkpoint.nativeLotGroups=2;
+ h.input.groupCraftedEquipment=true;
+ const old=await finish(h,partial.checkpoint);
+ const fresh=await finish(h);
+ assert.equal(old.result.combinationCount,'9');
+ assert.equal(fresh.checkpoint.nativeLotGroups,3);
+ assert.equal(fresh.checkpoint.version,4);
+ assert.equal(old.checkpoint.version,3);
+ assert.equal(fresh.result.combinationCount,'4');
+ assert.deepEqual(fresh.result.bestDpsConfirmed,old.result.bestDpsConfirmed);
+ assert.deepEqual(fresh.result.bestValueConfirmed,old.result.bestValueConfirmed);
+ assert.deepEqual(ids(fresh.result.bestDpsConfirmed),[91,92]);
+ assert.equal(fresh.result.bestDpsConfirmed.spentCopper,40);
+ assert.deepEqual(ids(fresh.result.bestValueConfirmed),[91]);
+});
+
 test('a context rejected by the worker stays separate from valid native lots',async()=>{
  const engine='SimulationCraft fixture · 18428cd';
  const h=fixture(),domain=[option(71,'HEAD',30),option(72,'HEAD',5)];
