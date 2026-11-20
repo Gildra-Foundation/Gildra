@@ -14,10 +14,14 @@ export function supportedAuctionModifiers(modifiers: AuctionModifier[]) {
 // The pinned SimC item parser stores context in a discarded local variable.
 export const ignoresItemContext = (engine: string) => / · 18428cd(?:3902412abc8ee274d19567d603e674e66)?$/.test(engine);
 
+export function validAuctionItemContext(contextId?: number) {
+  return contextId === undefined || Number.isSafeInteger(contextId) && contextId >= 0 && contextId <= 10_000;
+}
+
 /** Keep the worker's exact options when the pinned parser or modifier validation is unavailable. */
 export function auctionNativeItemOptions(item: {contextId?: number; modifiers?: AuctionModifier[]}, engine: string) {
   const { contextId, modifiers } = item;
-  if (!ignoresItemContext(engine) || !supportedAuctionModifiers(modifiers ?? [])) return { contextId, modifiers };
+  if (!validAuctionItemContext(contextId) || !ignoresItemContext(engine) || !supportedAuctionModifiers(modifiers ?? [])) return { contextId, modifiers };
   const native = modifiers?.filter(modifier => modifier.type < 38 || modifier.type > 51);
   return { contextId: undefined, modifiers: native?.length ? native : undefined };
 }

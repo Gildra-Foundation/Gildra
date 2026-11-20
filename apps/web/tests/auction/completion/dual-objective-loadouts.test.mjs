@@ -233,3 +233,13 @@ test('pinned native lot groups keep affordable receipts and resume each cursor i
  assert.deepEqual(ids(resumed.result.bestDpsConfirmed),[72,73]);
  assert.deepEqual(ids(resumed.result.bestValueConfirmed),[72]);
 });
+
+test('a context rejected by the worker stays separate from valid native lots',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const h=fixture(),domain=[option(71,'HEAD',30),option(72,'HEAD',5)];
+ for(const row of domain)row.candidate.itemId=9876;
+ domain[1].candidate.variants[0].contextId=10001;
+ Object.assign(h.input,{baseline:{...measurement(1000),engine},options:domain,selectedSlots:['HEAD'],reuseAppliedStats:true,
+   simulate:async sel=>({...measurement(1000+sel.length*100),engine})});
+ assert.equal((await finish(h)).result.combinationCount,'3');
+});

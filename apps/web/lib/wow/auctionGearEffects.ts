@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
-import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers } from "./gearItemModifiers";
+import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
@@ -28,7 +28,7 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
     if (option.customization) return;
     const c = option.candidate, t = c.constraints;
     const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
-    if (!v) return;
+    if (!v || !validAuctionItemContext(v.contextId)) return;
     const e = r?.enhancements, stats = r?.appliedStatsV1;
     if (plainArmorSlots.has(c.slotType) && c.itemClassId === 4 && Number.isSafeInteger(v.itemLevel) && v.itemLevel > 0 &&
         r?.engine === engine && r.nativeNoItemEffects === true && !r.effects?.length && !r.weapon &&
@@ -104,7 +104,7 @@ export type AuctionEffectGroup = { options: AuctionGearOption[] };
 export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], engine), constraints])).digest("hex");
+  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine), constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */
