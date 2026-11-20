@@ -12,12 +12,16 @@ import (
 
 const maxSimulationBatch = 25
 
+// SimC excludes its warm-up iteration. Keep one sample for the unused primary row.
+const neutralPrimaryIterations = 2
+
 var errUnsupportedMixedSlots = errors.New("mixed-slot batches require a verified SimulationCraft revision")
 
 type batchCandidate struct {
-	GearChanges  []GearChange `json:"gearChanges"`
-	OwnedChanges []ownedEdit  `json:"ownedChanges,omitempty"`
-	ownedLines   []string
+	GearChanges    []GearChange `json:"gearChanges"`
+	OwnedChanges   []ownedEdit  `json:"ownedChanges,omitempty"`
+	ownedLines     []string
+	neutralPrimary bool
 }
 
 type simulationBatch struct {
@@ -103,8 +107,11 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	input := b.Base
 	// Mixed rows inherit the original armory. The extra primary measurement
 	// is never returned as a candidate or used in its confidence interval.
+	candidateIterations := e.iterationBudget(input)
+	primaryIterations := candidateIterations
 	if b.MixedSlots {
-		b.Candidates = append([]batchCandidate{{}}, b.Candidates...)
+		primaryIterations = neutralPrimaryIterations
+		b.Candidates = append([]batchCandidate{{neutralPrimary: true}}, b.Candidates...)
 	} else {
 		input.GearChanges = b.Candidates[0].GearChanges
 	}
@@ -112,7 +119,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	if err != nil {
 		return nil, err
 	}
-	rows, err := parseSimulationBatch(payload, len(b.Candidates), e.iterationBudget(input))
+	rows, err := parseSimulationBatchBudgets(payload, len(b.Candidates), candidateIterations, primaryIterations)
 	if err == nil && b.MixedSlots {
 		if !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
 			return nil, errUnsupportedMixedSlots
@@ -126,7 +133,11 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 }
 
 func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batchMeasurement, error) {
-	if count < 1 || count > maxSimulationBatch+1 || expectedIterations < 2 {
+	return parseSimulationBatchBudgets(payload, count, expectedIterations, expectedIterations)
+}
+
+func parseSimulationBatchBudgets(payload []byte, count, expectedIterations, primaryIterations int) ([]batchMeasurement, error) {
+	if count < 1 || count > maxSimulationBatch+1 || expectedIterations < 2 || primaryIterations < 2 {
 		return nil, errors.New("invalid SimulationCraft measurement count")
 	}
 	// The two native JSON schemas use different names for standard error.
@@ -165,7 +176,7 @@ func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batc
 	}
 	sim := report.Sim
 	if report.Version == "" || report.GitRevision == "" || len(sim.Players) != 1 || len(sim.Profilesets.Results) != count-1 ||
-		sim.Options.Iterations != expectedIterations || sim.Options.Confidence <= 0 || sim.Options.Confidence >= 1 ||
+		sim.Options.Iterations != primaryIterations || sim.Options.Confidence <= 0 || sim.Options.Confidence >= 1 ||
 		(count > 1 && sim.Profilesets.Metric != "Damage per Second") {
 		return nil, errors.New("incomplete SimulationCraft batch report")
 	}
@@ -187,14 +198,21 @@ func parseSimulationBatch(payload []byte, count, expectedIterations int) ([]batc
 	// The pinned binary excludes its warm-up iteration from sample statistics.
 	// Keep the configured iteration budget on the wire, but reject a truncated
 	// sample set rather than treating its uncertainty as the requested precision.
-	if base.DPS.Count == nil || (*base.DPS.Count != expectedIterations-1 && *base.DPS.Count != expectedIterations) {
+	if base.DPS.Count == nil || (*base.DPS.Count != primaryIterations-1 && *base.DPS.Count != primaryIterations) {
 		return nil, errors.New("incomplete SimulationCraft DPS samples")
 	}
 	iterations := base.TotalIterations
 	if iterations == 0 {
 		iterations = sim.Options.Iterations
 	}
-	if err := add(0, base.DPS.Mean, base.DPS.Error, iterations); err != nil {
+	if primaryIterations != expectedIterations {
+		// This row only supplies the common armory. An idle primary actor
+		// may deal zero damage even when a purchased weapon can attack.
+		if iterations != primaryIterations {
+			return nil, errors.New("incomplete SimulationCraft primary iterations")
+		}
+		measurements[0].Engine = engine
+	} else if err := add(0, base.DPS.Mean, base.DPS.Error, iterations); err != nil {
 		return nil, err
 	}
 	for _, row := range sim.Profilesets.Results {

@@ -206,7 +206,13 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 	}
 	if len(candidates) > 1 {
 		args = append(args, "profileset_work_threads=0", "profileset_init_threads=1")
+		if candidates[0].neutralPrimary {
+			args = append(args, fmt.Sprintf("iterations=%d", neutralPrimaryIterations))
+		}
 		for i, candidate := range candidates[1:] {
+			if candidates[0].neutralPrimary {
+				args = append(args, fmt.Sprintf("profileset.c%d+=iterations=%d", i+1, e.iterationBudget(input)))
+			}
 			for _, line := range candidate.ownedLines {
 				args = append(args, fmt.Sprintf("profileset.c%d+=%s", i+1, line))
 			}
