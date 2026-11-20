@@ -20,14 +20,14 @@ const storeCode=storeSource.slice(storeSource.indexOf('function storedEntry('),s
 const storedEntry=vm.runInNewContext(stripTypeScriptTypes(storeCode)+';storedEntry',{snapshotAuctionGearContext:()=>({})});
 const simulation=dps=>({dps,dpsError:1,iterations:750,confidence:95,engine:'SimulationCraft synthetic-state'});
 function fixture() {
-  const h={price:10,stale:false,partial:false,stageCalls:[],slice:0,abortAfterQuotes:false};
+  const h={price:10,stale:false,partial:false,stageCalls:[],screenCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:h.prices ?? {'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
     createHash,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';
-      h.stageCalls.push(key);h.slice++;h.lastGloveRule=input.omitNeutralGloveEnchants;
+      h.stageCalls.push(key);if (!input.simulateConfiguration) h.screenCalls.push(key);h.slice++;h.lastGloveRule=input.omitNeutralGloveEnchants;
       const ids=h.dependencies?.[key] ?? [1];
       input.onPriceDependencies(ids);
       input.state.quotes=await quote();input.state.quotedItemIds=[...new Set([...(input.state.quotedItemIds??[]),...ids])];
@@ -508,6 +508,7 @@ test('independent precision covers more than one private receipt window, across 
   };
   const result = await run();
   assert.equal(h.state.finalistReceipts, 'overflow');
+  assert.equal(h.screenCalls.length,65,'the 65th distinct receipt requires a precise traversal from the first layout');
   assert.equal(nativeInputs.size,78);
   assert(!h.state.cursor.exhausted, 'Only the prefix seen before the final peak needs a ranking replay');
   assert.equal(result.equipmentChecked,79);
@@ -519,6 +520,7 @@ test('independent precision covers more than one private receipt window, across 
   h.price=1;h.state.stage.quotes.fetchedAt='2000-01-01T00:00:00Z';
   assert.equal((await h.run()).result.complete,false);
   const repriced=await run();
+  assert.equal(h.screenCalls.length,65,'repricing reopens the exact domain without rescreening it');
   assert.equal(repriced.verifiedValueKey,'offer-0');
   assert.equal(repriced.recommendations.find(r=>r.configuration.key==='offer-0').configuration.totalCopper,2);
 });

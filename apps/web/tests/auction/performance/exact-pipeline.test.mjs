@@ -24,8 +24,8 @@ test('full exact pipeline publishes every distinct enhancement result in order a
   assert.equal(run.final.result.enhancementOptimization.complete,true);
   assert.equal(run.summary.equipmentChecked,2,'Both retained equipment and the purchasable replacement were exhaustively evaluated');
   const ordinary=run.requests.filter(request=>request.precision==='auction-candidate');
-  assert.equal(ordinary.length,1+21*21,'Owned baseline plus every combination of 20 or no gem and 20 or no scroll');
-  assert.equal(run.summary.counts.native,2*ordinary.length);
+  assert.equal(ordinary.length,66,'After the early equipment preview, the 65th distinct enhancement receipt ends screening');
+  assert.equal(run.summary.counts.native,ordinary.length+1+21*21);
   assert.equal(new Set(run.requests.map(nativeKey)).size,run.requests.length);
   assert.deepEqual(published,expected);
   assert(run.summary.counts.searchWrites<run.summary.counts.stage,'The full job writes fewer search snapshots than enhancement evaluations');

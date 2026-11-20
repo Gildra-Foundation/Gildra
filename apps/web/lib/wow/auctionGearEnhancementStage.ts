@@ -68,6 +68,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   includePrecisionContenders?: boolean;
   simulationConcurrency?: 1 | 2;
   simulationBatchSize?: number;
+  remainingScreenComparisons?: () => number;
   simulationOwnedBatch?: boolean;
   additionalSearchReasons?: readonly string[];
   simulateConfiguration?: (options: AuctionGearOption[], configuration: PricedEnhancementConfiguration, signal: AbortSignal) => Promise<GearPlanSimulation>;
@@ -225,6 +226,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       exhaustive:input.exhaustive, valuePrecision: input.exhaustive && input.includePrecisionContenders && input.baseline.iterations === 100,
       simulationConcurrency:input.simulationConcurrency,
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
+      remainingScreenComparisons:input.remainingScreenComparisons,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
         const host = finalist.options.find(option => option.candidate.slotType === slot);

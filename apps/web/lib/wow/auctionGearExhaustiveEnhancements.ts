@@ -15,6 +15,8 @@ type Receipt = AuctionEnhancedRecommendation;
 type PrecisionPass = {
   phase: "peak" | "rank" | "done";
   replayThrough?: string;
+  /** Completed gear layouts on a precise pass started before screening finished. */
+  checkedEquipment?: number;
   peak?: Receipt; second?: Receipt; preferred?: Receipt; outsideValue?: Receipt; confirmedDps?: Receipt; tiedAlternative?: Receipt;
 };
 const confirmedGain = (row: Receipt) => row.comparison.deltaDps > 0 && row.comparison.uncertainty.significant;
@@ -228,8 +230,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
       if (!state.priceGroups || collectReceipts) {
         // Old checkpoints and oversized indices still prove a complete result
         // by replay. Preserve price-independent native facts across this reset.
-        const { stage, precise, recentMeasurements } = state;
-        state = { ...initial({ checkpoints: {}, quotes, quotedItemIds: stage.quotedItemIds }), precise, recentMeasurements: state.precisionPass ? undefined : recentMeasurements };
+        const { stage, precise, recentMeasurements, precisionPass, preciseBaseline } = state;
+        state = { ...initial({ checkpoints: {}, quotes, quotedItemIds: stage.quotedItemIds }), precise,
+          ...(precisionPass ? { finalistReceipts: "overflow", preciseBaseline } : { recentMeasurements }) };
         state.quoteSignatures = signatures;
         input.onState(state);
         return true;
@@ -424,6 +427,25 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     // Entering another slice may change the cursor or prices without producing
     // an update. Only reuse a snapshot when no later slice has touched state.
     lastUpdate = undefined;
+    // Once the receipt index overflows, only the full independent traversal
+    // can establish the winners. Further screening cannot remove a single
+    // precise fight. Restart from ordinal zero, including the partial layout.
+    if (state.finalistReceipts === "overflow" && !state.precisionPass) {
+      if (input.shouldYield()) break;
+      const baseline = state.preciseBaseline ?? await input.recheckBaseline!(input.signal);
+      input.signal.throwIfAborted();
+      if (!validRecheck(baseline, input.baseline)) throw new Error("invalid_simulation_result");
+      state.preciseBaseline = baseline;
+      state.precisionPass = { phase: "peak", checkedEquipment: 0 };
+      state.cursor = iterator.initialState();
+      delete state.currentOptionIds;
+      delete state.currentOrdinal;
+      delete state.replay;
+      delete state.recentMeasurements;
+      delete state.priceGroups;
+      state.stage.checkpoints = {};
+      input.onState(state);
+    }
     if (state.precisionPass?.phase === "done") break;
     if (state.precisionPass?.phase === "rank" && state.currentOptionIds === undefined &&
         (state.cursor.exhausted || BigInt(state.cursor.visited) > BigInt(state.precisionPass.replayThrough!))) {
@@ -455,18 +477,17 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     }
     if (state.currentOptionIds === undefined) {
       if (input.shouldYield()) break;
-      if (state.finalistReceipts === "overflow" && state.cursor.exhausted && !state.replay?.length) {
-        if (state.precisionPass && state.precisionPass.replayThrough === undefined) {
+      if (state.precisionPass && state.cursor.exhausted && !state.replay?.length) {
+        if (state.precisionPass.replayThrough === undefined) {
           return completePrecision();
         }
-        const baseline = state.preciseBaseline ?? await input.recheckBaseline!(input.signal);
-        input.signal.throwIfAborted();
-        if (!validRecheck(baseline, input.baseline)) throw new Error("invalid_simulation_result");
-        state.preciseBaseline = baseline;
-        state.precisionPass = { ...state.precisionPass, phase: state.precisionPass ? "rank" : "peak" };
+        state.precisionPass.phase = "rank";
         state.cursor = iterator.initialState();
         state.stage.checkpoints = {};
-        delete state.recentMeasurements;
+        // Both traversals use the same independent baseline and precision.
+        // Keep the recent native results that are inside the replay range.
+        const through = BigInt(state.precisionPass.replayThrough);
+        state.recentMeasurements = state.recentMeasurements?.filter(row => BigInt(row.ordinal) <= through);
         delete state.priceGroups;
         input.onState(state);
         continue;
@@ -519,13 +540,18 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const selected = state.currentOptionIds.map(id => byId.get(id));
     if (!selected.every((option): option is AuctionGearOption => Boolean(option))) throw new Error("invalid_enhancement_checkpoint");
     let dependencies: number[] = [];
-    const pass = state.precisionPass, preciseBaseline = state.preciseBaseline;
+    const pass = state.precisionPass, preciseBaseline = state.preciseBaseline, receipts = state.finalistReceipts;
     const sameClass = (a: Receipt, b: Receipt) => {
       const identity = (row: Receipt) => input.finalistKey!(row.optionIds.map(id => byId.get(id)!), row.configuration);
       return identity(a) === identity(b);
     };
     const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, pruneEquivalentRingGems: collectReceipts, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
+      shouldYield: () => input.shouldYield() || (!pass && state.finalistReceipts === "overflow"),
+      // At most this many new comparisons can fit before screening must stop.
+      // Duplicate receipts may need a later slice with the same remaining capacity.
+      remainingScreenComparisons: !pass && receipts && receipts !== "overflow"
+        ? () => maxFinalistReceipts + 1 - Object.keys(receipts).length : undefined,
       ...(pass && preciseBaseline ? {
         baseline: preciseBaseline, includePrecisionContenders: false,
         simulateConfiguration: async (options: AuctionGearOption[], configuration: Receipt["configuration"], signal: AbortSignal) => {
@@ -592,6 +618,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
         state.recentMeasurements = recent;
       }
       if (!pass) state.equipmentChecked++;
+      else if (pass.phase === "peak" && pass.checkedEquipment !== undefined)
+        state.equipmentChecked = Math.max(state.equipmentChecked, ++pass.checkedEquipment);
       state.unavailable ||= result.status === "unavailable";
       state.currentOptionIds = undefined;
       state.currentOrdinal = undefined;

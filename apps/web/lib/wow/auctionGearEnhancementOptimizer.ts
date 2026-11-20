@@ -76,6 +76,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   shouldYield?: () => boolean; onCacheHit?: () => void; checkpoint?: EnhancementCheckpoint;
   /** Runtime worker capacity; never part of the durable traversal identity. */
   simulationConcurrency?: 1 | 2;
+  remainingScreenComparisons?: () => number;
   /** Maximum candidates per native request confirmed by this worker. */
   simulationBatchSize?: number;
   /** Worker can import owned item edits independently for each profileset. */
@@ -489,7 +490,8 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     if (status === "priced" && (fullyEnhanced || exact)) {
       let simulation = checkpoint.cache[config.key];
       if (!simulation) {
-        const capacity = Math.min(windowSize, simulationLimit - simulations);
+        const capacity = Math.min(windowSize, simulationLimit - simulations, input.remainingScreenComparisons?.() ?? Infinity);
+        if (capacity <= 0) break;
         if (capacity === 1) {
           simulation = measurement(await input.simulate(structuredClone(config),signal));
           signal.throwIfAborted(); checkpoint.cache[config.key] = simulation; simulations++;
