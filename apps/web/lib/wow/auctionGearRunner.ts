@@ -31,7 +31,7 @@ import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { auctionGearMechanicalCache, auctionGearMechanicalKey, purchasedRingScoreChanges } from "./auctionGearMechanicalCache";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
@@ -1018,10 +1018,10 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
     simSignal.throwIfAborted();
     const verifiedEngine = engine() || measuredEngine;
-    const ringScore = mode === "certified-candidate" && selections.length
-      ? purchasedRingScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings) : undefined;
-    const scoreChanges = ringScore?.changes ?? prepared.changes;
-    const scoreOwned = ringScore?.ownedChanges ?? ownedChanges;
+    const jewelryScore = mode === "certified-candidate" && selections.length
+      ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings) : undefined;
+    const scoreChanges = jewelryScore?.changes ?? prepared.changes;
+    const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
     const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, engine: verifiedEngine, unenchantedHandsId, wornRings });

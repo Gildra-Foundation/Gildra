@@ -57,7 +57,7 @@ for line in (root / "spell_item_enchantment.inc").open():
 def signature(item):
     enchant, color, description = properties[items[int(item)]]
     assert color == 14  # ordinary prismatic gem, including socket bonus matching
-    # Swaps between single-socket rings use only hosts of level ten or higher.
+    # Swaps between single-socket jewelry pieces use only hosts of level ten or higher.
     # No enabled gem has an upper level gate or a Midnight gem-description tag.
     low, high, _ = enchants[enchant]
     assert 0 <= low <= 10 and high == 0 and description == 0

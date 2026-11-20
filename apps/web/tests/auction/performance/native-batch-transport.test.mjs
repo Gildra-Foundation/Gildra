@@ -8,7 +8,7 @@ import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagno
 import { auctionAppliedStatsKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
-import { auctionGearMechanicalKey, purchasedRingScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { nativeGearSimulationMeasurement, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 
@@ -49,7 +49,7 @@ function fixture({ cache = createAuctionGearMechanicalCache(), freshMetadata = t
     } finally { state.active--; }
   };
   const create = vm.runInNewContext(code, { fetch, process, AbortSignal, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
-    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedRingScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
+    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => createAuctionGearDiagnostics() });
   const armory = { profile: {}, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
@@ -644,6 +644,42 @@ test('single prismatic rings reuse certified direct gem permutations only for ca
     assert.deepEqual(state.requests.at(-1).base.gearChanges.map(c=>c.gemIds),other.map(o=>o.customization.gemIds));
     await finishFrom(before);assert.equal((await final).iterations,750);
   }
+});
+
+test('candidate combat groups three purchased jewelry sockets including empty sockets', async () => {
+  const pinned = 'SimulationCraft 1210-01 · 18428cd';
+  const worn = {equipped_items: [{slot: {type: 'NECK'}, item: {id: 600}, sockets: [{item: {id: 240870}}]}]};
+  const {run, state, finishFrom} = fixture({workerEngine: pinned, equipment: worn});
+  const hosts = ['FINGER_1', 'FINGER_2', 'NECK'].map((slot, i) => {
+    const row = option(501 + i, slot);
+    row.candidate.inventoryType = i === 2 ? 2 : 11;
+    Object.assign(row.candidate.variants[0], {itemLevel: 150, resolution: {engine: pinned, nativeNoItemEffects: true,
+      enhancements: {status: 'verified', socketColors: [14, 0, 0], socketCount: 1, socketBonusId: 0, requiredProfessionId: 0}}});
+    return row;
+  });
+  const measure = async (gems, native, mode = 'certified-candidate') => {
+    const rows = hosts.map((row, i) => ({...row, customization: {gemIds: gems[i]}})).reverse();
+    const before = state.requests.length;
+    const pending = run(rows, signal(), [], mode);
+    await tick();
+    assert.equal(state.requests.length - before, Number(native));
+    if (native) {
+      const actual = state.requests.at(-1).base.gearChanges;
+      assert.deepEqual(actual.map(c => c.gemIds), rows.map(r => r.customization.gemIds));
+      await finishFrom(before);
+    }
+    assert.equal((await pending).iterations, mode === 'finalist' ? 750 : 100);
+  };
+  await measure([[130216], [153710], undefined], true);
+  await measure([[0], [130216], [130215]], false);
+  await measure([[130215], undefined, [130216]], false);
+  await measure([[130215], undefined, [130216]], true, 'finalist');
+  await measure([[130215], undefined, undefined], true);
+  await measure([undefined, undefined, [153710]], false);
+  // An item with its own socket bonus must keep the actual gem on that host.
+  hosts[2].candidate.variants[0].resolution.enhancements.socketBonusId = 111;
+  await measure([undefined, undefined, [130216]], true);
+  await measure([[130216], undefined, undefined], true);
 });
 
 test('direct enchant transfers between a purchased ring and an explicitly edited worn ring preserve both receipts', async () => {

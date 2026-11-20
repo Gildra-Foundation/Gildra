@@ -1,6 +1,6 @@
 import { createAuctionGearDiagnostics, logAuctionGearDiagnostics } from "../../../lib/wow/auctionGearDiagnostics.ts";
 import { auctionGearVariantSelectionKey } from "../../../lib/wow/auctionGearExclusions.ts";
-import { auctionGearMechanicalKey, purchasedRingScoreChanges, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
+import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from "../../../lib/wow/auctionGearMechanicalCache.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
@@ -28,7 +28,7 @@ const selectionCode = stripTypeScriptTypes(source.slice(source.indexOf("export f
 const selectedAuctionGearAssemblyOptions = new vm.Script(selectionCode + "\n;selectedAuctionGearAssemblyOptions").runInNewContext({ createAuctionGearDiagnostics,auctionGearVariantSelectionKey});
 const simulatorCode = stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")), { mode: "strip" });
 const createSimulator = new vm.Script(simulatorCode + "\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
-  auctionGearMechanicalKey, purchasedRingScoreChanges, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
+  auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: createAuctionGearMechanicalCache(), auctionGearProfileFingerprint, nativeGearSimulationMeasurement, AbortSignal, process: { env: { ROTATION_WORKER_URL: "http://synthetic.invalid" } }, Number, JSON, Error,
   assertFreshMarket() {}, prepareGearLoadout: () => ({ equipment: {}, changes: [] }),
   fetch: async () => Response.json(full, { headers: { "x-gildra-engine": "simulationcraft" } }),
 });

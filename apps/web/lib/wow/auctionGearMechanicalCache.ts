@@ -79,35 +79,52 @@ function purchasedRingEnchantChanges(changes: SimcGearChange[], options: Auction
   return { changes: scoreChanges, ownedChanges: scoreOwned };
 }
 
-/** Each certified gem adds player-level integer stats and matches a prismatic
- * socket. Neither host has a socket bonus or intrinsic effect. The native gem
- * observers retain the same names, counts and colors. Move only the score key. */
-export function purchasedRingScoreChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string,
+// A purchased item is a complete local replacement in SimC. An omitted gem
+// starts with an empty socket even when the previously worn item had a gem.
+function directJewelryGem(change: SimcGearChange, option: AuctionGearOption, engine: string) {
+  const ring = change.slot === "finger1" || change.slot === "finger2";
+  if (!ring && change.slot !== "neck") return;
+  if (change.enchantId && (!ring || !ringStatEnchants.has(change.enchantId))) return;
+  const gem = change.gemIds?.[0] ?? 0;
+  if ((change.gemIds?.length ?? 0) > 1 || (gem !== 0 && !directPrismaticGems.has(gem))) return;
+  const c = option.candidate, variant = c.variants.find(v => v.key === option.variantKey);
+  const resolution = variant?.resolution, meta = resolution?.enhancements;
+  if (c.itemId !== change.itemId || c.inventoryType !== (ring ? 11 : 2) || c.itemClassId !== 4 ||
+      !variant || !Number.isSafeInteger(variant.itemLevel) || variant.itemLevel < 10 ||
+      resolution?.engine !== engine || resolution.nativeNoItemEffects !== true || meta?.status !== "verified" ||
+      meta.socketCount !== 1 || meta.socketBonusId !== 0 || meta.requiredProfessionId !== 0 ||
+      meta.socketColors?.length !== 3 || meta.socketColors[0] !== 14 || meta.socketColors[1] !== 0 || meta.socketColors[2] !== 0) return;
+  return equivalentGems.get(gem) ?? gem;
+}
+
+/** The verified gems contribute player-level integer stats. Every eligible
+ * socket has the same color and no bonus. Moving gems preserves the global
+ * counts and all other effects. Canonicalize only the candidate score key. */
+export function purchasedJewelryScoreChanges(changes: SimcGearChange[], options: AuctionGearOption[], engine: string,
   owned: readonly OwnedAuctionGearChange[] | undefined, wornRings: readonly [WornRing, WornRing] | undefined) {
   if ((changes.length < 2 && !owned?.length) || !ignoresItemContext(engine)) return;
   const first = changes.findIndex(c => c.slot === "finger1"), second = changes.findIndex(c => c.slot === "finger2");
   if (first < 0 && second < 0) return;
   const enchants = purchasedRingEnchantChanges(changes, options, engine, [first, second], owned, wornRings);
-  if (first < 0 || second < 0 || !changes[first].gemIds?.length || !changes[second].gemIds?.length ||
-      owned?.some(c => c.slotType === "FINGER_1" || c.slotType === "FINGER_2")) return enchants;
-  const gem = (index: number) => {
-    const change = changes[index], gems = change.gemIds;
-    if (gems?.length !== 1 || !directPrismaticGems.has(gems[0]) || (change.enchantId && !ringStatEnchants.has(change.enchantId))) return;
-    const option = options[index], c = option.candidate, variant = c.variants.find(v => v.key === option.variantKey);
-    const r = variant?.resolution, meta = r?.enhancements;
-    if (c.itemId !== change.itemId || c.inventoryType !== 11 || c.itemClassId !== 4 ||
-        !variant || !Number.isSafeInteger(variant.itemLevel) || variant.itemLevel < 10 ||
-        r?.engine !== engine || r.nativeNoItemEffects !== true || meta?.status !== "verified" ||
-        meta.socketCount !== 1 || meta.socketBonusId !== 0 || meta.requiredProfessionId !== 0 ||
-        meta.socketColors?.length !== 3 || meta.socketColors[0] !== 14 || meta.socketColors[1] !== 0 || meta.socketColors[2] !== 0) return;
-    return equivalentGems.get(gems[0]) ?? gems[0];
-  };
-  const a = gem(first), b = gem(second);
-  if (a === undefined || b === undefined || a <= b) return enchants;
-  const scoreChanges = enchants?.changes ?? changes.slice();
-  scoreChanges[first] = { ...scoreChanges[first], gemIds: [b] };
-  scoreChanges[second] = { ...scoreChanges[second], gemIds: [a] };
-  return { changes: scoreChanges, ownedChanges: enchants?.ownedChanges ?? owned };
+  if (!changes.some(c => c.gemIds?.length)) return enchants;
+  const hosts: { index: number; gem: number }[] = [];
+  // Fixed host order also covers calls submitting the same purchases in a
+  // different order. An unverified host keeps its original customization.
+  for (const index of [first, second, changes.findIndex(c => c.slot === "neck")]) {
+    if (index < 0 || owned?.some(c => c.slotType === options[index].candidate.slotType)) continue;
+    const gem = directJewelryGem(changes[index], options[index], engine);
+    if (gem !== undefined) hosts.push({ index, gem });
+  }
+  if (hosts.length < 2) return enchants;
+  const sorted = hosts.map(host => host.gem).sort((a, b) => a - b);
+  let scoreChanges = enchants?.changes;
+  for (const [i, { index, gem }] of hosts.entries()) {
+    // Match the ordinary worker encoding of an empty purchased socket.
+    if (sorted[i] === gem && (gem || !changes[index].gemIds?.length)) continue;
+    scoreChanges ??= changes.slice();
+    scoreChanges[index] = { ...scoreChanges[index], gemIds: sorted[i] ? [sorted[i]] : undefined };
+  }
+  if (scoreChanges) return { changes: scoreChanges, ownedChanges: enchants?.ownedChanges ?? owned };
 }
 
 function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: readonly [WornRing, WornRing]) {
