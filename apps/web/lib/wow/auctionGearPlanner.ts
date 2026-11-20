@@ -1,3 +1,4 @@
+import { ignoresItemContext } from "./gearItemModifiers";
 import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
@@ -284,7 +285,12 @@ export async function assembleAuctionGear(input: PlannerInput & {
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
 }): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint }> {
   const { options, slots, inputKey, max, maxAssignments } = prepare(input);
-  const groups = auctionEffectGroups(options, slots);
+  // Existing cursors index their original groups. Only new pinned-engine searches
+  // can assign one ordinal to lots that the worker parses identically.
+  const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
+  const nativeGroups = input.checkpoint ? input.checkpoint.nativeLotGroups === 1 : input.reuseAppliedStats;
+  const groupEngine = nativeGroups && engine && ignoresItemContext(engine) ? engine : undefined;
+  const groups = auctionEffectGroups(options, slots, option => auctionEffectGroupKey(option, groupEngine));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));
@@ -324,7 +330,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
     const cache = cloneCache(input.simulationCache);
     const baseline = await baselineFor(input, cache);
     calls = baseline.calls;
-    checkpoint = { version: 3, inputKey, cursor: slots.map(() => 0), exhausted: false,
+    checkpoint = { version: 3, inputKey, ...(groupEngine ? { nativeLotGroups: 1 as const } : {}), cursor: slots.map(() => 0), exhausted: false,
       baseline: baseline.baseline, best: { optionIds: [], simulation: baseline.baseline }, bestConfirmed: null,
       bestValueConfirmed: null, bestDpsConfirmed: null, simulationCache: cache,
       simulations: calls, combinationsChecked: 0, validCombinations: 0, nextPair: 0, seedSelections: null, nextSeed: 0,
@@ -400,7 +406,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       try { auctionPlanLoadout(input.loadout, [option], input.specId, slots); } catch { continue; }
       consider([option], simulation);
     }
-    const byEffect = new Map(flatGroups.map(group => [auctionEffectGroupKey(group.options[0]), group]));
+    const byEffect = new Map(flatGroups.flatMap(group => group.options.map(option => [auctionEffectGroupKey(option), group] as const)));
     for (const incumbent of input.incumbents ?? []) {
       input.signal.throwIfAborted();
       const simulation = validSimulation(incumbent.simulation, checkpoint.baseline.engine);

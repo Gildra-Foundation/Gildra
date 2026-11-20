@@ -211,3 +211,25 @@ test('only the same positively certified standalone suffix program substitutes f
     assert.notEqual(key(first),key(different));
   }
 });
+
+test('pinned native lot groups keep affordable receipts and resume each cursor in its original domain',async()=>{
+ const engine='SimulationCraft fixture · 18428cd';
+ const score=dps=>({...measurement(dps),engine,iterations:100});
+ const h=fixture(),domain=[option(71,'HEAD',30),option(72,'HEAD',5),option(73,'CHEST',40)];
+ for(const row of domain.slice(0,2)){
+   row.candidate.itemId=9876;
+   row.candidate.variants[0].contextId=row.auctionId;
+ }
+ Object.assign(h.input,{baseline:score(1000),options:domain,simulate:async sel=>score(1000+sel.length*100)});
+ const legacy=await assembleAuctionGear({...h.input,maxAssignments:1});
+ const legacyFinish=await finish({input:{...h.input,reuseAppliedStats:true}},legacy.checkpoint);
+ const grouped=await assembleAuctionGear({...h.input,reuseAppliedStats:true,maxAssignments:1});
+ const resumed=await finish({input:h.input},grouped.checkpoint);
+ assert.equal(grouped.checkpoint.nativeLotGroups,1);
+ assert.equal(resumed.result.combinationCount,'4');
+ assert.equal(legacyFinish.result.combinationCount,'6');
+ assert.deepEqual(resumed.result.bestDpsConfirmed,legacyFinish.result.bestDpsConfirmed);
+ assert.deepEqual(resumed.result.bestValueConfirmed,legacyFinish.result.bestValueConfirmed);
+ assert.deepEqual(ids(resumed.result.bestDpsConfirmed),[72,73]);
+ assert.deepEqual(ids(resumed.result.bestValueConfirmed),[72]);
+});

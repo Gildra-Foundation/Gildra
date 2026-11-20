@@ -1,16 +1,17 @@
 import { createHash } from "node:crypto";
 import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
-import { ignoresItemContext, supportedAuctionModifiers } from "./gearItemModifiers";
+import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[]) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
+    const item = engine ? auctionNativeItemOptions(variant, engine) : variant;
     return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
-      variant.contextId ?? 0, [...(variant.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value),
+      item.contextId ?? 0, [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value),
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
@@ -100,10 +101,10 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option]), constraints])).digest("hex");
+  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], engine), constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */
