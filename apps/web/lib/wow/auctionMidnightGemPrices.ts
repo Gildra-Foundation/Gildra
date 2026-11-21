@@ -6,6 +6,7 @@ import { combinedRingRatings90, isDirectRingEnchant } from "./auctionRingRatings
 type Choice = { slot: number; socket: number | null; enhancement: Enhancement | null; retained: boolean };
 type Offer = { id: number; signature: number; modern: boolean; one: number; two: number; three: number };
 
+const otherGemOrders = [[0,2,1], [1,0,2], [1,2,0], [2,0,1], [2,1,0]] as const;
 const descriptionDigit = new Map([[14262, 1], [14278, 4], [14276, 16], [14277, 64]]);
 function price(a: Offer, b: Offer, c: Offer) {
   if (a.id === b.id) return a.id === c.id ? a.three : a.two + c.one;
@@ -178,20 +179,26 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
   const weapons = includeWeaponSavings ? cheaperWeaponScrolls(axes, slots, multiUnitCost) : undefined;
   return {
     axis, weaponAxis: weapons?.axis,
-    // These orders buy exactly the same three SKUs. Check the live choices
+    // These orders buy the same gems in exactly the same quantities. Check the live choices
     // for each destination, since a retained or restricted gem is not a witness.
-    tiedGemOrders(indices: number[]) {
+    tiedGemOrders(indices: number[], needed: 2 | 3 = 3) {
       if (neckEnchant >= 0 && axes[neckEnchant][indices[neckEnchant]].enhancement) return;
       const ids = sockets.map((axis, i) => {
         const offer = offers[i].get(axes[axis][indices[axis]]);
         return offer?.modern ? offer.id : 0;
       });
-      if (ids.includes(0) || new Set(ids).size !== 3) return;
+      const distinct = new Set(ids).size;
+      if (ids.includes(0) || distinct < needed) return;
       const orders: number[][] = [];
-      for (let first = 0; first < 3; first++) for (let second = 0; second < 3; second++) {
-        if (first === second || (first === 0 && second === 1)) continue;
+      const seen = distinct === 2 ? new Set([ids.join(",")]) : undefined;
+      for (const [first, second, third] of otherGemOrders) {
+        if (seen) {
+          const key = [ids[first], ids[second], ids[third]].join(",");
+          if (seen.has(key)) continue;
+          seen.add(key);
+        }
         const a = socketOffers[0].get(ids[first]), b = socketOffers[1].get(ids[second]);
-        const c = socketOffers[2].get(ids[3 - first - second]);
+        const c = socketOffers[2].get(ids[third]);
         if (a === undefined || b === undefined || c === undefined) continue;
         const other = indices.slice();
         other[sockets[0]] = a;
@@ -199,7 +206,7 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
         other[sockets[2]] = c;
         orders.push(other);
       }
-      return orders.length >= 3 ? orders : undefined;
+      return orders.length >= needed ? orders : undefined;
     },
     cutAxis(selected: Choice[]) {
       if (neckEnchant >= 0 && selected[neckEnchant].enhancement) return;

@@ -94,8 +94,8 @@ test("mixed triples preserve lower enchant digits, strict prices and distinct or
   assert.equal(mixedFixture(aliasRows,aliasPrices)(aliasRows[0]),undefined);
 });
 
-for (const rule of ["strict", "mixed", "tied"]) test(`streaming ${rule} gem receipts preserve complete rankings across checkpoints and overflow`, async () => {
-  const mixed = rule === "mixed", tied = rule === "tied";
+for (const rule of ["strict", "mixed", "tied", "two"]) test(`streaming ${rule} gem receipts preserve complete rankings across checkpoints and overflow`, async () => {
+  const mixed = rule === "mixed", two = rule === "two", tied = two || rule === "tied";
   const engine = "SimulationCraft 1210-01 · 18428cd", now = new Date().toISOString();
   const items = positions.map((position, i) => ({slot:{type:position}, item:{id:itemIds[i]},
     inventory_type:{type:i === 2 ? "NECK" : "FINGER"}, level:{value:295}, item_class:{id:4},item_subclass:{id:0},
@@ -129,7 +129,8 @@ for (const rule of ["strict", "mixed", "tied"]) test(`streaming ${rule} gem rece
     // Before this rule, all older flags were already enabled. Run that exact
     // traversal as the independently completed reference, preserving its key on resume.
     let {state} = await advanceAuctionGearExhaustiveEnhancements({...input,shouldYield:()=>true});
-    if (!enabled || !tied) delete state.pruneTiedMidnightGems;
+    if (!two || !enabled) delete state.twoGemWitnesses;
+    if (!tied || !enabled && !two) delete state.pruneTiedMidnightGems;
     if (!enabled && !tied) {
       delete state.pruneMixedMidnightPrices;
       if (!mixed) delete state.pruneMidnightGemPrices;
@@ -140,7 +141,8 @@ for (const rule of ["strict", "mixed", "tied"]) test(`streaming ${rule} gem rece
       if (next.result.complete) {
         assert.equal(Boolean(state.pruneMidnightGemPrices),tied || mixed || enabled);
         assert.equal(Boolean(state.pruneMixedMidnightPrices),tied || enabled);
-        assert.equal(Boolean(state.pruneTiedMidnightGems),tied && enabled);
+        assert.equal(Boolean(state.pruneTiedMidnightGems),tied && (two || enabled));
+        assert.equal(Boolean(state.twoGemWitnesses),two && enabled);
         assert.equal(Boolean(state.precisionPass.rankReceiptsOverflow),tied || mixed || enabled);
         for (const pass of Object.values((tied ? state.jewelryTiePruning : state.ringPricePruning) ?? {})) cut+=Number(pass.configurations);
         return {result:next.result,calls,cut};
@@ -194,7 +196,7 @@ test("cheaper weapon scrolls can pay for three differently ranked gemstone recei
   ]) assert.equal(fixture.enabled.cutAxis(fixture.row(2,0,[0,0,1])),undefined);
 });
 
-test("equal-price gem orders preserve other digits and require three legal destination orders", () => {
+test("equal-price gem orders preserve other digits and count distinct legal placements", () => {
   function full(modify = () => {}) {
     return fixture(prices, (axes, slots) => {
       for (const axis of axes.slice(0, 2)) axis.push({...axis[0], enhancement:{...axis[0].enhancement, simulationId:c, consumableItemId:c}});
@@ -208,6 +210,8 @@ test("equal-price gem orders preserve other digits and require three legal desti
   assert.deepEqual(guard.tiedGemOrders(selected), [[1,0,2,1],[1,1,0,2],[1,1,2,0],[1,2,0,1],[1,2,1,0]]);
   assert.deepEqual(selected,[1,0,1,2]);
   assert.equal(guard.tiedGemOrders([1,0,0,1]),undefined);
+  assert.deepEqual(guard.tiedGemOrders([1,0,0,1],2), [[1,0,1,0],[1,1,0,0]]);
+  assert.equal(guard.tiedGemOrders([1,0,0,0],2),undefined);
   const restricted = full(axes => { axes[1][2].retained = true; axes[2][2].enhancement.profession = {id:1,rank:1}; });
   assert.equal(restricted.guard.tiedGemOrders(selected),undefined);
   const enchanted = full(axes => { axes.push([{slot:2,socket:null,retained:false,enhancement:{kind:"enchant",simulationId:5317,consumableItemId:38800}}]); });

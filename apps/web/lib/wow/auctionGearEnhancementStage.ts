@@ -89,6 +89,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   useMidnightGemPrices?: () => boolean;
   pruneMixedMidnightPrices?: boolean;
   pruneTiedMidnightGems?: boolean;
+  twoGemWitnesses?: boolean;
   pruneWeaponGemPrices?: boolean;
   pruneRingNeckPricePairs?: boolean;
   nativePlayerLevel?: number;
@@ -336,7 +337,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       preciseReceiptKey: input.preciseReceiptKey,
       pruneWeaponGemPrices: scrollWeapons.size === 2 && !removed.has("MAIN_HAND") && !removed.has("OFF_HAND"),
-      pruneTiedMidnightGems: input.pruneTiedMidnightGems,
+      pruneTiedMidnightGems: input.pruneTiedMidnightGems, twoGemWitnesses: input.twoGemWitnesses,
       pruneMixedMidnightPrices: input.pruneMixedMidnightPrices && bareRingSlots.size === 2,
       useMidnightGemPrices: midnightHosts.size === 3 ? input.useMidnightGemPrices : undefined,
       // With two bought rings the finalist normalizer can move gems between

@@ -64,6 +64,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   midnightGemPrices?: true;
   mixedMidnightPrices?: true;
   tiedMidnightGems?: true;
+  twoGemWitnesses?: true;
   weaponGemPrices?: true;
   tiedJewelryReceipts?: true | "ring_and_gem";
   jewelryTiePruning?: { branches: string; configurations: string };
@@ -92,6 +93,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   useMidnightGemPrices?: () => boolean;
   pruneMixedMidnightPrices?: boolean;
   pruneTiedMidnightGems?: boolean;
+  twoGemWitnesses?: boolean;
   pruneWeaponGemPrices?: boolean;
   ringNeckPricePairs?: boolean;
   bareRingScrolls90?: boolean;
@@ -703,10 +705,13 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     (!input.checkpoint || input.checkpoint.midnightGemPrices)
     ? midnightGemPrices(axes, slots, commodityPrices.cost, c => Boolean(conditional?.has(c) || pairGuards?.has(c)), mixedMidnightPrices, weaponGemPrices) : undefined;
   const tiedMidnight = midnight && input.pruneTiedMidnightGems && (!input.checkpoint || input.checkpoint.tiedMidnightGems);
+  const twoGemWitnesses = tiedMidnight && input.twoGemWitnesses && (!input.checkpoint || input.checkpoint.twoGemWitnesses);
+  const neededRanks = twoGemWitnesses ? 2 : 3;
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(twoGemWitnesses ? {twoGemWitnesses:1} : {}),
     ...(tiedMidnight ? {tiedMidnightGems:1} : {}),
     ...(midnight ? {midnightGemPrices:1} : {}),
     ...(midnight?.weaponAxis !== undefined ? {weaponGemPrices:1} : {}),
@@ -727,6 +732,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
+    ...(twoGemWitnesses ? {twoGemWitnesses:true} : {}),
     ...(tiedMidnight ? {tiedMidnightGems:true} : {}),
     ...(midnight ? {midnightGemPrices:true} : {}),
     ...(midnight?.weaponAxis !== undefined ? {weaponGemPrices:true} : {}),
@@ -947,7 +953,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       const positionKey = indices.join(",");
       let cut = tiedOrders.get(positionKey);
       if (cut === undefined) {
-        const orders = midnight.tiedGemOrders(indices);
+        const orders = midnight.tiedGemOrders(indices, neededRanks);
         if (!orders) return result;
         const siblings = [{position:positionKey, config:result.config}];
         for (const order of orders) {
@@ -959,7 +965,10 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
         const betterRanks = new Set<string>();
         if (tiedOrders.size + siblings.length > 4096) tiedOrders.clear();
         for (const sibling of siblings) {
-          const dominated = betterRanks.size >= 3;
+          // The public peak, preferred and value leaders each need one
+          // preceding equal-score receipt. The runner-up and tied alternative
+          // exclude only the peak's rank, so two distinct earlier ranks suffice.
+          const dominated = betterRanks.size >= neededRanks;
           tiedOrders.set(sibling.position, dominated);
           if (!dominated) {
             const rank = rankKey(sibling.config);
