@@ -386,3 +386,31 @@ test('both ring positions retain equal-price scrolls and can use the last cheap 
     assert.equal((await choices([[1,2]],options)).get('5325,5325'),10);
   }
 });
+
+test('owned armor exchanges require bare verified hosts and the exact native engine and level', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const hosts=[['HEAD',271456,1],['SHOULDER',271454,3],['FEET',268260,8]];
+  const loadout=hosts.map(([slotType,itemId,inventoryType])=>({slotType,itemId,inventoryType,itemSubclassId:4}));
+  async function enumerate({revision=engine,level=90,headEnchant,enabled=true}={}) {
+    const items=hosts.map(([slot,id])=>({item:{id},slot:{type:slot},inventory_type:{type:slot},level:{value:295},
+      item_class:{id:4},item_subclass:{id:4},sockets:[],spells:[],
+      ...(slot==='HEAD' && headEnchant ? {enchantments:[{enchantment_slot:{id:0},enchantment_id:headEnchant}]} : {})}));
+    const state={checkpoints:{}}, keys=new Set(), baseline={dps:1000,dpsError:1,iterations:100,confidence:95,engine:revision};
+    const prices=Object.fromEntries([[243979,4],[243960,5],[243961,8]].map(([id,price])=>[id,{ladder:[[price,1]]}]));
+    for (let i=0;i<32;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneArmorEnchantPairs:enabled,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,
+        selectedSlots:hosts.map(([slot])=>slot),nativePlayerLevel:level,specId:72,level:90,region:'eu',engine:revision,
+        profileFingerprint:'armor-prices',encounter:{},budgetCopper:100,baseline,state,signal:new AbortController().signal,
+        shouldYield:()=>false,quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>keys.add(c.slots.map(s=>s.enchantId).join(','))});
+      if (result.complete) return keys;
+    }
+    assert.fail('armor exchange fixture did not finish');
+  }
+  const kept=await enumerate();
+  assert(kept.has('0,0,7971'));
+  assert(!kept.has('0,7989,7970'));
+  for (const inputs of [{revision:'SimulationCraft 18428cd different build'},{level:89},{headEnchant:7958},{enabled:false}])
+    assert((await enumerate(inputs)).has('0,7989,7970'),JSON.stringify(inputs));
+});

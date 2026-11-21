@@ -156,3 +156,46 @@ for line in (data / 'sc_spell_data.inc').open():
 assert spells == spell_enchants.keys() and effects == spell_enchants
 print(f'Verified {len(pairs)} neck scroll pairs with identical native ratings')
 print(f'Verified {len(ring_ids)} level-90 ring scrolls in {len(ring_groups)} rating groups')
+
+# Verify both complete sides of the exact cross-slot armor substitutions. All
+# records in this proof use only the fallback at player level 90, with no
+# enchant spell, skill gate, proc, or implicit effect.
+armor_source = module.with_name('auctionGearEnhancementOptimizer.ts').read_text()
+source = armor_source.split('const armorEnchantExchanges90 = {', 1)[1].split('} as const;', 1)[0]
+armor_pairs = {slot: json.loads(rows) for slot, rows in
+               re.findall(r'(SHOULDER|FEET): (\[\[.*?\]\])', source, re.S)}
+assert set(armor_pairs) == {'SHOULDER', 'FEET'}
+armor_ids = {eid for rows in armor_pairs.values() for pair in rows for eid in pair if eid}
+inventory = {}
+for line in (data / 'permanent_enchant.inc').open():
+    row = re.match(r'^  \{\s*(\d+),\s*\d+,\s*4,\s*(0x\w+)', line)
+    if row and int(row[1]) in armor_ids:
+        inventory[int(row[1])] = int(row[2], 16)
+armor = {0: (0, 0, 0, 0)}
+for line in (data / 'spell_item_enchantment.inc').open():
+    row = re.match(r'^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),', line)
+    if not row:
+        continue
+    eid, _, scaling, scale_min, cap, minimum, maximum, skill, rank = map(int, row[1].split(','))
+    if eid not in armor_ids:
+        continue
+    assert (scaling, scale_min, cap, minimum, maximum, skill, rank, int(row[5])) == (-7, 0, 80, 120, 0, 0, 0, 0), eid
+    kinds, stats = (list(map(int, row[i].split(','))) for i in (2, 3))
+    coefficients = [float(x.strip().removesuffix('f')) for x in row[4].split(',')]
+    vector = [0, 0, 0, 0]
+    for kind, stat, coefficient in zip(kinds, stats, coefficients, strict=True):
+        if kind == 0:
+            assert stat == coefficient == 0
+            continue
+        assert kind == 5 and stat in (7, 61, 62, 63) and coefficient > 0, eid
+        native_float = struct.unpack('f', struct.pack('f', coefficient))[0]
+        vector[(7, 61, 62, 63).index(stat)] += math.floor(tables[class_id[scaling]][cap-1] * native_float + 0.5)
+    armor[eid] = tuple(vector)
+assert set(armor) == armor_ids | {0}
+for slot, rows in armor_pairs.items():
+    for a, b, c, d in rows:
+        assert a != c and b != d
+        assert all(inventory[eid] == 1 << 1 for eid in (a, c) if eid)
+        assert all(inventory[eid] == 1 << {'SHOULDER': 3, 'FEET': 8}[slot] for eid in (b, d))
+        assert tuple(map(sum, zip(armor[a], armor[b]))) == tuple(map(sum, zip(armor[c], armor[d]))), (a, b, c, d)
+print(f'Verified {sum(map(len, armor_pairs.values()))} level-90 cross-slot armor exchanges')

@@ -646,3 +646,78 @@ test('a purchased neck gem can exchange integer ratings with both rings at a str
     if (parameters.enchanted || parameters.purchased) assert.deepEqual(actual.receipts,control.receipts);
   }
 });
+
+test('head and armor exchanges honor ties, stock, slot restrictions, and the restored traversal', async () => {
+  const enchant = (id, extra = {}) => ({key:String(id),kind:'enchant',consumableItemId:id,simulationId:id,...extra});
+  const run = async ({headCost=4, shoulderCost=5, freeCost=8, shared=false, restricted=false,
+    flags=true, installed=false, stock=true, resume=false, lowerDigits=false} = {}) => {
+    const options = {HEAD:[enchant(7989,restricted ? {category:{id:'class',limit:1}} : {})],
+      SHOULDER:[enchant(7970),enchant(7971)]};
+    if (shared) options.WRIST=[enchant(99999,{consumableItemId:7971})];
+    if (lowerDigits) options.CHEST=[enchant(12345)];
+    const slots=Object.keys(options).map(slotType=>({slotType,variantKey:slotType,metadataKey:'verified',sockets:[],
+      owned:installed && slotType==='HEAD', ...(installed && slotType==='HEAD' ?
+        {ownedItemId:123,allowOwnedChanges:true,installed:{gems:[],enchant:enchant(98765)}} : {})}));
+    const prices={7989:{ladder:[[headCost,1]]},7970:{ladder:[[shoulderCost,1]]},12345:{ladder:[[2,1]]},
+      ...(stock ? {7971:{ladder:[[freeCost,1]]}} : {})};
+    const calls=[];
+    const h={input:{...fixture().input,slots,catalog:{version:'paired-armor',complete:true,resolve:slot=>({
+      verified:true,enchantApplicable:true,enchantChoices:options[slot.slotType],gemChoices:{}})},
+      prices:{sourceUpdatedAt:new Date().toISOString(),prices},bareArmorSlots90:flags ? new Set(['HEAD','SHOULDER']) : undefined,
+      simulate:async config=>{calls.push(config.slots.map(s=>s.enchantId).join('/'));return measurement();}}};
+    const legacy=resume && await optimizeAuctionGearEnhancements({...h.input,bareArmorSlots90:undefined});
+    const result=await complete(h,legacy || undefined);
+    return {calls,checkpoint:result.checkpoint};
+  };
+  const proof=await run({lowerDigits:true});
+  assert.equal(proof.calls.length,10);
+  assert.deepEqual(proof.checkpoint.armorPricePruning,{branches:'1',configurations:'2'});
+  assert(!proof.calls.includes('0/7989/7970'));
+  for (const params of [{headCost:3},{shared:true},{restricted:true},{flags:false},{resume:true}]) {
+    const result=await run(params);
+    assert.equal(result.checkpoint.pairedArmorPrices,undefined);
+    assert(result.calls.some(key=>key.startsWith('7989/7970')));
+  }
+  assert((await run({installed:true})).calls.includes('7989/7970'));
+  assert((await run({stock:false})).calls.includes('7989/7970'));
+  const reverse=await run({freeCost:10});
+  assert(reverse.calls.includes('7989/7970'));
+  assert(!reverse.calls.includes('0/7971'));
+});
+
+test('every skipped three-slot armor receipt has a cheaper measured receipt with identical stats', async () => {
+  // Base-256 digits represent speed, leech, avoidance, and stamina. The
+  // complete three-slot total in each digit is smaller than the base.
+  const stat = {speed:1,leech:256,avoid:256**2,stamina:256**3};
+  const ratings = {
+    HEAD:{7988:9*stat.speed,7989:13*stat.speed,7958:22*stat.leech,7959:33*stat.leech,8014:15*stat.avoid,8015:22*stat.avoid},
+    SHOULDER:{7970:26*stat.speed,7971:39*stat.speed,7972:52*stat.speed,7973:65*stat.speed,
+      8028:66*stat.leech,8029:99*stat.leech,8030:132*stat.leech,7999:67*stat.avoid,8000:89*stat.avoid,8001:111*stat.avoid},
+    FEET:{7962:186*stat.stamina+15*stat.avoid,7992:186*stat.stamina+22*stat.leech,8018:186*stat.stamina+9*stat.speed},
+  };
+  const slots=Object.keys(ratings).map(slotType=>({slotType,variantKey:slotType,metadataKey:'armor',sockets:[],owned:false}));
+  const options=Object.fromEntries(Object.entries(ratings).map(([slot,stats])=>[slot,Object.keys(stats).map(Number).map(id=>({
+    key:String(id),simulationId:id,consumableItemId:id,kind:'enchant'}))]));
+  for (const ascending of [true,false]) {
+    const prices=Object.fromEntries(Object.values(options).flat().map(e=>[e.simulationId,{ladder:[[ascending ? e.simulationId-7900 : 8100-e.simulationId,1]]}]));
+    const tracked=new Map();
+    const h={input:{...fixture().input,slots,bareArmorSlots90:new Set(Object.keys(ratings)),
+      limits:{configurations:1024,simulations:12},prices:{prices,sourceUpdatedAt:new Date().toISOString()},budgetCopper:10000,itemsCopper:0,
+      catalog:{version:'all-armor',complete:true,resolve:s=>({verified:true,enchantApplicable:true,enchantChoices:options[s.slotType],gemChoices:{}})},
+      simulate:async c=>{tracked.set(c.slots.map(s=>s.enchantId).join('/'),c.totalCopper);return measurement();}}};
+    await complete(h);
+    const receipts=[], minima=new Map();
+    for (const foot of [0,...Object.keys(ratings.FEET).map(Number)])
+      for (const head of [0,...Object.keys(ratings.HEAD).map(Number)])
+        for (const shoulder of [0,...Object.keys(ratings.SHOULDER).map(Number)]) {
+          const ids=[foot,head,shoulder], key=ids.join('/');
+          const vector=(ratings.FEET[foot]??0)+(ratings.HEAD[head]??0)+(ratings.SHOULDER[shoulder]??0);
+          const price=ids.reduce((n,id)=>n+(prices[id]?.ladder[0][0]??0),0);
+          if (tracked.has(key)) assert.equal(tracked.get(key),price);
+          receipts.push({key,vector,price});
+          minima.set(vector,Math.min(price,minima.get(vector)??Infinity));
+        }
+    assert(tracked.size<receipts.length);
+    for (const {key,vector,price} of receipts) if (price===minima.get(vector)) assert(tracked.has(key),key);
+  }
+});
