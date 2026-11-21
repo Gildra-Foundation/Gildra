@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { auctionEffectGroupKey } from '../../../lib/wow/auctionGearEffects.ts';
+import { auctionGearMechanicalKey } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 import { auctionRingMirrorOrder } from '../../../lib/wow/auctionGearRingMirrors.ts';
 import { assembleAuctionGear } from '../../../lib/wow/auctionGearPlanner.ts';
 
@@ -162,12 +163,92 @@ test('bare ring suffix lots preserve exact stock, prices, both winners and preex
     const partial = await assembleAuctionGear({...input,bareEquipmentProofs:false});
     const control = await finish(true, structuredClone(partial.checkpoint)), fresh = await finish(true);
     assert.equal(control.checkpoint.nativeLotGroups,6);
-    assert.equal(fresh.checkpoint.nativeLotGroups,7);
+    assert.equal(fresh.checkpoint.nativeLotGroups,8);
     assert.equal(control.result.combinationCount,'16');
     assert.equal(fresh.result.combinationCount,'9');
     for (const key of ['bestDpsConfirmed','bestValueConfirmed']) {
       assert(fresh.result[key]?.purchases.length);
       assert.deepEqual(fresh.result[key],control.result[key]);
     }
+  }
+});
+
+function curveOffer(lot, slot, bonus, tuning) {
+  const option = offer(lot, 258910, slot, 60, String(bonus));
+  const v = option.candidate.variants[0];
+  Object.assign(v, {itemLevel:133, contextId:133, bonusIds:[13668, bonus], modifiers:[{type:9,value:82},{type:28,value:tuning}]});
+  v.resolution.nativeDropCurveV1 = [82, tuning, 133];
+  Object.assign(v.resolution.enhancements, {socketCount:1,socketColors:[14,0,0]});
+  return option;
+}
+
+test('socketed ring curves compare only bound levels, native stats and matching paid upgrades', () => {
+  const a = curveOffer(81, slots[0], 13729, 3087), b = curveOffer(82, slots[0], 13900, 3321);
+  const key = (o, version) => auctionEffectGroupKey(o, engine, "missive", "drop-curve", version);
+  assert.equal(key(a, 'socket-curve'), key(b, 'socket-curve'));
+  assert.notEqual(key(a, true), key(b, true));
+  const score = (o, enchantId, gemId, precision, edit = () => {}) => {
+    const v = o.candidate.variants[0];
+    const gear = {slot:'finger1', itemId:o.candidate.itemId, contextId:v.contextId, bonusIds:v.bonusIds,
+      modifiers:v.modifiers, enchantId, gemIds:gemId ? [gemId] : []};
+    edit(gear);
+    return auctionGearMechanicalKey('actor', {spec:'fury',scenario:'single-target',fightLengthSeconds:120,targets:1,precision},
+      {changes:[gear], options:[o], engine, playerLevel:90});
+  };
+  for (const precision of [undefined, 'finalist']) {
+    for (const [enchant, gem] of [[0,0],[7994,0],[0,130219],[7994,130219]]) {
+      assert.equal(score(a,enchant,gem,precision),score(b,enchant,gem,precision));
+    }
+    for (const [enchant, gem] of [[99999,0],[0,99999]]) assert.notEqual(score(a,enchant,gem,precision),score(b,enchant,gem,precision));
+    assert.notEqual(score(a,7994,0,precision),score(b,7995,0,precision));
+    assert.notEqual(score(a,0,130219,precision),score(b,0,130220,precision));
+    for (const edit of [g => g.itemId++, g => g.slot = 'finger2', g => g.bonusIds = [13668,13900],
+      g => g.modifiers = [{type:9,value:81}], g => g.gemIds = [130219,130219]]) {
+      assert.notEqual(score(a,7994,130219,precision,edit),score(b,7994,130219,precision));
+    }
+  }
+  assert.notEqual(score(a,7994,130219),score(b,7994,130219,'finalist'));
+  for (const change of [
+    (_,v) => v.bonusIds.reverse(), (_,v) => v.bonusIds.push(41), (_,v) => v.bonusIds[0]++,
+    (_,v) => v.itemLevel++, (_,v) => v.resolution.nativeDropCurveV1[1]--,
+    (_,v) => v.resolution.appliedStatsV1[7]++, (_,v) => v.resolution.nativeNoItemEffects = false,
+    (_,v) => v.resolution.enhancements.socketColors = [0,14,0], (_,v) => v.resolution.enhancements.socketBonusId = 5203,
+    (o) => o.candidate.itemId++, (o) => o.candidate.constraints.uniqueEquipped = true,
+    (o) => o.customization = {gemIds:[130219]},
+  ]) {
+    const row = structuredClone(b);
+    change(row, row.candidate.variants[0]);
+    assert.notEqual(key(a,'socket-curve'),key(row,'socket-curve'));
+  }
+});
+
+test('a v7 bare curve cursor resumes its original domain; new cursors allocate physical lots jointly', async () => {
+  for (const quantity of [1, 2]) {
+    const options = slots.slice(0,2).flatMap(slot => {
+      const a = curveOffer(81, slot, 13729, 3087), b = curveOffer(82, slot, 13900, 3321);
+      a.quantity = quantity;
+      return [b, a, offer(85,31,slot,25)];
+    });
+    const input = {searchId:'curves',options,selectedSlots:slots.slice(0,2),specId:72,loadout:[],budgetCopper:120,
+      market:{sourceUpdatedAt:new Date().toISOString()},signal:new AbortController().signal,groupCraftedEquipment:true,
+      reuseAppliedStats:true,maxAssignments:1,baseline:{engine,iterations:750,dpsError:0,confidence:95,dps:1000},
+      simulate:async sel=>({engine,iterations:750,dpsError:0,confidence:95,dps:1000+sel.reduce((n,o)=>n+(o.candidate.itemId===31?50:100),0)})};
+    const finish = async checkpoint => {
+      for (let step=0;step<200;step++) {
+        const run = await assembleAuctionGear({...input,bareEquipmentProofs:true,checkpoint});
+        if (run.result.exhaustiveComplete) return run;
+        checkpoint = structuredClone(run.checkpoint);
+      }
+      assert.fail('incomplete curve market');
+    };
+    const partial = await assembleAuctionGear(input);
+    // v6 and v7 group these offers identically; v7 also supports unrelated legacy suffixes.
+    const old = await finish({...partial.checkpoint,nativeLotGroups:7}), fresh = await finish();
+    assert.equal(old.result.combinationCount,'16');
+    assert.equal(fresh.result.combinationCount,'9');
+    for (const field of ['bestValueConfirmed','bestDpsConfirmed']) assert.deepEqual(fresh.result[field],old.result[field]);
+    const peak=fresh.result.bestDpsConfirmed;
+    assert.equal(peak.spentCopper, quantity===1 ? 120 : 60);
+    assert.deepEqual(peak.purchases.map(o=>o.auctionId).sort(),quantity===1 ? [81,82] : [81,81]);
   }
 });

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, ringGemRepresentative90 } from "./auctionRingRatings";
-import { auctionAppliedStatsKey } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionSocketedRingCurve } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
@@ -333,12 +333,16 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []) &&
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
+    // These prismatic gems and direct enchants cannot read the original
+    // scaling bonus ID. Retain their existing rating key and the real receipt.
+    const ringCurve = ratings && option ? auctionSocketedRingCurve(option, native.engine) : undefined;
     if (ratings) certifiedJewelry.push({ index: i, slot: change.slot, ratings });
     const missive = auctionMissiveComparison(change, change.slot, native.engine);
     const source = missive ? { ...change, ...missive } : change;
     return {
       ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
-        !change.enchantId && !change.gemIds?.length, tuning, curve),
+        !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
+      ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),

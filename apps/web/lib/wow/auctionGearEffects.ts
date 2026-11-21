@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
-import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext } from "./gearItemModifiers";
+import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext, verifiedAuctionDropCurve } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
@@ -194,12 +194,34 @@ function bareRingSuffixIdentity(option: AuctionGearOption, engine: string) {
   return ["bare-ring-suffix-13152", c.itemId, v.itemLevel, v.contextId ?? 0, v.modifiers ?? [], r.appliedStatsV1];
 }
 
+/** 13668 adds the same prismatic socket to either ring. The other list
+ * has exactly one level-setting operation and two ignored operations in
+ * pinned SimC. The native certificate binds its output to this lot's drop
+ * level and tuning. The caller must compare any installed gem and enchant. */
+export function auctionSocketedRingCurve(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  if ((c.slotType !== "FINGER_1" && c.slotType !== "FINGER_2") || c.inventoryType !== 11 ||
+      c.itemClassId !== 4 || c.itemSubclassId !== 0 || c.constraints.crafted || c.constraints.setId ||
+      c.constraints.setName || !ignoresItemContext(engine)) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution, e = r?.enhancements;
+  if (!v || !Array.isArray(v.bonusIds) || v.bonusIds.length !== 2 || v.bonusIds[0] !== 13668 || (v.bonusIds[1] !== 13729 && v.bonusIds[1] !== 13900) ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
+      !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 9 && m.type !== 28) ||
+      verifiedAuctionDropCurve(v.modifiers ?? [], r?.nativeDropCurveV1) !== v.itemLevel) return;
+  if (!r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
+      e?.status !== "verified" || e.socketCount !== 1 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      e.socketColors?.length !== 3 || e.socketColors[0] !== 14 || e.socketColors[1] !== 0 || e.socketColors[2] !== 0 ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  return ["socketed-ring-curve-v1", c.itemId, v.itemLevel, r.appliedStatsV1];
+}
+
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareRingSuffix = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareRings: boolean | "socket-curve" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  const suffix = bareRingSuffix && engine ? bareRingSuffixIdentity(option, engine) : undefined;
-  const effect = suffix ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  const suffix = bareRings && engine ? bareRingSuffixIdentity(option, engine) : undefined;
+  const curve = bareRings === "socket-curve" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
+  const effect = suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 

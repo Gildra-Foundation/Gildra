@@ -13,6 +13,15 @@ for line in rows:
         bonuses[list_id].append((kind, value))
 assert sum(map(len, bonuses.values())) == 20226
 
+# Native type 51 sets only the resolved item level and the Midnight scaling
+# flag. Both lists have the same ignored operation types (27 and 47). The
+# socket is supplied by the common list. No list can install an item effect,
+# suffix, or a cross-item description tag.
+assert bonuses[13668] == [(6, 1), (26, 5)]
+assert bonuses[13729] == [(27, 101224), (47, 2), (51, 434)]
+assert bonuses[13900] == [(27, 115477), (47, 2), (51, 481)]
+
+
 # Automatic weapon oils and socket bonuses can reach apply_item_bonus via
 # ITEM_ENCHANTMENT_APPLY_BONUS even when the replacement has no bonus_id.
 enchantments = 0
