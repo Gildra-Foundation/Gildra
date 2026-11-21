@@ -1,5 +1,6 @@
 // Synthetic algorithm fixtures, never live DPS/market claims.
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import test from 'node:test';
 import { optimizeAuctionGearEnhancements } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
 import { purchasedJewelryGemEffect } from '../../../lib/wow/auctionGearMechanicalCache.ts';
@@ -758,4 +759,53 @@ test('two bare rings price scroll exchanges using exact stock while every socket
   }
   const shared=await search({external:true});
   assert.equal(shared.get(one+'/'+three+'/12345'),13);
+});
+
+test('exact finalist tie pruning preserves the preferred physical receipt at every price and combat identity', async()=>{
+  const date=new Date().toISOString(), ringNames=['FINGER_1','FINGER_2'];
+  const gems=[115804,130220,115803].map(id=>({key:'gem-'+id,kind:'gem',simulationId:id,consumableItemId:id}));
+  const scrolls=[8020,7994].map(id=>({key:'scroll-'+id,kind:'enchant',simulationId:id,consumableItemId:id+100000}));
+  const rawKey=c=>JSON.stringify(c.slots.map(s=>[s.slotType,s.enchantId,s.gemIds]));
+  const combatKey=c=>{
+    const [back,...jewelry]=c.slots;
+    const gems=jewelry.flatMap(s=>s.gemIds).sort((a,b)=>a-b);
+    return JSON.stringify([back.gemIds,gems,jewelry.map(s=>s.enchantId).sort((a,b)=>a-b)]);
+  };
+  async function run({enable=true,key=combatKey,legacy=false,restricted=false}={}) {
+    const h=fixture({slots:4,limits:{simulations:12,configurations:64}});
+    h.input.slots.forEach((s,i)=>{s.slotType=['BACK',...ringNames,'NECK'][i];});
+    h.input.ratingRingSlots=new Set(ringNames);h.input.ratingOwnedNeck=true;
+    h.input.catalog.resolve=s=>({verified:true,enchantApplicable:ringNames.includes(s.slotType),enchantChoices:scrolls,
+      gemChoices:{'0':s.slotType==='BACK'?[gems[0]]:restricted&&s.slotType==='FINGER_2'?[gems[1]]:gems}});
+    h.input.prices={sourceUpdatedAt:date,prices:Object.fromEntries([...gems,...scrolls].map(e=>
+      [e.consumableItemId,{ladder:e===gems[0]?[[2,1],[8,1]]:[[3,4]]}]))};
+    h.input.budgetCopper=75;
+    const seen=new Map(),byCost=new Map(),keys=[];
+    h.input.preciseReceiptKey=enable?key:undefined;
+    h.input.simulate=async c=>measurement(1100+parseInt(createHash('sha256').update(key(c)).digest('hex').slice(0,3),16));
+    h.input.onMeasured=c=>{
+      const k=JSON.stringify([key(c),c.totalCopper]);
+      keys.push(c.key);
+      if(!seen.has(k)||c.key.localeCompare(seen.get(k))<0)seen.set(k,c.key);
+      byCost.set(c.key,c.totalCopper);
+    };
+    const first=legacy?await optimizeAuctionGearEnhancements({...h.input,preciseReceiptKey:undefined}):undefined;
+    const {checkpoint}=await complete(h,first);
+    return {seen,keys,byCost,checkpoint};
+  }
+  for(const restricted of [false,true]){
+    const oracle=await run({enable:false,restricted}), test=await run({restricted});
+    assert.deepEqual(test.seen,oracle.seen);
+    assert(test.keys.length<oracle.keys.length);
+    assert.deepEqual(test.checkpoint.jewelryTiePruning,{branches:String(oracle.keys.length-test.keys.length),
+      configurations:String(oracle.keys.length-test.keys.length)});
+    assert.equal(new Set(test.keys).size,test.keys.length);
+    for(const winner of ['bestDpsConfirmed','bestValueConfirmed'])assert.deepEqual(test.checkpoint[winner],oracle.checkpoint[winner]);
+    for(const [key,price] of test.byCost)assert.equal(price,oracle.byCost.get(key));
+  }
+  const raw=await run({enable:false,key:rawKey}),distinct=await run({key:rawKey});
+  assert.deepEqual(distinct.keys,raw.keys,'A position-dependent effect keeps both arrangements');
+  const restored=await run({legacy:true});
+  assert.deepEqual(restored.keys,(await run({enable:false})).keys);
+  assert.equal(restored.checkpoint.tiedJewelryReceipts,undefined);
 });

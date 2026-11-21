@@ -74,6 +74,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   pruneArmorEnchantPairs?: boolean;
   pruneRingScrollPairs?: boolean;
   pruneBareOwnedRingRatings?: boolean;
+  preciseReceiptKey?: (configuration: PricedEnhancementConfiguration) => string;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -303,6 +304,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
+      preciseReceiptKey: input.preciseReceiptKey,
       bareRingScrolls90: input.pruneRingScrollPairs && bareRingSlots.size === 2,
       bareOwnedRingRatings: input.pruneBareOwnedRingRatings ? bareRingSlots : undefined, bareArmorSlots90, ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
       purchasedEnchantEffect: cradleSlots.size || pricedNeck || pricedRings ? (slot: string, id: number) => {

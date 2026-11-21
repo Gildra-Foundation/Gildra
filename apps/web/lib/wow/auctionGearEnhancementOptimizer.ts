@@ -59,6 +59,8 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   pairedRingPrices?: true;
   pairedNeckPrices?: true;
   pairedScrollPrices?: true;
+  tiedJewelryReceipts?: true;
+  jewelryTiePruning?: { branches: string; configurations: string };
   bareOwnedRingRatings?: true;
   pairedArmorPrices?: true;
   armorPricePruning?: { branches: string; configurations: string };
@@ -79,6 +81,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   /** Enumerate every supported priced configuration, including partial and bare. */
   exhaustive?: boolean;
   ratingRingSlots?: ReadonlySet<string>;
+  preciseReceiptKey?: (configuration: PricedEnhancementConfiguration) => string;
   ratingOwnedNeck?: boolean;
   bareRingScrolls90?: boolean;
   bareOwnedRingRatings?: ReadonlySet<string>;
@@ -498,6 +501,34 @@ function validateEnhancement(e: Enhancement, kind: Enhancement["kind"], retained
       (e.category && (!e.category.id || !positive(e.category.limit)))) throw new Error("invalid_enhancement_catalog");
 }
 
+/** Each translation refers to the same purchased SKU and native effect on
+ * the other axis. Unavailable and installed options cannot be exchanged. */
+function jewelryReceiptSwaps(axes: Choice[][], slots: readonly EnhancementSlot[], rings?: ReadonlySet<string>, neck?: boolean) {
+  const jewelry = axes.flatMap((choices, axis) => {
+    const {slot, socket} = choices[0], position = slots[slot].slotType;
+    if (!rings?.has(position) && !(neck && position === "NECK" && socket !== null)) return [];
+    const byPurchase = new Map<string, number>();
+    for (const [index, choice] of choices.entries()) {
+      const e = choice.enhancement;
+      if (!e || choice.retained) continue;
+      const rating = socket === null ? combinedRingRatings90(e.simulationId, 0) : combinedRingRatings90(0, e.simulationId);
+      if (rating) byPurchase.set(e.simulationId + ":" + e.consumableItemId, index);
+    }
+    return byPurchase.size > 1 ? [{axis, socket, byPurchase}] : [];
+  });
+  return jewelry.flatMap((a, i) => jewelry.slice(i + 1).flatMap(b => {
+    if (a.socket !== b.socket) return [];
+    const toLeft = new Map<number, number>(), toRight = new Map<number, number>();
+    for (const [key, left] of a.byPurchase) {
+      const right = b.byPurchase.get(key);
+      if (right === undefined) continue;
+      toLeft.set(right, left);
+      toRight.set(left, right);
+    }
+    return toLeft.size > 1 ? [{left:a.axis, right:b.axis, toLeft, toRight}] : [];
+  }));
+}
+
 /** Exact configuration evaluation, no additive stat/DPS approximation. Run once per equipment finalist.
  * Checkpoint is invalidated by market/rules/character changes; simulation cache identity includes exact installed configuration.
  */
@@ -602,10 +633,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     ? costlierRingScrollPairs(axes, slots, commodityPrices.cost) : undefined;
   const armorGuards = exact && pricedAxes && input.bareArmorSlots90?.has("HEAD") && input.bareArmorSlots90.size > 1 &&
     (!input.checkpoint || input.checkpoint.pairedArmorPrices) ? costlierArmorPairs(axes, slots, input.bareArmorSlots90, input.prices.prices) : undefined;
+  const preciseReceiptKey = exact && (!input.checkpoint || input.checkpoint.tiedJewelryReceipts)
+    ? input.preciseReceiptKey : undefined;
+  const swaps = preciseReceiptKey ? jewelryReceiptSwaps(axes, slots, input.ratingRingSlots, input.ratingOwnedNeck) : [];
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(swaps.length ? { tiedJewelryReceipts: 1 } : {}),
     ...(bareOwnedRings ? { bareOwnedRingRatings: [...bareOwnedRings].sort() } : {}),
     ...(scrollPairs ? { pairedScrollPrices: 1 } : {}),
     ...(armorGuards?.size ? { pairedArmorPrices: [...input.bareArmorSlots90!].sort() } : {}),
@@ -620,6 +655,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
+    ...(swaps.length ? {tiedJewelryReceipts:true} : {}),
     ...(bareOwnedRings ? {bareOwnedRingRatings:true} : {}),
     ...(scrollPairs ? {pairedScrollPrices:true} : {}),
     ...(armorGuards?.size ? {pairedArmorPrices:true} : {}),
@@ -667,7 +703,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const clearRetained = () => { delete checkpoint.valuePrecision; finalists.length = 0; confirmed = bestValueConfirmed = bestDpsConfirmed = bestMeasuredDps = secondMeasuredDps = thirdMeasuredDps = undefined;
     checkpoint.finalists=[];checkpoint.confirmed=checkpoint.bestValueConfirmed=checkpoint.bestDpsConfirmed=checkpoint.bestMeasuredDps=checkpoint.secondMeasuredDps=checkpoint.thirdMeasuredDps=undefined;
     // Fresh quotes may reuse native measurements, but must rebuild all price-certified leaders.
-    if(exact) { checkpoint.exactNextConfiguration="0"; delete checkpoint.ringPricePruning; }
+    if(exact) { checkpoint.exactNextConfiguration="0"; delete checkpoint.ringPricePruning; delete checkpoint.jewelryTiePruning; }
   };
   if (!marketVerified) clearRetained();
   else if (exact) for (const retained of [...finalists,checkpoint.valuePrecision?.lower,checkpoint.valuePrecision?.upper,confirmed,bestValueConfirmed,bestDpsConfirmed,bestMeasuredDps,secondMeasuredDps,thirdMeasuredDps]) {
@@ -689,7 +725,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   // pricing and positional configuration construction. Lookahead has no cursor
   // or ranking effects and cannot certify a configuration out of order.
   const prepare = (indices: number[], configurationReasons: Set<string>):
-    { valid: false; pruneAxis: number; ringPriceProof?: true; armorPriceProof?: true } | { valid: true; config: PricedEnhancementConfiguration } => {
+    { valid: false; pruneAxis: number; ringPriceProof?: true; armorPriceProof?: true; jewelryTieProof?: true } | { valid: true; config: PricedEnhancementConfiguration } => {
     const selected = axes.map((axis,index)=>axis[indices[index]]);
     const categories = new Map<string,{count:number;limit:number}>();
     const identities = new Map<string,{count:number;unique:boolean}>();
@@ -778,6 +814,27 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const indicesAt = (at: bigint) => axes.map(axis => {
     const index = Number(at % BigInt(axis.length)); at /= BigInt(axis.length); return index;
   });
+  // A tie is resolved using the hash of the complete receipt. A winning
+  // mirror of this receipt says nothing about another assignment of a lower
+  // digit, so this proof skips exactly one configuration.
+  const prepareReceipt: typeof prepare = preciseReceiptKey && swaps.length ? (indices, reasons) => {
+    const result = prepare(indices, reasons);
+    if (!result.valid || result.config.status !== "priced") return result;
+    let sourceKey: string | undefined;
+    for (const {left, right, toLeft, toRight} of swaps) {
+      const x = toLeft.get(indices[right]), y = toRight.get(indices[left]);
+      if (x === undefined || y === undefined || x === indices[left]) continue;
+      const other = indices.slice();
+      other[left] = x;
+      other[right] = y;
+      const mirror = prepare(other, new Set());
+      if (!mirror.valid || mirror.config.status !== "priced" || mirror.config.totalCopper !== result.config.totalCopper ||
+          mirror.config.key.localeCompare(result.config.key) >= 0) continue;
+      sourceKey ??= preciseReceiptKey(result.config);
+      if (sourceKey && preciseReceiptKey(mirror.config) === sourceKey) return {valid:false, pruneAxis:0, jewelryTieProof:true};
+    }
+    return result;
+  } : prepare;
   // A bounded scan can prove that the complete precise pass is mandatory
   // before submitting any of this layout's screening fights. An unpriced
   // configuration or duplicate finalist input provides no new witness.
@@ -789,7 +846,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       if (scanned && scanned % 32 === 0) await new Promise<void>(resolve => setImmediate(resolve));
       signal.throwIfAborted();
       if (input.shouldYield?.()) break;
-      const candidate = prepare(indicesAt(at), new Set());
+      const candidate = prepareReceipt(indicesAt(at), new Set());
       if (!candidate.valid) {
         const stride = strides[candidate.pruneAxis];
         at = (at / stride + 1n) * stride;
@@ -828,14 +885,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       countStep();
     };
     if (!exact && !Number.isSafeInteger(checkpoint.nextConfiguration + 1)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
-    const prepared = prepare(indices,reasons);
+    const prepared = prepareReceipt(indices,reasons);
     if (!prepared.valid) {
       if (fromSeed) { advance(); continue; }
       const stride = strides[prepared.pruneAxis];
       const next = (position() / stride + 1n) * stride;
       if (!exact && next > BigInt(Number.MAX_SAFE_INTEGER)) { reasons.add("configuration_limit"); checkpoint.traversalSteps = 4096; break; }
-      if (prepared.ringPriceProof || prepared.armorPriceProof) {
-        const key = prepared.armorPriceProof ? "armorPricePruning" : "ringPricePruning";
+      if (prepared.ringPriceProof || prepared.armorPriceProof || prepared.jewelryTieProof) {
+        const key = prepared.jewelryTieProof ? "jewelryTiePruning" : prepared.armorPriceProof ? "armorPricePruning" : "ringPricePruning";
         const counts = checkpoint[key] ??= { branches: "0", configurations: "0" };
         counts.branches = (BigInt(counts.branches) + 1n).toString();
         counts.configurations = (BigInt(counts.configurations) + next - position()).toString();
@@ -883,7 +940,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
             for (let scanned = 1; candidates.size < capacity && next < total && visited + scanned < bounds.configurations; scanned++) {
               if (scanned % 32 === 0) await new Promise<void>(resolve => setImmediate(resolve));
               if (batchSignal.aborted || input.shouldYield?.()) break;
-              const candidate = prepare(indicesAt(next), new Set());
+              const candidate = prepareReceipt(indicesAt(next), new Set());
               if (!candidate.valid) {
                 const stride = strides[candidate.pruneAxis];
                 next = (next / stride + 1n) * stride;
