@@ -278,7 +278,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
-      ratingRingSlots,
+      ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
       purchasedEnchantEffect: cradleSlots.size ? (slot: string, id: number) =>
         cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined : undefined,
       ownedGemEffect: ownedGemSlots.size ? (slot: string, id: number, enchantId: number) =>

@@ -578,3 +578,71 @@ test('two rings retain every cheapest tied receipt at each rating and reject unc
     assert.equal(actual.receipts.filter(oneLarge).length, expectedSingleLarge);
   }
 });
+
+test('a purchased neck gem can exchange integer ratings with both rings at a strictly lower total price', async () => {
+  const gem = id => ({ key:String(id), kind:'gem', simulationId:id, consumableItemId:id });
+  const choices = [115804,130216,130220,115803].map(gem); // Haste 2/3/4, crit 2
+  const hasteScroll = { key:'haste',kind:'enchant',simulationId:8020,consumableItemId:244010 };
+  const rings = ['FINGER_1','FINGER_2'];
+  const observed = new Date().toISOString();
+  // Keep crit and haste distinct, even when the number of rating points matches.
+  function ratings(config) {
+    let crit = 0, haste = 0;
+    for (const { gemIds, enchantId } of config.slots) {
+      if (enchantId === 8020) haste += 22;
+      for (const id of gemIds) {
+        if (id === 115803) crit += 2;
+        haste += ({ 115804:2, 130216:3, 130220:4 })[id] ?? 0;
+      }
+    }
+    return [crit, haste];
+  }
+  async function run({ certified = true, legacy = false, tie = false, scarce = false, enchanted = false, purchased = false } = {}) {
+    const h = fixture({ choices,slots:3,limits:{configurations:1024,simulations:12} });
+    for (const [i, slot] of h.input.slots.entries()) {
+      slot.slotType = [...rings,'NECK'][i];
+      if (i === 2 && !purchased) Object.assign(slot,{owned:true,allowOwnedChanges:true,ownedItemId:831});
+    }
+    h.input.ratingRingSlots = new Set(rings);
+    h.input.ratingOwnedNeck = certified;
+    h.input.catalog.resolve = slot => ({verified:true,enchantApplicable:slot.slotType !== 'NECK' || enchanted,
+      enchantChoices:slot.slotType !== 'NECK' ? [hasteScroll] : [],gemChoices:{'0':choices}});
+    const ladder = id => tie ? [[2,4]] : id === 130216 ? [[8,4]] : scarce ? [[1,1],[9,1]] : [[1,3]];
+    h.input.prices = {sourceUpdatedAt:observed, prices:Object.fromEntries(
+      [...choices.map(c=>c.simulationId),244010].map(id=>[id,{ladder:ladder(id)}]))};
+    h.input.simulate = async config => {
+      const [crit,haste] = ratings(config);
+      return measurement(1050 + 20 * crit + haste * (60 - haste));
+    };
+    const receipts = new Map();
+    h.input.onMeasured = c => receipts.set(c.key,c);
+    const first = legacy ? await optimizeAuctionGearEnhancements({...h.input,ratingOwnedNeck:false}) : undefined;
+    const result = await complete(h,first);
+    return { checkpoint:result.checkpoint, receipts };
+  }
+  const original = await run({certified:false});
+  const candidate = await run();
+  assert.equal(candidate.checkpoint.pairedNeckPrices,true);
+  assert(candidate.receipts.size < original.receipts.size);
+  function checkCoverage(candidate, original) {
+    const affordable = new Map();
+    for (const c of candidate.receipts.values()) {
+      const key = JSON.stringify(ratings(c));
+      affordable.set(key,Math.min(c.totalCopper,affordable.get(key) ?? Infinity));
+    }
+    for (const [key,c] of original.receipts) {
+      if (!candidate.receipts.has(key)) assert(affordable.get(JSON.stringify(ratings(c))) < c.totalCopper);
+    }
+    for (const key of ['bestDpsConfirmed','bestValueConfirmed']) assert.deepEqual(candidate.checkpoint[key],original.checkpoint[key]);
+  }
+  checkCoverage(candidate,original);
+  const resumed = await run({legacy:true});
+  assert.equal(resumed.checkpoint.pairedNeckPrices,undefined);
+  assert.deepEqual(resumed.receipts,original.receipts);
+  for (const parameters of [{tie:true},{scarce:true},{enchanted:true},{purchased:true}]) {
+    const actual = await run(parameters), control = await run({...parameters,certified:false});
+    if (parameters.enchanted || parameters.purchased) assert.equal(actual.checkpoint.pairedNeckPrices,undefined);
+    checkCoverage(actual,control);
+    if (parameters.enchanted || parameters.purchased) assert.deepEqual(actual.receipts,control.receipts);
+  }
+});
