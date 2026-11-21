@@ -865,6 +865,20 @@ test('exact finalist tie pruning preserves the preferred physical receipt at eve
   }
   const raw=await run({enable:false,key:rawKey}),distinct=await run({key:rawKey});
   assert.deepEqual(distinct.keys,raw.keys,'A position-dependent effect keeps both arrangements');
+  // Only moving a gem together with its scroll preserves this score key.
+  // Each individual exchange produces a different independent finalist.
+  const ringPairs=c=>{
+    const [back,left,right,neck]=c.slots;
+    if (!left.enchantId || !right.enchantId || left.enchantId===right.enchantId ||
+        !left.gemIds[0] || !right.gemIds[0] || left.gemIds[0]===right.gemIds[0]) return rawKey(c);
+    const pairs=[left,right].map(slot=>[slot.enchantId,slot.gemIds[0]]).sort((a,b)=>a[0]-b[0]);
+    return JSON.stringify([back.gemIds,pairs,neck.gemIds]);
+  };
+  const allPairs=await run({enable:false,key:ringPairs}), joint=await run({key:ringPairs});
+  assert.deepEqual(joint.seen,allPairs.seen);
+  assert(joint.keys.length<allPairs.keys.length);
+  assert.equal(joint.checkpoint.tiedJewelryReceipts,'ring_and_gem');
+  for(const winner of ['bestDpsConfirmed','bestValueConfirmed'])assert.deepEqual(joint.checkpoint[winner],allPairs.checkpoint[winner]);
   const restored=await run({legacy:true});
   assert.deepEqual(restored.keys,(await run({enable:false})).keys);
   assert.equal(restored.checkpoint.tiedJewelryReceipts,undefined);

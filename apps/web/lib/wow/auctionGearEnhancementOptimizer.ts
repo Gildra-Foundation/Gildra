@@ -60,7 +60,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   pairedNeckPrices?: true;
   ringNeckPricePairs?: true;
   pairedScrollPrices?: true;
-  tiedJewelryReceipts?: true;
+  tiedJewelryReceipts?: true | "ring_and_gem";
   jewelryTiePruning?: { branches: string; configurations: string };
   bareOwnedRingRatings?: true;
   pairedArmorPrices?: true;
@@ -685,11 +685,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const preciseReceiptKey = exact && (!input.checkpoint || input.checkpoint.tiedJewelryReceipts)
     ? input.preciseReceiptKey : undefined;
   const swaps = preciseReceiptKey ? jewelryReceiptSwaps(axes, slots, input.ratingRingSlots, input.ratingOwnedNeck) : [];
+  const scrollSwap = (!input.checkpoint || input.checkpoint.tiedJewelryReceipts === "ring_and_gem") &&
+    swaps.some(swap => axes[swap.left][0].socket !== null)
+    ? swaps.find(swap => axes[swap.left][0].socket === null) : undefined;
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
-    ...(swaps.length ? { tiedJewelryReceipts: 1 } : {}),
+    ...(swaps.length ? { tiedJewelryReceipts: scrollSwap ? 2 : 1 } : {}),
     ...(bareOwnedRings ? { bareOwnedRingRatings: [...bareOwnedRings].sort() } : {}),
     ...(scrollPairs ? { pairedScrollPrices: 1 } : {}),
     ...(armorGuards?.size ? { pairedArmorPrices: [...input.bareArmorSlots90!].sort() } : {}),
@@ -705,7 +708,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
-    ...(swaps.length ? {tiedJewelryReceipts:true} : {}),
+    ...(swaps.length ? {tiedJewelryReceipts:scrollSwap ? "ring_and_gem" : true} : {}),
     ...(bareOwnedRings ? {bareOwnedRingRatings:true} : {}),
     ...(scrollPairs ? {pairedScrollPrices:true} : {}),
     ...(armorGuards?.size ? {pairedArmorPrices:true} : {}),
@@ -865,6 +868,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const indicesAt = (at: bigint) => axes.map(axis => {
     const index = Number(at % BigInt(axis.length)); at /= BigInt(axis.length); return index;
   });
+  const exchange = (indices: number[], {left, right, toLeft, toRight}: typeof swaps[number]) => {
+    const x = toLeft.get(indices[right]), y = toRight.get(indices[left]);
+    if (x === undefined || y === undefined || x === indices[left]) return;
+    const other = indices.slice();
+    other[left] = x;
+    other[right] = y;
+    return other;
+  };
   // A tie is resolved using the hash of the complete receipt. A winning
   // mirror of this receipt says nothing about another assignment of a lower
   // digit, so this proof skips exactly one configuration.
@@ -872,17 +883,26 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     const result = prepare(indices, reasons);
     if (!result.valid || result.config.status !== "priced") return result;
     let sourceKey: string | undefined;
-    for (const {left, right, toLeft, toRight} of swaps) {
-      const x = toLeft.get(indices[right]), y = toRight.get(indices[left]);
-      if (x === undefined || y === undefined || x === indices[left]) continue;
-      const other = indices.slice();
-      other[left] = x;
-      other[right] = y;
+    const wins = (other: number[]) => {
       const mirror = prepare(other, new Set());
       if (!mirror.valid || mirror.config.status !== "priced" || mirror.config.totalCopper !== result.config.totalCopper ||
-          mirror.config.key.localeCompare(result.config.key) >= 0) continue;
+          mirror.config.key.localeCompare(result.config.key) >= 0) return false;
       sourceKey ??= preciseReceiptKey(result.config);
-      if (sourceKey && preciseReceiptKey(mirror.config) === sourceKey) return {valid:false, pruneAxis:0, jewelryTieProof:true};
+      return Boolean(sourceKey && preciseReceiptKey(mirror.config) === sourceKey);
+    };
+    let exchangedScrolls: number[] | undefined;
+    for (const swap of swaps) {
+      const other = exchange(indices, swap);
+      if (!other) continue;
+      if (wins(other)) return {valid:false, pruneAxis:0, jewelryTieProof:true};
+      if (swap === scrollSwap) exchangedScrolls = other;
+    }
+    // Neither individual exchange has to win. Compare the complete receipt
+    // produced by moving the two scrolls and a pair of purchased gems together.
+    if (exchangedScrolls) for (const swap of swaps) {
+      if (swap === scrollSwap) continue;
+      const other = exchange(exchangedScrolls, swap);
+      if (other && wins(other)) return {valid:false, pruneAxis:0, jewelryTieProof:true};
     }
     return result;
   } : prepare;
