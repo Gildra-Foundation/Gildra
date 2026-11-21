@@ -172,11 +172,11 @@ export function GearFarmPlanner({ characterSlug, snapshotKey, localePrefix = "/r
       </div>
     </div>
     <div className={tools.fields}>
-      <div className={tools.field}><label htmlFor={`${titleId}-dungeon`}>{c.dungeonDifficulty}</label><AtlasValyroSelect native id={`${titleId}-dungeon`} value={settings.dungeonDifficulty}
+      <div className={tools.field}><label id={`${titleId}-dungeon-label`} htmlFor={`${titleId}-dungeon`}>{c.dungeonDifficulty}</label><AtlasValyroSelect native id={`${titleId}-dungeon`} value={settings.dungeonDifficulty}
         options={farmDungeonDifficulties.map(value => ({ value, label: difficultyLabel(value, c) }))}
         onValueChange={value => changeSettings({ dungeonDifficulty: value as GearFarmSettings["dungeonDifficulty"], raidDifficulty: settings.raidDifficulty,
           ...(value === "mythic-plus" ? { mythicKeyLevel: farmMythicKeyBounds.min } : {}) })} /></div>
-      <div className={tools.field}><label htmlFor={`${titleId}-raid`}>{c.raidDifficulty}</label><AtlasValyroSelect native id={`${titleId}-raid`} value={settings.raidDifficulty}
+      <div className={tools.field}><label id={`${titleId}-raid-label`} htmlFor={`${titleId}-raid`}>{c.raidDifficulty}</label><AtlasValyroSelect native id={`${titleId}-raid`} value={settings.raidDifficulty}
         options={farmRaidDifficulties.map(value => ({ value, label: difficultyLabel(value, c) }))}
         onValueChange={value => changeSettings({ ...settings, raidDifficulty: value as GearFarmSettings["raidDifficulty"] })} /></div>
       {settings.dungeonDifficulty === "mythic-plus" ? <div className={tools.field}><label htmlFor={`${titleId}-key`}>{c.keyLevel}</label><AtlasValyroSelect native id={`${titleId}-key`} value={String(settings.mythicKeyLevel)}
