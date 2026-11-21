@@ -373,3 +373,40 @@ test("mixed and partially replaced prismatic gems share only the physical finali
   assert.notEqual(key(build([240855, 127761], [9999, 7964])), key(build([115804, 240856], [9999, 7964])));
   assert.notEqual(key(source), key(build([240855, 130220])));
 });
+
+test('two purchased weapon scrolls share only an independently measured physical spell-power total', () => {
+ const engine='SimulationCraft native · 18428cd';
+ function score(ids, edit=()=>{}) {
+  const options=ids.map((enchantId,i)=>{
+   const o=structuredClone(option), v=o.candidate.variants[0];
+   Object.assign(o.candidate,{itemId:2029+i,slotType:i?'OFF_HAND':'MAIN_HAND',itemClassId:2,inventoryType:13});
+   v.itemLevel=13;
+   v.resolution={engine,metadataVersion:3,nativeNoItemEffects:true,weapon:{speed:2.1},
+    enhancements:{status:'verified',socketColors:[0,0,0],socketCount:0,socketBonusId:0,requiredProfessionId:0}};
+   if(enchantId)o.customization={enchantId};
+   return o;
+  });
+  const changes=options.map((o,i)=>({slot:i?'off_hand':'main_hand',itemId:o.candidate.itemId,bonusIds:[],
+   ...(ids[i]?{enchantId:ids[i]}:{})}));
+  const request={spec:'fury',scenario:'single-target',targets:1,fightLengthSeconds:120,precision:'finalist'};
+  const native={changes,options,engine,playerLevel:90,physicalFinalist:true};
+  edit(request,native);
+  return auctionGearMechanicalKey('actor',request,native);
+ }
+ const one=[2505,0], two=[3830,3830];
+ for(const [a,b] of [[one,two],[[0,2504],two],[[2669,3830],[3834,3854]],[[3855,3834],[3846,3854]]])
+  assert.equal(score(a),score(b));
+ assert.notEqual(score(one),score([3834,3834]));
+ for(const edit of [
+  r=>{delete r.precision;},(_,n)=>{n.physicalFinalist=false;},(_,n)=>{n.playerLevel=89;},
+  r=>{r.ownedChanges=[{slotType:'OFF_HAND',enchantId:2505}];},r=>{r.removedSlots=['MAIN_HAND'];},
+  (_,n)=>{n.changes.pop();},(_,n)=>{n.changes.push(n.changes[0]);},
+  (_,n)=>{n.changes[0].itemId++;},(_,n)=>{n.changes[1].gemIds=[123];},
+  (_,n)=>{n.options[0].customization.enchantId=555;},(_,n)=>{n.options[0].candidate.constraints.setId=3;},
+  (_,n)=>{n.options[0].candidate.variants[0].resolution.nativeNoItemEffects=false;},
+  (_,n)=>{n.options[0].candidate.variants[0].resolution.enhancements.socketCount=1;},
+  (_,n)=>{n.options[0].candidate.variants[0].itemLevel=121;},
+ ])assert.notEqual(score(one,edit),score(two,edit));
+ assert.notEqual(score([0,4083]),score([4083,0]));
+ assert.notEqual(score(one),score(two,(_,n)=>{n.options[1].candidate.itemId++;n.changes[1].itemId++;}));
+});

@@ -132,6 +132,12 @@ weapon_stats = [(4, 7), (5, 10), (38, 12), (45, 7), (45, 14)]
 weapon_ratings = {eid: stat for group, stat in zip(weapon_groups, weapon_stats, strict=True) for eid in group}
 weapon_stats_by_id = {}
 assert len(weapon_ratings) == 11 and not (weapon_ratings.keys() & joint_ratings.keys())
+power_decl = neck_module.read_text().split('const directWeaponSpellPower90 = new Map<number, number>(', 1)[1].split(');', 1)[0]
+power_pairs = json.loads(re.sub(r',\s*]', ']', power_decl))
+assert len(power_pairs) == len(dict(power_pairs)) == 8
+for eid, amount in power_pairs:
+    assert weapon_ratings.get(eid, (45, amount)) == (45, amount)
+    weapon_ratings[eid] = (45, amount)
 weapon_rules = set()
 for line in (data / 'permanent_enchant.inc').open():
     entry = re.match(r'^  \{\s*(\d+),\s*\d+,\s*2,', line)
@@ -192,12 +198,13 @@ assert spells == spell_enchants.keys() and effects == spell_enchants
 # Each whitelisted scroll must follow the same (unmatched) path.
 native = data.parents[1]
 hand_readers = set()
-for subtree in ('class_modules', 'player'):
+for subtree in ('class_modules', 'player', 'action', 'sim'):
     for path in (native / subtree).rglob('*'):
         if path.suffix not in ('.cpp', '.hpp'):
             continue
         text = path.read_text(errors='replace')
         assert 'encoded_enchant' not in text and 'option_enchant_id_str' not in text, path
+        assert 'parsed.enchant_stats' not in text, path
         if 'parsed.enchant_id' in text:
             hand_readers.add(path.relative_to(native).as_posix())
 assert hand_readers == {'class_modules/sc_death_knight.cpp', 'player/unique_gear.cpp'}
@@ -206,7 +213,12 @@ checked_ids = {int(v) for v in re.findall(r'parsed\.enchant_id\s*==\s*(\d+)', un
 dk = (native / 'class_modules/sc_death_knight.cpp').read_text()
 checked_ids.update(int(v) for v in re.findall(r'RUNEFORGE_ID_\w+\s*=\s*(\d+)', dk))
 assert 4083 in checked_ids and 3368 in checked_ids and not checked_ids.intersection(weapon_ratings)
-print(f'Verified {len(weapon_ratings)} pure level-90 weapon scrolls in {len(weapon_groups)} equal-stat groups')
+item_code = (native / 'item/item.cpp').read_text()
+aggregate = item_code.split('gear_stats_t item_t::total_stats() const', 1)[1].split('return total_stats;', 1)[0]
+assert 'range::for_each( parsed.enchant_stats' in aggregate and 'total_stats.add_stat( to, s.value )' in aggregate
+assert 'range::accumulate( items, gear_stats_t{}, &item_t::total_stats )' in (native / 'player/player.cpp').read_text()
+assert 0 not in checked_ids
+print(f'Verified {len(weapon_groups)} equal-stat weapon groups and {len(power_pairs)} additive spell-power scrolls')
 print(f'Verified {len(pairs)} neck scroll pairs with identical native ratings')
 print(f'Verified {len(joint_ratings)} two-ring scroll contributions and {len(ring_groups)} legacy substitution groups')
 
