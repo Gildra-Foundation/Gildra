@@ -215,7 +215,7 @@ function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
 
 const auctionFactsKey = (options: AuctionGearOption[]) => JSON.stringify(options.map(option =>
   [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey,
-    ...(option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.nativeCraftedSymmetryV1 ? [true] : [])]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
+    ...(option.candidate.variants?.find(v => v.key === option.variantKey)?.resolution?.nativeCraftedSymmetryV1 ? [true] : [])]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
 
 function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: AuctionGearOption[]) {
   const context = entry.context;
