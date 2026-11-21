@@ -767,16 +767,22 @@ export async function assembleAuctionGear(input: PlannerInput & {
     // Adjacent cursor positions share their leading choices. Reuse only the
     // exact receipt for an unchanged prefix in this immutable offer pool.
     const previousChoices: number[] = [];
-    // A globally exclusive lot cannot contribute to the price of another slot.
-    const seenLots = new Set<number>(), repeatedLots = new Set<number>();
-    for (const option of options) {
-      if (seenLots.has(option.auctionId)) repeatedLots.add(option.auctionId);
-      seenLots.add(option.auctionId);
-    }
-    const independentOffers = new Map<AuctionEffectGroup, AuctionGearOption>();
-    for (const [index, group] of flatGroups.entries()) {
-      if (group.options.every(option => !repeatedLots.has(option.auctionId)))
-        independentOffers.set(group, cheapestSingles[index]);
+    // A multi-slot lot only couples prices when another selected group can
+    // use it. Index all offers in cursor order, including same-group duplicates.
+    const overlappingGroups = new Map<AuctionEffectGroup, Set<AuctionEffectGroup>>();
+    if (!directVerification && !yieldBeforeEnumeration && !traversal.exhausted) {
+      const groupsByLot = new Map<number, AuctionEffectGroup[]>();
+      for (const group of flatGroups) {
+        const overlaps = new Set<AuctionEffectGroup>();
+        for (const option of group.options) {
+          const prior = groupsByLot.get(option.auctionId);
+          if (prior) {
+            for (const other of prior) overlaps.add(other);
+            if (prior[prior.length - 1] !== group) prior.push(group);
+          } else groupsByLot.set(option.auctionId, [group]);
+        }
+        if (overlaps.size) overlappingGroups.set(group, overlaps);
+      }
     }
     const prefixReceipts: AuctionGearOption[][] = [[]];
     const prefixCosts = [0];
@@ -824,8 +830,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
         }
         previousChoices.length = index;
         if (choice) {
-          const offer = independentOffers.get(groups[index][choice - 1]);
-          if (offer && effectSelection.length <= 16) {
+          const group = groups[index][choice - 1];
+          const overlaps = overlappingGroups.get(group);
+          if (effectSelection.length <= 16 && (!overlaps || !effectSelection.some(selected => overlaps.has(selected)))) {
+            const offer = cheapestSingles[groupIndex.get(group)!];
             if (offer.costCopper > input.budgetCopper - costCopper) invalidPrefix = index;
             else {
               costCopper += offer.costCopper;
