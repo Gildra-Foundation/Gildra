@@ -1063,7 +1063,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
-  const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
+  const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; armorKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
   const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate") => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const verifiedEngine = engine() || measuredEngine;
@@ -1119,24 +1119,40 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
     const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
-    if (verified && mode === "finalist" && ownedChanges?.length) {
-      for (const mask of observedArmorMasks) {
-        const key = armorScoreKey(selections, ownedChanges, mask);
-        const measured = key && auctionGearMechanicalCache.get(key, verifiedEngine);
-        if (measured) { metrics.cacheHit(); return measured; }
+    const armorScore = () => {
+      if (verified && mode === "finalist" && ownedChanges?.length) {
+        for (const mask of observedArmorMasks) {
+          const key = armorScoreKey(selections, ownedChanges, mask);
+          const measured = key && auctionGearMechanicalCache.get(key, verifiedEngine);
+          if (measured) return measured;
+        }
       }
-    }
-    // Precision is part of cacheKey. Two finalists can join the same precise
-    // fight under exactly the same conditions as a completed cache hit.
+    };
+    const covered = armorScore();
+    if (covered) { metrics.cacheHit(); return covered; }
     const share = verified && verifiedEngine.startsWith("SimulationCraft");
+    const armorKey = share && mode === "finalist" && transport.armorProbe && ownedChanges?.length &&
+      (specSlug === "fury-warrior" || specSlug === "fire-mage") && ignoresItemContext(verifiedEngine)
+      ? armorScoreKey(selections, ownedChanges, 7) : undefined;
+    let probe: Promise<GearPlanSimulation> | undefined;
     if (share) for (const entry of pending) {
       if (entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
-      // Either proof used by the completed cache also suffices in flight.
-      if (entry.cacheKey !== cacheKey && (!equivalentKey || entry.equivalentKey !== equivalentKey)) continue;
-      const measured = await entry.result;
+      if (entry.cacheKey === cacheKey || equivalentKey && entry.equivalentKey === equivalentKey) {
+        const measured = await entry.result;
+        simSignal.throwIfAborted();
+        metrics.cacheHit();
+        return { ...measured };
+      }
+      if (armorKey && entry.armorKey === armorKey) probe ??= entry.result;
+    }
+    if (probe) {
+      // A matching unmeasured armor group is only a scheduling hint. If the
+      // native run read either rating, failed, or returned no certificate,
+      // continue with this caller's physical build.
+      await probe.catch(() => undefined);
       simSignal.throwIfAborted();
-      metrics.cacheHit();
-      return { ...measured };
+      const measured = armorScore();
+      if (measured) { metrics.cacheHit(); return measured; }
     }
     metrics.simulation();
     const measurement = metrics.measure("simulation", async () => {
@@ -1155,7 +1171,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
           mixed ? "mixed" : prepared.changes.map(change => change.slot).sort(),
           ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
         : undefined;
-      const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
+      const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, probeArmor: Boolean(armorKey), signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
       if (mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
@@ -1190,7 +1206,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     // Start the native request immediately. Track at most one full two-lane
     // window, and only share work whose callers cancel together.
     if (!share || pending.size >= 2 * Math.max(1, transport.batchSize)) return measurement;
-    const entry = { engine: verifiedEngine, cacheKey, equivalentKey, signal: simSignal, result: measurement };
+    const entry = { engine: verifiedEngine, cacheKey, equivalentKey, armorKey, signal: simSignal, result: measurement };
     pending.add(entry);
     try { return await measurement; }
     finally { pending.delete(entry); }
@@ -1205,6 +1221,7 @@ type AuctionNativeBase = { precision: string; armory: object; spec: string };
 type AuctionNativeChanges = ReturnType<typeof prepareGearLoadout>["changes"];
 type AuctionNativeJob = {
   base: AuctionNativeBase; changes: AuctionNativeChanges; group?: string; signal: AbortSignal;
+  probeArmor?: boolean;
   ownedBatch?: { base: AuctionNativeBase; changes: readonly OwnedAuctionGearChange[] };
   resolve: (result: unknown) => void; reject: (error: unknown) => void; checkGroupAbort?: () => void;
 };
@@ -1253,7 +1270,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
   const pending: AuctionNativeJob[] = [];
   const subscribers = new Map<AbortSignal, { jobs: Set<AuctionNativeJob>; abort: () => void }>();
-  let ownedBatch = false, mixedSlots = false;
+  let ownedBatch = false, mixedSlots = false, armorProbe = false;
   let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
 
   const requestDeadlineMs = 190_000;
@@ -1303,7 +1320,8 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   }
 
   async function send(jobs: AuctionNativeJob[]) {
-    const first = jobs[0], batch = jobs.length > 1;
+    const first = jobs[0];
+    const batch = jobs.length > 1 || Boolean(ownedBatch && armorProbe && first.group && first.ownedBatch && first.probeArmor);
     let requestSignal = first.signal;
     if (batch && jobs.some(job => job.signal !== first.signal)) {
       const controller = new AbortController();
@@ -1326,7 +1344,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
         gearChanges: job.changes, ...(job.ownedBatch ? {ownedChanges: job.ownedBatch.changes} : {}) })) }
         : { ...first.base, ...(first.changes.length ? { gearChanges: first.changes } : {}) }),
     }).catch(error => {
-      if (!finalist || !batch || !deadline.aborted || requestSignal.aborted) throw error;
+      if (!finalist || jobs.length < 2 || !deadline.aborted || requestSignal.aborted) throw error;
       // Retry only still-requested rows. Halving every timed-out packet
       // eventually reaches a single, whose failure is returned to the caller.
       finalistTimeoutCap = Math.min(finalistTimeoutCap, Math.floor(jobs.length / 2));
@@ -1407,7 +1425,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
     };
   }
 
-  function submit(input: Pick<AuctionNativeJob, "base" | "changes" | "group" | "signal" | "ownedBatch">) {
+  function submit(input: Pick<AuctionNativeJob, "base" | "changes" | "group" | "signal" | "ownedBatch" | "probeArmor">) {
     input.signal.throwIfAborted();
     let unsubscribe: () => void;
     return new Promise<unknown>((resolve, reject) => {
@@ -1434,6 +1452,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       batchSize = permits === 2 && /^\d+$/.test(advertised) && Number(advertised) >= 2 ? Math.min(25, Number(advertised)) : 0;
       mixedSlots = batchSize > 0 && response.headers.get("x-gildra-simulation-mixed-slots") === "1";
       ownedBatch = batchSize > 0 && response.headers.get("x-gildra-simulation-owned-batch") === "1";
+      armorProbe = ownedBatch && response.headers.get("x-gildra-simulation-armor-probe") === "1";
       schedule();
       return capacity;
     } catch {
@@ -1445,5 +1464,5 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       return capacity;
     }
   }
-  return { submit, concurrency, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
+  return { submit, concurrency, get armorProbe() { return ownedBatch && armorProbe; }, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
 }

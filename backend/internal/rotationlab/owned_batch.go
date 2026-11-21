@@ -66,6 +66,9 @@ func ownedSimCSlot(slot string) string {
 }
 
 func (b simulationBatch) prepareOwnedCandidates() ([]batchCandidate, error) {
+	if b.Base.Armory == nil {
+		return nil, errUnsupportedOwnedBatch
+	}
 	var equipment struct {
 		Items []armoryItem `json:"equipped_items"`
 	}

@@ -114,6 +114,13 @@ func TestExplicitArmorMasksPreserveReadSlots(t *testing.T) {
 	}
 }
 
+func TestSingleOwnedProbeRequiresThePhysicalArmory(t *testing.T) {
+	b := simulationBatch{Candidates: []batchCandidate{{OwnedChanges: []ownedEdit{{SlotType: "HEAD", ItemID: 10, EnchantID: 8014}}}}}
+	if _, err := b.prepareOwnedCandidates(); !errors.Is(err, errUnsupportedOwnedBatch) {
+		t.Fatalf("missing armory returned %v", err)
+	}
+}
+
 func TestArmorBatchKeepsInstancesAndUnsupportedEditsSeparate(t *testing.T) {
 	ix := 0
 	r := batchCandidate{OwnedChanges: []ownedEdit{{SlotType: "FEET", ItemID: 1, EnchantID: 7962}}}

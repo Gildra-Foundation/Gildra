@@ -25,12 +25,12 @@ function option(itemId, slotType = 'WRIST') {
     variants: [{ key: 'base', bonusIds: [] }] }, variantKey: 'base' };
 }
 
-function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
+function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, armorProbe = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
   const state = { capacity: '2', batch: '25', ownedBatch, mixedSlots:false, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
     const path = new URL(url).pathname;
-    if (path === '/healthz') return Response.json({}, { headers: { 'x-gildra-simulation-concurrency': state.capacity, 'x-gildra-simulation-batch': state.batch, ...(state.ownedBatch ? {'x-gildra-simulation-owned-batch': '1'} : {}), ...(state.mixedSlots ? {'x-gildra-simulation-mixed-slots':'1'} : {}) } });
+    if (path === '/healthz') return Response.json({}, { headers: { 'x-gildra-simulation-concurrency': state.capacity, 'x-gildra-simulation-batch': state.batch, ...(state.ownedBatch ? {'x-gildra-simulation-owned-batch': '1'} : {}), ...(state.mixedSlots ? {'x-gildra-simulation-mixed-slots':'1'} : {}), ...(armorProbe ? {'x-gildra-simulation-armor-probe':'1'} : {}) } });
     const body = JSON.parse(request.body), batch = path.endsWith('/batch');
     const base = batch ? body.base : body, rows = batch ? body.candidates : [body];
     const ids = rows.map(row => row.gearChanges?.[0]?.itemId ?? row.ownedChanges?.[0].gems[0]?.itemId
@@ -662,6 +662,62 @@ test('a joint armor certificate covers simultaneous edits only inside the observ
     await tick(); assert.equal(state.requests.length,count+1);
     state.requests.at(-1).finish(); await promise;
   }
+});
+
+test('concurrent armor alternatives wait for actual evidence while another class uses the second worker lane', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd', common = signal();
+  const equipment={equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};
+  const {run,state} = fixture({ownedBatch:true,armorProbe:true,workerEngine,equipment});
+  await run.concurrency(common);
+  const score=id=>run([],common,[{slotType:'FEET',itemId:10,enchantId:id,gems:[]}],'finalist');
+  const rows=[7962,7992,8018,7963].map(score);
+  await tick();
+  assert.deepEqual(state.requests.map(r=>r.ids),[[7962],[7963]]);
+  assert.equal(state.peak,2);
+  assert.ok(state.requests.every(r=>r.batch));
+  const finish=(req,mask)=>req.finish({results:req.ids.map(id=>({dps:id,dpsMean:id+0.25,dpsError:0.12,confidence:95,iterations:750,engine:workerEngine,unreadArmorRatingsV1:mask}))});
+  finish(state.requests[0],6); finish(state.requests[1],7);
+  await tick();
+  assert.deepEqual(state.requests.map(r=>r.ids),[[7962],[7963],[8018]]);
+  finish(state.requests[2],6);
+  assert.deepEqual((await Promise.all(rows)).map(r=>r.dps),[7962.25,7962.25,8018.25,7963.25]);
+});
+
+test('a failed armor probe releases the other physical builds for simulation', async () => {
+  const workerEngine='SimulationCraft 1210-01 · 18428cd', common=signal();
+  const equipment={equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};
+  const {run,state}=fixture({ownedBatch:true,armorProbe:true,workerEngine,equipment});
+  await run.concurrency(common);
+  const score=id=>run([],common,[{slotType:'FEET',itemId:10,enchantId:id,gems:[]}],'finalist');
+  const failed=assert.rejects(score(7962),/simulation_unavailable/), independent=score(7992);
+  await tick(); assert.equal(state.requests.length,1); state.requests[0].finish({},500);
+  await failed; await tick();
+  assert.deepEqual(state.requests[1].ids,[7992]); state.requests[1].finish();
+  assert.equal((await independent).dps,7992.25);
+});
+
+test('a worker rejecting a singleton armor probe receives each exact enchant as a patched single', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd', common = signal();
+  const equipment = {equipped_items: [{slot: {type: 'FEET'}, item: {id: 10}}]};
+  const {run, state} = fixture({ownedBatch: true, armorProbe: true, workerEngine, equipment});
+  await run.concurrency(common);
+  const ids = [7962, 7992];
+  const scores = ids.map(enchantId => run([], common, [{slotType: 'FEET', itemId: 10, enchantId, gems: []}], 'finalist'));
+  await tick();
+  for (const [index, id] of ids.entries()) {
+    assert.equal(state.requests.length, 2 * index + 1);
+    const probe = state.requests[2 * index];
+    assert.equal(probe.batch, true);
+    assert.deepEqual(probe.ids, [id]);
+    probe.finish({code: 'unsupported_owned_batch'}, 422);
+    await tick();
+    const single = state.requests[2 * index + 1];
+    assert.equal(single.batch, false);
+    assert.deepEqual(single.ids, [id]);
+    single.finish();
+    await tick();
+  }
+  assert.deepEqual((await Promise.all(scores)).map(row => row.dps), [7962.25, 7992.25]);
 });
 
 test('enchant-only edits on the same owned item share a batch and keep separate measurements', async () => {
