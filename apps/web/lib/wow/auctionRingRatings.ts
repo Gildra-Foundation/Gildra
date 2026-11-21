@@ -47,6 +47,22 @@ for (const [axis, ranks] of enchantRanks90.entries()) {
   for (const [rank, id] of ranks.entries()) enchants.set(id, { axis, amount: enchantAmounts90[rank] });
 }
 
+// One coordinate per rating. At most 58 points can appear in a two-scroll
+// sum, so no addition can carry into a neighboring base-128 coordinate.
+const scrollRatings90 = new Map<number, number>([[0, 0]]);
+for (const [group, ids] of legacyRingEnchantGroups90.entries()) {
+  const value = (1 + Math.floor(group / 4)) * 128 ** (group % 4);
+  for (const id of ids) scrollRatings90.set(id, value);
+}
+const warWithinRingAmounts90 = [9, 11, 13, 15, 18, 21] as const;
+for (let axis = 0; axis < 4; axis++) {
+  for (const [rank, amount] of warWithinRingAmounts90.entries())
+    scrollRatings90.set(7329 + axis * 6 + rank, amount * 128 ** axis);
+}
+for (const [id, rating] of enchants) scrollRatings90.set(id, rating.amount * 128 ** rating.axis);
+
+export const ringScrollRating90 = (id: number) => scrollRatings90.get(id);
+
 export const isDirectRingEnchant = (id: number) => enchants.has(id);
 export const ringGemRepresentative90 = (id: number) => gems.get(id)?.representative;
 

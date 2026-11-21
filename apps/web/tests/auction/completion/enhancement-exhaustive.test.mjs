@@ -721,3 +721,41 @@ test('every skipped three-slot armor receipt has a cheaper measured receipt with
     for (const {key,vector,price} of receipts) if (price===minima.get(vector)) assert(tracked.has(key),key);
   }
 });
+
+test('two bare rings price scroll exchanges using exact stock while every socket stays fixed', async () => {
+  const ringSlots=['FINGER_1','FINGER_2'];
+  const one=5297,two=5428,three=6553;
+  const enchant=(id,extra={})=>({key:String(id),kind:'enchant',consumableItemId:id,simulationId:id,...extra});
+  async function search({ladder=[[4,2]],restricted=false,external=false,enabled=true,resume=false,socket=false}={}) {
+    const labels=external ? [...ringSlots,'WRIST'] : ringSlots;
+    const slots=labels.map(slotType=>({slotType,owned:false,variantKey:slotType,metadataKey:'ring-snapshot',sockets:socket && slotType==='FINGER_1' ? [{key:'0',type:'14'}] : []}));
+    const prices={8000:{ladder:[[1,1]]},[one]:{ladder:[[3,2]]},[two]:{ladder},[three]:{ladder:[[6,2]]}};
+    const seen=new Map();
+    const h={input:{...fixture().input,slots,bareRingScrolls90:enabled,limits:{simulations:12},
+      catalog:{version:'scrolls',complete:true,resolve:s=>({verified:true,enchantApplicable:true,gemChoices:s.sockets.length ? {'0':gems(1)} : {},
+        enchantChoices:s.slotType==='WRIST' ? [enchant(12345,{consumableItemId:two})] :
+          [enchant(one),enchant(two,restricted ? {category:{id:'limited',limit:1}} : {}),enchant(three)]})},
+      prices:{prices,sourceUpdatedAt:new Date().toISOString()},itemsCopper:0,simulate:async c=>{
+        const gem=socket ? '|'+(c.slots[0].gemIds[0]??0) : '';
+        seen.set(c.slots.map(s=>s.enchantId).join('/')+gem,c.totalCopper);return measurement();}}};
+    const old=resume && await optimizeAuctionGearEnhancements({...h.input,bareRingScrolls90:false});
+    await complete(h,old || undefined);return seen;
+  }
+  const cheaper=await search();
+  assert.equal(cheaper.get(two+'/'+two),8);
+  assert(!cheaper.has(one+'/'+three) && !cheaper.has(three+'/'+one));
+  for(const args of [{ladder:[[4,1],[5,1]]},{ladder:[[4,1]]},{restricted:true},{enabled:false},{resume:true}]) {
+    const all=await search(args);
+    assert.equal(all.get(one+'/'+three),9);
+    assert.equal(all.get(three+'/'+one),9);
+  }
+  const reversed=await search({ladder:[[4,1],[8,1]]});
+  assert(!reversed.has(two+'/'+two));
+  const withGem=await search({socket:true});
+  for (const gem of [0,8000]) {
+    assert(withGem.has(two+'/'+two+'|'+gem));
+    assert(!withGem.has(one+'/'+three+'|'+gem));
+  }
+  const shared=await search({external:true});
+  assert.equal(shared.get(one+'/'+three+'/12345'),13);
+});

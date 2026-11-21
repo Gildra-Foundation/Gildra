@@ -72,6 +72,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   pruneNeckEnchantRanks?: boolean;
   pruneRingEnchantRanks?: boolean;
   pruneArmorEnchantPairs?: boolean;
+  pruneRingScrollPairs?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -117,6 +118,10 @@ export async function evaluateAuctionEnhancementStage(input: {
     const cradleSlots = new Set<string>();
     const eligibleWeapon = (slot: string, itemClass: number) => input.exhaustive && input.pruneCradleEnchants &&
       ignoresItemContext(input.engine) && itemClass === 2 && (slot === 'MAIN_HAND' || slot === 'OFF_HAND');
+    const bareRingSlots = new Set<string>();
+    const certifiedRing = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
+      input.pruneRingScrollPairs && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
+      (slot === "FINGER_1" || slot === "FINGER_2") && inventory === 11 && itemClass === 4;
     const bareArmorSlots90 = new Set<string>();
     const certifiedArmor = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
       input.pruneArmorEnchantPairs && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) && itemClass === 4 &&
@@ -150,6 +155,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       const slot: EnhancementSlot = {slotType:option.candidate.slotType,variantKey:option.variantKey,metadataKey:hash(variant.resolution?.metadataVersion===3 ? [target,metadata,3] : [target,metadata]),owned:false,
         sockets:metadata.socketColors.flatMap((color,index)=>color ? [{key:String(index),type:String(color)}] : [])};
       slots.push(slot);
+      if (!option.customization && certifiedRing(slot.slotType, target.inventoryType, target.itemClassId))
+        bareRingSlots.add(slot.slotType);
       if (!option.customization && certifiedArmor(slot.slotType, target.inventoryType, target.itemClassId))
         bareArmorSlots90.add(slot.slotType);
       const bareShoulder = input.exhaustive && input.omitShoulderIllusions && slot.slotType === 'SHOULDER' &&
@@ -201,6 +208,8 @@ export async function evaluateAuctionEnhancementStage(input: {
           // Leaving an originally bare glove unchanged has the same native effect
           // and costs zero. Every purchasable scroll costs strictly positive copper.
           const unenchanted = item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length;
+          if (unenchanted && obj(item.inventory_type).type === "FINGER" && certifiedRing(slotType, target.inventoryType, target.itemClassId))
+            bareRingSlots.add(slotType);
           if (unenchanted && obj(item.inventory_type).type === slotType && certifiedArmor(slotType, target.inventoryType, target.itemClassId))
             bareArmorSlots90.add(slotType);
           const weapon = eligibleWeapon(slotType, target.itemClassId);
@@ -293,7 +302,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
-      bareArmorSlots90, ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
+      bareRingScrolls90: bareRingSlots.size === 2, bareArmorSlots90, ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
       purchasedEnchantEffect: cradleSlots.size || pricedNeck || pricedRings ? (slot: string, id: number) => {
         if (pricedRings && (slot === "FINGER_1" || slot === "FINGER_2")) return ringEnchantRepresentative90(id);
         if (pricedNeck && slot === "NECK") return directNeckEnchantGroup(id);

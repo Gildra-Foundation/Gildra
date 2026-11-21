@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { combinedRingRatings90 } from "./auctionRingRatings";
+import { combinedRingRatings90, ringScrollRating90 } from "./auctionRingRatings";
 import { compareGearSimulationResults } from "./gearSimulation";
 import { assertFreshMarket } from "./auctionMarket";
 import { createExactCommodityPriceCache, type ExactCommodityPrices } from "./auctionGearCost";
@@ -58,6 +58,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   /** Older cursors continue with their original single-ring price guards. */
   pairedRingPrices?: true;
   pairedNeckPrices?: true;
+  pairedScrollPrices?: true;
   pairedArmorPrices?: true;
   armorPricePruning?: { branches: string; configurations: string };
   pricedAxes?: true | "within_budget" | "equivalent_scrolls" | "equivalent_gems" | "conditional_ring_gems" | "combined_ring_cost";
@@ -78,6 +79,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   exhaustive?: boolean;
   ratingRingSlots?: ReadonlySet<string>;
   ratingOwnedNeck?: boolean;
+  bareRingScrolls90?: boolean;
   bareArmorSlots90?: ReadonlySet<string>;
   purchasedEnchantEffect?: (slotType: string, id: number) => number | undefined;
   purchasedGemEffect?: (slotType: string, id: number, enchantId: number) => number | undefined;
@@ -212,6 +214,50 @@ type NeckGemPrices = {
 };
 type JewelryPrices = { rings: RingPriceOptions[]; includeNeck: boolean; neck?: NeckGemPrices };
 type PairedRingPrices = { axis: number; skips: (selected: Choice[]) => boolean };
+
+/** The two verified bare hosts keep every socket and every other purchase
+ * fixed. For ring-exclusive scrolls we can price both units of a shared SKU
+ * exactly. Restricted or retained enchantments cannot witness a substitution. */
+function costlierRingScrollPairs(axes: Choice[][], slots: readonly EnhancementSlot[],
+  cost: (sku: number, quantity: number) => number | null) {
+  const ringAxes = ["FINGER_1", "FINGER_2"].map(slot =>
+    axes.findIndex(axis => axis[0].socket === null && slots[axis[0].slot].slotType === slot));
+  const [first, second] = ringAxes;
+  if (first < 0 || second <= first) return;
+  const external = new Set<number>(), unique = new Set<number>();
+  for (const [index, axis] of axes.entries()) for (const c of axis) {
+    const e = c.enhancement;
+    if (!e) continue;
+    if (e.kind === "enchant" && e.uniqueEquipped) unique.add(e.simulationId);
+    if (!c.retained && index !== first && index !== second) external.add(e.consumableItemId);
+  }
+  const [left, right] = ringAxes.map(index => axes[index].flatMap(choice => {
+    const e = choice.enhancement;
+    if (choice.retained || e && (e.category || e.profession || e.uniqueEquipped ||
+        external.has(e.consumableItemId) || unique.has(e.simulationId))) return [];
+    const rating = ringScrollRating90(e?.simulationId ?? 0), sku = e?.consumableItemId ?? 0;
+    const unit = sku ? cost(sku, 1) : 0;
+    return rating !== undefined && unit !== null ? [{ choice, rating, sku, unit }] : [];
+  }));
+  const groups = new Map<number, { best: number; pairs: { left: Choice; right: Choice; price: number }[] }>();
+  for (const a of left) for (const b of right) {
+    const price = a.sku && a.sku === b.sku ? cost(a.sku, 2) : a.unit + b.unit;
+    if (price === null || !Number.isSafeInteger(price)) continue;
+    const rating = a.rating + b.rating;
+    const group = groups.get(rating) ?? {best: price, pairs: []};
+    group.best = Math.min(group.best, price);
+    group.pairs.push({left: a.choice, right: b.choice, price});
+    groups.set(rating, group);
+  }
+  const guards = new Map<Choice, Set<Choice>>();
+  for (const {best, pairs} of groups.values()) for (const pair of pairs) {
+    if (pair.price <= best) continue;
+    const blocked = guards.get(pair.right) ?? new Set<Choice>();
+    blocked.add(pair.left);
+    guards.set(pair.right, blocked);
+  }
+  return guards.size ? {first, second, guards} : undefined;
+}
 
 /** A joint substitute must cover every changed purchase at maximum marginal prices.
  * Each source saves at least its first-unit price, for any legal use in other slots. */
@@ -543,12 +589,15 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined,
         gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect, pairedRings) : undefined;
   const pairedPrice = pairedRings && pairedRingPriceGuard(pairedRings);
+  const scrollPairs = exact && pricedAxes && input.bareRingScrolls90 && (!input.checkpoint || input.checkpoint.pairedScrollPrices)
+    ? costlierRingScrollPairs(axes, slots, commodityPrices.cost) : undefined;
   const armorGuards = exact && pricedAxes && input.bareArmorSlots90?.has("HEAD") && input.bareArmorSlots90.size > 1 &&
     (!input.checkpoint || input.checkpoint.pairedArmorPrices) ? costlierArmorPairs(axes, slots, input.bareArmorSlots90, input.prices.prices) : undefined;
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(scrollPairs ? { pairedScrollPrices: 1 } : {}),
     ...(armorGuards?.size ? { pairedArmorPrices: [...input.bareArmorSlots90!].sort() } : {}),
     ...(pairedPrice ? { pairedRingPrices: 1 } : {}),
     ...(pairedNeck ? { pairedNeckPrices: 1 } : {}),
@@ -561,6 +610,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
+    ...(scrollPairs ? {pairedScrollPrices:true} : {}),
     ...(armorGuards?.size ? {pairedArmorPrices:true} : {}),
     ...(pairedPrice ? {pairedRingPrices:true} : {}),
     ...(pairedNeck ? {pairedNeckPrices:true} : {}),
@@ -642,6 +692,8 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       // assignment below the enchant has the same strictly cheaper substitute.
       const pair = pairGuards?.get(selected[axis]);
       if (pair?.enchants.has(selected[pair.enchantAxis])) return { valid: false, pruneAxis: pair.enchantAxis, ringPriceProof: true };
+      if (axis === scrollPairs?.second && scrollPairs.guards.get(selected[axis])?.has(selected[scrollPairs.first]))
+        return { valid: false, pruneAxis: scrollPairs.first, ringPriceProof: true };
       const armor = armorGuards?.get(selected[axis]);
       if (armor?.lowerChoices.has(selected[armor.lowerAxis])) return { valid: false, pruneAxis: armor.lowerAxis, armorPriceProof: true };
       const skip = conditional?.get(selected[axis]);

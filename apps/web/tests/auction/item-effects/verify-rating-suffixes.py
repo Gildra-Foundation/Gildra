@@ -112,24 +112,39 @@ scales = (data / 'sc_scale_data.inc').read_text().split('double __spell_scaling[
 tables = [list(map(float, row.strip().rstrip(',').split(',')))
           for row in re.findall(r'\{([^{}]+)\}', re.sub(r'//[^\n]*', '', scales))]
 class_id = {-1: 14, -3: 16, -4: 17, -5: 18, -7: 14}
+rating_order = [32, 36, 49, 40]
+joint_ratings = {eid: (rating_order[index % 4], 1 + index // 4)
+                 for index, group in enumerate(ring_groups) for eid in group}
+war_amounts = json.loads(ring_source.split('const warWithinRingAmounts90 = ', 1)[1].split(' as const;', 1)[0])
+assert len(war_amounts) == 6
+for axis, stat in enumerate(rating_order):
+    for rank, amount in enumerate(war_amounts):
+        joint_ratings[7329 + axis*6 + rank] = (stat, amount)
+def rating_list(name):
+    return json.loads(re.sub(r',\s*]', ']', ring_source.split(f'const {name} = ', 1)[1].split(' as const;', 1)[0]))
+for stat, ranks in zip(rating_order, rating_list('enchantRanks90'), strict=True):
+    for eid, amount in zip(ranks, rating_list('enchantAmounts90'), strict=True):
+        joint_ratings[eid] = (stat, amount)
+assert len(joint_ratings) == 92 and joint_ratings.keys() <= ring_rules
 fallback, spell_enchants, ring_rating = {}, {}, {}
 for line in (data / 'spell_item_enchantment.inc').open():
     row = re.match(r'^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),', line)
     if not row:
         continue
     eid, _, scaling, scaling_min, cap, minimum, maximum, skill, rank = map(int, row[1].split(','))
-    if eid in ring_ids or eid in paired_ids:
+    if eid in joint_ratings or eid in paired_ids:
         assert scaling != 0 and skill == rank == 0
         fallback[eid] = (scaling, scaling_min, cap, minimum, maximum, row[2], row[3], row[4])
         if int(row[5]):
             spell_enchants[int(row[5])] = eid
-        if eid in ring_ids:
+        if eid in joint_ratings:
             kinds, stats = [list(map(int, row[i].split(','))) for i in (2, 3)]
             assert kinds == [5, 0, 0] and stats[0] in (32, 36, 40, 49) and stats[1:] == [0, 0]
             assert scaling_min == 0 and 0 < cap <= 90 and scaling in class_id
             coefficient = float(row[4].split(',')[0].strip().removesuffix('f'))
             native_float = struct.unpack('f', struct.pack('f', coefficient))[0]
             ring_rating[eid] = (stats[0], math.floor(tables[class_id[scaling]][cap-1] * native_float + 0.5))
+assert joint_ratings == ring_rating
 for a, b in pairs:
     assert fallback[a] == fallback[b], (a, b)
 assert paired_ids <= set(spell_enchants.values())
@@ -155,7 +170,7 @@ for line in (data / 'sc_spell_data.inc').open():
             effects[sid] = int(fields[16])
 assert spells == spell_enchants.keys() and effects == spell_enchants
 print(f'Verified {len(pairs)} neck scroll pairs with identical native ratings')
-print(f'Verified {len(ring_ids)} level-90 ring scrolls in {len(ring_groups)} rating groups')
+print(f'Verified {len(joint_ratings)} two-ring scroll contributions and {len(ring_groups)} legacy substitution groups')
 
 # Verify both complete sides of the exact cross-slot armor substitutions. All
 # records in this proof use only the fallback at player level 90, with no

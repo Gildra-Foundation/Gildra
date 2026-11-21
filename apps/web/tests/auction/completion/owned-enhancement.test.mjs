@@ -414,3 +414,31 @@ test('owned armor exchanges require bare verified hosts and the exact native eng
   for (const inputs of [{revision:'SimulationCraft 18428cd different build'},{level:89},{headEnchant:7958},{enabled:false}])
     assert((await enumerate(inputs)).has('0,7989,7970'),JSON.stringify(inputs));
 });
+
+test('a ring scroll can be exchanged across bare socketless worn rings only at certified player level', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd', selectedSlots=['FINGER_1','FINGER_2'];
+  const loadout=selectedSlots.map((slotType,index)=>({slotType,itemId:173131+index,inventoryType:11,itemSubclassId:0}));
+  async function search({level=90,enabled=true,installed=false,revision=engine}={}) {
+    const items=loadout.map((x,i)=>({item:{id:x.itemId},slot:{type:x.slotType},inventory_type:{type:'FINGER'},level:{value:35},
+      item_class:{id:4},item_subclass:{id:0},sockets:[],spells:[],...(i===0 && installed ?
+        {enchantments:[{enchantment_slot:{id:0},enchantment_id:5425}]} : {})}));
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision},state={checkpoints:{}},seen=new Set();
+    const prices={110618:{ladder:[[3,2]]},128542:{ladder:[[4,2]]},199954:{ladder:[[6,2]]}};
+    for(let i=0;i<32;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneRingScrollPairs:enabled,selectedSlots,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,nativePlayerLevel:level,
+        specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'two-bare-rings',encounter:{},budgetCopper:50,
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.add(c.slots.map(s=>s.enchantId).join('/'))});
+      if(result.complete)return seen;
+    }
+    assert.fail('socketless rings did not finish');
+  }
+  const small=await search();
+  assert(small.has('5428/5428'));
+  for(const args of [{enabled:false},{level:89},{installed:true},{revision:'SimulationCraft 18428cd different build'}]) {
+    const full=await search(args);
+    assert(full.size>small.size,JSON.stringify(args));
+  }
+});
