@@ -339,6 +339,24 @@ test("mixed and partially replaced prismatic gems share only the physical finali
   const key = (ownedChanges, options = {}, request = {}) => auctionGearMechanicalKey("character",
     {spec: "fury-warrior", scenario: "single-target", fightLengthSeconds: 120, targets: 1,
       precision: "finalist", ownedChanges, ...request}, {...native, ...options});
+  // Two 13-mastery gems and a 22-mastery scroll equal two 12s and a 24.
+  // The third gem and the three color counts remain part of the native key.
+  const three = build([240864, 240864, 240895]);
+  const threeCompensated = build([240863, 240863, 240895], [7965, 7964]);
+  assert.equal(key(three), key(threeCompensated));
+  assert.notEqual(run.finalistKey([], three), run.finalistKey([], threeCompensated));
+  await Promise.all([run([], signal, three, "finalist"), run([], signal, threeCompensated, "finalist")]);
+  assert.equal(calls(), 2);
+  assert.notEqual(key(three), key(build([240864, 240863, 240895], [7965, 7964])));
+  assert.notEqual(key(three), key(build([240863, 240863, 240895], [7966, 7964])));
+  const withoutScroll = build([240864, 240864, 240895], [7964, undefined]);
+  const otherBare = build([240863, 240863, 240895], [undefined, 7965]);
+  assert.notEqual(key(withoutScroll), key(otherBare));
+  const bare = {barePrismaticRings: new Set(["FINGER_1","FINGER_2"])};
+  assert.equal(key(withoutScroll, bare), key(otherBare, bare));
+  assert.notEqual(key(three, {physicalFinalist:false}), key(threeCompensated, {physicalFinalist:false}));
+  assert.notEqual(key(three, {playerLevel:89}), key(threeCompensated, {playerLevel:89}));
+  assert.notEqual(key(three, {engine:"unknown"}), key(threeCompensated, {engine:"unknown"}));
   assert.equal(key(build([240855, 127761, 240863])), key(build([115804, 240863, 240856])));
   assert.equal(key(build([240895, 115804])), key(build([240864, 115804], [7965, 7964])));
   assert.equal(key(build([240855, 127761, 240966])), key(build([115804, 240856, 240966])));

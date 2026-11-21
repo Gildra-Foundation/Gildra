@@ -407,10 +407,14 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   const worn = request.precision === "finalist" && native?.playerLevel === 90 && native.wornPrismatic?.size &&
     ignoresItemContext(native.engine) && request.ownedChanges?.length
     ? { edits: request.ownedChanges, hosts: native.wornPrismatic } : undefined;
-  const midnight = worn && native?.physicalFinalist
-    ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots) : undefined;
-  const jewelry = worn && native && !midnight
+  const directJewelry = worn && native
     ? explicitOwnedJewelry(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings, native.physicalFinalist) : undefined;
+  // When all three socket edits and both effective ring enchants are direct,
+  // their integer ratings add across hosts. A separate three-gem proof also
+  // covers fixed proc enchants; it must keep both physical enchant IDs.
+  const midnight = worn && native?.physicalFinalist && directJewelry?.gemColors?.slots.length !== 3
+    ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots) : undefined;
+  const jewelry = midnight ? undefined : directJewelry;
   // Assign the total to one stable field. Keep the original purchased-only
   // key when there are no qualifying worn edits so saved scores still match.
   if (gear && (jewelry || certifiedJewelry.length >= 2)) {
