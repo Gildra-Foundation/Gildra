@@ -87,6 +87,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   useMidnightGemPrices?: () => boolean;
+  pruneMixedMidnightPrices?: boolean;
   pruneRingNeckPricePairs?: boolean;
   nativePlayerLevel?: number;
   preview?: boolean;
@@ -329,6 +330,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       preciseReceiptKey: input.preciseReceiptKey,
+      pruneMixedMidnightPrices: input.pruneMixedMidnightPrices && bareRingSlots.size === 2,
       useMidnightGemPrices: midnightHosts.size === 3 ? input.useMidnightGemPrices : undefined,
       // With two bought rings the finalist normalizer can move gems between
       // their physical hosts. Keep that case on its existing joint price proof.

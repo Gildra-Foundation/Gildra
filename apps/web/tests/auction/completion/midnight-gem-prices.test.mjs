@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { advanceAuctionGearExhaustiveEnhancements } from "../../../lib/wow/auctionGearExhaustiveEnhancements.ts";
 import { midnightGemPrices } from "../../../lib/wow/auctionMidnightGemPrices.ts";
+import { combinedRingRatings90 } from "../../../lib/wow/auctionRingRatings.ts";
 import { midnightGemRating90 } from "../../../lib/wow/auctionMidnightGemRatings.ts";
 import { createExactCommodityPriceCache } from "../../../lib/wow/auctionGearCost.ts";
 
@@ -25,7 +26,7 @@ test("three live physical gemstone receipts at strictly smaller exact ladder cos
   const { axes, guard } = fixture();
   const rows = [];
   for (const left of axes[0]) for (const right of axes[1]) for (const neck of axes[2])
-    if (guard.skips([left,right,neck])) rows.push([left,right,neck].map(x => x.enhancement.simulationId));
+    if (guard.cutAxis([left,right,neck]) !== undefined) rows.push([left,right,neck].map(x => x.enhancement.simulationId));
   assert.deepEqual(rows, [[a,a,c]]);
   for (const locked of [
     fixture({...prices, [b]: {ladder: [[14,1]]}}),
@@ -40,32 +41,76 @@ test("three live physical gemstone receipts at strictly smaller exact ladder cos
     fixture(prices, (axes, slots) => {slots.push({slotType:"HEAD"});
       axes.push([{...axes[0][1],slot:3}]);}),
   ]) {
-    assert.equal(locked.guard?.skips([locked.axes[0][0],locked.axes[1][0],locked.axes[2][2]]) ?? false, false);
+    assert.equal(locked.guard?.cutAxis([locked.axes[0][0],locked.axes[1][0],locked.axes[2][2]]), undefined);
   }
   const neckChoice = fixture(prices, axes => {
     axes.push([{slot:2,socket:null,retained:false,enhancement:null},
       {slot:2,socket:null,retained:false,enhancement:{kind:"enchant",simulationId:5317,consumableItemId:38800}}]);
   });
   const selected = [neckChoice.axes[0][0],neckChoice.axes[1][0],neckChoice.axes[2][2]];
-  assert.equal(neckChoice.guard.skips([...selected,neckChoice.axes[3][0]]),true);
-  assert.equal(neckChoice.guard.skips([...selected,neckChoice.axes[3][1]]),false);
+  assert.equal(neckChoice.guard.cutAxis([...selected,neckChoice.axes[3][0]]),0);
+  assert.equal(neckChoice.guard.cutAxis([...selected,neckChoice.axes[3][1]]),undefined);
   const bought = fixture(prices, (_, slots) => { slots[0].owned = false; });
   assert.equal(bought.guard, undefined);
   const enchanted = fixture(prices, (axes, slots) => { slots[2].installed = {enchant:{},gems:[null]}; });
   assert.equal(enchanted.guard, undefined);
 });
 
-test("streaming price cuts preserve complete public precision after checkpoint resumes and 64-key overflow", async () => {
+// Three strictly cheaper Eversong receipts with two colored gems and one
+// legacy haste gem. Keep each host's raw gem ID as the public purchase.
+const mixedSource = [115804, 240869, 240887];
+const mixedWitnesses = [[240861,240867,115804], [240867,240861,115804], [240855,240869,151583]];
+const mixedPrices = {115804:15, 240869:30, 240887:70, 240861:10, 240867:11, 240855:12, 151583:8};
+function mixedFixture(rows, price, enabled = true, excluded = () => false) {
+  const slots = positions.map((slotType,i) => ({slotType, owned:true, allowOwnedChanges:true,
+    ownedItemId:itemIds[i], sockets:[{key:"0",type:"14"}]}));
+  const axes = slots.flatMap((_,slot) => {
+    const gems = [...new Set(rows.map(row=>row[slot]))].map(id=>({slot,socket:0,retained:false,
+      enhancement:{kind:"gem", simulationId:id, consumableItemId:id}}));
+    return slot === 2 ? [gems] : [[null,7964,7966].map(id=>({slot,socket:null,retained:!id,
+      enhancement:id && {kind:"enchant",simulationId:id,consumableItemId:id+1000000}})),gems];
+  });
+  const quotes = Object.fromEntries(Object.entries(price).map(([id,p])=>[id,{ladder:[[p,3]]}]));
+  const guard = midnightGemPrices(axes,slots,createExactCommodityPriceCache(quotes).cost,excluded,enabled);
+  return (row, enchant = 7964) => guard?.cutAxis(axes.map(choices=>choices.find(c=>
+    (c.enhancement?.simulationId ?? 0) === (c.socket === null ? enchant : row[c.slot]))));
+}
+
+test("mixed triples preserve lower enchant digits, strict prices and distinct original finalists", () => {
+  const rows = [mixedSource,...mixedWitnesses];
+  const cut = mixedFixture(rows,mixedPrices);
+  assert.equal(cut(mixedSource),0);
+  assert.equal(cut(mixedSource,0),0);
+  assert.equal(cut(mixedSource,7966),undefined);
+  for (const witness of mixedWitnesses) assert.equal(cut(witness),undefined);
+  assert.equal(mixedFixture(rows,mixedPrices,false)(mixedSource),undefined);
+  assert.equal(mixedFixture(rows,mixedPrices,true,c=>c.enhancement.simulationId === 151583)(mixedSource),undefined);
+  // A tie with the third witness must be left for the complete receipt hash.
+  assert.equal(mixedFixture(rows,{...mixedPrices,240887:5})(mixedSource),undefined);
+  // Three cheap legacy SKUs at one position have the same native rating
+  // and the same historic finalist key. They supply exactly one witness.
+  const aliasRows = [[240856,240863,115804], ...[127761,130216,153711].map(id=>[240855,240863,id])];
+  const aliasPrices = {240856:100,240855:1,240863:10,115804:20,127761:1,130216:2,153711:3};
+  assert.equal(mixedFixture(aliasRows,aliasPrices)(aliasRows[0]),undefined);
+});
+
+for (const mixed of [false,true]) test(`streaming ${mixed ? "mixed" : "Midnight"} prices preserve complete rankings across checkpoints and overflow`, async () => {
   const engine = "SimulationCraft 1210-01 · 18428cd", now = new Date().toISOString();
   const items = positions.map((position, i) => ({slot:{type:position}, item:{id:itemIds[i]},
     inventory_type:{type:i === 2 ? "NECK" : "FINGER"}, level:{value:295}, item_class:{id:4},item_subclass:{id:0},
     sockets:[{socket_type:{type:"PRISMATIC"}}], spells:[]}));
   items.push({slot:{type:"CHEST"},item:{id:271459},inventory_type:{type:"CHEST"},item_class:{id:4},item_subclass:{id:4},
     level:{value:295},sockets:[],spells:[]});
-  const quotes = { ...prices, 243946:{ladder:[[1,4]]}, 243974:{ladder:[[2,4]]}, 243947:{ladder:[[3,4]]} };
+  const gemPrices = mixed ? Object.fromEntries(Object.entries(mixedPrices).map(([id,p])=>[id,{ladder:[[p,3]]}])) : prices;
+  const quotes = { ...gemPrices, 243946:{ladder:[[1,4]]}, 243974:{ladder:[[2,4]]}, 243947:{ladder:[[3,4]]} };
   const baseline = {dps:1000,dpsError:1,iterations:100,confidence:95,engine};
   function score(config) {
-    const sum = config.slots.flatMap(slot => slot.gemIds).reduce((n,id) => n + (midnightGemRating90(id)?.ratings[2] ?? 0),0);
+    const totals = [0,0,0,0];
+    for (const id of config.slots.flatMap(slot=>slot.gemIds)) {
+      const stats = midnightGemRating90(id)?.ratings ?? combinedRingRatings90(0,id);
+      stats.forEach((amount,i)=>{totals[i]+=amount;});
+    }
+    const sum = mixed ? totals.reduce((n,v,i)=>n+v*(i+1),0) : totals[2];
     const chest = config.slots.find(slot => slot.slotType === "CHEST").enchantId;
     return {...baseline,iterations:750,dps:1000 + (sum === 43 ? 400 : sum) + (chest === 7957 ? 4 : chest ? 1 : 0), dpsError:1.25};
   }
@@ -83,13 +128,17 @@ test("streaming price cuts preserve complete public precision after checkpoint r
     // Before this rule, all older flags were already enabled. Run that exact
     // traversal as the independently completed reference, preserving its key on resume.
     let {state} = await advanceAuctionGearExhaustiveEnhancements({...input,shouldYield:()=>true});
-    if (!enabled) delete state.pruneMidnightGemPrices;
-    for (let turn = 0; turn < 60; turn++) {
+    if (!enabled) {
+      delete state.pruneMixedMidnightPrices;
+      if (!mixed) delete state.pruneMidnightGemPrices;
+    }
+    for (let turn = 0; turn < 500; turn++) {
       const next = await advanceAuctionGearExhaustiveEnhancements({...input,state});
       state=structuredClone(next.state);
       if (next.result.complete) {
-        assert.equal(Boolean(state.pruneMidnightGemPrices),enabled);
-        assert.equal(Boolean(state.precisionPass.rankReceiptsOverflow),enabled);
+        assert.equal(Boolean(state.pruneMidnightGemPrices),mixed || enabled);
+        assert.equal(Boolean(state.pruneMixedMidnightPrices),enabled);
+        assert.equal(Boolean(state.precisionPass.rankReceiptsOverflow),mixed || enabled);
         for (const pass of Object.values(state.ringPricePruning ?? {})) cut+=Number(pass.configurations);
         return {result:next.result,calls,cut};
       }
@@ -98,6 +147,6 @@ test("streaming price cuts preserve complete public precision after checkpoint r
   }
   const reference=await run(false), current=await run(true);
   assert.deepEqual(current.result,reference.result);
-  assert(current.cut>0);
+  assert(current.cut>reference.cut);
   assert(current.calls<reference.calls);
 });

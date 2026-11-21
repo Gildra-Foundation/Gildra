@@ -1,8 +1,9 @@
 import type { Enhancement, EnhancementSlot } from "./auctionGearEnhancementOptimizer";
 import { midnightGemRating90 } from "./auctionMidnightGemRatings";
+import { combinedRingRatings90, isDirectRingEnchant } from "./auctionRingRatings";
 
 type Choice = { slot: number; socket: number | null; enhancement: Enhancement | null; retained: boolean };
-type Offer = { id: number; signature: number; one: number; two: number; three: number };
+type Offer = { id: number; signature: number; modern: boolean; one: number; two: number; three: number };
 
 const descriptionDigit = new Map([[14262, 1], [14278, 4], [14276, 16], [14277, 64]]);
 function price(a: Offer, b: Offer, c: Offer) {
@@ -16,7 +17,7 @@ function price(a: Offer, b: Offer, c: Offer) {
  * finalist keys give its exact score and error at strictly smaller prices.
  * Equal-priced receipts still compete by their original physical hashes. */
 export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementSlot[],
-  cost: (id: number, quantity: number) => number | null, hasOtherProof: (choice: Choice) => boolean) {
+  cost: (id: number, quantity: number) => number | null, hasOtherProof: (choice: Choice) => boolean, mixed = false) {
   const positions = ["FINGER_1", "FINGER_2", "NECK"];
   const sockets = positions.map(position => axes.findIndex(choices => {
     const { slot, socket } = choices[0], host = slots[slot];
@@ -28,6 +29,10 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
   const neck = axes[sockets[2]][0].slot;
   if (slots[neck].installed?.enchant) return;
   const neckEnchant = axes.findIndex(choices => choices[0].slot === neck && choices[0].socket === null);
+  const ringSlots = sockets.slice(0, 2).map(axis => axes[axis][0].slot);
+  const ringEnchants = axes.flatMap((choices, i) => choices[0].socket === null && ringSlots.includes(choices[0].slot) ? [i] : []);
+  const axis = Math.min(...sockets, neckEnchant < 0 ? Infinity : neckEnchant);
+  const mixedAxis = Math.min(axis, ...ringEnchants);
   // Every witness replaces the same three explicit socket edits. Other
   // positions may keep their original effect and quantity, even on a cut
   // covering an entire lower stride. Never borrow stock another axis can buy.
@@ -53,26 +58,38 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
     for (const choice of axes[axis]) {
       const e = choice.enhancement;
       if (!e || choice.retained || e.kind !== "gem" || e.simulationId !== e.consumableItemId ||
-          e.profession || e.category || unavailable.has(e.simulationId) || hasOtherProof(choice)) continue;
+          e.profession || e.category || unavailable.has(e.simulationId)) continue;
       const gem = midnightGemRating90(e.simulationId);
-      const digit = gem && descriptionDigit.get(gem.descriptionId);
-      if (!gem || !digit || gem.ratings.length !== 4 || gem.ratings.some(v => !Number.isInteger(v) || v < 0 || v > 85)) continue;
+      if (gem && hasOtherProof(choice)) continue;
+      const ratings = gem?.ratings ?? (mixed ? combinedRingRatings90(0, e.simulationId) : undefined);
+      const digit = gem ? descriptionDigit.get(gem.descriptionId) : 0;
+      if (!ratings || digit === undefined || ratings.length !== 4 || ratings.some(v => !Number.isInteger(v) || v < 0 || v > 85)) continue;
       // Base 256 packs each integer independently. Three descriptions are four
       // base-4 counts. Neither the stats nor the count byte can carry on addition.
-      const signature = gem.ratings.reduce((v, stat) => v * 256 + stat, 0) * 256 + digit;
+      const signature = ratings.reduce((v, stat) => v * 256 + stat, 0) * 256 + digit;
       const one = cost(e.simulationId, 1);
-      if (one !== null) choices.set(choice, { id: e.simulationId, signature, one,
-        two: multiUnitCost(e.simulationId, 2), three: multiUnitCost(e.simulationId, 3) });
+      if (one !== null) choices.set(choice, { id: e.simulationId, signature, modern: !!gem, one,
+        two: gem ? multiUnitCost(e.simulationId, 2) : Infinity, three: gem ? multiUnitCost(e.simulationId, 3) : Infinity });
     }
     return choices;
   });
-  if (offers.some(list => !list.size || list.size > 64 || new Set([...list.values()].map(o => o.id)).size !== list.size)) return;
-  // The optimizer already deduplicated identical purchases on each slot.
-  // Distinct ordered triples have distinct old finalist keys because the
-  // existing public normalizers keep each of these gem IDs in its slot.
+  if (offers.some(list => !list.size || list.size > (mixed ? 104 : 64) || new Set([...list.values()].map(o => o.id)).size !== list.size)) return;
   const [left, right, necklaces] = offers;
-  // Index only the two rings on the first eligible triple. Each request for a
-  // new target sum then needs at most 64 lookups, even on the complete market.
+  // With two Midnight gems the old finalist key retains both physical IDs
+  // and their positions. For a fixed target that fixes the remaining gem's
+  // rating. Use only one reachable witness per legacy rating and slot: two
+  // legacy SKUs with the same rating can have the same old finalist key.
+  const witnesses = offers.map(choices => {
+    const modern: Offer[] = [], cheapestLegacy = new Map<number, Offer>();
+    for (const [choice, offer] of choices) {
+      if (offer.modern) modern.push(offer);
+      else if (!hasOtherProof(choice) && offer.one < (cheapestLegacy.get(offer.signature)?.one ?? Infinity))
+        cheapestLegacy.set(offer.signature, offer);
+    }
+    return modern.concat([...cheapestLegacy.values()]);
+  });
+  // Index the two rings on the first eligible triple. For a new target sum,
+  // look up just the matching ring pairs for each possible necklace gem.
   let pairs: Map<number, [Offer, Offer][]> | undefined;
   const thresholds = new Map<number, number>();
   function thirdPrice(target: number) {
@@ -80,14 +97,14 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
     if (cached !== undefined) return cached;
     if (!pairs) {
       pairs = new Map();
-      for (const a of left.values()) for (const b of right.values()) {
+      for (const a of witnesses[0]) for (const b of witnesses[1]) {
         const key = a.signature + b.signature;
         const rows = pairs.get(key);
         if (rows) rows.push([a,b]); else pairs.set(key, [[a,b]]);
       }
     }
     let first = Infinity, second = Infinity, third = Infinity;
-    for (const c of necklaces.values()) {
+    for (const c of witnesses[2]) {
       const rows = pairs.get(target - c.signature);
       if (!rows) continue;
       for (const [a,b] of rows) {
@@ -106,13 +123,22 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
     return third;
   }
   return {
-    axis: Math.min(...sockets, neckEnchant < 0 ? Infinity : neckEnchant),
-    skips(selected: Choice[]) {
-      if (neckEnchant >= 0 && selected[neckEnchant].enhancement) return false;
+    axis,
+    cutAxis(selected: Choice[]) {
+      if (neckEnchant >= 0 && selected[neckEnchant].enhancement) return;
       const a = left.get(selected[sockets[0]]), b = right.get(selected[sockets[1]]), c = necklaces.get(selected[sockets[2]]);
-      if (!a || !b || !c) return false;
+      if (!a || !b || !c) return;
+      const modernCount = Number(a.modern) + Number(b.modern) + Number(c.modern);
+      if (modernCount < 2) return;
+      // Mixed purchases need both ring enchants to remain direct or absent.
+      // Include these digits in the fixed suffix when advancing the cursor.
+      if (modernCount === 2 && ringEnchants.some(axis => {
+        const enchant = selected[axis].enhancement;
+        return enchant && !isDirectRingEnchant(enchant.simulationId);
+      })) return;
       const total = price(a,b,c);
-      return Number.isSafeInteger(total) && total > thirdPrice(a.signature + b.signature + c.signature);
+      if (Number.isSafeInteger(total) && total > thirdPrice(a.signature + b.signature + c.signature))
+        return modernCount === 2 ? mixedAxis : axis;
     },
   };
 }
