@@ -137,16 +137,24 @@ function plainPrismaticHost(change: Pick<SimcGearChange, "slot" | "itemId">, opt
   return true;
 }
 
+export function hasLevel90NeckGemRatings(option: AuctionGearOption, engine: string) {
+  return option.candidate.slotType === "NECK" && ignoresItemContext(engine) &&
+    plainPrismaticHost({slot: "neck", itemId: option.candidate.itemId}, option, engine, 120);
+}
+
 export function hasLevel90RingRatings(option: AuctionGearOption, engine: string, playerLevel?: number) {
   const { slotType, itemId } = option.candidate;
   return playerLevel === 90 && ignoresItemContext(engine) && (slotType === "FINGER_1" || slotType === "FINGER_2") &&
     plainPrismaticHost({ slot: slotType === "FINGER_1" ? "finger1" : "finger2", itemId }, option, engine, 120);
 }
 
-/** Certify one ring, gem and enchant using the same host checks as the
- * independent finalist key. Other enchants keep their original native inputs. */
-export function purchasedRingGemEffect(option: AuctionGearOption, engine: string, gemId: number, enchantId: number, nativePlayerLevel?: number) {
+/** Gem substitution must pass the same host and enchant gates as the score key. */
+export function purchasedJewelryGemEffect(option: AuctionGearOption, engine: string, gemId: number, enchantId: number, nativePlayerLevel?: number) {
   const slotType = option.candidate.slotType;
+  if (slotType === "NECK") {
+    return nativePlayerLevel === 90 && enchantId === 0 && hasLevel90NeckGemRatings(option, engine)
+      ? ringGemRepresentative90(gemId) : undefined;
+  }
   if (!ignoresItemContext(engine) || (slotType !== "FINGER_1" && slotType !== "FINGER_2") ||
       enchantId !== 0 && !isDirectRingEnchant(enchantId)) return;
   const host = { slot: slotType === "FINGER_1" ? "finger1" : "finger2", itemId: option.candidate.itemId };
@@ -218,7 +226,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
-  const certifiedRings: { index: number; slot: string; ratings: number[] }[] = [];
+  const certifiedJewelry: { index: number; slot: string; ratings: number[] }[] = [];
   const gear = native?.changes.map((change, i) => {
     const option = native.options?.[i];
     const variant = option?.candidate.variants.find(row => row.key === option.variantKey);
@@ -249,17 +257,17 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
       JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? [])
       ? auctionAppliedStatsKey([option], native.engine, "enchanted-suffix") : undefined;
-    // A local purchase replaces the entire ring. These prismatic gems have
+    // A local purchase replaces the entire jewelry piece. These prismatic gems have
     // no observable name family, description tag, proc or socket bonus. Only
     // the final integer contribution changes combat. Keep the real receipt.
     const ratings = native.playerLevel === 90 && ignoresItemContext(native.engine) && sameProgram && option &&
-      (change.slot === "finger1" || change.slot === "finger2") && (change.gemIds?.length ?? 0) <= 1 &&
+      (change.slot !== "neck" || !change.enchantId) && (change.gemIds?.length ?? 0) <= 1 &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
       (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
       JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []) &&
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
-    if (ratings) certifiedRings.push({ index: i, slot: change.slot, ratings });
+    if (ratings) certifiedJewelry.push({ index: i, slot: change.slot, ratings });
     return {
       ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, curve),
@@ -269,16 +277,21 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       ...(ratings && (change.enchantId || change.gemIds?.some(Boolean)) ? { gemIds: undefined, enchantId: undefined, ringRatings90: ratings } : {}),
     };
   });
-  // item_t::total_stats adds these integer ratings before player_t sums gear.
-  // Both physical ring slots and every other field remain in the cache key.
-  if (gear && certifiedRings.length === 2) {
-    const [first, second] = certifiedRings;
-    if (first.slot !== second.slot) {
-      const sum = first.ratings.map((amount, axis) => amount + second.ratings[axis]);
+  // SimC adds these integer ratings to player gear totals. Assign their sum
+  // to one stable slot in the score key, retaining the actual hosts and order
+  // of all unrelated edits. The native request and shopping list keep each gem.
+  if (gear && certifiedJewelry.length >= 2) {
+    const slots = certifiedJewelry.map(piece => piece.slot);
+    if (new Set(slots).size === slots.length) {
+      const firstSlot = slots.sort()[0];
+      const sum = [0, 0, 0, 0];
+      for (const { ratings } of certifiedJewelry) {
+        for (const [axis, amount] of ratings.entries()) sum[axis] += amount;
+      }
       if (sum.some(Boolean)) {
-        for (const { index, slot } of certifiedRings) {
+        for (const { index, slot } of certifiedJewelry) {
           gear[index] = { ...gear[index], gemIds: undefined, enchantId: undefined,
-            ringRatings90: slot === "finger1" ? sum : [0, 0, 0, 0] };
+            ringRatings90: slot === firstSlot ? sum : [0, 0, 0, 0] };
         }
       }
     }

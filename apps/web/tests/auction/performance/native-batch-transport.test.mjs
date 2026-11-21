@@ -837,6 +837,27 @@ test('level-90 ring ratings share fights within a precision and preserve the pur
   assert.equal(run.finalistKey(a), run.finalistKey(b));
   assert.equal(run.finalistKey(a), run.finalistKey([...b].reverse()));
   assert.notEqual(run.finalistKey(a), run.finalistKey(two(8021, 0, 7965, 0)));
+  // A two-point purchased neck gem and a two-point difference in ring enchants
+  // are interchangeable even when the second ring is absent.
+  const neck = (gem, itemId = 258911) => {
+    const row = ring(gem, undefined, 'NECK');
+    row.candidate.itemId = itemId;
+    row.candidate.inventoryType = 2;
+    return row;
+  };
+  for (const slot of ['FINGER_1', 'FINGER_2']) {
+    const looseGem = [neck(115804), ring(0, 8020, slot)];
+    const higherEnchant = [ring(0, 8021, slot), neck(0)];
+    assert.equal(run.finalistKey(looseGem), run.finalistKey(higherEnchant));
+    assert.notEqual(run.finalistKey(looseGem), run.finalistKey([neck(115804, 240948), ring(0, 8020, slot)]));
+    const extraRing = ring(115805, 7964, slot === 'FINGER_1' ? 'FINGER_2' : 'FINGER_1');
+    assert.equal(run.finalistKey([...looseGem, extraRing]), run.finalistKey([extraRing, ...higherEnchant]));
+    const otherLevel = fixture({workerEngine: engine, profile: {level: 89}}).run;
+    assert.notEqual(otherLevel.finalistKey(looseGem), otherLevel.finalistKey(higherEnchant));
+    for (const rows of [looseGem, higherEnchant])
+      rows.find(row => row.candidate.slotType === 'NECK').candidate.variants[0].resolution.enhancements.socketBonusId = 1;
+    assert.notEqual(run.finalistKey(looseGem), run.finalistKey(higherEnchant));
+  }
   for (const rows of [a, b]) rows[1].candidate.variants[0].resolution.nativeNoItemEffects = false;
   assert.notEqual(run.finalistKey(a), run.finalistKey(b));
   for (const level of [89, undefined]) {

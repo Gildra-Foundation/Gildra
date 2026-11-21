@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { optimizeAuctionGearEnhancements } from '../../../lib/wow/auctionGearEnhancementOptimizer.ts';
-import { purchasedRingGemEffect } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { purchasedJewelryGemEffect } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 import { MARKET_MAX_AGE_MS } from '../../../lib/wow/auctionMarket.ts';
 import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { auctionEnhancementCatalogInfo } from '../../../lib/wow/auctionEnhancementCatalog.ts';
@@ -385,20 +385,20 @@ test('strictly cheaper certified ring gems prune whole branches only when substi
   const engine='SimulationCraft fixture · 18428cd';
   const gem = (id, flags={}) => ({key:String(id), simulationId:id, consumableItemId:id, kind:'gem', ...flags});
   const cheap=130216, dear=153711;
-  async function run({ladder=[[2,2]], restricted={}, own=false, effect=false, otherEnchant=false, legacy=false, installed=false, cheapId=cheap, dearId=dear, nativeLevel}={}) {
+  async function run({ladder=[[2,2]], restricted={}, own=false, effect=false, otherEnchant=false, legacy=false, installed=false, cheapId=cheap, dearId=dear, nativeLevel, neck=false}={}) {
     const source=stageFixture().input.finalists[0].options[0];
     const c=source.candidate, variant=c.variants[0];
     Object.assign(c,{itemClassId:4,inventoryType:11});
     Object.assign(variant.resolution,{engine,nativeNoItemEffects:!effect});
     const h=fixture({choices:[gem(cheapId,restricted),gem(dearId)],slots:2});
-    h.input.slots.forEach((slot,i)=>Object.assign(slot,{slotType:`FINGER_${i+1}`,owned:own,allowOwnedChanges:own}));
+    h.input.slots.forEach((slot,i)=>Object.assign(slot,{slotType:neck && i === 0 ? "NECK" : `FINGER_${i+1}`,owned:own,allowOwnedChanges:own}));
     if(installed) h.input.slots.push({slotType:'NECK',variantKey:'owned-neck',metadataKey:'owned-socket',owned:true,
       sockets:[{key:'0',type:'14'}],installed:{gems:[gem(cheapId,{uniqueEquipped:true})]}});
     const resolve=h.input.catalog.resolve;
     if(otherEnchant) h.input.catalog.resolve=slot=>({...resolve(slot),enchantApplicable:true,
       enchantChoices:[{key:'enchant',kind:'enchant',simulationId:5555,consumableItemId:12}]});
     h.input.prices.prices={[cheapId]:{ladder},[dearId]:{ladder:[[5,2]]},12:{ladder:[[1,10]]}};
-    h.input.purchasedGemEffect=(slot,id,enchant)=>purchasedRingGemEffect({...source,candidate:{...c,slotType:slot}},engine,id,enchant,nativeLevel);
+    h.input.purchasedGemEffect=(slot,id,enchant)=>purchasedJewelryGemEffect({...source,candidate:{...c,slotType:slot,inventoryType:slot === "NECK" ? 2 : 11}},engine,id,enchant,nativeLevel);
     h.input.simulate=async config=>measurement(1000+100*config.slots.filter(s=>s.gemIds[0]).length);
     const first=legacy ? await optimizeAuctionGearEnhancements({...h.input,purchasedGemEffect:undefined,limits:{configurations:1}}) : undefined;
     const choices=[];
@@ -416,6 +416,12 @@ test('strictly cheaper certified ring gems prune whole branches only when substi
     const trial = await run({...level90Pair, nativeLevel});
     assert.equal(trial.checkpoint.exactNextConfiguration, count);
   }
+  const neckAndRing = await run({...level90Pair, nativeLevel:90, neck:true});
+  assert.equal(neckAndRing.checkpoint.exactNextConfiguration, '4');
+  const scarce = await run({...level90Pair, nativeLevel:90, neck:true, ladder:[[2,1],[6,1]]});
+  assert.equal(scarce.checkpoint.exactNextConfiguration, '9');
+  const lowerLevel = await run({...level90Pair, nativeLevel:89, neck:true});
+  assert.equal(lowerLevel.checkpoint.exactNextConfiguration, '9');
   const costlySecondCopy = await run({...level90Pair, nativeLevel:90, ladder:[[2,1],[6,1]]});
   assert.equal(costlySecondCopy.checkpoint.exactNextConfiguration, '9');
   const mixed=await run({otherEnchant:true});

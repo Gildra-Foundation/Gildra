@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedRingGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedJewelryGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
 import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
@@ -286,7 +286,7 @@ export async function evaluateAuctionEnhancementStage(input: {
           ? ringGemRepresentative90(id) : undefined : undefined,
       purchasedGemEffect: input.pruneEquivalentRingGems ? (slot: string, id: number, enchantId: number) => {
         const host = finalist.options.find(option => option.candidate.slotType === slot);
-        return host && purchasedRingGemEffect(host, input.engine, id, enchantId, input.nativePlayerLevel);
+        return host && purchasedJewelryGemEffect(host, input.engine, id, enchantId, input.nativePlayerLevel);
       } : undefined,
       onMeasured: input.onMeasured && ((configuration: PricedEnhancementConfiguration, simulation: GearPlanSimulation) =>
         input.onMeasured!(configuration, () => describe({ configuration, simulation }))),
