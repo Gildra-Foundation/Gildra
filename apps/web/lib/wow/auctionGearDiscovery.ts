@@ -403,7 +403,10 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
       input.signal.throwIfAborted();
       acceptCatalogSummaries(state, ids, records, input.selectedSlots);
       input.onProgress?.({ phase: "catalog", completed: state.itemCursor, total: state.itemIds.length });
-    } else if (state.variantCursor < state.variantKeys.length && (!state.records.length || compareCatalogHints(
+    } else if (state.variantCursor < state.variantKeys.length &&
+      // After the first comparison, collect a full reference window when more details are ready.
+      (!paired || !state.records.length || state.variantKeys.length - state.variantCursor >= detailBatch) &&
+      (!state.records.length || compareCatalogHints(
       state.catalogHints?.get(state.offers.get(state.variantKeys[state.variantCursor])?.[0]?.itemId ?? 0),
       state.catalogHints?.get(state.records[0].externalId), input.characterLevel) <= 0)) {
       // Each candidate may also need an exact reference control.
