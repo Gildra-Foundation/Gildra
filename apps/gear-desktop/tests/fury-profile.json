@@ -1,0 +1,378 @@
+{
+  "spec": "fury-warrior",
+  "scenario": "single-target",
+  "fightLengthSeconds": 30,
+  "targets": 1,
+  "actionListMode": "native",
+  "rules": [],
+  "talentLoadout": "CgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgGDzMmZ2MzMzMDjZmZGzMzsMzMmZmZzYmBAAixy2ALgJYGmAzwGwMDjNAAYmhxYYMYM",
+  "armory": {
+    "profile": {
+      "name": "GildraReleaseSmoke",
+      "level": 90,
+      "character_class": {
+        "id": 1
+      },
+      "race": {
+        "id": 3
+      },
+      "realm": {
+        "name": "Synthetic"
+      },
+      "active_spec": {
+        "id": 72
+      },
+      "specializations": {
+        "href": "local"
+      },
+      "equipment": {
+        "href": "local"
+      }
+    },
+    "specializations": {
+      "active_specialization": {
+        "id": 72
+      },
+      "specializations": []
+    },
+    "equipment": {
+      "equipped_items": [
+        {
+          "item": {
+            "id": 271456
+          },
+          "slot": {
+            "type": "HEAD"
+          },
+          "bonus_list": [
+            12854,
+            13335,
+            13750
+          ],
+          "sockets": [
+            {
+              "item": {
+                "id": 240967
+              }
+            }
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 7961,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 268265
+          },
+          "slot": {
+            "type": "NECK"
+          },
+          "bonus_list": [
+            13335,
+            13848,
+            13987
+          ],
+          "sockets": [
+            {
+              "item": {
+                "id": 240918
+              }
+            },
+            {
+              "item": {
+                "id": 240892
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 271454
+          },
+          "slot": {
+            "type": "SHOULDER"
+          },
+          "bonus_list": [
+            12854,
+            13335
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 8001,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 268253
+          },
+          "slot": {
+            "type": "BACK"
+          },
+          "bonus_list": [
+            13335,
+            13848
+          ]
+        },
+        {
+          "item": {
+            "id": 271459
+          },
+          "slot": {
+            "type": "CHEST"
+          },
+          "bonus_list": [
+            13335,
+            13848
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 7987,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 237834
+          },
+          "slot": {
+            "type": "WRIST"
+          },
+          "bonus_list": [
+            8793,
+            8960,
+            12384,
+            13750,
+            13751,
+            13836,
+            12497
+          ],
+          "sockets": [
+            {
+              "item": {
+                "id": 240908
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 271457
+          },
+          "slot": {
+            "type": "HANDS"
+          },
+          "bonus_list": [
+            12854,
+            13335
+          ]
+        },
+        {
+          "item": {
+            "id": 268259
+          },
+          "slot": {
+            "type": "WAIST"
+          },
+          "bonus_list": [
+            13335,
+            13750,
+            13848
+          ],
+          "sockets": [
+            {
+              "item": {
+                "id": 240900
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 271878
+          },
+          "slot": {
+            "type": "LEGS"
+          },
+          "bonus_list": [
+            13335,
+            13708,
+            13848
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 8163,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 268260
+          },
+          "slot": {
+            "type": "FEET"
+          },
+          "bonus_list": [
+            12854,
+            13335
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 7963,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 159459
+          },
+          "slot": {
+            "type": "FINGER_1"
+          },
+          "bonus_list": [
+            12854,
+            12854,
+            13440
+          ],
+          "sockets": [
+            {
+              "item": {
+                "id": 240900
+              }
+            }
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 7967,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 252258
+          },
+          "slot": {
+            "type": "FINGER_2"
+          },
+          "bonus_list": [
+            12854,
+            12854,
+            13440
+          ],
+          "sockets": [
+            {
+              "item": {
+                "id": 240900
+              }
+            }
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 7967,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 270175
+          },
+          "slot": {
+            "type": "TRINKET_1"
+          },
+          "bonus_list": [
+            13335,
+            13848
+          ]
+        },
+        {
+          "item": {
+            "id": 270173
+          },
+          "slot": {
+            "type": "TRINKET_2"
+          },
+          "bonus_list": [
+            13335,
+            13848
+          ]
+        },
+        {
+          "item": {
+            "id": 268213
+          },
+          "slot": {
+            "type": "MAIN_HAND"
+          },
+          "bonus_list": [
+            13335,
+            13848
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 8689,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        },
+        {
+          "item": {
+            "id": 237847
+          },
+          "slot": {
+            "type": "OFF_HAND"
+          },
+          "bonus_list": [
+            8793,
+            8960,
+            13751,
+            13771,
+            13836,
+            12497
+          ],
+          "enchantments": [
+            {
+              "enchantment_id": 8689,
+              "enchantment_slot": {
+                "id": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "gearChange": {
+    "slot": "head",
+    "itemId": 271456,
+    "bonusIds": [
+      12854,
+      13335,
+      13750
+    ]
+  }
+}

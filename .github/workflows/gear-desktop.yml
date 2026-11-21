@@ -1,0 +1,66 @@
+name: Gildra Gear for Windows
+on:
+  push:
+    branches: [desktop/gear-planner-windows]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.27.1'
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.404'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22.23.5'
+      - name: Fetch pinned toolchain, SimulationCraft and Node for Windows
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl --fail --location --retry 3 -o mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20261117/llvm-mingw-20261117-ucrt-ubuntu-22.04-x86_64.tar.xz
+          curl --fail --location --retry 3 -o node.zip https://nodejs.org/dist/v22.23.5/node-v22.23.5-win-x64.zip
+          echo 'e7a15a49a2ea95e9f3d8a9d0cfabe5052a4b10fb4777cc54de5a8c27b64bb701  mingw.tar.xz' | sha256sum -c -
+          echo '4a191082e9706866830379d577d2cc8a50c776fcd9436a8d061b063ed0d9a0e3  node.zip' | sha256sum -c -
+          mkdir mingw simc
+          tar xf mingw.tar.xz --strip-components=1 -C mingw
+          unzip -q node.zip
+          git -C simc init -q
+          git -C simc fetch --depth=1 https://github.com/simulationcraft/simc.git 18428cd3902412abc8ee274d19567d603e674e66
+          git -C simc checkout --detach FETCH_HEAD
+      - name: Build portable x64 application
+        env:
+          SIMC_DIR: ${{ runner.temp }}/simc
+          NODE_WIN_DIR: ${{ runner.temp }}/node-v22.23.5-win-x64
+          MINGW_CXX: ${{ runner.temp }}/mingw/bin/x86_64-w64-mingw32-clang++
+          GEAR_DIST: ${{ runner.temp }}/portable
+        run: bash apps/gear-desktop/build-linux.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Gildra-Gear-Windows-x64
+          path: ${{ runner.temp }}/portable/
+          if-no-files-found: error
+  windows:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: Gildra-Gear-Windows-x64
+          path: ${{ runner.temp }}/Gildra Gear
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22.23.5'
+      - name: Test both calculation modes and the native overlay
+        shell: pwsh
+        run: |
+          npm install --prefix "$env:RUNNER_TEMP/driver" --no-save --no-audit --no-fund playwright-core@1.62.1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./apps/gear-desktop/tests/windows-smoke.ps1 -AppDir "$env:RUNNER_TEMP/Gildra Gear"

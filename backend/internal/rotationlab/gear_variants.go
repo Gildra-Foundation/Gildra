@@ -246,7 +246,8 @@ func (e *SimCEngine) runVariantBatch(ctx context.Context, input GearVariantReque
 	if err = os.WriteFile(path, []byte(profile.String()), 0600); err != nil {
 		return GearVariantResponse{}, err
 	}
-	cmd := exec.CommandContext(ctx, e.binary, path, "iterations=1", "threads=1", "max_time=1", "fixed_time=1", "vary_combat_length=0", "optimal_raid=0", "desired_targets=1", "report_details=1", "json2="+report)
+	cmd := exec.CommandContext(ctx, e.binary, filepath.Base(path), "iterations=1", "threads=1", "max_time=1", "fixed_time=1", "vary_combat_length=0", "optimal_raid=0", "desired_targets=1", "report_details=1", "json2="+filepath.Base(report))
+	hideSimCWindow(cmd)
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "GILDRA_VARIANT_REPORT_SLOTS="+strings.Join(slots, ","))
 	var output bytes.Buffer

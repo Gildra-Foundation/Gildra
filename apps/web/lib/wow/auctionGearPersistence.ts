@@ -40,6 +40,8 @@ function directory() {
   return value;
 }
 function syncDirectory(dir: string) {
+  // Windows cannot open directories through Node. The replacement file was already flushed.
+  if (process.platform === "win32") return;
   const fd = openSync(dir, "r");
   try { fsyncSync(fd); } finally { closeSync(fd); }
 }
@@ -179,8 +181,10 @@ export async function writeAuctionStateAsync(kind: Kind, id: string, expiresAt: 
     // never overwrite a newer synchronous write or resurrect a deleted search.
     if (!existsSync(key)) throw new Error();
     renameSync(temporary, key);
-    const directoryHandle = await open(dir, "r");
-    try { await directoryHandle.sync(); } finally { await directoryHandle.close(); }
+    if (process.platform !== "win32") {
+      const directoryHandle = await open(dir, "r");
+      try { await directoryHandle.sync(); } finally { await directoryHandle.close(); }
+    }
     return true;
   } catch {
     throw new Error("auction_storage_unavailable");

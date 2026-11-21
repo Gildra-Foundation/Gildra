@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -63,7 +64,7 @@ func NewSimCEngine(binary, profile string, iterations int) (*SimCEngine, error) 
 	if iterations <= 0 || iterations > 10_000 {
 		return nil, errors.New("SimulationCraft iterations must be between 1 and 10000")
 	}
-	if info, err := os.Stat(binary); err != nil || info.IsDir() || info.Mode()&0o111 == 0 {
+	if info, err := os.Stat(binary); err != nil || info.IsDir() || (runtime.GOOS != "windows" && info.Mode()&0o111 == 0) {
 		return nil, fmt.Errorf("SimulationCraft binary is not executable: %s", binary)
 	}
 	if profile != "" {
@@ -200,7 +201,12 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 	if err != nil {
 		return nil, err
 	}
-	args := e.arguments(input, reportPath, profilePath)
+	reportArgument := reportPath
+	if filepath.Dir(profilePath) == tempDir {
+		// SimulationCraft separates JSON options with commas, including on Windows.
+		reportArgument = filepath.Base(reportPath)
+	}
+	args := e.arguments(input, reportArgument, filepath.Base(profilePath))
 	if len(candidates) > 0 {
 		args = append(args, candidates[0].ownedLines...)
 	}
@@ -222,6 +228,7 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 		}
 	}
 	command := exec.CommandContext(runCtx, e.binary, args...)
+	hideSimCWindow(command)
 	command.Dir = filepath.Dir(profilePath)
 	if len(candidates) > 1 {
 		// The pinned native build validates each profileset on its simulation instance.
@@ -262,7 +269,7 @@ func (e *SimCEngine) profileForInput(input SimulationInput, tempDir string) (str
 		}
 		path := filepath.Join(tempDir, "armory.simc")
 		// https://github.com/simulationcraft/simc/wiki/Characters#loading-characters-from-local-json-files
-		profile := fmt.Sprintf("local_json=%s,spec=%s,equipment=%s\n", mainPath, specPath, equipmentPath)
+		profile := "local_json=character.json,spec=specializations.json,equipment=equipment.json\n"
 		if input.GearChange != nil {
 			profile += serializeGearChange(*input.GearChange) + "\n"
 		}

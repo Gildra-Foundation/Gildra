@@ -1,0 +1,6 @@
+{
+  "name": "gildra-gear-desktop-bundler",
+  "private": true,
+  "type": "module",
+  "devDependencies": { "esbuild": "0.25.12" }
+}
