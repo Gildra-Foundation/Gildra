@@ -246,6 +246,29 @@ test('an enchanted piece shares item context only when the engine ignores it and
   }
 });
 
+test('queued armor alternatives share packets while each caller receives its own worker result', async () => {
+  const sockets = [{ socket_type: { type: 'PRISMATIC' } }];
+  const equipment = { equipped_items: [{ slot: { type: 'FEET' }, item: { id: 10 }, sockets }] };
+  const { run, state, finishFrom } = fixture({ ownedBatch: true, equipment });
+  const shared = signal();
+  state.batch = '5';
+  await run.concurrency(shared);
+  const blockers = Promise.all([run([option(198)], shared), run([option(199)], shared)]);
+  await tick();
+  const enchants = [7962, 7963, 7992, 7993, 8018, 8019, 7962, 7992];
+  const measured = Promise.all(enchants.map((enchantId, i) => {
+    const gems = i >= 6 ? [{ index: 0, itemId: 500 }] : [];
+    return run([], shared, [{ slotType: 'FEET', itemId: 10, enchantId, gems }], 'finalist');
+  }));
+  await tick();
+  assert.equal(state.requests.length, 2);
+  await finishFrom(0);
+  await blockers;
+  assert.deepEqual(state.requests.slice(2).map(r => r.ids), [[7962, 7992, 8018, 500, 500], [7963, 7993, 8019]]);
+  assert.deepEqual((await measured).map(row => row.dps), enchants.map((id, i) => (i >= 6 ? 500 : id) + 0.25));
+  assert.equal(state.peak, 2);
+});
+
 test('first native candidate starts immediately, then two lanes share profilesets and return exact cached rows', async () => {
   const { state, run, finishFrom } = fixture();
   assert.equal(run.batchSize, 0);

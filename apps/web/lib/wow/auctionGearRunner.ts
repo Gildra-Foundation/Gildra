@@ -1155,13 +1155,53 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   });
 }
 
-type AuctionNativeBase = { precision: string; armory: object };
+type AuctionNativeBase = { precision: string; armory: object; spec: string };
 type AuctionNativeChanges = ReturnType<typeof prepareGearLoadout>["changes"];
 type AuctionNativeJob = {
   base: AuctionNativeBase; changes: AuctionNativeChanges; group?: string; signal: AbortSignal;
   ownedBatch?: { base: AuctionNativeBase; changes: readonly OwnedAuctionGearChange[] };
   resolve: (result: unknown) => void; reject: (error: unknown) => void; checkGroupAbort?: () => void;
 };
+
+function selectNativeBatchPeers(first: AuctionNativeJob, compatible: AuctionNativeJob[], room: number) {
+  if (room <= 0) return [];
+  const armorSlots = ["FEET", "HEAD", "SHOULDER"];
+  if (compatible.length <= room || (first.base.spec !== "fury-warrior" && first.base.spec !== "fire-mage") ||
+      !first.ownedBatch?.changes.some(edit => armorSlots.includes(edit.slotType))) {
+    return compatible.slice(0, room);
+  }
+  // Pack similar owned armor edits together so the worker can test equivalence
+  // within a packet. This ordering hint never substitutes a physical edit.
+  const cohort = (job: AuctionNativeJob) => JSON.stringify([job.changes, job.ownedBatch?.changes.map(edit => {
+    if (edit.enchantId && armorSlots.includes(edit.slotType)) {
+      // The two boot ranks can carry different stamina.
+      return [edit.slotType, edit.itemId, edit.gems, edit.slotType === "FEET" ? edit.enchantId % 2 : 0];
+    }
+    return edit;
+  })]);
+  const groups = new Map<string, AuctionNativeJob[]>([[cohort(first), []]]);
+  for (const job of compatible) {
+    const key = cohort(job);
+    const group = groups.get(key);
+    if (group) group.push(job);
+    else groups.set(key, [job]);
+  }
+  const [peers, ...others] = groups.values();
+  if (peers.length >= room) return peers.slice(0, room);
+  // Find a full packet of whole cohorts, always including the oldest row
+  // and its peers. There are at most 24 places left in a native packet.
+  const remaining = room - peers.length;
+  const fills: (AuctionNativeJob[] | undefined)[] = new Array(remaining + 1);
+  fills[0] = [];
+  for (const group of others) {
+    for (let size = remaining; size >= group.length; size--) {
+      const prefix = fills[size - group.length];
+      if (prefix && !fills[size]) fills[size] = [...prefix, ...group];
+    }
+    if (fills[remaining]) return peers.concat(fills[remaining]);
+  }
+  return peers.concat(others.flat()).slice(0, room);
+}
 
 function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
@@ -1193,7 +1233,8 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
           // requests measure the cost of a finalist on this transport.
           const timeLimit = first.base.precision === "auction-finalist"
             ? Math.max(1, Math.min(finalistTimeoutCap, Math.floor(0.7 * requestDeadlineMs / finalistMsPerRow))) : Infinity;
-          for (const job of compatible.slice(0, Math.min(batchSize, limit, timeLimit) - 1)) {
+          const room = Math.min(batchSize, limit, timeLimit) - 1;
+          for (const job of selectNativeBatchPeers(first, compatible, room)) {
             jobs.push(job);
             pending.splice(pending.indexOf(job), 1);
           }
