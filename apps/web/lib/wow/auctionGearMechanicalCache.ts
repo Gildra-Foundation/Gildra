@@ -219,10 +219,35 @@ function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: 
   return a === Math.min(first, second) && b === Math.max(first, second) ? [] : [a, b];
 }
 
+/** Two explicit replacements remove the same installed data. The remaining
+ * stats are integer player-level ratings. A retained socket or ring enchant
+ * can carry instance data and must keep its original score key. */
+function explicitOwnedJewelry(owned: readonly OwnedAuctionGearChange[], hosts: ReadonlyMap<string, number>,
+  purchased: readonly SimcGearChange[], removed: readonly string[] | undefined) {
+  if (new Set(owned.map(edit => edit.slotType)).size !== owned.length) return;
+  const ratings = [0, 0, 0, 0];
+  let changed = false;
+  const edits = owned.map(edit => {
+    const ring = edit.slotType === "FINGER_1" || edit.slotType === "FINGER_2";
+    if ((!ring && edit.slotType !== "NECK") || hosts.get(edit.slotType) !== edit.itemId ||
+        removed?.includes(edit.slotType) || purchased.some(c => jewelrySlots[c.slot] === edit.slotType) ||
+        edit.gems.length !== 1 || edit.gems[0].index !== 0 || !edit.gems[0].itemId ||
+        (ring ? !edit.enchantId : edit.enchantId !== undefined)) return edit;
+    const contribution = combinedRingRatings90(edit.enchantId ?? 0, edit.gems[0].itemId);
+    if (!contribution) return edit;
+    for (const [index, amount] of contribution.entries()) ratings[index] += amount;
+    changed = true;
+    // Zeroes are placeholders only in the hash. Keep the physical hosts,
+    // socket position and every unrelated edit in the comparison.
+    return { ...edit, enchantId: edit.enchantId === undefined ? undefined : 0, gems: [{ ...edit.gems[0], itemId: 0 }] };
+  });
+  return changed ? { edits, ratings } : undefined;
+}
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing] }) {
+}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number> }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
@@ -279,14 +304,16 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       ...(ratings && (change.enchantId || change.gemIds?.some(Boolean)) ? { gemIds: undefined, enchantId: undefined, ringRatings90: ratings } : {}),
     };
   });
-  // SimC adds these integer ratings to player gear totals. Assign their sum
-  // to one stable slot in the score key, retaining the actual hosts and order
-  // of all unrelated edits. The native request and shopping list keep each gem.
-  if (gear && certifiedJewelry.length >= 2) {
+  const jewelry = request.precision === "finalist" && native?.playerLevel === 90 && native.wornPrismatic?.size &&
+    ignoresItemContext(native.engine) && request.ownedChanges?.length
+    ? explicitOwnedJewelry(request.ownedChanges, native.wornPrismatic, native.changes, request.removedSlots) : undefined;
+  // Assign the total to one stable field. Keep the original purchased-only
+  // key when there are no qualifying worn edits so saved scores still match.
+  if (gear && (jewelry || certifiedJewelry.length >= 2)) {
     const slots = certifiedJewelry.map(piece => piece.slot);
     if (new Set(slots).size === slots.length) {
-      const firstSlot = slots.sort()[0];
-      const sum = [0, 0, 0, 0];
+      const firstSlot = jewelry ? undefined : slots.sort()[0];
+      const sum = jewelry?.ratings ?? [0, 0, 0, 0];
       for (const { ratings } of certifiedJewelry) {
         for (const [axis, amount] of ratings.entries()) sum[axis] += amount;
       }
@@ -300,7 +327,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   }
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
-  let ownedChanges = request.ownedChanges;
+  let ownedChanges = jewelry?.edits ?? request.ownedChanges;
   let ringEnchants: number[] | undefined;
   if (reuseCandidateInputs && ownedChanges?.length) {
     if (native.wornRings && !native.changes.some(item => item.slot === "finger1" || item.slot === "finger2"))
@@ -320,7 +347,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     ownedChanges = edits.length ? edits : undefined;
   }
   const changes = (gear ?? request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
-  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
+  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, explicitJewelryRatings90: jewelry?.ratings, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
     actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 

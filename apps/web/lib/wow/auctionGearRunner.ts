@@ -1044,6 +1044,19 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (permanent.length <= 1 && typeof enchantId === "number" && Number.isSafeInteger(enchantId) && enchantId >= 0)
       return {itemId: Number(ring.item.id), enchantId};
   };
+  const wornPrismatic = new Map<string, number>();
+  if (armory.profile?.level === 90) for (const slot of ["FINGER_1", "FINGER_2", "NECK"]) {
+    const item = itemInSlot(slot);
+    if (item?.inventory_type?.type !== (slot === "NECK" ? "NECK" : "FINGER") || item.item_class?.id !== 4 ||
+        !Number.isSafeInteger(item.item?.id) || item.item.id <= 0 || !Number.isSafeInteger(item.level?.value) ||
+        item.level.value < 120 || !Array.isArray(item.sockets) || item.sockets.length !== 1 ||
+        item.sockets[0]?.socket_type?.type !== "PRISMATIC") continue;
+    // A neck enchant can change the behavior of its gem. Ring comparisons
+    // below require an explicit replacement of both the gem and the enchant.
+    if (slot === "NECK" && !(item.enchantments === undefined ||
+        Array.isArray(item.enchantments) && item.enchantments.length === 0)) continue;
+    wornPrismatic.set(slot, item.item.id);
+  }
   const firstRing = wornRing("FINGER_1"), secondRing = wornRing("FINGER_2");
   const wornRings = firstRing && secondRing ? [firstRing, secondRing] as const : undefined;
   const fingerprint = auctionGearProfileFingerprint(armory);
@@ -1059,7 +1072,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings });
+    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic });
     return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>

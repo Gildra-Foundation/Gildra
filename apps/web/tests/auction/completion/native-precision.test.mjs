@@ -18,7 +18,7 @@ const wires=process.env.GILDRA_NATIVE_PRECISION_REPORT
  ? JSON.parse(readFileSync(process.env.GILDRA_NATIVE_PRECISION_REPORT,"utf8"))
  : rawMean.map(dpsMean=>({dps:Math.round(dpsMean),dpsMean,dpsError:standardError,confidence:95,iterations:750,engine}));
 const option={id:"1:WRIST:base",auctionId:1,quantity:1,costCopper:320000,variantKey:"base",candidate:{itemId:1001,name:"Synthetic boundary wrist",slotType:"WRIST",inventoryType:9,itemClassId:4,itemSubclassId:4,eligible:true,compatibility:{specId:72},constraints:{uniqueEquipped:false},variants:[{key:"base",itemLevel:197,bonusIds:[],contextId:0}]}};
-function simulator(response){
+function simulator(response, {equipped=[], level, verifiedEngine=wires[0].engine}={}){
  const source=readFileSync(new URL("../../../lib/wow/auctionGearRunner.ts",import.meta.url),"utf8");
  const body=stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")),{mode:"strip"});
  let calls=0;
@@ -27,7 +27,7 @@ function simulator(response){
   fetch:async(_url,request)=>{calls++;const selection=JSON.parse(request.body).gearChanges?.length?1:0;
    return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection,JSON.parse(request.body))};}
  });
- const run=create({armory:{equipment:{equipped_items:[]},profile:{id:1},specializations:{},activeTalentLoadout:"explicit-talents"},loadout:[],specId:72,specSlug:"fury-warrior",scenario:"single-target",encounter:{fightLengthSeconds:120,targets:1},market:{sourceUpdatedAt:new Date().toISOString()},engine:()=>wires[0].engine});
+ const run=create({armory:{equipment:{equipped_items:equipped},profile:{id:1,level},specializations:{},activeTalentLoadout:"explicit-talents"},loadout:[],specId:72,specSlug:"fury-warrior",scenario:"single-target",encounter:{fightLengthSeconds:120,targets:1},market:{sourceUpdatedAt:new Date().toISOString()},engine:()=>verifiedEngine});
  return {run,calls:()=>calls};
 }
 const input=simulate=>({searchId:"precision-boundary",objective:"value",budgetCopper:320000,options:[option],selectedSlots:["WRIST"],loadout:[],specId:72,market:{sourceUpdatedAt:new Date().toISOString()},signal:new AbortController().signal,simulate});
@@ -91,4 +91,43 @@ test("finalist precision travels to the worker and never shares a cache entry wi
  assert.equal((await run([option],signal,[],"finalist")).iterations,750);
  assert.equal((await run([option],signal)).iterations,100);
  assert.equal(calls(),2);
+});
+
+test('finalist keys share equal explicit worn jewelry ratings while preserving the edited hosts and other equipment', () => {
+ const slots=['FINGER_1','FINGER_2','NECK'];
+ const equipped=slots.map((slot,i)=>({slot:{type:slot},item:{id:100+i},item_class:{id:4},level:{value:300},
+   inventory_type:{type:slot==='NECK'?'NECK':'FINGER'},sockets:[{socket_type:{type:'PRISMATIC'}}]}));
+ const build=(enchant1,gem1,enchant2,gem2,neck)=>[gem1,gem2,neck].map((id,i)=>({
+   slotType:slots[i],itemId:100+i,gems:[{index:0,itemId:id}],...(i<2?{enchantId:i===0?enchant1:enchant2}:{})
+ }));
+ const before=build(8020,115804,7994,130220,130216);
+ const after=build(7994,130216,8020,130216,130216);
+ const keyFor=(options={})=>simulator(null,{equipped,level:90,verifiedEngine:'SimulationCraft fixture · 18428cd',...options}).run.finalistKey;
+ const key=keyFor();
+ assert.equal(key([],before),key([],after));
+ assert.notEqual(key([],before),key([],build(7994,130216,8020,130216,130215)));
+ const other={slotType:'CHEST',itemId:829,gems:[],enchantId:7984};
+ assert.notEqual(key([],before),key([],[...after,other]));
+ for(const change of [edit=>{delete edit.enchantId;},edit=>{edit.enchantId=7967;},
+   edit=>{edit.gems=[];},edit=>{edit.gems[0].index=1;},edit=>{edit.itemId++;},
+   edit=>{edit.gems[0].itemId=240894;}]) {
+   const lhs=structuredClone(before),rhs=structuredClone(after);
+   change(lhs[0]);change(rhs[0]);
+   assert.notEqual(key([],lhs),key([],rhs));
+ }
+ for(const override of [{level:89},{verifiedEngine:'SimulationCraft unrecognized'},
+   ...[i=>{i.sockets.push(i.sockets[0]);},i=>{i.sockets[0].socket_type.type='RED';},
+     i=>{i.inventory_type.type='TRINKET';},i=>{i.level.value=119;},i=>{i.item_class.id=2;}]
+     .map(change=>{const items=structuredClone(equipped);change(items[0]);return {equipped:items};}),
+   {equipped:[...equipped,equipped[0]]}]) {
+   const unverified=keyFor(override);
+   assert.notEqual(unverified([],before),unverified([],after));
+ }
+ const swapNeck=build(7994,115804,8020,130216,130220);
+ assert.equal(key([],before),key([],swapNeck));
+ const enchantedNeck=structuredClone(equipped);
+ enchantedNeck[2].enchantments=[{enchantment_id:5439,enchantment_slot:{id:0}}];
+ const uncertain=keyFor({equipped:enchantedNeck});
+ assert.notEqual(uncertain([],before),uncertain([],swapNeck));
+ assert.deepEqual(before,build(8020,115804,7994,130220,130216));
 });
