@@ -234,7 +234,7 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const iterator = createAuctionGearEnhancedLoadoutIterator({ options: input.options,
     engine: !input.state || input.state.cursor?.nativeLotGroups ? input.engine : undefined,
     nativeLotGroups: input.state?.cursor?.nativeLotGroups ?? (!input.state && input.trackBareEquipment &&
-      input.recheck && input.recheckBaseline && input.finalistKey && input.baseline.iterations === 100 ? 4 : undefined), selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
+      input.recheck && input.recheckBaseline && input.finalistKey && input.baseline.iterations === 100 ? 5 : undefined), selectedSlots: input.selectedSlots ?? [...auctionGearSlots],
     loadout: input.loadout, equipment: input.equipment, specId: input.specId, budgetCopper: input.budgetCopper });
   const aliases = input.recheck ? finalistAliases(input.options, input.engine) : undefined;
   const valueBaseline = input.recheck && input.baseline.iterations === 100 ? input.baseline : undefined;

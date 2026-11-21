@@ -315,17 +315,19 @@ test('verified drop curves keep both ring receipts and enhancement domains acros
   assert.equal(create(input).totalAssignments, '12');
 });
 
-test('a cheaper tuning cap purchase covers only the same equipment and enhancement inputs', async () => {
- const engine='SimulationCraft fixture · 18428cd';
- function lot(id,slot,cost,tuning,quantity=1) {
+const cappedFixtureEngine = 'SimulationCraft fixture · 18428cd';
+function cappedLot(id,slot,cost,tuning,quantity=1) {
   const o=option(id,slot,cost,{quantity});o.candidate.itemId=41116;
   const v=o.candidate.variants[0];v.key=o.variantKey='native-'+tuning;
   Object.assign(v,{bonusIds:[13663,13900],modifiers:[{type:9,value:90},{type:28,value:tuning}],
-   resolution:{engine,metadataVersion:3,nativeNoItemEffects:true,nativeContentTuningV1:[tuning,90],
+   resolution:{engine:cappedFixtureEngine,metadataVersion:3,nativeNoItemEffects:true,nativeContentTuningV1:[tuning,90],
     nativeArmorCurveV1:[90,tuning,100],enhancements:{status:'verified',socketCount:0,socketColors:[0,0,0],socketBonusId:0}}});
   return o;
  }
- const offers=[lot(1,'HEAD',20,101), lot(2,'HEAD',10,102), lot(3,'HEAD',10,103)];
+
+test('a cheaper tuning cap purchase covers only the same equipment and enhancement inputs', async () => {
+ const engine=cappedFixtureEngine;
+ const offers=[cappedLot(1,'HEAD',20,101), cappedLot(2,'HEAD',10,102), cappedLot(3,'HEAD',10,103)];
  const input={...base(offers),engine,nativeLotGroups:4},prior={...input,nativeLotGroups:3};
  const first=await create(prior).nextBatch(create(prior).initialState(),{maxAssignments:1,maxResults:1,signal:signal()});
  await assert.rejects(create(input).nextBatch(first.state,{maxAssignments:1,maxResults:1,signal:signal()}),/invalid_search_checkpoint/);
@@ -342,7 +344,7 @@ test('a cheaper tuning cap purchase covers only the same equipment and enhanceme
   assert.equal(create(modified).totalAssignments,'4');
  }
  const hands=['MAIN_HAND','OFF_HAND'];
- const make=(lots)=>({...base(hands.flatMap(slot=>lots.map(([id,p,t,q])=>lot(id,slot,p,t,q))),hands),engine,nativeLotGroups:4});
+ const make=(lots)=>({...base(hands.flatMap(slot=>lots.map(([id,p,t,q])=>cappedLot(id,slot,p,t,q))),hands),engine,nativeLotGroups:4});
  // A single expensive auction can equip both hands only when it has a stack.
  // A single cheap unit must also be reserved for whichever hand buys it.
  assert.equal(create(make([[1,7,101,1],[2,10,102,1]])).totalAssignments,'9');
@@ -355,4 +357,49 @@ test('a cheaper tuning cap purchase covers only the same equipment and enhanceme
    map[k]=Math.min(map[k]??Infinity,row.spentCopper);return map;},{});
   assert.deepEqual(costs(current.rows),costs(old.rows));
  }
+});
+
+
+test('ordered hand receipts keep every cheapest physical tie across shared stacks and budgets', async () => {
+  const slots = ['MAIN_HAND', 'OFF_HAND'];
+  const owned = [{slotType:'MAIN_HAND', itemId:1234, inventoryType:13, itemSubclassId:7}];
+  const limits = {maxAssignments:2, maxResults:1};
+  for (const [prices, quantities] of [
+    [[7, 8, 10], [1, 1, 1]],
+    [[7, 7, 10], [1, 1, 1]],
+    [[7, 8, 10], [1, 1, 2]],
+    [[7, 8, 15], [1, 1, 2]],
+  ]) {
+    const options = slots.flatMap(slot => prices.map((price, i) => cappedLot(i+1, slot, price, 101+i, quantities[i])));
+    const fixed = option(99, 'OFF_HAND', 1);
+    options.push(fixed);
+    const input = {...base(options,slots,owned), engine:cappedFixtureEngine, nativeLotGroups:5};
+    const prior = create({...input, nativeLotGroups:4}), current = create(input);
+    const partial = await prior.nextBatch(prior.initialState(), {...limits, signal:signal()});
+    await assert.rejects(current.nextBatch(partial.state, {...limits, signal:signal()}), /invalid_search_checkpoint/);
+    assert.deepEqual(current.equivalentSingles('3:MAIN_HAND').map(o=>o.auctionId).sort(), [1,2,3]);
+
+    // Independently enumerate the full physical market and keep every receipt
+    // at the minimum cost for its ordered pair of verified native effects.
+    const physical = (await all({...input, nativeLotGroups:3})).rows;
+    const shape = row => row.options.map(o => o.candidate.slotType + '=' + o.candidate.itemId).join('|');
+    const cheapest = new Map();
+    for (const row of physical) cheapest.set(shape(row), Math.min(cheapest.get(shape(row)) ?? Infinity, row.spentCopper));
+    const frontier = physical.filter(row => row.spentCopper === cheapest.get(shape(row)));
+    for (const budget of new Set(physical.flatMap(row=>[row.spentCopper, Math.max(0,row.spentCopper-1)]))) {
+      const {rows} = await all({...input, budgetCopper:budget}, limits);
+      const receipt = row => JSON.stringify([row.options.map(o=>o.id),row.spentCopper]);
+      assert.deepEqual(rows.map(receipt).sort(), frontier.filter(row=>row.spentCopper<=budget).map(receipt).sort());
+    }
+    const pairs = frontier.filter(row=>row.options.length===2 && row.options.every(o=>o!==fixed)).map(key);
+    if (quantities[2]===2) assert(pairs.includes('3:MAIN_HAND|3:OFF_HAND'));
+    if (quantities[2]===1 || prices[2]===15) {
+      assert(pairs.includes('1:MAIN_HAND|2:OFF_HAND'));
+      assert(pairs.includes('1:OFF_HAND|2:MAIN_HAND'));
+    }
+    const uncertain = structuredClone(input);
+    for (const o of uncertain.options.filter(o=>o.auctionId===3)) o.candidate.variants[0].resolution.nativeNoItemEffects=false;
+    assert.deepEqual(create(uncertain).equivalentSingles('3:MAIN_HAND').map(o=>o.auctionId),[3]);
+    assert((await all(uncertain)).rows.some(r=>r.options.length===1 && r.options[0].auctionId===3));
+  }
 });

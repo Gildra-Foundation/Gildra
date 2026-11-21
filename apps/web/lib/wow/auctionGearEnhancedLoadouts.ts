@@ -10,7 +10,7 @@ import type { AuctionGearOption } from "./auctionGearTypes";
 export type AuctionGearEnhancedLoadoutInput = {
   loadout: GearLoadoutItem[];
   engine?: string;
-  nativeLotGroups?: 1 | 2 | 3 | 4;
+  nativeLotGroups?: 1 | 2 | 3 | 4 | 5;
   equipment: Record<string, unknown>;
   specId: number;
   options: AuctionGearOption[];
@@ -20,7 +20,7 @@ export type AuctionGearEnhancedLoadoutInput = {
 /** Points to the next complete assignment. Decimal strings keep large domains exact. */
 export type AuctionGearEnhancedLoadoutState = {
   version: 2;
-  nativeLotGroups?: 1 | 2 | 3 | 4;
+  nativeLotGroups?: 1 | 2 | 3 | 4 | 5;
   inputKey: string;
   cursor: number[];
   exhausted: boolean;
@@ -117,7 +117,7 @@ function cappedEquipmentKey(option: AuctionGearOption, engine: string) {
   return JSON.stringify([alias, variant.bonusIds, variant.modifiers?.filter(m => m.type !== 28), proof]);
 }
 
-function cheaperCappedLots(axes: AuctionEffectGroup[][], engine: string) {
+function cheaperCappedLots(axes: AuctionEffectGroup[][], engine: string, handFamilies?: Map<AuctionEffectGroup, AuctionEffectGroup>) {
   const slotsByItem = new Map<number, Set<string>>();
   const lots = new Map<number, AuctionGearOption>();
   for (const axis of axes) {
@@ -176,6 +176,16 @@ function cheaperCappedLots(axes: AuctionEffectGroup[][], engine: string) {
     // Keep all physical lot IDs in their surviving group for standalone item
     // results and joint procurement. A substituted lot can never be cheaper.
     for (const [group, witness] of substitutes) for (const option of group.options) witness.options.push(option);
+    if (handFamilies) {
+      for (const family of families.values()) {
+        const surviving = family.filter(({ group }) => !substitutes.has(group));
+        if (surviving.length < 2) continue;
+        const itemSlots = slotsByItem.get(surviving[0].group.options[0].candidate.itemId)!;
+        if (itemSlots.size !== 2 || !itemSlots.has("MAIN_HAND") || !itemSlots.has("OFF_HAND")) continue;
+        const pooled = { options: surviving.flatMap(({ group }) => group.options) };
+        for (const { group } of surviving) handFamilies.set(group, pooled);
+      }
+    }
     return groups.filter(group => !substitutes.has(group));
   });
 }
@@ -199,10 +209,13 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     option.candidate.compatibility.specId === input.specId && option.candidate.variants.some(variant => variant.key === option.variantKey));
   const engine = input.engine && ignoresItemContext(input.engine) ? input.engine : undefined;
   const version = input.nativeLotGroups ?? 3;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) throw new Error("invalid_search_checkpoint");
+  if (![1, 2, 3, 4, 5].includes(version)) throw new Error("invalid_search_checkpoint");
   const groupsVersion = engine ? { nativeLotGroups: version } : {};
-  const rawGroups = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine, engine ? (version === 4 ? 3 : version) : undefined));
-  const choices = engine && version === 4 ? cheaperCappedLots(rawGroups, engine) : rawGroups;
+  const groupVersion = version === 1 || version === 2 ? version : 3;
+  const rawGroups = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine, engine ? groupVersion : undefined));
+  const handFamilies = new Map<AuctionEffectGroup, AuctionEffectGroup>();
+  const choices = engine && version >= 4
+    ? cheaperCappedLots(rawGroups, engine, version === 5 ? handFamilies : undefined) : rawGroups;
   // Zero keeps the equipped item (or the empty slot). It also emits the empty
   // purchase set, allowing the caller to process the retained-equipment case.
   const radices = choices.map(rows => rows.length + 1);
@@ -283,6 +296,29 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     purchase?.options.sort((a, b) => slotOrder.get(a.candidate.slotType)! - slotOrder.get(b.candidate.slotType)!);
     return purchase;
   }
+  const mainAxis = slotOrder.get("MAIN_HAND") ?? -1, offAxis = slotOrder.get("OFF_HAND") ?? -1;
+  const dearerSingles = new Set<AuctionEffectGroup>();
+  for (const pooled of new Set(handFamilies.values())) {
+    cheapest.set(pooled, pooled.options.reduce((a, b) => a.costCopper <= b.costCopper ? a : b));
+  }
+  for (const [group, pooled] of handFamilies) {
+    if (cheapest.get(pooled)!.costCopper < cheapest.get(group)!.costCopper) dearerSingles.add(group);
+  }
+  // No other slot can buy these lots. Compare the ordered pair jointly when
+  // both hands need the same item, including any discount from buying a stack.
+  // Every equally priced physical receipt keeps its original tie-break key.
+  async function costlierSharedItem(main: AuctionEffectGroup, off: AuctionEffectGroup, paid: AuctionGearOption[], signal: AbortSignal) {
+    const alternative = await procure([handFamilies.get(main) ?? main, handFamilies.get(off) ?? off], signal);
+    const hands = paid.filter(o => o.candidate.slotType === "MAIN_HAND" || o.candidate.slotType === "OFF_HAND");
+    return alternative !== null && alternative.costCopper < auctionPlanCost(hands);
+  }
+  function dominatedHandPrice(cursor: number[], paid: AuctionGearOption[], signal: AbortSignal) {
+    const main = choices[mainAxis][cursor[mainAxis] - 1], off = choices[offAxis][cursor[offAxis] - 1];
+    if (main && off && main.options[0].candidate.itemId === off.options[0].candidate.itemId) {
+      return (handFamilies.has(main) || handFamilies.has(off)) && costlierSharedItem(main, off, paid, signal);
+    }
+    return dearerSingles.has(main) || dearerSingles.has(off);
+  }
   async function nextBatch(saved: AuctionGearEnhancedLoadoutState, limits: AuctionGearEnhancedLoadoutBatchOptions): Promise<AuctionGearEnhancedLoadoutBatch> {
     limits.signal.throwIfAborted();
     if (!Number.isSafeInteger(limits.maxAssignments) || limits.maxAssignments < 1 ||
@@ -297,6 +333,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
       try {
         const groups = chosen.map(choice => choice.group);
         const purchase = await procure(groups, limits.signal);
+        const higherHandPrice = purchase && handFamilies.size && dominatedHandPrice(state.cursor, purchase.options, limits.signal);
         if (!purchase) {
           // Affordability and supply are monotone: any receipt that satisfies a
           // longer assignment would also satisfy its prefix within budget.
@@ -307,6 +344,8 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
               break;
             }
           }
+        } else if (higherHandPrice && await higherHandPrice) {
+          advanceAxis = Math.max(mainAxis, offAxis);
         } else {
           const { options: selected, costCopper: spentCopper } = purchase;
           const loadout = auctionPlanLoadout(input.loadout, selected, input.specId, slots);
@@ -347,7 +386,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
   let singleAliases: Map<string, AuctionGearOption[]> | undefined;
   function equivalentSingles(id: string) {
     singleAliases ??= new Map(choices.flatMap(axis => axis.flatMap(group =>
-      group.options.map(option => [option.id, group.options] as const))));
+      group.options.map(option => [option.id, handFamilies.get(group)?.options ?? group.options] as const))));
     return singleAliases.get(id) ?? [];
   }
   return { inputKey, totalAssignments: total.toString(), initialState, nextBatch, optionIdsAt, equivalentSingles };
