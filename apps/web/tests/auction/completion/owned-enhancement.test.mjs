@@ -476,3 +476,66 @@ test('a bare owned ring can supply a gem to a cheaper equal-rating two-ring purc
   for(const args of [{enabled:false},{level:89},{revision:'SimulationCraft 18428cd different build'},{opaque:true},{stock:1},{secondUnit:5}])
     assert.equal((await receipts(args)).get(source),10,JSON.stringify(args));
 });
+
+test('legacy weapon scrolls need a strictly cheaper substitute available for every hand', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const slots = ['MAIN_HAND', 'OFF_HAND'];
+  function option(slotType, index, proofEngine) {
+    const variant = { key: 'staff', itemLevel: 10, contextId: 0, bonusIds: [], resolution: {
+      engine: proofEngine, metadataVersion: 3, effectsVerified: true, effects: [], enhancements: {
+        status: 'verified', socketCount: 0, socketColors: [0, 0, 0], socketBonusId: 0,
+        requiredProfessionId: 0, requiredProfessionRank: 0,
+      },
+    } };
+    return { id: slotType, auctionId: 100 + index, costCopper: 5, quantity: 1, variantKey: 'staff',
+      candidate: { itemId: 2030 + index, name: 'Staff', slotType, inventoryType: 17, itemClassId: 2,
+        itemSubclassId: 10, eligible: true, compatibility: { specId: 72 }, constraints: { requiredLevel: 1 }, variants: [variant] } };
+  }
+  async function run({ cheap = [[5, 2]], other = [[10, 2]], enabled = true, level = 90, proofEngine = engine } = {}) {
+    const seen = new Set(), state = { checkpoints: {} };
+    const baseline = { dps: 1000, dpsError: 1, confidence: 95, iterations: 750, engine };
+    const options = slots.map((slot, i) => option(slot, i, proofEngine));
+    const now = new Date().toISOString();
+    const prices = {38920: {ladder: other}};
+    if (cheap) prices[38879] = {ladder: cheap};
+    for (let i = 0; i < 20; i++) {
+      const stage = await evaluateAuctionEnhancementStage({ exhaustive: true, pruneWeaponEnchantRanks: enabled,
+        finalists: [{ label: 'both weapons', options }], equipment: { equipped_items: [] }, loadout: [],
+        selectedSlots: slots, level: 90, nativePlayerLevel: level, specId: 72, region: 'eu', engine,
+        profileFingerprint: 'weapon-scrolls', budgetCopper: 100, encounter: {}, baseline, state,
+        signal: new AbortController().signal, shouldYield: () => false,
+        quote: async () => ({prices, sourceUpdatedAt: now, fetchedAt: now}), simulate: async () => baseline,
+        onMeasured: configuration => seen.add(configuration.slots.map(slot => slot.enchantId).join(',')),
+      });
+      if (stage.complete) return seen;
+    }
+    assert.fail('weapon scrolls did not exhaust');
+  }
+  const physical = await run({ enabled: false });
+  assert.equal(physical.size, 9);
+  assert.deepEqual(await run(), new Set(['0,0', '0,2563', '2563,0', '2563,2563']));
+  assert.deepEqual(await run({ cheap: null }), new Set(['0,0', '0,2668', '2668,0', '2668,2668']));
+  for (const args of [{ cheap: [[10, 2]] }, { cheap: [[5, 1], [11, 1]] }, { level: 89 }, { proofEngine: 'unverified' }]) {
+    assert.deepEqual(await run(args), physical);
+  }
+  const lastCopy = await run({ cheap: [[5, 1]] });
+  assert(lastCopy.has('2563,2668') && lastCopy.has('2668,2563') && !lastCopy.has('2563,2563'));
+});
+
+test('weapon scroll pruning preserves older exhaustive search cursors', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const baseline = {dps: 1000, dpsError: 1, confidence: 95, iterations: 100, engine};
+  const input = {options: [], selectedSlots: ['MAIN_HAND'], equipment: {equipped_items: []}, loadout: [],
+    specId: 72, level: 90, region: 'eu', engine, profileFingerprint: 'older-weapon-scroll-cursor',
+    encounter: {}, budgetCopper: 1000, objective: 'dps', baseline, simulate: async () => baseline,
+    signal: new AbortController().signal, shouldYield: () => true, onState: () => {}};
+  const old = (await advanceAuctionGearExhaustiveEnhancements(input)).state;
+  assert.equal(old.pruneWeaponEnchantRanks, undefined);
+  const current = { ...input, nativePlayerLevel: 90 };
+  const resumed = (await advanceAuctionGearExhaustiveEnhancements({ ...current, state: old })).state;
+  const fresh = (await advanceAuctionGearExhaustiveEnhancements(current)).state;
+  assert.equal(resumed.inputKey, old.inputKey);
+  assert.equal(resumed.pruneWeaponEnchantRanks, undefined);
+  assert.equal(fresh.pruneWeaponEnchantRanks, true);
+  assert.notEqual(fresh.inputKey, old.inputKey);
+});

@@ -16,6 +16,14 @@ import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
 
+// In each group, every scroll installs the same integer stat at player level 90.
+// Each hand retains its physical weapon. Catalog eligibility and both hands’
+// demand are checked before a more expensive scroll is removed.
+const weaponScrollGroups90 = [[2563, 2668], [2568, 2666], [2667, 3828], [3830, 3846], [2504, 2505, 2669]] as const;
+const weaponScrollRepresentatives90 = new Map<number, number>(
+  weaponScrollGroups90.flatMap(group => group.map(id => [id, group[0]] as const))
+);
+
 type Quotes = Awaited<ReturnType<typeof exactCommodityPrices>>;
 export type AuctionEnhancementStageState = { checkpoints: Record<string, EnhancementCheckpoint>; quotes?: Quotes; quotedItemIds?: number[] };
 export type AuctionEnhancedRecommendation = { label: string; configuration: PricedEnhancementConfiguration;
@@ -69,6 +77,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   omitWristHearthEnchants?: boolean;
   omitInertFuryLeech?: boolean;
   pruneCradleEnchants?: boolean;
+  pruneWeaponEnchantRanks?: boolean;
   pruneNeckEnchantRanks?: boolean;
   pruneRingEnchantRanks?: boolean;
   pruneArmorEnchantPairs?: boolean;
@@ -121,6 +130,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     const cradleSlots = new Set<string>();
     const eligibleWeapon = (slot: string, itemClass: number) => input.exhaustive && input.pruneCradleEnchants &&
       ignoresItemContext(input.engine) && itemClass === 2 && (slot === 'MAIN_HAND' || slot === 'OFF_HAND');
+    const purchasedWeaponRanks = new Set<string>();
     const bareRingSlots = new Set<string>();
     const certifiedRing = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
       (input.pruneRingScrollPairs || input.pruneBareOwnedRingRatings) && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
@@ -167,6 +177,12 @@ export async function evaluateAuctionEnhancementStage(input: {
         target.inventoryType === 3 && !option.customization;
       const bareWrist = input.exhaustive && input.omitWristHearthEnchants && slot.slotType === 'WRIST' &&
         target.inventoryType === 9 && !option.customization;
+      if (input.exhaustive && input.pruneWeaponEnchantRanks && input.nativePlayerLevel === 90 &&
+          ignoresItemContext(input.engine) && variant.resolution?.engine === input.engine &&
+          variant.resolution.metadataVersion === 3 && !option.customization && target.itemClassId === 2 &&
+          (slot.slotType === 'MAIN_HAND' || slot.slotType === 'OFF_HAND') &&
+          Number.isSafeInteger(target.itemLevel) && target.itemLevel >= 10 && target.itemLevel <= 120)
+        purchasedWeaponRanks.add(slot.slotType);
       const bareWeapon = !option.customization && eligibleWeapon(slot.slotType, target.itemClassId);
       resolutions.set(slot.slotType,{...resolved,
         enchantChoices:resolved.enchantChoices.filter(e =>
@@ -314,9 +330,10 @@ export async function evaluateAuctionEnhancementStage(input: {
         !(replaced.has("FINGER_1") && replaced.has("FINGER_2")),
       bareRingScrolls90: input.pruneRingScrollPairs && bareRingSlots.size === 2,
       bareOwnedRingRatings: input.pruneBareOwnedRingRatings ? bareRingSlots : undefined, bareArmorSlots90, ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
-      purchasedEnchantEffect: cradleSlots.size || pricedNeck || pricedRings ? (slot: string, id: number) => {
+      purchasedEnchantEffect: purchasedWeaponRanks.size || cradleSlots.size || pricedNeck || pricedRings ? (slot: string, id: number) => {
         if (pricedRings && (slot === "FINGER_1" || slot === "FINGER_2")) return ringEnchantRepresentative90(id);
         if (pricedNeck && slot === "NECK") return directNeckEnchantGroup(id);
+        if (purchasedWeaponRanks.has(slot)) return weaponScrollRepresentatives90.get(id);
         return cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined;
       } : undefined,
       ownedGemEffect: ownedGemSlots.size ? (slot: string, id: number, enchantId: number) =>

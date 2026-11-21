@@ -126,14 +126,26 @@ for stat, ranks in zip(rating_order, rating_list('enchantRanks90'), strict=True)
     for eid, amount in zip(ranks, rating_list('enchantAmounts90'), strict=True):
         joint_ratings[eid] = (stat, amount)
 assert len(joint_ratings) == 92 and joint_ratings.keys() <= ring_rules
+weapon_source = module.with_name('auctionGearEnhancementStage.ts').read_text()
+weapon_groups = json.loads(weapon_source.split('const weaponScrollGroups90 = ', 1)[1].split(' as const;', 1)[0])
+weapon_stats = [(4, 7), (5, 10), (38, 12), (45, 7), (45, 14)]
+weapon_ratings = {eid: stat for group, stat in zip(weapon_groups, weapon_stats, strict=True) for eid in group}
+weapon_stats_by_id = {}
+assert len(weapon_ratings) == 11 and not (weapon_ratings.keys() & joint_ratings.keys())
+weapon_rules = set()
+for line in (data / 'permanent_enchant.inc').open():
+    entry = re.match(r'^  \{\s*(\d+),\s*\d+,\s*2,', line)
+    if entry:
+        weapon_rules.add(int(entry[1]))
+assert weapon_ratings.keys() <= weapon_rules
 fallback, spell_enchants, ring_rating = {}, {}, {}
 for line in (data / 'spell_item_enchantment.inc').open():
     row = re.match(r'^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),', line)
     if not row:
         continue
     eid, _, scaling, scaling_min, cap, minimum, maximum, skill, rank = map(int, row[1].split(','))
-    if eid in joint_ratings or eid in paired_ids:
-        if eid in ring_ids:
+    if eid in joint_ratings or eid in paired_ids or eid in weapon_ratings:
+        if eid in ring_ids or eid in weapon_ratings:
             assert (minimum, maximum) == (10, 120), eid
         elif 7329 <= eid <= 7352:
             assert (minimum, maximum) == (70, 170), eid
@@ -141,14 +153,16 @@ for line in (data / 'spell_item_enchantment.inc').open():
         fallback[eid] = (scaling, scaling_min, cap, minimum, maximum, row[2], row[3], row[4])
         if int(row[5]):
             spell_enchants[int(row[5])] = eid
-        if eid in joint_ratings:
+        if eid in joint_ratings or eid in weapon_ratings:
             kinds, stats = [list(map(int, row[i].split(','))) for i in (2, 3)]
-            assert kinds == [5, 0, 0] and stats[0] in (32, 36, 40, 49) and stats[1:] == [0, 0]
+            assert kinds == [5, 0, 0] and stats[1:] == [0, 0]
             assert scaling_min == 0 and 0 < cap <= 90 and scaling in class_id
             coefficient = float(row[4].split(',')[0].strip().removesuffix('f'))
             native_float = struct.unpack('f', struct.pack('f', coefficient))[0]
-            ring_rating[eid] = (stats[0], math.floor(tables[class_id[scaling]][cap-1] * native_float + 0.5))
+            observed = weapon_stats_by_id if eid in weapon_ratings else ring_rating
+            observed[eid] = (stats[0], math.floor(tables[class_id[scaling]][cap-1] * native_float + 0.5))
 assert joint_ratings == ring_rating
+assert weapon_ratings == weapon_stats_by_id
 for a, b in pairs:
     assert fallback[a] == fallback[b], (a, b)
 assert paired_ids <= set(spell_enchants.values())
@@ -173,6 +187,26 @@ for line in (data / 'sc_spell_data.inc').open():
             assert all(float(fields[i]) == 0 for i in (7, 15, 22))  # scaling coefficient, base, points per level
             effects[sid] = int(fields[16])
 assert spells == spell_enchants.keys() and effects == spell_enchants
+# Direct reads of a hand's permanent enchant ID in combat concern
+# effect 4083 and the Death Knight runeforges.
+# Each whitelisted scroll must follow the same (unmatched) path.
+native = data.parents[1]
+hand_readers = set()
+for subtree in ('class_modules', 'player'):
+    for path in (native / subtree).rglob('*'):
+        if path.suffix not in ('.cpp', '.hpp'):
+            continue
+        text = path.read_text(errors='replace')
+        assert 'encoded_enchant' not in text and 'option_enchant_id_str' not in text, path
+        if 'parsed.enchant_id' in text:
+            hand_readers.add(path.relative_to(native).as_posix())
+assert hand_readers == {'class_modules/sc_death_knight.cpp', 'player/unique_gear.cpp'}
+unique_checks = (native / 'player/unique_gear.cpp').read_text()
+checked_ids = {int(v) for v in re.findall(r'parsed\.enchant_id\s*==\s*(\d+)', unique_checks)}
+dk = (native / 'class_modules/sc_death_knight.cpp').read_text()
+checked_ids.update(int(v) for v in re.findall(r'RUNEFORGE_ID_\w+\s*=\s*(\d+)', dk))
+assert 4083 in checked_ids and 3368 in checked_ids and not checked_ids.intersection(weapon_ratings)
+print(f'Verified {len(weapon_ratings)} pure level-90 weapon scrolls in {len(weapon_groups)} equal-stat groups')
 print(f'Verified {len(pairs)} neck scroll pairs with identical native ratings')
 print(f'Verified {len(joint_ratings)} two-ring scroll contributions and {len(ring_groups)} legacy substitution groups')
 
