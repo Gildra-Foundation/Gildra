@@ -70,7 +70,7 @@ export function purchasedRingScrollRating90(id: number, itemLevel: number, empty
   if (id >= 7329 && id <= 7352 && itemLevel >= 70 && itemLevel <= 170 && emptyPlainSockets) return scrollRatings90.get(id);
 }
 
-const isEyesOfTheEagle = (id: number | undefined) => id === 7966 || id === 7967;
+export const isEyesOfTheEagle = (id: number | undefined) => id === 7966 || id === 7967;
 export const isDirectRingEnchant = (id: number) => enchants.has(id);
 export const ringGemRepresentative90 = (id: number) => gems.get(id)?.representative;
 

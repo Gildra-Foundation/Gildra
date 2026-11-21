@@ -449,7 +449,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   // their integer ratings add across hosts. A separate three-gem proof also
   // covers fixed proc enchants; it must keep both physical enchant IDs.
   const midnight = worn && native?.physicalFinalist && directJewelry?.gemColors?.slots.length !== 3
-    ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots) : undefined;
+    ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings) : undefined;
   const jewelry = midnight ? undefined : directJewelry;
   // Assign the total to one stable field. Keep the original purchased-only
   // key when there are no qualifying worn edits so saved scores still match.

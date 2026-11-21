@@ -410,3 +410,41 @@ test('two purchased weapon scrolls share only an independently measured physical
  assert.notEqual(score([0,4083]),score([4083,0]));
  assert.notEqual(score(one),score(two,(_,n)=>{n.options[1].candidate.itemId++;n.changes[1].itemId++;}));
 });
+
+test("two Midnight gems with a fixed Eyes of the Eagle proc share a physical fight across original finalists", async () => {
+  const engine = "SimulationCraft 1210-01 · 18428cd";
+  const slots = ["FINGER_1", "FINGER_2", "NECK"];
+  const equipped = slots.map((slot,i) => ({slot:{type:slot}, item:{id:500+i}, item_class:{id:4},
+    inventory_type:{type:i===2 ? "NECK" : "FINGER"}, level:{value:295}, sockets:[{socket_type:{type:"PRISMATIC"}}]}));
+  const native = {engine, playerLevel:90, physicalFinalist:true, changes:[],
+    wornPrismatic:new Map(equipped.map(item=>[item.slot.type,item.item.id]))};
+  const key = (ownedChanges,options={},request={}) => auctionGearMechanicalKey("character",
+    {spec:"fury-warrior",scenario:"single-target",fightLengthSeconds:120,targets:1,precision:"finalist",ownedChanges,...request},
+    {...native,...options});
+  const build = (positions,ids) => positions.map((p,i)=>({slotType:slots[p],itemId:500+p,gems:[{index:0,itemId:ids[i]}],
+    ...(p<2 ? {enchantId:7966+p} : {})}));
+  const {run,calls}=simulator(()=>({...wires[0],engine}),{equipped,level:90,verifiedEngine:engine});
+  const signal = new AbortController().signal;
+  let expected = 0;
+  for(const hosts of [[0,1],[0,2],[1,2]]) {
+    const left=build(hosts,[240855,240866]), right=build(hosts,[240858,240863]);
+    assert.notEqual(run.finalistKey([],left), run.finalistKey([],right));
+    assert.equal(key(left),key(right));
+    await Promise.all([run([],signal,left,"finalist"),run([],signal,right,"finalist")]);
+    assert.equal(calls(),++expected);
+    assert.notEqual(key(left),key(build(hosts,[240856,240866])));
+    for(const settings of [{physicalFinalist:false},{playerLevel:89},{engine:"unknown"},
+      {changes:[{slot:"neck",itemId:123}]}]) assert.notEqual(key(left,settings),key(right,settings));
+  }
+  // Both pairs give 16 crit, 11 haste and 11 mastery. A color-counting proc
+  // can still distinguish them.
+  assert.notEqual(key(build([0,1],[240859,240908])),key(build([0,1],[240867,240906])));
+  const left=build([0,1],[240867,240877]),right=build([0,1],[240877,240867]);
+  for (const rows of [left,right]) delete rows[1].enchantId;
+  assert.notEqual(key(left),key(right));
+  assert.equal(key(left,{barePrismaticRings:new Set(["FINGER_2"])}),key(right,{barePrismaticRings:new Set(["FINGER_2"])}));
+  for(const rows of [left,right]) rows[1].enchantId=9999;
+  assert.notEqual(key(left),key(right));
+  const other=build([0,2],[240855,240866]);
+  assert.notEqual(key(other),key([...other,{slotType:"FINGER_2",itemId:501,enchantId:7964,gems:[]}]));
+});

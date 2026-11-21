@@ -1,3 +1,4 @@
+import { isDirectRingEnchant, isEyesOfTheEagle } from "./auctionRingRatings";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { SimcGearChange } from "./gearSimulation";
 
@@ -84,19 +85,30 @@ export function midnightGemRating90(id: number) {
 const slots = ["FINGER_1", "FINGER_2", "NECK"] as const;
 const simcSlots = ["finger1", "finger2", "neck"];
 
-/** All three explicitly replaced gems contribute direct stats. Native procs
+/** Explicitly replaced Midnight gems contribute direct stats. Native procs
  * observe their description counts. Socket matching still sees a prismatic
  * gem in each original slot. Every other item, enchant and edit is retained. */
 export function ownedMidnightGemScore(owned: readonly OwnedAuctionGearChange[], hosts: ReadonlyMap<string, number>,
-  purchased: readonly SimcGearChange[], removed?: readonly string[]) {
-  if (owned.length < slots.length || hosts.size < slots.length || purchased.some(c => simcSlots.includes(c.slot)) ||
+  purchased: readonly SimcGearChange[], removed?: readonly string[], bareRings?: ReadonlySet<string>) {
+  if (owned.length < 2 || hosts.size < slots.length || purchased.some(c => simcSlots.includes(c.slot)) ||
       removed?.some(slot => slots.some(s => s === slot) || simcSlots.includes(slot)) ||
       new Set(owned.map(edit => edit.slotType)).size !== owned.length) return;
+
+  const replaced = slots.filter(slot => owned.some(edit => edit.slotType === slot && edit.gems.length > 0));
+  if (replaced.length < 2) return;
+  if (replaced.length === 2) {
+    // Preserve the third host exactly, including an installed gem or an
+    // enchant-only edit. Only pool pairs with a fixed Eyes of the Eagle proc.
+    const rings = owned.filter(edit => edit.slotType !== "NECK" && replaced.some(slot => slot === edit.slotType));
+    if (!rings.some(edit => isEyesOfTheEagle(edit.enchantId)) || !rings.every(edit =>
+      isEyesOfTheEagle(edit.enchantId) || (edit.enchantId !== undefined
+        ? isDirectRingEnchant(edit.enchantId) : bareRings?.has(edit.slotType)))) return;
+  }
 
   const ratings = [0, 0, 0, 0];
   const descriptions: number[] = [];
   const edits = owned.slice();
-  for (const slot of slots) {
+  for (const slot of replaced) {
     const index = owned.findIndex(edit => edit.slotType === slot);
     const edit = owned[index];
     if (!edit || !hosts.has(slot) || hosts.get(slot) !== edit.itemId || (slot === "NECK" && edit.enchantId !== undefined) ||
@@ -107,7 +119,8 @@ export function ownedMidnightGemScore(owned: readonly OwnedAuctionGearChange[], 
     for (const [axis, amount] of gem.ratings.entries()) ratings[axis] += amount;
     edits[index] = { ...edit, gems: [{ ...edit.gems[0], itemId: 0 }] };
   }
-  // With three explicitly filled sockets, sorting keeps exact counts as well
-  // as presence, including duplicates counted by Signet of Azerothian Blessings.
-  return { edits, signature: { ratings, descriptions: descriptions.sort((a, b) => a - b) } };
+  // Multiplicity matters to Signet of Azerothian Blessings. For a partial
+  // replacement the key must also identify which original socket was kept.
+  return { edits, signature: { ratings, descriptions: descriptions.sort((a, b) => a - b),
+    ...(replaced.length === 2 ? {slots:replaced} : {}) } };
 }
