@@ -26,9 +26,7 @@ export function equivalentBootEnchants(original: number | undefined, unread: unk
   return rank.filter((id, index) => id !== original && (unread & (1 << index)));
 }
 
-// A worker certificate applies only to explicit replacements. Retained
-// enchants can have other effects. Unknown IDs and any observed rating keep
-// their original slot, instance, enchant and socket data in the score key.
+// Unknown enchants and observed ratings retain their physical identity.
 const armorEnchants = new Map<number, { slot: string; axis: number; group: number }>();
 for (const [rank, ids] of bootEnchantRanks.entries())
   ids.forEach((id, index) => armorEnchants.set(id, {slot: "FEET", axis: 1 << index, group: -1 - rank}));
@@ -39,13 +37,21 @@ for (const [slot, families] of [
   families.forEach((ids, index) => ids.forEach(id => armorEnchants.set(id, {slot, axis: 1 << index, group: -1})));
 }
 
-export function projectUnreadArmor(edits: readonly OwnedAuctionGearChange[], unread: number) {
+export function projectUnreadArmor(edits: readonly OwnedAuctionGearChange[], unread: number,
+  bareHosts?: ReadonlyMap<string, number>, purchases?: readonly AuctionGearOption[]) {
   let projected: OwnedAuctionGearChange[] | undefined;
   for (const [index, edit] of edits.entries()) {
     const effect = edit.enchantId && armorEnchants.get(edit.enchantId);
-    if (!effect || effect.slot !== edit.slotType || !(effect.axis & unread)) continue;
-    projected ??= edits.slice();
-    projected[index] = { ...edit, enchantId: effect.group };
+    if (!effect || effect.slot !== edit.slotType || !(effect.axis & unread)) {
+      projected?.push(edit);
+      continue;
+    }
+    projected ??= edits.slice(0, index);
+    // These head and shoulder enchants have only the unread rating. The
+    // original bare item contributes zero to it. Boots also change stamina.
+    const bare = effect.slot !== "FEET" && bareHosts?.get(edit.slotType) === edit.itemId &&
+      !purchases?.some(option => option.candidate.slotType === edit.slotType);
+    if (!bare || edit.gems.length) projected.push({ ...edit, enchantId: bare ? undefined : effect.group });
   }
   return projected;
 }

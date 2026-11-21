@@ -683,6 +683,56 @@ test('concurrent armor alternatives wait for actual evidence while another class
   assert.deepEqual((await Promise.all(rows)).map(r=>r.dps),[7962.25,7962.25,8018.25,7963.25]);
 });
 
+test('only bare worn armor may keep its original enchant after a certified unread replacement', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd', common = signal();
+  for (const original of [undefined, [{enchantment_id: 5250, enchantment_slot: {id: 0}}]]) {
+    const equipment = {equipped_items: ['HEAD', 'SHOULDER', 'FEET'].map((type, i) => ({
+      slot: {type}, item: {id: 20 + i}, inventory_type: {type}, item_class: {id: 4}, enchantments: original,
+    }))};
+    const {run, state} = fixture({ownedBatch: true, armorProbe: true, workerEngine, equipment});
+    await run.concurrency(common);
+    const edits = (head, shoulder, feet) => [head, shoulder, feet].flatMap((enchantId, i) => enchantId
+      ? [{slotType: equipment.equipped_items[i].slot.type, itemId: 20 + i, enchantId, gems: []}] : []);
+    const first = run([], common, edits(8014, 7998, 7962), 'finalist');
+    await tick();
+    state.requests[0].finish({results: [{dps: 100, dpsMean: 100.25, dpsError: 0.2, confidence: 95,
+      iterations: 750, engine: workerEngine, unreadArmorRatingsV1: 6}]});
+    await first;
+    const unchanged = run([], common, edits(0, 0, 7992), 'finalist');
+    await tick();
+    if (original) {
+      assert.equal(state.requests.length, 2);
+      state.requests[1].finish();
+      assert.equal((await unchanged).dps, 7992.25);
+    } else {
+      assert.equal(state.requests.length, 1);
+      assert.equal((await unchanged).dps, 100.25);
+    }
+    for (const other of [edits(7988, 0, 7992), edits(0, 7970, 7992), edits(8014, 7998, 0)]) {
+      const count = state.requests.length, task = run([], common, other, 'finalist');
+      await tick();
+      assert.equal(state.requests.length, count + 1);
+      state.requests[count].finish();
+      await task;
+    }
+  }
+});
+
+test('omitting unread armor enchants preserves replaced gems, unrelated edits and purchased hosts', () => {
+  const bare = new Map([['HEAD', 20], ['SHOULDER', 21]]);
+  const gems = [{index: 0, itemId: 115804}];
+  const edits = [
+    {slotType: 'HEAD', itemId: 20, enchantId: 8014, gems},
+    {slotType: 'CHEST', itemId: 23, enchantId: 7984, gems: []},
+    {slotType: 'SHOULDER', itemId: 21, enchantId: 7998, gems: []},
+    {slotType: 'FEET', itemId: 22, enchantId: 7963, gems: []},
+  ];
+  const kept = projectUnreadArmor(edits, 4, bare, [option(21, 'SHOULDER')]);
+  assert.deepEqual(kept, [{...edits[0], enchantId: undefined}, edits[1],
+    {...edits[2], enchantId: -1}, {...edits[3], enchantId: -2}]);
+  assert.equal(edits[0].enchantId, 8014);
+});
+
 test('a failed armor probe releases the other physical builds for simulation', async () => {
   const workerEngine='SimulationCraft 1210-01 · 18428cd', common=signal();
   const equipment={equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};

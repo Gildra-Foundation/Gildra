@@ -1034,6 +1034,15 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const gloves = itemInSlot("HANDS");
   const unenchantedHandsId = gloves && (gloves.enchantments === undefined ||
     Array.isArray(gloves.enchantments) && !gloves.enchantments.length) ? gloves.item?.id : undefined;
+  const bareArmor = new Map<string, number>();
+  for (const slot of ["HEAD", "SHOULDER"]) {
+    const item = itemInSlot(slot);
+    if (item?.inventory_type?.type === slot && item.item_class?.id === 4 &&
+        Number.isSafeInteger(item.item?.id) && item.item.id > 0 &&
+        (item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length)) {
+      bareArmor.set(slot, item.item.id);
+    }
+  }
   const wornRing = (slot: string) => {
     const ring = itemInSlot(slot);
     if (ring?.inventory_type?.type !== "FINGER" || !Number.isSafeInteger(ring.item?.id) || ring.item.id <= 0 ||
@@ -1079,11 +1088,12 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
     prepareScore(selections, ownedChanges, "finalist").cacheKey;
   const observedArmorMasks = new Set<number>();
-  const armorScoreKey = (selections: AuctionGearOption[], edits: readonly OwnedAuctionGearChange[], mask: number) => {
-    const projected = projectUnreadArmor(edits, mask);
+  const armorScoreKey = (selections: AuctionGearOption[], edits: readonly OwnedAuctionGearChange[], mask: number, physicalKey?: string) => {
+    const projected = projectUnreadArmor(edits, mask, bareArmor, selections);
     // Partition certificates by mask: an unread speed score must never serve
     // a build covered only by a different packet's unread avoidance rating.
-    return projected && `armor:${mask}:${finalistKey(selections, projected)}`;
+    const key = projected ? finalistKey(selections, projected) : bareArmor.size ? physicalKey : undefined;
+    return key && `armor:${mask}:${key}`;
   };
   const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
@@ -1122,7 +1132,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const armorScore = () => {
       if (verified && mode === "finalist" && ownedChanges?.length) {
         for (const mask of observedArmorMasks) {
-          const key = armorScoreKey(selections, ownedChanges, mask);
+          const key = armorScoreKey(selections, ownedChanges, mask, cacheKey);
           const measured = key && auctionGearMechanicalCache.get(key, verifiedEngine);
           if (measured) return measured;
         }
