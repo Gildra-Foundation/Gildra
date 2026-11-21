@@ -17,7 +17,7 @@ if (!['local','server'].includes(settings.mode)) settings.mode='server';
 if (!['ru','en'].includes(settings.lang)) settings.lang='ru';
 const json = (value,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const error=(name,status)=>json({error:name},status);
-let main, hud, login, identity, planner, hudData=null, reading=false, exiting=false, loggingOut=false;
+let main, hud, login, signingIn, identity, planner, hudData=null, reading=false, exiting=false, loggingOut=false;
 function save(){
   const tmp=settingsFile+'.tmp';
   fs.mkdirSync(dataDir,{recursive:true});
@@ -118,17 +118,22 @@ async function authenticate(){
     body:new URLSearchParams({csrfToken:csrf.csrfToken,callbackUrl:handshake}).toString(),redirect:'error'});
   const start=new URL((await reply.json()).url);
   if(!reply.ok||!safeProvider(start))throw Error('auth_unavailable');
-  login=new BrowserWindow({parent:main,width:700,height:760,title:'Battle.net',autoHideMenuBar:true,webPreferences:{...secureWeb,session:identity}});
-  login.webContents.setWindowOpenHandler(()=>({action:'deny'}));
+  if(exiting || main.isDestroyed())return;
+  const dialog=login=new BrowserWindow({parent:main,width:700,height:760,title:'Battle.net',autoHideMenuBar:true,webPreferences:{...secureWeb,session:identity}});
+  dialog.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   const allow=(e,address)=>{
     const u=new URL(address||e.url);
-    if(u.origin===site&&u.pathname==='/api/auth/callback/battlenet'){login.hide();return;}
-    if(u.href===handshake){e.preventDefault();login.close();return;}
-    if(!safeProvider(u)){e.preventDefault();login.close();}
+    if(u.origin===site&&u.pathname==='/api/auth/callback/battlenet'){dialog.hide();return;}
+    if(u.href===handshake){e.preventDefault();dialog.close();return;}
+    if(!safeProvider(u)){e.preventDefault();dialog.close();}
   };
-  login.webContents.on('will-navigate',allow);login.webContents.on('will-redirect',allow);
-  login.on('closed',()=>{login=null;announce();});
-  announce();await login.loadURL(start.href).catch(()=>{});
+  dialog.webContents.on('will-navigate',allow);dialog.webContents.on('will-redirect',allow);
+  dialog.webContents.on('did-fail-load',(_event,code,_message,_url,top)=>{if(top&&code!==-3&&!dialog.isDestroyed())dialog.close();});
+  dialog.webContents.on('did-finish-load',()=>{
+    if(dialog.webContents.getURL().startsWith(site+'/api/auth/callback/'))dialog.close();
+  });
+  dialog.on('closed',()=>{login=null;announce();});
+  announce();await dialog.loadURL(start.href).catch(()=>{});
 }
 function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
@@ -137,7 +142,7 @@ async function action(e,name,value){
   if(name==='overlay')return toggleHud();
   if(name==='open'){main.restore();main.show();main.focus();return;}
   if(!own) return;
-  if(name==='login')return authenticate();
+  if(name==='login'){signingIn??=authenticate().finally(()=>{signingIn=null;});return signingIn;}
   if(name==='logout'){
     loggingOut=true;
     try{resetPlanner();await identity.clearStorageData();settings.slug='';save();await main.webContents.session.clearStorageData({storages:['localstorage']});loggingOut=false;await main.loadURL('gear://'+settings.mode+'/');}
@@ -157,7 +162,10 @@ else {
   app.whenReady().then(()=>{
     Menu.setApplicationMenu(null);
     identity=session.fromPartition('persist:gildra-account');
-    for(const s of [identity,session.defaultSession]){s.setPermissionRequestHandler((_wc,_p,cb)=>cb(false));s.setPermissionCheckHandler(()=>false);}
+    identity.setPermissionRequestHandler((_wc,_p,cb)=>cb(false));identity.setPermissionCheckHandler(()=>false);
+    const mayCopy=(wc,permission)=>permission==='clipboard-sanitized-write' && !!main && wc===main.webContents && wc.getURL().startsWith('gear://');
+    session.defaultSession.setPermissionRequestHandler((wc,p,cb)=>cb(mayCopy(wc,p)));
+    session.defaultSession.setPermissionCheckHandler(mayCopy);
     session.defaultSession.protocol.handle('gear',gearProtocol);
     ipcMain.handle('gear:action',action);
     ipcMain.handle('gear:state',e=>([main?.webContents,hud?.webContents].includes(e.sender)&&e.senderFrame===e.sender.mainFrame)?state():null);
