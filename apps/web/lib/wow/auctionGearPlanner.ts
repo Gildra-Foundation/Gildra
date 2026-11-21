@@ -389,6 +389,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   bareEquipmentProofs?: boolean;
   recheckEquipment?: PlannerInput["simulate"];
   preciseSingleCards?: boolean;
+  screeningGroupVersion?: AuctionGearAssemblyCheckpoint["nativeLotGroups"];
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
 }): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint; preciseSingles?: PreciseSingles }> {
@@ -396,13 +397,14 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
-  const equipmentGrouping = input.bareEquipmentProofs ? 12 : 6;
+  const equipmentGrouping = input.screeningGroupVersion ?? (input.bareEquipmentProofs ? 13 : 6);
   const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
     input.reuseAppliedStats ? (input.groupCraftedEquipment ? equipmentGrouping : 1) : undefined;
-  if (grouping !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(grouping)) throw new Error("invalid_search_checkpoint");
+  if (grouping !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(grouping)) throw new Error("invalid_search_checkpoint");
   const groupEngine = grouping && engine && ignoresItemContext(engine) ? engine : undefined;
   const jewelry = (grouping ?? 0) >= 9 ? "jewelry-suffix" : grouping === 8 ? "socket-curve" : grouping === 7;
-  const armor = grouping === 12 && stableAuctionReceiptOrder(options) ? "equivalent-curves" : (grouping ?? 0) >= 11;
+  const stable = (grouping ?? 0) >= 12 && stableAuctionReceiptOrder(options);
+  const armor = stable ? (grouping === 13 ? "curves-and-missives" : "equivalent-curves") : (grouping ?? 0) >= 11;
   const groups = auctionEffectGroups(options, slots, option =>
     auctionEffectGroupKey(option, groupEngine, (grouping ?? 0) >= 6 ? "missive" : (grouping ?? 0) >= 2,
       (grouping ?? 0) >= 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3, jewelry, (grouping ?? 0) >= 10,
@@ -962,6 +964,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       } else {
         const verification = await assembleAuctionGear({ ...input, searchId: input.searchId + ":equipment-750",
           baseline, simulate: recheck, simulationCache: warm, checkpoint: saved, incumbents: undefined,
+          screeningGroupVersion: grouping,
           maxNewSimulations: Math.max(1, max - calls), shouldYield: calls >= max ? () => true : input.shouldYield,
           recheckEquipment: undefined,
           onCheckpoint: state => { checkpoint.equipmentVerification = state; save(); } });

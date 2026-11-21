@@ -40,7 +40,22 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?:
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
 
-const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
+const plainArmorSlots: ReadonlySet<string> = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
+
+/** A missive consumes both crafting placeholders before SimC reads the selected
+ * secondary stats. Preserve the inventory slot, item, ordered bonuses and every
+ * other native input. The original variant is still used to buy and equip it. */
+export function armorMissiveInputs(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  if (c.itemClassId !== 4 || !plainArmorSlots.has(c.slotType)) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
+  if (!v?.bonusIds?.some(id => id >= 8790 && id <= 8795) || r?.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true ||
+      r.weapon || r.effects?.length || r.enhancements?.status !== "verified" ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  const missive = auctionMissiveComparison(v, c.slotType, engine, true);
+  if (missive) return { missive, stats: r.appliedStatsV1, level: v.itemLevel };
+}
 
 // Pinned chest enchants with only STAT and RESISTANCE operations. SimC
 // adds their contribution to the player's stats without rereading the item's
@@ -291,14 +306,17 @@ export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine
     v.bonusIds, v.itemLevel, r.appliedStatsV1] as const;
 }
 
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant: boolean | "equivalent-curves" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant: boolean | "equivalent-curves" | "curves-and-missives" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
   const curve = typeof bareJewelry === "string" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
   const weapon = bareWeapon && engine ? bareWeaponCurveIdentity(option, engine) : undefined;
-  const armor = bareArmorConstant && engine ? bareArmorConstantCurveIdentity(option, engine, bareArmorConstant === "equivalent-curves") : undefined;
-  const effect = armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  const armor = bareArmorConstant && engine ? bareArmorConstantCurveIdentity(option, engine, typeof bareArmorConstant === "string") : undefined;
+  const crafted = bareArmorConstant === "curves-and-missives" && engine && !option.customization ? armorMissiveInputs(option, engine) : undefined;
+  const missive = crafted && engine ? ["armor-missive-v1", option.candidate.itemId, crafted.level, crafted.stats,
+    crafted.missive.bonusIds, auctionNativeItemOptions(crafted.missive, engine)] : undefined;
+  const effect = missive ?? armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 

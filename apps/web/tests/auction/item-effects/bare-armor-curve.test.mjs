@@ -75,7 +75,7 @@ test("a version-ten cursor keeps both old armor choices when a new search groups
   const resumed=await finish(checkpoint),fresh=await finish(undefined);
   assert.equal(resumed.checkpoint.nativeLotGroups,10);
   assert.equal(resumed.result.combinationCount,"3");
-  assert.equal(fresh.checkpoint.nativeLotGroups,12);
+  assert.equal(fresh.checkpoint.nativeLotGroups,13);
   assert.equal(fresh.result.combinationCount,"2");
   assert.deepEqual(fresh.result.bestDpsConfirmed,resumed.result.bestDpsConfirmed);
   assert.deepEqual(fresh.result.bestValueConfirmed,resumed.result.bestValueConfirmed);
@@ -141,4 +141,73 @@ test("a resumed version-eleven search and new grouping keep the same physical DP
   assert.deepEqual(await compare("a","b",4,3,true),["b","z"]);
   // Here "a0|z" wins the public tie against "a|z".
   assert.deepEqual(await compare("a","a0",3,3,false),["a0","z"]);
+});
+
+function craftedWrist(lot, stat, price = 3) {
+  const option = offer(lot, 80, price);
+  option.candidate.constraints.crafted = true;
+  const variant = option.candidate.variants[0];
+  variant.bonusIds = [8794, 12245, 12497, 13760, 13762, 13763];
+  variant.modifiers = [{ type: 28, value: 3615 }, { type: 29, value: stat }, { type: 30, value: 49 }];
+  delete variant.resolution.nativeArmorCurveV1;
+  return option;
+}
+
+test("a verified armor missive shares the physical fight while preserving the public finalist key", () => {
+  const a = craftedWrist(11, 32), b = craftedWrist(12, 40);
+  const key = option => auctionEffectGroupKey(option, engine, "missive", "drop-curve", "jewelry-suffix", true, "curves-and-missives");
+  assert.equal(key(a), key(b));
+  assert.notEqual(group(a, "equivalent-curves"), group(b, "equivalent-curves"));
+  assert.notEqual(score(a, "finalist", {}, [], false), score(b, "finalist", {}, [], false));
+  for (const edit of [{}, {enchantId: 7956}, {gemIds: [240967]}]) {
+    assert.equal(score(a, undefined, edit), score(b, undefined, edit));
+    assert.equal(score(a, "finalist", edit), score(b, "finalist", edit));
+  }
+  assert.notEqual(score(a, "finalist", {enchantId: 7956}), score(b, "finalist"));
+  assert.notEqual(score(a, "finalist", {gemIds: [240967]}), score(b, "finalist"));
+  for (const change of [
+    v => { v.bonusIds = v.bonusIds.filter(id => id !== 8794); }, v => v.bonusIds.reverse(),
+    v => { v.bonusIds[0] = 8792; }, v => { v.modifiers[0].value++; },
+    v => { v.modifiers.push({ type: 99, value: 1 }); }, v => { v.resolution.metadataVersion = 2; },
+    v => { v.resolution.engine = "other"; }, v => { delete v.resolution.enhancements; },
+    v => { v.resolution.appliedStatsV1[45]++; }, v => { v.itemLevel++; },
+    v => { v.resolution.nativeNoItemEffects = false; }, v => { v.resolution.effects = ["equip"]; },
+  ]) {
+    const c = structuredClone(b);
+    change(c.candidate.variants[0]);
+    assert.notEqual(key(a), key(c));
+    assert.notEqual(score(a, "finalist"), score(c, "finalist"));
+  }
+  assert.notEqual(score(a, "finalist", {slot: "head"}), score(b, "finalist", {slot: "head"}));
+});
+
+test("the bare missive branch preserves both recommendations, each lot card, and the previous cursor", async () => {
+  for (const [left, right, price, expectedCount, winner] of [
+    ["a", "b", 3, "4", "a"], ["a", "b", 2, "4", "b"], ["a", "a0", 3, "6", "a0"],
+  ]) {
+    const a = craftedWrist(11,32), b = craftedWrist(12,40,price), head = offer(13,80,1);
+    a.id = left; b.id = right; head.id = "z"; head.candidate.slotType = "HEAD"; head.candidate.itemId++;
+    head.candidate.inventoryType = 1;
+    const baseline = { engine, iterations: 100, dps: 1000, confidence: 95, dpsError: 0 };
+    const fight = async (selected, iterations) => ({ ...baseline, iterations, dps: 1000 + (selected.length === 2 ? 90 : 0) });
+    const input = { searchId: "missive-receipts", options: [a,b,head], selectedSlots: ["HEAD","WRIST"],
+      budgetCopper: 5, specId: 72, market: {sourceUpdatedAt: new Date().toISOString()}, loadout: [], baseline,
+      signal: new AbortController().signal, reuseAppliedStats: true, groupCraftedEquipment: true, bareEquipmentProofs: true,
+      preciseSingleCards: true, simulate: selected => fight(selected, 100), recheckEquipment: selected => fight(selected, 750) };
+    const old = await assembleAuctionGear({...input, screeningGroupVersion: 12, maxAssignments: 1});
+    const resumed = await assembleAuctionGear({...input, checkpoint: old.checkpoint});
+    const fresh = await assembleAuctionGear(input);
+    for (const [run, version, count] of [[resumed, 12, "6"], [fresh, 13, expectedCount]]) {
+      assert.equal(run.checkpoint.nativeLotGroups, version);
+      assert.equal(run.checkpoint.equipmentVerification.nativeLotGroups, version);
+      assert.equal(run.result.exhaustiveComplete, true);
+      assert.equal(run.result.combinationCount, count);
+      assert.deepEqual(new Set(run.preciseSingles.byOption.keys()), new Set([left,right,"z"]));
+      assert.equal(run.preciseSingles.byOption.get(right).iterations, 750);
+    }
+    for (const field of ["bestDpsConfirmed","bestValueConfirmed"]) {
+      assert.deepEqual(fresh.result[field], resumed.result[field]);
+      assert.deepEqual(fresh.checkpoint.equipmentVerification[field].optionIds.slice().sort(), [winner,"z"]);
+    }
+  }
 });

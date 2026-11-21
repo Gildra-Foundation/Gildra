@@ -25,13 +25,16 @@ const jewelrySlots = new Set(["FINGER_1", "FINGER_2", "NECK", "finger1", "finger
  * placeholder. There are only two placeholder types, and no pinned bonus adds
  * either back. The paired rank markers below each contain just one type-0 no-op. */
 export function auctionMissiveComparison(item: { bonusIds?: number[]; modifiers?: AuctionModifier[]; contextId?: number },
-  slot: string, engine: string) {
+  slot: string, engine: string, physicalArmor = false) {
   const bonuses = item.bonusIds;
-  if (!jewelrySlots.has(slot) || !Array.isArray(bonuses) || !bonuses.some(id => id >= 8790 && id <= 8795) ||
+  const jewelry = jewelrySlots.has(slot);
+  if ((!jewelry && !physicalArmor) || !Array.isArray(bonuses) || !bonuses.some(id => id >= 8790 && id <= 8795) ||
       !ignoresItemContext(engine) || !validAuctionItemContext(item.contextId) || !supportedAuctionModifiers(item.modifiers ?? [])) return;
   if (bonuses.length > 20 || bonuses.some(id => !Number.isInteger(id) || id <= 0 || id > 1_000_000) ||
       new Set(bonuses).size !== bonuses.length) return;
-  const rankMarkers = bonuses.map(id => id === 10395 ? 10394 : id === 10833 ? 10832 : id);
+  // The armor proof keeps every physical bonus ID; only the already consumed
+  // crafting placeholders are irrelevant to that measurement.
+  const rankMarkers = jewelry ? bonuses.map(id => id === 10395 ? 10394 : id === 10833 ? 10832 : id) : bonuses;
   if (new Set(rankMarkers).size !== rankMarkers.length) return;
   return {
     bonusIds: rankMarkers,
