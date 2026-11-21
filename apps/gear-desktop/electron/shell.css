@@ -1,0 +1,24 @@
+@import '../../web/app/styles/tokens.css';
+@import '../../web/app/styles/atlas-theme.css';
+*{box-sizing:border-box}
+html,body,#root{margin:0;min-height:100%;color-scheme:dark}
+body{font:15px/1.45 "Segoe UI",Arial,sans-serif;color:#e4eaf0;background:#101820}
+button,select{font:inherit;color:inherit}
+.toolbar,.selectors,.mode,.wordmark,.toolbar button,.hud header{display:flex;align-items:center;gap:9px}
+.toolbar{padding:10px clamp(12px,3vw,44px);min-height:58px;border-bottom:1px solid #334653;background:#14202a;position:sticky;top:0;z-index:40;flex-wrap:wrap}
+.wordmark{margin-right:auto;font:20px Georgia,serif;white-space:nowrap}
+.wordmark img,.hud header img{height:30px;width:30px}
+.toolbar button,.toolbar select,.selectors button,.selectors select,.hud button,.primary{border-radius:5px;background:#202f3c;color:#e4edf4;border:1px solid #516475;padding:7px 10px;cursor:pointer}
+.mode select{max-width:160px}.toolbar button[aria-pressed=true]{border-color:#a6cde7}
+button:focus-visible,select:focus-visible{outline:2px solid #b6dbed;outline-offset:3px}
+.welcome{min-height:calc(100vh - 60px);display:grid;align-items:center;padding:7vw;background:linear-gradient(90deg,rgba(10,16,24,.9),rgba(10,16,24,.52) 52%,rgba(10,16,24,.12)),url('/assets/wow/loading/characters-icecrown-20261106.webp') center/cover}
+.welcome>div{width:min(34rem,100%);padding:2rem 0}.welcome img{height:72px;width:72px;object-fit:contain}
+.welcome h1,.context h1{font:normal clamp(30px,4vw,55px)/1.1 Georgia,serif;margin:.3em 0}
+.welcome p,.context p{color:#c4d1dc}.welcome p{max-width:38ch;font-size:17px}.primary{background:#c9dbea;color:#122231;font-weight:650;padding:12px 20px}
+.workspace{max-width:1350px;margin:auto;padding:26px clamp(12px,3vw,44px) 64px}
+.context{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.selectors{flex-wrap:wrap}.selectors select{max-width:min(60vw,320px)}.workspace [data-tool-panel]{display:grid;gap:20px}
+.workspace [role=alert],.welcome [role=alert]{color:#efb39e}
+.hud{height:100vh;display:flex;flex-direction:column;background:#101820}
+.hud header,.hud footer{padding:10px 14px;background:#192630}.hud main{padding:0 14px;overflow:auto;flex:1}.hud li{border-bottom:1px solid #344754;padding:9px 0}.hud ul{list-style:none;padding:0;margin:0}.hud button{width:100%}
+@media(max-width:620px){.toolbar{gap:6px}.wordmark{font-size:16px}.mode svg{display:none}.toolbar select,.toolbar button{padding:5px 6px}.workspace{padding-top:16px}}

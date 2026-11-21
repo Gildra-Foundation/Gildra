@@ -14,9 +14,6 @@ jobs:
         with:
           go-version: '1.27.1'
           cache-dependency-path: backend/go.sum
-      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
-        with:
-          dotnet-version: '10.0.404'
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: '22.23.5'
@@ -27,6 +24,7 @@ jobs:
           curl --fail --location --retry 3 -o node.zip https://nodejs.org/dist/v22.23.5/node-v22.23.5-win-x64.zip
           echo 'e7a15a49a2ea95e9f3d8a9d0cfabe5052a4b10fb4777cc54de5a8c27b64bb701  mingw.tar.xz' | sha256sum -c -
           echo '4a191082e9706866830379d577d2cc8a50c776fcd9436a8d061b063ed0d9a0e3  node.zip' | sha256sum -c -
+          curl --fail --location --retry 3 -o electron.zip https://github.com/electron/electron/releases/download/v45.4.1/electron-v45.4.1-win32-x64.zip
           mkdir mingw simc
           tar xf mingw.tar.xz --strip-components=1 -C mingw
           unzip -q node.zip
@@ -35,6 +33,7 @@ jobs:
           git -C simc checkout --detach FETCH_HEAD
       - name: Build portable x64 application
         env:
+          ELECTRON_ZIP: ${{ runner.temp }}/electron.zip
           SIMC_DIR: ${{ runner.temp }}/simc
           NODE_WIN_DIR: ${{ runner.temp }}/node-v22.23.5-win-x64
           MINGW_CXX: ${{ runner.temp }}/mingw/bin/x86_64-w64-mingw32-clang++
@@ -47,7 +46,7 @@ jobs:
           if-no-files-found: error
   windows:
     needs: build
-    runs-on: windows-2022
+    runs-on: windows-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -63,4 +62,6 @@ jobs:
         run: |
           npm install --prefix "$env:RUNNER_TEMP/driver" --no-save --no-audit --no-fund playwright-core@1.62.1
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          ./apps/gear-desktop/tests/windows-smoke.ps1 -AppDir "$env:RUNNER_TEMP/Gildra Gear"
+          & "$env:RUNNER_TEMP/Gildra Gear/runtime/node.exe" apps/gear-desktop/tests/native-batch.mjs "$env:RUNNER_TEMP/Gildra Gear/runtime"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node apps/gear-desktop/tests/electron-smoke.mjs "$env:RUNNER_TEMP/Gildra Gear/Gildra Gear.exe"
