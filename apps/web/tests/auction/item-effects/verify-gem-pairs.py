@@ -50,7 +50,15 @@ scaling = (root / "sc_scale_data.inc").read_text().split("double __spell_scaling
 scaling = re.sub(r"//[^\n]*", "", scaling)
 budgets = [[float(x) for x in row.split(",") if x.strip()] for row in re.findall(r"\{([^{}]+)\}", scaling)]
 assert len(budgets) == 23 and all(len(row) == 90 for row in budgets)
-required = {properties[items[i]][0] for i in ids} | set(enchant_ratings)
+# Extract the worker's observable rating for each supported explicit armor enchant.
+worker = proof.parents[4] / "backend/internal/rotationlab/armor_batch.go"
+armor = {}
+for slot, body in re.findall(r'case "(FEET|HEAD|SHOULDER)":(.*?)(?=\n\t(?:case "|default:))', worker.read_text(), re.S):
+    for id_list, axis in re.findall(r'case ([0-9, ]+):\s+axis = armor(Speed|Leech|Avoidance)', body):
+        for token in id_list.split(","):
+            armor[int(token)] = (slot, {"Speed": 61, "Leech": 62, "Avoidance": 63}[axis])
+assert len(armor) == 24
+required = {properties[items[i]][0] for i in ids} | set(enchant_ratings) | set(armor)
 enchants = {}
 for line in (root / "spell_item_enchantment.inc").open():
     row = re.match(r"^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),", line)
@@ -95,3 +103,14 @@ for eid, rating in enchant_ratings.items():
     low, high, amounts = enchants[eid]
     assert low == 120 and high == 0 and amounts[89] == (rating,), (eid, amounts[89])
 print(f"Verified {len(gem_ratings)} gem ratings and {len(enchant_ratings)} enchant ratings at level 90")
+
+stamina_per_rank = {}
+for eid, (slot, stat) in armor.items():
+    low, high, levels = enchants[eid]
+    assert (low, high) == (120, 0)
+    for level, values in enumerate(levels, 1):
+        assert tuple(k for k, _ in values) == ((stat, 7) if slot == "FEET" else (stat,))
+        if slot == "FEET":
+            stamina = values[1][1]
+            assert stamina_per_rank.setdefault((level, eid % 2), stamina) == stamina
+print(f"Verified {len(armor)} armor enchant effects and boot stamina at all 90 levels")

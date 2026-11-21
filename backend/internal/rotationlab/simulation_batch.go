@@ -106,6 +106,17 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 		return nil, err
 	}
 	defer e.release()
+	if owned && len(b.Candidates) > 1 && (b.Base.Spec == "fury-warrior" || b.Base.Spec == "fire-mage") {
+		return simulateArmorBatch(b.Candidates, func(candidates []batchCandidate, reads *byte) ([]batchMeasurement, error) {
+			subset := b
+			subset.Candidates = candidates
+			return e.runPreparedBatch(ctx, subset, reads)
+		})
+	}
+	return e.runPreparedBatch(ctx, b, nil)
+}
+
+func (e *SimCEngine) runPreparedBatch(ctx context.Context, b simulationBatch, reads *byte) ([]batchMeasurement, error) {
 	input := b.Base
 	// Mixed rows inherit the original armory. The extra primary measurement
 	// is never returned as a candidate or used in its confidence interval.
@@ -117,7 +128,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	} else {
 		input.GearChanges = b.Candidates[0].GearChanges
 	}
-	payload, err := e.runReport(ctx, input, b.Candidates)
+	payload, err := e.runReportWithArmorReads(ctx, input, b.Candidates, reads)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +139,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 		}
 		rows = rows[1:]
 	}
-	if err == nil && owned && !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
+	if err == nil && len(b.Candidates[0].OwnedChanges) > 0 && !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
 		return nil, errUnsupportedOwnedBatch
 	}
 	return rows, err

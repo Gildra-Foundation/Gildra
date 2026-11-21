@@ -7,13 +7,13 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates g++ git make \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src/simc
-COPY infra/simc/gear-metadata.patch infra/simc/batch-initialization.patch /tmp/
+COPY infra/simc/gear-metadata.patch infra/simc/batch-initialization.patch infra/simc/auction-armor-reads.patch /tmp/
 RUN git init \
     && git remote add origin https://github.com/simulationcraft/simc.git \
     && git fetch --depth 1 origin "${SIMC_REF}" \
     && git checkout --detach FETCH_HEAD \
-    && git apply --check /tmp/gear-metadata.patch /tmp/batch-initialization.patch \
-    && git apply /tmp/gear-metadata.patch /tmp/batch-initialization.patch \
+    && git apply --check /tmp/gear-metadata.patch /tmp/batch-initialization.patch /tmp/auction-armor-reads.patch \
+    && git apply /tmp/gear-metadata.patch /tmp/batch-initialization.patch /tmp/auction-armor-reads.patch \
     && make -C engine release -j4 SC_NO_NETWORKING=1
 
 FROM golang:1.26.6-bookworm AS worker-build
