@@ -67,7 +67,14 @@ test('bare rings with matching empty prismatic sockets can move between fingers'
     assert(!skips());
     Object.assign(sockets,original);
   }
-  for(const copy of copies) copy.customization={gemIds:[192982]};
+  for(const copy of copies) copy.candidate.variants[0].resolution.enhancements.socketBonusId=5203;
+  assert(skips());
+  for(const copy of copies) copy.candidate.variants[0].resolution.enhancements.socketBonusId=999999;
+  assert(!skips());
+  for(const copy of copies) {
+    copy.candidate.variants[0].resolution.enhancements.socketBonusId=5203;
+    copy.customization={gemIds:[192982]};
+  }
   assert(!skips());
 });
 test('full bare search skips equivalent ring branches and preserves both physical winners across restores',async()=>{

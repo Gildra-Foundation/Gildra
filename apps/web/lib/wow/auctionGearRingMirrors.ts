@@ -4,6 +4,13 @@ import type { AuctionEffectGroup } from "./auctionGearEffects";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 const firstRingSlot = "FINGER_1", secondRingSlot = "FINGER_2";
+// Every socket bonus on a ring in this native revision. The table check in
+// verify-bare-ring-slots.py verifies that each program adds only stats.
+const statOnlyRingSocketBonuses = new Set([
+  2782, 3153, 3263, 3267, 3308, 3309, 3353, 3354, 3596, 3752, 3765, 4123, 4135, 4143, 4147, 4154,
+  4160, 4211, 4827, 4830, 4831, 4833, 4834, 4836, 4837, 4838, 4839, 4840, 5168, 5171, 5199, 5203,
+  5207, 5208, 5209, 5210, 5211, 5212, 5214, 5218, 5226, 5234, 5244, 5247, 5248, 5249, 5254, 5265, 5267,
+]);
 
 function bareRingIdentity(option: AuctionGearOption, engine: string) {
   const candidate = option.candidate;
@@ -25,14 +32,17 @@ function bareRingIdentity(option: AuctionGearOption, engine: string) {
       !Array.isArray(resolution.appliedStatsV1) || resolution.appliedStatsV1.length !== 46 ||
       !resolution.appliedStatsV1.every(Number.isSafeInteger)) return;
   // Local replacements receive gems only through customization, excluded above.
-  // An empty prismatic socket with no socket bonus adds neither stats nor effects.
-  if (enhancements?.status !== "verified" || enhancements.socketBonusId !== 0 ||
+  // The native loader can populate socket_bonus_stats before checking colors.
+  // Any such stats travel with their original item when both rings swap.
+  if (enhancements?.status !== "verified" ||
       enhancements.requiredProfessionId !== 0 || !Array.isArray(enhancements.socketColors) ||
       enhancements.socketColors.length !== 3 || !enhancements.socketColors.every(color => color === 0 || color === 14) ||
       enhancements.socketCount !== enhancements.socketColors.filter(color => color === 14).length) return;
+  if (enhancements.socketBonusId !== 0 && (!enhancements.socketCount ||
+      !statOnlyRingSocketBonuses.has(enhancements.socketBonusId ?? -1))) return;
   const constraints = Object.entries(candidateLoadoutItem(candidate)).filter(([key]) => key !== "slotType").sort(([a], [b]) => a.localeCompare(b));
   return JSON.stringify([option.variantKey, variant.itemLevel, variant.contextId, variant.bonusIds, variant.modifiers, constraints,
-    resolution.appliedStatsV1, enhancements.socketColors, option.quantity, option.costCopper]);
+    resolution.appliedStatsV1, enhancements.socketColors, enhancements.socketBonusId, option.quantity, option.costCopper]);
 }
 
 /** Two bare local rings give the pinned Fury actor the same integer stat sum and
