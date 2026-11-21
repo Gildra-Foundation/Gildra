@@ -260,27 +260,27 @@ function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: 
   return a === Math.min(first, second) && b === Math.max(first, second) ? [] : [a, b];
 }
 
-/** Two explicit replacements remove the same installed data. The remaining
- * stats are integer player-level ratings. A retained socket or ring enchant
- * can carry instance data and must keep its original score key. */
+/** Explicit replacements remove the same installed data. A positively
+ * identified bare ring enchant also contributes zero for score reuse. */
 function explicitOwnedJewelry(owned: readonly OwnedAuctionGearChange[], hosts: ReadonlyMap<string, number>,
-  purchased: readonly SimcGearChange[], removed: readonly string[] | undefined) {
+  purchased: readonly SimcGearChange[], removed: readonly string[] | undefined, bareRings?: ReadonlySet<string>) {
   if (new Set(owned.map(edit => edit.slotType)).size !== owned.length) return;
   const ratings = [0, 0, 0, 0];
   let changed = false;
   const edits = owned.map(edit => {
     const ring = edit.slotType === "FINGER_1" || edit.slotType === "FINGER_2";
-    if ((!ring && edit.slotType !== "NECK") || hosts.get(edit.slotType) !== edit.itemId ||
+    const knownEnchant = ring ? Boolean(edit.enchantId) || edit.enchantId === undefined && bareRings?.has(edit.slotType)
+      : edit.enchantId === undefined;
+    if (!knownEnchant || (!ring && edit.slotType !== "NECK") || hosts.get(edit.slotType) !== edit.itemId ||
         removed?.includes(edit.slotType) || purchased.some(c => jewelrySlots[c.slot] === edit.slotType) ||
-        edit.gems.length !== 1 || edit.gems[0].index !== 0 || !edit.gems[0].itemId ||
-        (ring ? !edit.enchantId : edit.enchantId !== undefined)) return edit;
+        edit.gems.length !== 1 || edit.gems[0].index !== 0 || !edit.gems[0].itemId) return edit;
     const contribution = combinedRingRatings90(edit.enchantId ?? 0, edit.gems[0].itemId);
     if (!contribution) return edit;
     for (const [index, amount] of contribution.entries()) ratings[index] += amount;
     changed = true;
     // Zeroes are placeholders only in the hash. Keep the physical hosts,
     // socket position and every unrelated edit in the comparison.
-    return { ...edit, enchantId: edit.enchantId === undefined ? undefined : 0, gems: [{ ...edit.gems[0], itemId: 0 }] };
+    return { ...edit, enchantId: ring ? 0 : undefined, gems: [{ ...edit.gems[0], itemId: 0 }] };
   });
   return changed ? { edits, ratings } : undefined;
 }
@@ -299,7 +299,7 @@ export function directNeckEnchantGroup(id: number) {
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number> }) {
+}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number>; barePrismaticRings?: ReadonlySet<string> }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
@@ -369,7 +369,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   });
   const jewelry = request.precision === "finalist" && native?.playerLevel === 90 && native.wornPrismatic?.size &&
     ignoresItemContext(native.engine) && request.ownedChanges?.length
-    ? explicitOwnedJewelry(request.ownedChanges, native.wornPrismatic, native.changes, request.removedSlots) : undefined;
+    ? explicitOwnedJewelry(request.ownedChanges, native.wornPrismatic, native.changes, request.removedSlots, native.barePrismaticRings) : undefined;
   // Assign the total to one stable field. Keep the original purchased-only
   // key when there are no qualifying worn edits so saved scores still match.
   if (gear && (jewelry || certifiedJewelry.length >= 2)) {

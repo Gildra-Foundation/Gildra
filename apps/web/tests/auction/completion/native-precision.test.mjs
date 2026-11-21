@@ -7,6 +7,7 @@ import test from "node:test";
 import vm from "node:vm";
 import * as gear from "../../../lib/wow/gearSimulation.ts";
 import {auctionGearMechanicalKey, purchasedJewelryScoreChanges,createAuctionGearMechanicalCache} from "../../../lib/wow/auctionGearMechanicalCache.ts";
+import {applyOwnedAuctionGearChanges} from "../../../lib/wow/auctionGearEnhancedConfiguration.ts";
 import {auctionGearProfileFingerprint} from "../../../lib/wow/auctionGearFingerprint.ts";
 import {assertFreshMarket} from "../../../lib/wow/auctionMarket.ts";
 import {auctionAppliedStatsKey} from "../../../lib/wow/auctionGearEffects.ts";
@@ -23,7 +24,7 @@ function simulator(response, {equipped=[], level, verifiedEngine=wires[0].engine
  const body=stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")),{mode:"strip"});
  let calls=0;
  const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
-  ...gear,auctionAppliedStatsKey,auctionGearMechanicalKey, purchasedJewelryScoreChanges,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
+  ...gear,applyOwnedAuctionGearChanges,auctionAppliedStatsKey,auctionGearMechanicalKey, purchasedJewelryScoreChanges,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
   fetch:async(_url,request)=>{calls++;const selection=JSON.parse(request.body).gearChanges?.length?1:0;
    return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection,JSON.parse(request.body))};}
  });
@@ -130,4 +131,34 @@ test('finalist keys share equal explicit worn jewelry ratings while preserving t
  const uncertain=keyFor({equipped:enchantedNeck});
  assert.notEqual(uncertain([],before),uncertain([],swapNeck));
  assert.deepEqual(before,build(8020,115804,7994,130220,130216));
+});
+
+test('finalist simulations reuse an equal gem and enchant total on bare rings while receipts retain their identities',async()=>{
+ const verifiedEngine='SimulationCraft 1210-01 · 18428cd',signal=new AbortController().signal;
+ const equipped=['FINGER_1','FINGER_2'].map((slot,i)=>({slot:{type:slot},item:{id:100+i},item_class:{id:4},
+   level:{value:300},inventory_type:{type:'FINGER'},sockets:[{socket_type:{type:'PRISMATIC'}}]}));
+ const build=(enchant,secondGem)=>equipped.map((host,i)=>({slotType:host.slot.type,itemId:host.item.id,
+   gems:[{index:0,itemId:i?secondGem:154128}],...(!i?{enchantId:enchant}:{})}));
+ const source=build(8027,115807),replacement=build(8026,154128),weaker=build(8026,115807);
+ async function count(items,level){
+   const requests=[];
+   const {run,calls}=simulator((_i,request)=>{
+     requests.push(request);
+     return {...wires[0],iterations:request.precision==='auction-finalist'?750:100,engine:verifiedEngine};
+   },{equipped:items,level,verifiedEngine});
+   assert.notEqual(run.finalistKey([],source),run.finalistKey([],replacement));
+   await run([],signal,source,'finalist');
+   const sent=requests[0].armory.equipment.equipped_items;
+   assert.equal(sent[0].enchantments[0].enchantment_id,8027);
+   assert.equal(sent[1].sockets[0].item.id,115807);
+   await run([],signal,replacement,'finalist');
+   await run([],signal,weaker,'finalist');
+   return calls();
+ }
+ assert.equal(await count(equipped,90),2);
+ assert.equal(await count(equipped,89),3);
+ for(const enchantments of [[{enchantment_slot:{id:0},enchantment_id:7967}],[{enchantment_slot:{id:2},enchantment_id:777}]]) {
+   const other=structuredClone(equipped);other[1].enchantments=enchantments;
+   assert.equal(await count(other,90),3);
+ }
 });
