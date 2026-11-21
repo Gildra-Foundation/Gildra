@@ -11,7 +11,7 @@
 +
  #include "interfaces/sc_js.hpp"
  #include "rapidjson/document.h"
-@@ -379,12 +382,175 @@
+@@ -379,12 +382,180 @@
    } );
  }
 -
@@ -53,11 +53,12 @@
 +
 +// The only drop/tuning reader in these bonus lists is one type-51 curve.
 +// Equal rounded outputs write the same item level and scaling flag. The other
-+// accepted entries add sockets or are ignored by the pinned item parser.
++// entries include sockets and, on weapons, no-ops and fixed quality writes.
 +void gildra_drop_curve( JsonOutput node, const item_t& item )
 +{
 +  const auto& parsed = item.parsed;
-+  if ( !parsed.drop_level || parsed.data.item_class != ITEM_CLASS_ARMOR || item.parent_slot != SLOT_INVALID )
++  const bool weapon = parsed.data.item_class == ITEM_CLASS_WEAPON;
++  if ( !parsed.drop_level || ( !weapon && parsed.data.item_class != ITEM_CLASS_ARMOR ) || item.parent_slot != SLOT_INVALID )
 +    return;
 +  const auto& dbc = *item.player->dbc;
 +  int config_id = 0;
@@ -72,6 +73,10 @@
 +        case ITEM_BONUS_SCALE_CONFIG_2:
 +          if ( config_id || entry.value_1 <= 0 ) return;
 +          config_id = entry.value_1;
++          break;
++        case 0:
++        case ITEM_BONUS_QUALITY:
++          if ( !weapon ) return;
 +          break;
 +        case ITEM_BONUS_SOCKET:
 +        case 26:
@@ -95,7 +100,7 @@
 +  const auto& offset = offsets[ 0 ];
 +  const int level = as<int>( util::round( item_database::curve_point_value( dbc, offset.curve_id, drop ) ) ) + offset.offset;
 +  if ( level <= 0 || level != as<int>( parsed.data.level ) || !parsed.has_midnight_scaling ) return;
-+  auto proof = node[ "gildra_drop_curve_v1" ];
++  auto proof = node[ weapon ? "gildra_weapon_drop_curve_v1" : "gildra_drop_curve_v1" ];
 +  proof.make_array();
 +  proof.add() = parsed.drop_level;
 +  proof.add() = parsed.content_tuning_id;
@@ -190,7 +195,7 @@
      {
        continue;
      }
-@@ -393,6 +559,76 @@
+@@ -393,6 +564,76 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -267,7 +272,7 @@
  
      for ( size_t i = 0; i < std::size( item.parsed.data.stat_type_e ); i++ )
      {
-@@ -753,6 +989,8 @@
+@@ -753,6 +994,8 @@
    root[ "race" ] = util::race_type_string( p.race );
    root[ "level" ] = p.true_level;
    root[ "role" ] = util::role_type_string( p.role );
@@ -276,7 +281,7 @@
    root[ "specialization" ] = util::specialization_string( p.specialization() );
    root[ "profile_source" ] = util::profile_source_string( p.profile_source_ );
    root[ "talents" ] = p.talents_str;
-@@ -1372,6 +1610,37 @@
+@@ -1372,6 +1615,37 @@
    }
  }
 -
@@ -315,7 +320,7 @@
  void print_json_pretty( FILE* o, const sim_t& sim, const ::report::json::report_configuration_t& report_configuration )
  {
    Document doc;
-@@ -1403,7 +1672,8 @@
+@@ -1403,7 +1677,8 @@
      root[ "git_branch" ] = git_info::branch();
    }
 -

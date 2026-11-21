@@ -59,6 +59,7 @@ type GearVariantMetadata struct {
 	SetID                   int                     `json:"setId"`
 	NativeCraftedSymmetryV1 *[]int                  `json:"nativeCraftedSymmetryV1,omitempty"`
 	NativeSuffixProgramV1   string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeWeaponCurveV1     *[3]int                 `json:"nativeWeaponCurveV1,omitempty"`
 	NativeDropCurveV1       *[3]int                 `json:"nativeDropCurveV1,omitempty"`
 	NativeContentTuningV1   *[2]int                 `json:"nativeContentTuningV1,omitempty"`
 	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
@@ -323,6 +324,9 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 				// order sent to SimC, including an explicitly empty bonus list.
 				bonuses := append([]int{}, v.Change.BonusIDs...)
 				result.NativeCraftedSymmetryV1 = &bonuses
+			}
+			if n("item_class") == 2 {
+				result.NativeWeaponCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_weapon_drop_curve_v1"])
 			}
 			result.NativeDropCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_drop_curve_v1"])
 			result.NativeContentTuningV1 = nativeContentTuningV1(r.Git, v.Change.Modifiers, item["gildra_content_tuning_v1"])

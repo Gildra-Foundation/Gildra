@@ -231,13 +231,42 @@ export function auctionSocketedRingCurve(option: AuctionGearOption, engine: stri
   return ["socketed-ring-curve-v1", c.itemId, v.itemLevel, r.appliedStatsV1];
 }
 
+/** The native curve certificate verifies the raw item level written by the
+ * one scaling operation. In 18428cd lists 13729 and 13900 only perform that
+ * write. 13730 also writes quality, so retain that ordered program separately.
+ * Weapon type, original item ID, level and quality fix the native damage table.
+ * The display damage fields alone would lose unrounded weapon DPS. */
+export function bareWeaponCurveIdentity(option: AuctionGearOption, engine: string) {
+  const c = option.candidate, t = c.constraints;
+  if (!ignoresItemContext(engine) || option.customization || c.itemClassId !== 2 ||
+      (c.slotType !== "MAIN_HAND" && c.slotType !== "OFF_HAND") ||
+      t.crafted || t.setId || t.setName) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
+  const e = r?.enhancements, w = r?.weapon;
+  if (!v || !validAuctionItemContext(v.contextId) || !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 ||
+      !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 9 && m.type !== 28) ||
+      !r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.effects?.length ||
+      verifiedAuctionDropCurve(v.modifiers ?? [], r.nativeWeaponCurveV1) !== v.itemLevel ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketColors?.length !== 3 || e.socketColors.some(Boolean) ||
+      e.socketBonusId !== 0 || e.requiredProfessionId !== 0 || !w ||
+      ![w.minDamage, w.maxDamage, w.dps, w.speedSeconds].every(Number.isFinite) ||
+      w.minDamage < 0 || w.maxDamage <= 0 || w.maxDamage < w.minDamage || w.dps <= 0 || w.speedSeconds <= 0 ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  const b = v.bonusIds;
+  const curveOnly = b?.length === 1 && (b[0] === 13729 || b[0] === 13900);
+  if (!curveOnly && !(b?.length === 2 && b[0] === 6652 && b[1] === 13730)) return;
+  return ["bare-weapon-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId, v.itemLevel, curveOnly ? 0 : 13730,
+    w.minDamage, w.maxDamage, w.dps, w.speedSeconds, r.appliedStatsV1];
+}
+
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
   const curve = typeof bareJewelry === "string" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
-  const effect = suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  const weapon = bareWeapon && engine ? bareWeaponCurveIdentity(option, engine) : undefined;
+  const effect = weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 

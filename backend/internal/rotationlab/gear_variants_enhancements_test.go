@@ -270,3 +270,16 @@ func TestDropCurveReportBindsDropTuningAndResolvedLevel(t *testing.T) {
 		t.Fatalf("missing curve in published variant metadata: %+v", report)
 	}
 }
+
+func TestWeaponCurveReportIsSeparateFromArmorAndChecksNativeClass(t *testing.T) {
+	mods := []ItemModifier{{Type: 9, Value: 81}, {Type: 28, Value: 3321}}
+	for _, class := range []int{2, 4} {
+		report := enhancementReport(t, func(item map[string]any) {
+			item["item_class"] = class
+			item["gildra_weapon_drop_curve_v1"] = []int{81, 3321, 133}
+		}, mods...)
+		if (report.NativeWeaponCurveV1 != nil) != (class == 2) || report.NativeDropCurveV1 != nil {
+			t.Fatalf("incorrect curve for item class %d: %+v", class, report)
+		}
+	}
+}

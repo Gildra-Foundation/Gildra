@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, purchasedRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
-import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity, bareWeaponCurveIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
@@ -322,6 +322,11 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     const suffix = sameVariant && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
       (!change.enchantId || directNeck) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
       ? bareJewelrySuffixIdentity(directNeck ? { ...option, customization: undefined } : option, native.engine) : undefined;
+    const weaponCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
+      ((change.slot === "main_hand" && option.candidate.slotType === "MAIN_HAND") ||
+       (change.slot === "off_hand" && option.candidate.slotType === "OFF_HAND")) &&
+      !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
+      ? bareWeaponCurveIdentity(option, native.engine) : undefined;
     const curve = reuseCandidateInputs && sameProgram ? proof?.nativeDropCurveV1 : undefined;
     // A finalist can reuse a previous 750-iteration fight only within its
     // own precision key. Both native tuning handlers consume the same cap.
@@ -375,6 +380,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     return {
       ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
+      ...(weaponCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, bonusIds: [], weaponCurve } : {}),
       ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
       ...(suffix ? { bonusIds: [], bareSuffix: suffix } : {}),
       ...(scroll !== undefined ? { enchantId: undefined } : {}),

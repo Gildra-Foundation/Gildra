@@ -45,3 +45,8 @@ while applied:
         if kind == 50:
             applied.add(value)
 print(f'Checked {enchantments} enchantments and {len(visited)} reachable bonus lists')
+
+# On weapons, the other accepted ordered program changes quality. It must
+# remain distinct from the curve-only programs even when the level matches.
+assert bonuses[6652] == [(0, 0)]
+assert bonuses[13730] == [(27, 101224), (47, 2), (51, 435), (3, 3)]
