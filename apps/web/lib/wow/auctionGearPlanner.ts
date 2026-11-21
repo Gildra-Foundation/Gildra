@@ -1,3 +1,4 @@
+import { auctionRingMirrorOrder } from "./auctionGearRingMirrors";
 import { ignoresItemContext } from "./gearItemModifiers";
 import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { createHash } from "node:crypto";
@@ -556,6 +557,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const screenFinished = directVerification && checkpoint.seedSelections !== null &&
     checkpoint.nextSeed === checkpoint.seedSelections.length && checkpoint.nextEquipmentSingle === flatGroups.length;
   const yieldBeforeEnumeration = screenFinished || input.shouldYield?.() === true;
+  const ringMirrors = !directVerification && !yieldBeforeEnumeration && input.bareEquipmentProofs && reuseAppliedStats
+    ? auctionRingMirrorOrder(groups, slots, checkpoint.baseline.engine, input.specId) : undefined;
   const groupIndex = new Map(flatGroups.map((group, index) => [group, index]));
   const rankedBySlot = groups.map(slotGroups => slotGroups.map(group => groupIndex.get(group)!)
     .sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b));
@@ -716,7 +719,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       input.signal.throwIfAborted();
       const seed = seeds[traversal.nextSeed].map(index => flatGroups[index]);
       const purchase = seed.some(group => dominatedGroups.has(group)) ? null : await cheapestAuctionEffectSelection(seed, input.budgetCopper, input.signal);
-      if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
+      if (purchase && !ringMirrors?.skipsReceipt(purchase.options) && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextSeed++;
       traversal.combinationsChecked++;
       assignments++;
@@ -733,7 +736,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       const first = flatGroups[pair.first], second = flatGroups[pair.second];
       const purchase = dominatedGroups.has(first) || dominatedGroups.has(second) ? null :
         await cheapestAuctionEffectSelection([first, second], input.budgetCopper, input.signal);
-      if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
+      if (purchase && !ringMirrors?.skipsReceipt(purchase.options) && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextPair++;
       traversal.combinationsChecked++;
       assignments++;
@@ -775,12 +778,14 @@ export async function assembleAuctionGear(input: PlannerInput & {
       input.signal.throwIfAborted();
       const dominatedAxis = dominatedGroups.size ? traversal.cursor.findIndex((choice, axis) =>
         choice > 0 && dominatedGroups.has(groups[axis][choice - 1])) : -1;
-      if (dominatedAxis >= 0) {
+      const substitutionAxis = dominatedAxis >= 0 ? dominatedAxis :
+        ringMirrors?.skips(traversal.cursor) ? ringMirrors.axis : -1;
+      if (substitutionAxis >= 0) {
         // A resume may already be partway through this suffix. Count only its
         // remaining cursor positions, regardless of warmup order or budget.
-        proofPruned += remainingInBranch(dominatedAxis);
+        proofPruned += remainingInBranch(substitutionAxis);
         substitutionBranches++;
-        advance(dominatedAxis);
+        advance(substitutionAxis);
         assignments++;
         if (assignments % 256 === 0) await yieldTraversal();
         continue;
