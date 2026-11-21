@@ -353,3 +353,36 @@ test('paid neck scrolls require an available strictly cheaper equivalent and kee
   for(const args of [{price:9},{enabled:false},{level:89}])assert.deepEqual(await choices(args),[0,5317,5437,5898]);
   assert((await choices({installed:5898})).includes(5898));
 });
+
+test('both ring positions retain equal-price scrolls and can use the last cheap copy plus a substitute', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const selectedSlots=['FINGER_1','FINGER_2'];
+  const items=selectedSlots.map((slot,id)=>({item:{id:173131+id},slot:{type:slot},inventory_type:{type:'FINGER'},
+    level:{value:35},item_class:{id:4},item_subclass:{id:0},spells:[],sockets:[]}));
+  const loadout=items.map(x=>({slotType:x.slot.type,itemId:x.item.id,inventoryType:11,itemSubclassId:0}));
+  async function choices(ladder,{level=90,enabled=true,revision=engine}={}) {
+    const state={checkpoints:{}},seen=new Map(),baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for(let i=0;i<40;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneRingEnchantRanks:enabled,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,selectedSlots,
+        nativePlayerLevel:level,specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'dual-ring-scrolls',
+        encounter:{},budgetCopper:100,baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices:{128538:{ladder},110639:{ladder:[[5,2]]}},sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.set(c.slots.map(slot=>slot.enchantId).join(','),c.totalCopper)});
+      if(result.complete)return seen;
+    }
+    assert.fail('ring scroll fixtures did not exhaust');
+  }
+  const compact=await choices([[1,2]]);
+  assert.deepEqual([...compact.keys()].sort(),['0,0','0,5424','5424,0','5424,5424']);
+  assert.equal(compact.get('5424,5424'),2);
+  for(const ladder of [[[1,1]],[[1,1],[5,1]],[[1,1],[8,1]]]){
+    const all=await choices(ladder);
+    assert.equal(all.get('5424,5325'),6);
+    assert.equal(all.get('5325,5424'),6);
+    assert.equal(all.has('5424,5424'),ladder.length===2);
+  }
+  for(const options of [{level:89},{enabled:false},{revision:'SimulationCraft 18428cd different build'}]){
+    assert.equal((await choices([[1,2]],options)).get('5325,5325'),10);
+  }
+});

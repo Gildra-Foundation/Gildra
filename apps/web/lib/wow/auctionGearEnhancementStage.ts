@@ -11,7 +11,7 @@ import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from 
 import type { AuctionGearEncounter } from './auctionGearScenarios';
 import { directNeckEnchantGroup, isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedJewelryGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
-import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
+import { isDirectRingEnchant, ringEnchantRepresentative90, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
 import { assertFreshMarket } from './auctionMarket';
 import { validatedAuctionEnhancementMetadata } from './auctionItemVariant';
@@ -70,6 +70,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   omitInertFuryLeech?: boolean;
   pruneCradleEnchants?: boolean;
   pruneNeckEnchantRanks?: boolean;
+  pruneRingEnchantRanks?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -269,8 +270,10 @@ export async function evaluateAuctionEnhancementStage(input: {
       .filter(option => input.pruneEquivalentRingGems && hasLevel90RingRatings(option, input.engine, input.nativePlayerLevel))
       .map(option => option.candidate.slotType));
     for (const slot of ownedGemSlots) if (slot === 'FINGER_1' || slot === 'FINGER_2') ratingRingSlots.add(slot);
-    const pricedNeck = input.exhaustive && input.pruneNeckEnchantRanks && input.nativePlayerLevel === 90 &&
-      ignoresItemContext(input.engine) && slots.some(slot => slot.slotType === "NECK");
+    const pricedJewelry = input.exhaustive && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine);
+    const pricedNeck = pricedJewelry && input.pruneNeckEnchantRanks && slots.some(slot => slot.slotType === "NECK");
+    const pricedRings = pricedJewelry && input.pruneRingEnchantRanks &&
+      slots.some(slot => slot.slotType === "FINGER_1" || slot.slotType === "FINGER_2");
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
       character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
@@ -282,7 +285,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
-      purchasedEnchantEffect: cradleSlots.size || pricedNeck ? (slot: string, id: number) => {
+      purchasedEnchantEffect: cradleSlots.size || pricedNeck || pricedRings ? (slot: string, id: number) => {
+        if (pricedRings && (slot === "FINGER_1" || slot === "FINGER_2")) return ringEnchantRepresentative90(id);
         if (pricedNeck && slot === "NECK") return directNeckEnchantGroup(id);
         return cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined;
       } : undefined,

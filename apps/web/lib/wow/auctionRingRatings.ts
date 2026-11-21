@@ -17,6 +17,22 @@ const enchantRanks90 = [
 ] as const;
 const enchantAmounts90 = [22, 24, 27, 29] as const;
 
+// Direct enchants eligible on older rings. At player level 90 the pinned
+// native scaling table rounds every entry in a group to the same integer
+// rating. The first ID represents the effect, never the scroll to purchase.
+const legacyRingEnchantGroups90 = [
+  [5284, 5324, 5423], [5297, 5325, 5424], [5299, 5326, 5425], [5303, 5328, 5426],
+  [5427, 5938, 5942, 6545, 6546], [5428, 5939, 5943, 6551, 6552],
+  [5429, 5940, 5944, 6557, 6558], [5430, 5941, 5945, 6563, 6564],
+  [6547, 6548], [6553, 6554], [6559, 6560], [6565, 6566],
+  [6108, 6549, 6550], [6109, 6555, 6556], [6110, 6561, 6562], [6111, 6567, 6568],
+] as const;
+const legacyRingEnchantRepresentatives = new Map<number, number>();
+for (const group of legacyRingEnchantGroups90) {
+  for (const id of group) legacyRingEnchantRepresentatives.set(id, group[0]);
+}
+export const ringEnchantRepresentative90 = (id: number) => legacyRingEnchantRepresentatives.get(id);
+
 type Rating = { axis: number; amount: number };
 const gems = new Map<number, Rating & { representative: number }>();
 const enchants = new Map<number, Rating>();

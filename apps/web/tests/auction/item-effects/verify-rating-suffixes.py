@@ -2,6 +2,9 @@
 from collections import defaultdict
 from pathlib import Path
 import re
+import json
+import math
+import struct
 import sys
 
 programs = defaultdict(list)
@@ -73,11 +76,14 @@ neck_module = module.with_name('auctionGearMechanicalCache.ts')
 decl = neck_module.read_text().split('const directNeckEnchants = new Set([', 1)[1].split(']);', 1)[0]
 enabled_neck = set(map(int, re.findall(r'\d+', decl)))
 data = Path(sys.argv[1])
-neck_rules = set()
+neck_rules, ring_rules = set(), set()
 for line in (data / 'permanent_enchant.inc').open():
     record = re.match(r'^  \{\s*(\d+),\s*\d+,\s*4,\s*(0x\w+),\s*(0x\w+)', line)
-    if record and int(record[2], 16) & (1 << 2) and int(record[3], 16) & 1:
-        neck_rules.add(int(record[1]))
+    if record and int(record[3], 16) & 1:
+        if int(record[2], 16) & (1 << 2):
+            neck_rules.add(int(record[1]))
+        if int(record[2], 16) & (1 << 11):
+            ring_rules.add(int(record[1]))
 direct_neck = set()
 for line in (data / 'spell_item_enchantment.inc').open():
     record = re.match(r'^  \{\s*(\d+),[^{}]+\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\}', line)
@@ -94,19 +100,41 @@ source = neck_module.read_text().split('const equalNeckEnchantRanks = new Map(['
 pairs = [tuple(map(int, pair)) for pair in re.findall(r'\[(\d+), (\d+)\]', source)]
 paired_ids = {eid for pair in pairs for eid in pair}
 assert pairs and paired_ids <= direct_neck and len(paired_ids) == 2 * len(pairs)
-fallback, spell_enchants = {}, {}
+ring_source = module.with_name('auctionRingRatings.ts').read_text()
+decl = ring_source.split('const legacyRingEnchantGroups90 = ', 1)[1].split(' as const;', 1)[0]
+ring_groups = json.loads(re.sub(r',\s*]', ']', decl))
+ring_ids = {eid for group in ring_groups for eid in group}
+assert ring_ids and ring_ids <= ring_rules and sum(map(len, ring_groups)) == len(ring_ids)
+
+# dbc_t::spell_scaling indexes class_id(scale) and level-1. SimC reads
+# ench_coeff as a float and rounds the positive product with floor(x+0.5).
+scales = (data / 'sc_scale_data.inc').read_text().split('double __spell_scaling[][90] = {', 1)[1].split('};', 1)[0]
+tables = [list(map(float, row.strip().rstrip(',').split(',')))
+          for row in re.findall(r'\{([^{}]+)\}', re.sub(r'//[^\n]*', '', scales))]
+class_id = {-1: 14, -3: 16, -4: 17, -5: 18, -7: 14}
+fallback, spell_enchants, ring_rating = {}, {}, {}
 for line in (data / 'spell_item_enchantment.inc').open():
     row = re.match(r'^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),', line)
     if not row:
         continue
     eid, _, scaling, scaling_min, cap, minimum, maximum, skill, rank = map(int, row[1].split(','))
-    if eid in paired_ids:
+    if eid in ring_ids or eid in paired_ids:
         assert scaling != 0 and skill == rank == 0
         fallback[eid] = (scaling, scaling_min, cap, minimum, maximum, row[2], row[3], row[4])
-        spell_enchants[int(row[5])] = eid
+        if int(row[5]):
+            spell_enchants[int(row[5])] = eid
+        if eid in ring_ids:
+            kinds, stats = [list(map(int, row[i].split(','))) for i in (2, 3)]
+            assert kinds == [5, 0, 0] and stats[0] in (32, 36, 40, 49) and stats[1:] == [0, 0]
+            assert scaling_min == 0 and 0 < cap <= 90 and scaling in class_id
+            coefficient = float(row[4].split(',')[0].strip().removesuffix('f'))
+            native_float = struct.unpack('f', struct.pack('f', coefficient))[0]
+            ring_rating[eid] = (stats[0], math.floor(tables[class_id[scaling]][cap-1] * native_float + 0.5))
 for a, b in pairs:
     assert fallback[a] == fallback[b], (a, b)
-assert set(spell_enchants.values()) == paired_ids
+assert paired_ids <= set(spell_enchants.values())
+for group in ring_groups:
+    assert len(group) >= 2 and len({ring_rating[eid] for eid in group}) == 1, group
 spells, effects = set(), {}
 in_effects = False
 for line in (data / 'sc_spell_data.inc').open():
@@ -127,3 +155,4 @@ for line in (data / 'sc_spell_data.inc').open():
             effects[sid] = int(fields[16])
 assert spells == spell_enchants.keys() and effects == spell_enchants
 print(f'Verified {len(pairs)} neck scroll pairs with identical native ratings')
+print(f'Verified {len(ring_ids)} level-90 ring scrolls in {len(ring_groups)} rating groups')
