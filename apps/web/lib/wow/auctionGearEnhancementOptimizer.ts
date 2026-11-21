@@ -55,6 +55,8 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   /** Earlier checkpoints compacted only unavailable commodities. */
   screenCoverageProbed?: true;
   ringPricePruning?: { branches: string; configurations: string };
+  /** Older cursors continue with their original single-ring price guards. */
+  pairedRingPrices?: true;
   pricedAxes?: true | "within_budget" | "equivalent_scrolls" | "equivalent_gems" | "conditional_ring_gems" | "combined_ring_cost";
   cache: Record<string, GearPlanSimulation>; totalSimulations?: number; traversalSteps?: number; seedSelections?: number[][]; nextSeed?: number; reasons?: string[];
   confirmed?: { configuration: PricedEnhancementConfiguration; simulation: GearPlanSimulation };
@@ -124,11 +126,55 @@ const positive = (value: number) => Number.isSafeInteger(value) && value > 0;
 type Choice = { slot: number; socket: number | null; enhancement: Enhancement | null; retained: boolean };
 type RingPairGuards = Map<Choice, { enchantAxis: number; enchants: Set<Choice> }>;
 
+// The pinned table adds at most 34 points per rating per ring. Base 128
+// keeps all four integer coordinates distinct even after adding two rings.
+function ringRatingKey(ratings: number[]) {
+  return ratings.reduce((key, rating) => key * 128 + rating, 0);
+}
+type RingPriceOptions = {
+  enchantAxis: number;
+  gemAxis: number;
+  byGem: Map<Choice, Map<Choice, { rating: number; lower: number }>>;
+  upper: Map<number, number>;
+};
+type PairedRingPrices = { axis: number; skips: (selected: Choice[]) => boolean };
+
+/** A joint substitute must cover all four purchases at maximum marginal prices.
+ * Each source saves at least its first-unit price, for any legal use in other slots. */
+function pairedRingPriceGuard(rings: RingPriceOptions[]): PairedRingPrices | undefined {
+  if (rings.length !== 2) return;
+  const [left, right] = rings;
+  if (!left.upper.size || !right.upper.size) return;
+  // Most early configurations contain an uncertified or retained edit. Build
+  // the joint price table only if a real receipt can use it on this pass.
+  const minimumUpper = new Map<number, number>();
+  let built = false;
+  return {
+    axis: Math.min(left.enchantAxis, right.enchantAxis),
+    skips(selected) {
+      const a = left.byGem.get(selected[left.gemAxis])?.get(selected[left.enchantAxis]);
+      const b = right.byGem.get(selected[right.gemAxis])?.get(selected[right.enchantAxis]);
+      if (!a || !b) return false;
+      const lower = a.lower + b.lower;
+      if (!Number.isSafeInteger(lower) || !lower) return false;
+      if (!built) {
+        for (const [ratingA, priceA] of left.upper) for (const [ratingB, priceB] of right.upper) {
+          const price = priceA + priceB, rating = ratingA + ratingB;
+          if (Number.isSafeInteger(price) && price < (minimumUpper.get(rating) ?? Infinity))
+            minimumUpper.set(rating, price);
+        }
+        built = true;
+      }
+      return (minimumUpper.get(a.rating + b.rating) ?? Infinity) < lower;
+    },
+  };
+}
+
 /** Removing both source purchases saves at least their first-unit prices. Adding
  * both replacements costs at most their last potentially required units. A
  * strict gap therefore holds for every completion, including shared stock. */
 function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot[], ringSlots: ReadonlySet<string>,
-  prices: ExactCommodityPrices, maximumMarginal: (id: number) => number, guards: RingPairGuards, unique: Set<string>) {
+  prices: ExactCommodityPrices, maximumMarginal: (id: number) => number, guards: RingPairGuards, unique: Set<string>, paired?: RingPriceOptions[]) {
   const allowed = (choice: Choice, owned: boolean) => {
     const e = choice.enhancement;
     // An unchanged owned socket or enchant may carry native instance data.
@@ -148,14 +194,26 @@ function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot
     if (!socketAxis || socketAxis[0].slot !== slot || socketAxis[0].socket !== 0) continue;
     const gems = socketAxis.filter(c => allowed(c, target.owned) && combinedRingRatings90(0, c.enhancement?.simulationId ?? 0)).map(priceRange);
     const enchants = axis.filter(c => allowed(c, target.owned) && combinedRingRatings90(c.enhancement?.simulationId ?? 0, 0)).map(priceRange);
-    const groups = new Map<string, { upper: number; pairs: { gem: Choice; enchant: Choice; lower: number }[] }>();
+    const ring: RingPriceOptions | undefined = paired && (target.slotType === "FINGER_1" || target.slotType === "FINGER_2") ? {
+      enchantAxis, gemAxis: enchantAxis + 1, byGem: new Map(), upper: new Map(),
+    } : undefined;
+    const groups = new Map<number, { upper: number; pairs: { gem: Choice; enchant: Choice; lower: number }[] }>();
     for (const gem of gems) for (const enchant of enchants) {
-      const key = combinedRingRatings90(enchant.choice.enhancement?.simulationId ?? 0, gem.choice.enhancement?.simulationId ?? 0)!.join(",");
+      const key = ringRatingKey(combinedRingRatings90(enchant.choice.enhancement?.simulationId ?? 0, gem.choice.enhancement?.simulationId ?? 0)!);
       const group = groups.get(key) ?? { upper: Infinity, pairs: [] };
       const upper = gem.last + enchant.last, lower = gem.first + enchant.first;
       if (Number.isSafeInteger(upper)) group.upper = Math.min(group.upper, upper);
       if (Number.isSafeInteger(lower)) group.pairs.push({ gem: gem.choice, enchant: enchant.choice, lower });
       groups.set(key, group);
+      if (ring && Number.isSafeInteger(lower)) {
+        let byEnchant = ring.byGem.get(gem.choice);
+        if (!byEnchant) ring.byGem.set(gem.choice, byEnchant = new Map());
+        byEnchant.set(enchant.choice, { rating: key, lower });
+      }
+    }
+    if (paired && ring) {
+      for (const [key, group] of groups) if (Number.isSafeInteger(group.upper)) ring.upper.set(key, group.upper);
+      paired.push(ring);
     }
     for (const group of groups.values()) for (const { gem, enchant, lower } of group.pairs) {
       if (group.upper >= lower) continue;
@@ -174,7 +232,7 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
   ownedGemEffect: EnhancementOptimizerInput["ownedGemEffect"],
   conditional: Map<Choice, { axis: number; enchants: Set<number> }> | undefined,
   ringSlots?: ReadonlySet<string>, pairGuards?: RingPairGuards,
-  purchasedEnchantEffect?: EnhancementOptimizerInput["purchasedEnchantEffect"]) {
+  purchasedEnchantEffect?: EnhancementOptimizerInput["purchasedEnchantEffect"], paired?: RingPriceOptions[]) {
   const originalAxes = axes.slice();
   const lastPrice = new Map<number, number>();
   const maximumMarginal = (id: number) => {
@@ -263,7 +321,7 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
     for (const axis of originalAxes) for (const { enhancement } of axis) {
       if (enhancement?.uniqueEquipped) unique.add(enhancement.kind + ":" + enhancement.simulationId);
     }
-    markCostlierRingPairs(axes, slots, ringSlots, prices, maximumMarginal, pairGuards, unique);
+    markCostlierRingPairs(axes, slots, ringSlots, prices, maximumMarginal, pairGuards, unique, paired);
     if (pairGuards.size) return "combined_ring_cost";
   }
   return conditional?.size ? "conditional_ring_gems" : removedGems ? "equivalent_gems" : dominated.size ? "equivalent_scrolls" : undefined;
@@ -362,18 +420,22 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       addAxis(index, resolved.gemChoices[socket.key], slot.installed?.gems[index] ?? null);
     }
   }
-  const pairProofAllowed = !input.checkpoint || pricedAxes === "combined_ring_cost";
+  const pairProofAllowed = !input.checkpoint || input.checkpoint.pairedRingPrices === true || pricedAxes === "combined_ring_cost";
   const pairGuards: RingPairGuards | undefined = exact && pairProofAllowed && input.ratingRingSlots?.size ? new Map() : undefined;
   const conditionalAllowed = pairProofAllowed || pricedAxes === "conditional_ring_gems";
   const gemProofAllowed = conditionalAllowed || pricedAxes === "equivalent_gems";
   const conditional = exact && (input.purchasedGemEffect || input.ownedGemEffect) && conditionalAllowed
     ? new Map<Choice, {axis: number; enchants: Set<number>}>() : undefined;
+  const pairedRings: RingPriceOptions[] | undefined = pairGuards && input.ratingRingSlots?.has("FINGER_1") &&
+    input.ratingRingSlots.has("FINGER_2") && (!input.checkpoint || input.checkpoint.pairedRingPrices) ? [] : undefined;
   const compact = exact && (gemProofAllowed || pricedAxes === "equivalent_scrolls")
     ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined,
-        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect) : undefined;
+        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect, pairedRings) : undefined;
+  const pairedPrice = pairedRings && pairedRingPriceGuard(pairedRings);
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(pairedPrice ? { pairedRingPrices: 1 } : {}),
     ...(pairGuards?.size ? { costlierRingPairs: [...pairGuards].map(([gem, guard]) =>
       [gem.slot, gem.enhancement?.key ?? null, guard.enchantAxis, [...guard.enchants].map(c => c.enhancement?.key ?? null)]) } : {}),
     ...(conditional?.size ? { conditionalRingGems: [...conditional].map(([choice, guard]) =>
@@ -381,7 +443,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     prices:exact ? input.prices.prices : input.prices,
     ...(input.valuePrecision ? {valuePrecision:1} : {}), budget:input.budgetCopper, items:input.itemsCopper, objective:input.objective ?? "dps", baselineDps, baseline, identity:input.simulationIdentity, axes });
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
-  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(exact?{exactNextConfiguration:"0",pricedAxes:compact ?? "within_budget" as const}:{})};
+  const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {version:1,inputKey,nextConfiguration:0,cache:{},...(pairedPrice ? {pairedRingPrices:true as const} : {}),...(exact?{exactNextConfiguration:"0",pricedAxes:compact ?? "within_budget" as const}:{})};
   if (!Number.isSafeInteger(checkpoint.nextConfiguration) || checkpoint.nextConfiguration < 0) throw new Error("invalid_enhancement_checkpoint");
   if (exact && (typeof checkpoint.exactNextConfiguration !== "string" || checkpoint.exactNextConfiguration.length > 512 ||
     !/^(0|[1-9][0-9]*)$/.test(checkpoint.exactNextConfiguration))) throw new Error("invalid_enhancement_checkpoint");
@@ -460,6 +522,9 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       if (pair?.enchants.has(selected[pair.enchantAxis])) return { valid: false, pruneAxis: pair.enchantAxis, ringPriceProof: true };
       const skip = conditional?.get(selected[axis]);
       if (skip && skip.enchants.has(selected[skip.axis].enhancement?.simulationId ?? 0)) return { valid: false, pruneAxis: skip.axis };
+      // All four choices remain fixed while digits below the first ring vary.
+      if (axis === pairedPrice?.axis && pairedPrice.skips(selected))
+        return { valid: false, pruneAxis: axis, ringPriceProof: true };
       const {enhancement:e, retained} = selected[axis];
       if (e) {
         const key = `${e.kind}:${e.simulationId}`;
