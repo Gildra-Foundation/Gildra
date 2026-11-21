@@ -338,6 +338,22 @@ type DiscoveryInput = {
   fullMarket?: boolean;
 };
 
+function normalizeDiscoverySlots(entity: CatalogGearEntity, input: DiscoveryInput): GearCandidate[] {
+  const [firstSlot, ...otherSlots] = input.selectedSlots;
+  if (firstSlot === undefined) return [];
+  const first = normalizeGearCandidate(entity, input.context(firstSlot));
+  // The first candidate preserves unknown item/class facts and native mismatches.
+  // A known inventory type cannot become eligible in a different equipment slot.
+  const unverifiedSpecialization = first.rejectionReasons.includes("specialization_unverified");
+  const candidates = [first];
+  for (const slot of otherSlots) {
+    if (unverifiedSpecialization || auctionSummarySlotMatch(first.inventoryType, [slot]) !== false) {
+      candidates.push(normalizeGearCandidate(entity, input.context(slot)));
+    }
+  }
+  return candidates;
+}
+
 /** Persist cursors only after a whole batch succeeds, so cancellation is retryable. */
 export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, input: DiscoveryInput) {
   input.signal.throwIfAborted();
@@ -367,8 +383,9 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
     const batchLimit = state.variantBatchLimit ?? 16;
     const bulk = !input.stopAfterNewCandidates && batchLimit === 64;
     const paired = bulk && input.fullMarket === true;
-    // Read enough catalog rows for two native pages after class and slot filtering.
-    const detailBatch = paired ? 3 * batchLimit : bulk ? batchLimit : 8;
+    // A full-market step can hold up to 256 official reference IDs. This fills
+    // more 64-row native pages after filtering without changing the early lookup.
+    const detailBatch = paired ? 4 * batchLimit : bulk ? batchLimit : 8;
     input.signal.throwIfAborted();
     if (warmCandidatesFirst && !state.records.length && state.variantCursor === state.variantKeys.length) {
       warmCandidatesFirst = false;
@@ -396,7 +413,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         const offer = state.offers.get(key)?.[0], entity = offer && state.entities.get(offer.itemId);
         if (!offer || !entity) return [];
         const synthetic = variantEntity(entity, offer);
-        const normalized = input.selectedSlots.map(slot => normalizeGearCandidate(synthetic, input.context(slot)));
+        const normalized = normalizeDiscoverySlots(synthetic, input);
         rememberUnverifiedEligibility(state, entity.externalId, normalized);
         const slot = normalized.find(candidate => candidate.eligible)?.slotType;
         return slot ? [{ offer, entity, slot }] : [];
@@ -502,8 +519,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         }
         const entity = variantEntity(probe.entity, probe.offer, metadata.requiredLevel, metadata.itemLevel);
         const candidates: GearCandidate[] = [];
-        for (const slot of input.selectedSlots) {
-          const candidate = normalizeGearCandidate(entity, input.context(slot));
+        for (const candidate of normalizeDiscoverySlots(entity, input)) {
           if (candidate.itemClassId !== metadata.itemClassId || candidate.itemSubclassId !== metadata.itemSubclassId || candidate.inventoryType !== metadata.inventoryType) {
             state.rejectedVariants.add(key);
             continue;
@@ -543,7 +559,7 @@ export async function advanceAuctionGearDiscovery(state: AuctionGearDiscovery, i
         // details before treating missing equip fields as unknown gear data.
         if (knownNonGear(entity)) { state.entities.set(record.externalId, null); continue; }
         const offer = state.offers.get(state.itemVariants.get(entity.externalId)?.[0] ?? "")?.[0];
-        const normalized = input.selectedSlots.map(slot => normalizeGearCandidate(offer ? variantEntity(entity, offer) : entity, input.context(slot)));
+        const normalized = normalizeDiscoverySlots(offer ? variantEntity(entity, offer) : entity, input);
         rememberUnverifiedEligibility(state, entity.externalId, normalized);
         if (!offer) { state.entities.set(entity.externalId, entity); continue; }
         const eligible = normalized.some(candidate => candidate.eligible);
