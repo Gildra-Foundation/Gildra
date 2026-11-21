@@ -31,7 +31,7 @@ import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { auctionGearMechanicalCache, auctionGearMechanicalKey, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, equivalentBootEnchants, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
@@ -1150,6 +1150,16 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
           (share && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
+      // The native mask covers every iteration of this physical build. Switch
+      // only the unread rating, preserving the rank's stamina and the receipt.
+      if (mode === "finalist" && ownedBatch && verifiedEngine === simulation.engine &&
+          result && typeof result === "object" && "equivalentBootRatingsV1" in result) {
+        const boot = ownedBatch.changes.find(edit => edit.slotType === "FEET");
+        for (const enchantId of equivalentBootEnchants(boot?.enchantId, result.equivalentBootRatingsV1, verifiedEngine)) {
+          const other = ownedBatch.changes.map(edit => edit === boot ? { ...edit, enchantId } : edit);
+          auctionGearMechanicalCache.set(finalistKey(selections, other), simulation);
+        }
+      }
       measuredEngine = simulation.engine;
       verified = true;
       return simulation;

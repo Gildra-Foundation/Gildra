@@ -15,6 +15,17 @@ function canonical(value: unknown): unknown {
     .sort(([left], [right]) => left.localeCompare(right)).map(([key, entry]) => [key, canonical(entry)]));
 }
 
+// Within each rank all three enchants give the same stamina. The native
+// observation bits, in order, denote speed, leech and avoidance.
+const bootEnchantRanks = [[8018, 7992, 7962], [8019, 7993, 7963]];
+export function equivalentBootEnchants(original: number | undefined, unread: unknown, engine: string) {
+  if (!original || !ignoresItemContext(engine) || typeof unread !== "number" ||
+      !Number.isInteger(unread) || unread < 1 || unread > 7) return [];
+  const rank = bootEnchantRanks.find(ids => ids.includes(original));
+  if (!rank || !(unread & (1 << rank.indexOf(original)))) return [];
+  return rank.filter((id, index) => id !== original && (unread & (1 << index)));
+}
+
 // Pinned SimC gems with identical ordered direct stats at every level
 // from 1 to 90, socket color, description ID and item-level requirements.
 // These IDs have no spell, profession, relic, punchcard or gem-name proc.

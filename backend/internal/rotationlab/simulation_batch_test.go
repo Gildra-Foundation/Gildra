@@ -78,9 +78,9 @@ cat > report.json <<'REPORT'
 			t.Fatal(err)
 		}
 		want := []batchMeasurement{
-			{4322, 4321.87654, .78, 100, 95, "SimulationCraft 1210-01 · 18428cd", false},
-			{1235, 1234.56789, 0, 100, 95, "SimulationCraft 1210-01 · 18428cd", false},
-			{8765, 8765.4321, 1.23, 100, 95, "SimulationCraft 1210-01 · 18428cd", false},
+			{4322, 4321.87654, .78, 100, 95, "SimulationCraft 1210-01 · 18428cd", 0, false},
+			{1235, 1234.56789, 0, 100, 95, "SimulationCraft 1210-01 · 18428cd", 0, false},
+			{8765, 8765.4321, 1.23, 100, 95, "SimulationCraft 1210-01 · 18428cd", 0, false},
 		}
 		if len(reply.Results) != len(want) {
 			t.Fatal(reply)

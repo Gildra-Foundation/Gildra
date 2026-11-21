@@ -8,7 +8,7 @@ import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagno
 import { auctionAppliedStatsKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
-import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { equivalentBootEnchants, auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { nativeGearSimulationMeasurement, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 
@@ -50,7 +50,7 @@ function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGea
   };
   const diagnostics = createAuctionGearDiagnostics();
   const create = vm.runInNewContext(code, { fetch, process, Date:clock, AbortSignal:signals, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
-    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
+    assertFreshMarket, equivalentBootEnchants, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => diagnostics });
   const armory = { profile, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
@@ -602,6 +602,37 @@ test('an older worker receives distinct owned-only edits as complete armory sing
   assert(state.requests.every(request=>!request.batch && !Object.hasOwn(request.rows[0],'ownedChanges')));
 });
 
+
+test('a measured boot rating mask reuses only the same-rank finalist with the same physical loadout', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd';
+  const equipment = {equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};
+  const { run, state } = fixture({ ownedBatch:true, equipment, workerEngine });
+  await run.concurrency(signal());
+  const physical = (id, mode = 'finalist', selection = []) =>
+    run(selection, signal(), [{slotType:'FEET',itemId:10,enchantId:id,gems:[]}], mode);
+  const payload = (id, mask) => ({dps:id,dpsMean:id+0.25,dpsError:0.12,confidence:95,iterations:750,
+    engine:workerEngine,equivalentBootRatingsV1:mask});
+  const warm = [7956,7962,7963,7957].map(id => physical(id));
+  await tick();
+  for (let i = 0; i < state.requests.length; i++) {
+    const req = state.requests[i];
+    if (req.batch) req.finish({results:req.ids.map(id => payload(id, id === 7962 ? 6 : 5))});
+    else req.finish();
+    await tick();
+  }
+  await Promise.all(warm);
+  const count = state.requests.length;
+  assert.equal((await physical(7992)).dps,7962.25);
+  assert.equal(state.requests.length,count);
+  for (const request of [() => physical(8018), () => physical(7993), () => physical(7992,'certified-candidate'),
+      () => physical(7992,'finalist',[option(123)])]) {
+    const before = state.requests.length, result = request();
+    await tick();
+    assert.equal(state.requests.length,before+1);
+    state.requests.at(-1).finish();
+    await result;
+  }
+});
 
 test('enchant-only edits on the same owned item share a batch and keep separate measurements', async () => {
   const equipment = {equipped_items:[{slot:{type:'HEAD'},item:{id:10},

@@ -59,6 +59,17 @@ func armorEnchantKey(slot string, id int, reads byte) int {
 	return key
 }
 
+// Ratings available for a substitution of the same boot rank. A read of
+// the original enchant's rating makes it ineligible for substitution.
+func equivalentBootRatings(row batchCandidate, reads byte) byte {
+	for _, edit := range row.OwnedChanges {
+		if edit.SlotType == "FEET" && armorEnchantKey("FEET", edit.EnchantID, reads) < 0 && edit.EnchantID > 0 {
+			return allArmorRatings &^ reads
+		}
+	}
+	return 0
+}
+
 // The armory, APL, seed, precision and encounter belong to the enclosing
 // batch. Preserve every purchased item, owned instance, gem and unrelated edit.
 func armorBatchKey(row batchCandidate, reads byte) string {
@@ -71,7 +82,7 @@ func armorBatchKey(row batchCandidate, reads byte) string {
 	return string(key)
 }
 
-func simulateArmorBatch(candidates []batchCandidate, run func([]batchCandidate, *byte) ([]batchMeasurement, error)) ([]batchMeasurement, error) {
+func simulateArmorBatch(candidates []batchCandidate, shareBootScores bool, run func([]batchCandidate, *byte) ([]batchMeasurement, error)) ([]batchMeasurement, error) {
 	indices := make(map[string]int)
 	var anchors []batchCandidate
 	anchorFor := make([]int, len(candidates))
@@ -86,7 +97,19 @@ func simulateArmorBatch(candidates []batchCandidate, run func([]batchCandidate, 
 		anchorFor[i] = index
 	}
 	if len(anchors) == len(candidates) {
-		return run(candidates, nil)
+		if !shareBootScores {
+			return run(candidates, nil)
+		}
+		hasBoots := false
+		for _, row := range anchors {
+			if equivalentBootRatings(row, 0) != 0 {
+				hasBoots = true
+				break
+			}
+		}
+		if !hasBoots {
+			return run(candidates, nil)
+		}
 	}
 
 	// A read on any actor or iteration in the anchor packet protects that axis
@@ -108,6 +131,9 @@ func simulateArmorBatch(candidates []batchCandidate, run func([]batchCandidate, 
 		anchor := anchorFor[i]
 		if keys[anchor] == armorBatchKey(row, reads) {
 			results[i] = measured[anchor]
+			if shareBootScores {
+				results[i].EquivalentBootRatings = equivalentBootRatings(row, reads)
+			}
 		} else {
 			positions = append(positions, i)
 			unresolved = append(unresolved, row)

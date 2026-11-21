@@ -28,7 +28,7 @@ func TestArmorBatchPreservesObservedStatsAndPhysicalRows(t *testing.T) {
 				v := float64(-armorEnchantKey("FEET", row.OwnedChanges[0].EnchantID, tc.reads))
 				return v*10000 - float64(armorEnchantKey("HEAD", row.OwnedChanges[1].EnchantID, tc.reads))
 			}
-			got, err := simulateArmorBatch(physical, func(rows []batchCandidate, reads *byte) ([]batchMeasurement, error) {
+			got, err := simulateArmorBatch(physical, true, func(rows []batchCandidate, reads *byte) ([]batchMeasurement, error) {
 				sizes = append(sizes, len(rows))
 				if reads != nil && tc.reads != allArmorRatings {
 					*reads = tc.reads
@@ -54,7 +54,7 @@ func TestArmorBatchPreservesObservedStatsAndPhysicalRows(t *testing.T) {
 		})
 	}
 	errFallback := errors.New("unresolved physical fight failed")
-	got, err := simulateArmorBatch(physical, func(rows []batchCandidate, reads *byte) ([]batchMeasurement, error) {
+	got, err := simulateArmorBatch(physical, true, func(rows []batchCandidate, reads *byte) ([]batchMeasurement, error) {
 		if reads == nil {
 			return nil, errFallback
 		}
@@ -62,6 +62,38 @@ func TestArmorBatchPreservesObservedStatsAndPhysicalRows(t *testing.T) {
 	})
 	if got != nil || !errors.Is(err, errFallback) {
 		t.Fatalf("partial result %v, error %v", got, err)
+	}
+}
+
+func TestBootEvidenceRequiresAnUnreadPhysicalRatingAtFinalistPrecision(t *testing.T) {
+	for _, rating := range []struct {
+		enchant int
+		axis    byte
+	}{
+		{7962, armorAvoidance}, {7963, armorAvoidance}, {7992, armorLeech},
+		{7993, armorLeech}, {8018, armorSpeed}, {8019, armorSpeed},
+	} {
+		physical := []batchCandidate{
+			{OwnedChanges: []ownedEdit{{SlotType: "FEET", ItemID: 10, EnchantID: rating.enchant}}},
+			{OwnedChanges: []ownedEdit{{SlotType: "FEET", ItemID: 10, EnchantID: 99999}}},
+		}
+		for reads := byte(0); reads <= allArmorRatings; reads++ {
+			for _, share := range []bool{false, true} {
+				rows, err := simulateArmorBatch(physical, share, func(batch []batchCandidate, observed *byte) ([]batchMeasurement, error) {
+					if observed != nil {
+						*observed = reads
+					}
+					return make([]batchMeasurement, len(batch)), nil
+				})
+				want := byte(0)
+				if share && reads&rating.axis == 0 {
+					want = allArmorRatings &^ reads
+				}
+				if err != nil || rows[0].EquivalentBootRatings != want || rows[1].EquivalentBootRatings != 0 {
+					t.Fatalf("enchant %d, mask %d, share %v: got %+v, error %v", rating.enchant, reads, share, rows, err)
+				}
+			}
+		}
 	}
 }
 
@@ -114,7 +146,7 @@ func TestNativeArmorBatchObservesLaterProfilesets(t *testing.T) {
 		t.Fatal("expected boots and an original trinket")
 	}
 	input.ActionListMode = ActionListModeNative
-	input.Precision = auctionCandidatePrecision
+	input.Precision = auctionFinalistPrecision
 	batch := simulationBatch{Base: input}
 	for _, trinket := range []int{worn["TRINKET_1"], 226539} {
 		for _, enchant := range []int{7962, 7992, 8018} {
@@ -139,6 +171,15 @@ func TestNativeArmorBatchObservesLaterProfilesets(t *testing.T) {
 	want, err := engine.runPreparedBatch(ctx, batch, &mask)
 	if err != nil {
 		t.Fatal(err)
+	}
+	// The movement-speed trinket reads speed on a later profileset. Only
+	// avoidance/leech pairs may be substituted even on the earlier packet rows.
+	for i := range got {
+		observed := got[i].EquivalentBootRatings
+		if observed&armorSpeed != 0 || (i == 0 && observed != armorLeech|armorAvoidance) {
+			t.Fatalf("row %d advertised unsafe boot ratings %d, union %d", i, observed, mask)
+		}
+		got[i].EquivalentBootRatings = 0
 	}
 	if mask&armorSpeed == 0 || mask == allArmorRatings || want[3].DPSMean == want[5].DPSMean || !reflect.DeepEqual(got, want) {
 		t.Fatalf("later profileset mask %d, grouped %+v, individual %+v", mask, got, want)

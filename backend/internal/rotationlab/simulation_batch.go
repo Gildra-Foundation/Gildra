@@ -38,6 +38,9 @@ type batchMeasurement struct {
 	Confidence int     `json:"confidence"`
 	Engine     string  `json:"engine"`
 
+	// Measured on this physical build, at this precision and seed.
+	EquivalentBootRatings byte `json:"equivalentBootRatingsV1,omitempty"`
+
 	furyWithoutLeechHealing bool
 }
 
@@ -107,7 +110,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	}
 	defer e.release()
 	if owned && len(b.Candidates) > 1 && (b.Base.Spec == "fury-warrior" || b.Base.Spec == "fire-mage") {
-		return simulateArmorBatch(b.Candidates, func(candidates []batchCandidate, reads *byte) ([]batchMeasurement, error) {
+		return simulateArmorBatch(b.Candidates, b.Base.Precision == auctionFinalistPrecision, func(candidates []batchCandidate, reads *byte) ([]batchMeasurement, error) {
 			subset := b
 			subset.Candidates = candidates
 			return e.runPreparedBatch(ctx, subset, reads)
