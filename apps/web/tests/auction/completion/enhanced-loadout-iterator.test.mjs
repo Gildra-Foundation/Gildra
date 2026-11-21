@@ -314,3 +314,45 @@ test('verified drop curves keep both ring receipts and enhancement domains acros
   variant.resolution.nativeDropCurveV1[0] = 82;
   assert.equal(create(input).totalAssignments, '12');
 });
+
+test('a cheaper tuning cap purchase covers only the same equipment and enhancement inputs', async () => {
+ const engine='SimulationCraft fixture · 18428cd';
+ function lot(id,slot,cost,tuning,quantity=1) {
+  const o=option(id,slot,cost,{quantity});o.candidate.itemId=41116;
+  const v=o.candidate.variants[0];v.key=o.variantKey='native-'+tuning;
+  Object.assign(v,{bonusIds:[13663,13900],modifiers:[{type:9,value:90},{type:28,value:tuning}],
+   resolution:{engine,metadataVersion:3,nativeNoItemEffects:true,nativeContentTuningV1:[tuning,90],
+    nativeArmorCurveV1:[90,tuning,100],enhancements:{status:'verified',socketCount:0,socketColors:[0,0,0],socketBonusId:0}}});
+  return o;
+ }
+ const offers=[lot(1,'HEAD',20,101), lot(2,'HEAD',10,102), lot(3,'HEAD',10,103)];
+ const input={...base(offers),engine,nativeLotGroups:4},prior={...input,nativeLotGroups:3};
+ const first=await create(prior).nextBatch(create(prior).initialState(),{maxAssignments:1,maxResults:1,signal:signal()});
+ await assert.rejects(create(input).nextBatch(first.state,{maxAssignments:1,maxResults:1,signal:signal()}),/invalid_search_checkpoint/);
+ assert.equal((await all(prior)).total,'4');
+ assert.deepEqual((await all(input)).rows.map(r=>r.options.map(o=>o.id)),[[],['2:HEAD'],['3:HEAD']]);
+ assert.deepEqual(create(input).equivalentSingles('2:HEAD').map(o=>o.id).sort(),['1:HEAD','2:HEAD']);
+ for(const invalidate of [
+  v=>{v.modifiers[0].value=89;}, v=>{v.resolution.nativeContentTuningV1[0]=999;},
+  v=>{v.resolution.nativeArmorCurveV1[1]=999;}, v=>{v.resolution.nativeNoItemEffects=false;},
+  v=>{v.resolution.appliedStatsV1=[1];}, v=>{v.resolution.enhancements.socketCount=1;},
+  v=>{v.resolution.effectsVerified=true;}, v=>{v.resolution.nativeContentTuningV1[1]=91;},
+ ]) {
+  const modified=structuredClone(input);invalidate(modified.options[0].candidate.variants[0]);
+  assert.equal(create(modified).totalAssignments,'4');
+ }
+ const hands=['MAIN_HAND','OFF_HAND'];
+ const make=(lots)=>({...base(hands.flatMap(slot=>lots.map(([id,p,t,q])=>lot(id,slot,p,t,q))),hands),engine,nativeLotGroups:4});
+ // A single expensive auction can equip both hands only when it has a stack.
+ // A single cheap unit must also be reserved for whichever hand buys it.
+ assert.equal(create(make([[1,7,101,1],[2,10,102,1]])).totalAssignments,'9');
+ assert.equal(create(make([[1,7,101,1],[3,8,101,1],[2,10,102,2]])).totalAssignments,'9');
+ for(const lots of [[[1,7,101,1],[3,8,101,1],[2,10,102,1]], [[1,7,101,2],[2,10,102,1]]]) {
+  const data=make(lots),old=await all({...data,nativeLotGroups:3}),current=await all(data);
+  assert.equal(current.total,'4');assert(current.rows.every(r=>r.options.every(o=>o.auctionId!==2)));
+  const costs=rows=>rows.reduce((map,row)=>{
+   const k=row.options.map(o=>o.candidate.slotType).sort().join('|');
+   map[k]=Math.min(map[k]??Infinity,row.spentCopper);return map;},{});
+  assert.deepEqual(costs(current.rows),costs(old.rows));
+ }
+});
