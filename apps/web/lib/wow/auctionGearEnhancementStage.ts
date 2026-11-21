@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedJewelryGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { directNeckEnchantGroup, isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedJewelryGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
 import { isDirectRingEnchant, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
@@ -69,6 +69,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   omitWristHearthEnchants?: boolean;
   omitInertFuryLeech?: boolean;
   pruneCradleEnchants?: boolean;
+  pruneNeckEnchantRanks?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -268,6 +269,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       .filter(option => input.pruneEquivalentRingGems && hasLevel90RingRatings(option, input.engine, input.nativePlayerLevel))
       .map(option => option.candidate.slotType));
     for (const slot of ownedGemSlots) if (slot === 'FINGER_1' || slot === 'FINGER_2') ratingRingSlots.add(slot);
+    const pricedNeck = input.exhaustive && input.pruneNeckEnchantRanks && input.nativePlayerLevel === 90 &&
+      ignoresItemContext(input.engine) && slots.some(slot => slot.slotType === "NECK");
     const args={slots,catalog:{version:info.revision,complete:false,resolve:(slot:EnhancementSlot)=>resolutions.get(slot.slotType)!},
       character:input.professions ? {professions:Object.fromEntries(Object.entries(input.professions.ranks).map(([id, rank]) => [id, rank ?? 0]))} : {},
       prices:{prices,sourceUpdatedAt:input.state.quotes.sourceUpdatedAt},itemsCopper:auctionPlanCost(finalist.options),
@@ -279,8 +282,10 @@ export async function evaluateAuctionEnhancementStage(input: {
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
-      purchasedEnchantEffect: cradleSlots.size ? (slot: string, id: number) =>
-        cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined : undefined,
+      purchasedEnchantEffect: cradleSlots.size || pricedNeck ? (slot: string, id: number) => {
+        if (pricedNeck && slot === "NECK") return directNeckEnchantGroup(id);
+        return cradleSlots.has(slot) && isWorldsoulCradle(id) ? 8006 : undefined;
+      } : undefined,
       ownedGemEffect: ownedGemSlots.size ? (slot: string, id: number, enchantId: number) =>
         ownedGemSlots.has(slot) && (!enchantId || slot !== 'NECK' && isDirectRingEnchant(enchantId))
           ? ringGemRepresentative90(id) : undefined : undefined,

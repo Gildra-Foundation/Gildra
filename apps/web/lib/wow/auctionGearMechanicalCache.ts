@@ -289,6 +289,13 @@ function explicitOwnedJewelry(owned: readonly OwnedAuctionGearChange[], hosts: R
 // The final score key still contains the exact enchant ID and actual slot.
 const directNeckEnchants = new Set([5285, 5292, 5293, 5295, 5317, 5318, 5319, 5321, 5890, 5895, 5896, 5897, 5898]);
 
+// Gift and Mark install exactly the same rating in each pair. Their enchant
+// spells contribute zero, so SimC uses the same capped player scaling table.
+const equalNeckEnchantRanks = new Map([[5898, 5317], [5897, 5318], [5895, 5319], [5896, 5321]]);
+export function directNeckEnchantGroup(id: number) {
+  return directNeckEnchants.has(id) ? equalNeckEnchantRanks.get(id) ?? id : undefined;
+}
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";

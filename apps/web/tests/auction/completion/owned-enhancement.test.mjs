@@ -325,3 +325,31 @@ test('Cradle can stay free on a bare weapon, but removing an installed combat en
   for (const cheap of [[[1,1]],[[1,1],[5,1]],[[1,1],[6,1]]])
     assert((await market({items:both,cheap})).has('8007,8006'),'another hand may consume the last cheap scroll');
 });
+
+test('paid neck scrolls require an available strictly cheaper equivalent and keep the installed scroll free', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  async function choices({price=5,mark=9,level=90,installed,enabled=true}={}) {
+    const item={item:{id:115991},slot:{type:'NECK'},inventory_type:{type:'NECK'},level:{value:16},
+      item_class:{id:4},item_subclass:{id:0},sockets:[],spells:[],
+      enchantments:installed ? [{enchantment_slot:{id:0},enchantment_id:installed}] : []};
+    const state={checkpoints:{}},seen=new Set(),baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine};
+    const prices={128551:{ladder:[[14,1]]},144307:{ladder:[[mark,1]]}};
+    if(price!==null) prices[110645]={ladder:[[price,1]]};
+    for(let i=0;i<30;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneNeckEnchantRanks:enabled,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:[item]},
+        loadout:[{slotType:'NECK',itemId:115991,inventoryType:2,itemSubclassId:0}],selectedSlots:['NECK'],
+        nativePlayerLevel:level,specId:72,level:90,region:'eu',engine,profileFingerprint:'neck-scrolls',
+        encounter:{},budgetCopper:100,baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.add(c.slots[0].enchantId)});
+      if(result.complete) return [...seen].sort((a,b)=>a-b);
+    }
+    assert.fail('neck scroll fixtures did not exhaust');
+  }
+  assert.deepEqual(await choices(),[0,5317,5437]);
+  assert.deepEqual(await choices({price:10}),[0,5437,5898]);
+  assert.deepEqual(await choices({price:null}),[0,5437,5898]);
+  for(const args of [{price:9},{enabled:false},{level:89}])assert.deepEqual(await choices(args),[0,5317,5437,5898]);
+  assert((await choices({installed:5898})).includes(5898));
+});

@@ -87,3 +87,43 @@ for line in (data / 'spell_item_enchantment.inc').open():
             direct_neck.add(int(record[1]))
 assert direct_neck and enabled_neck == direct_neck, (enabled_neck, direct_neck)
 print(f'Verified {len(direct_neck)} direct neck enchants')
+
+# The enchant spell is tried first. Check that its average is identically zero,
+# then compare the actual fallback inputs to item_enchantment_effect_stats.
+source = neck_module.read_text().split('const equalNeckEnchantRanks = new Map([', 1)[1].split(']);', 1)[0]
+pairs = [tuple(map(int, pair)) for pair in re.findall(r'\[(\d+), (\d+)\]', source)]
+paired_ids = {eid for pair in pairs for eid in pair}
+assert pairs and paired_ids <= direct_neck and len(paired_ids) == 2 * len(pairs)
+fallback, spell_enchants = {}, {}
+for line in (data / 'spell_item_enchantment.inc').open():
+    row = re.match(r'^  \{\s*([^{}]+),\s*\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\},\s*\{([^}]+)\},\s*(\d+),', line)
+    if not row:
+        continue
+    eid, _, scaling, scaling_min, cap, minimum, maximum, skill, rank = map(int, row[1].split(','))
+    if eid in paired_ids:
+        assert scaling != 0 and skill == rank == 0
+        fallback[eid] = (scaling, scaling_min, cap, minimum, maximum, row[2], row[3], row[4])
+        spell_enchants[int(row[5])] = eid
+for a, b in pairs:
+    assert fallback[a] == fallback[b], (a, b)
+assert set(spell_enchants.values()) == paired_ids
+spells, effects = set(), {}
+in_effects = False
+for line in (data / 'sc_spell_data.inc').open():
+    spell = re.match(r'^  \{ "[^"]+"\s*,\s*(\d+),([^{}]+)', line)
+    if spell and int(spell[1]) in spell_enchants:
+        assert int(spell[2].split(',')[8]) == 0  # spell_data_t::_scale_from_ilevel
+        spells.add(int(spell[1]))
+    if line.startswith('static spelleffect_data_t __spelleffect_data['):
+        in_effects = True
+    elif line.startswith('};'):
+        in_effects = False
+    elif in_effects:
+        fields = re.sub(r'\{[^{}]+\}', 'flags', line.strip().removeprefix('{').removesuffix('},')).split(',')
+        sid = int(fields[1])
+        if sid in spell_enchants:
+            assert sid not in effects and int(fields[2]) == 0 and int(fields[3]) == 53
+            assert all(float(fields[i]) == 0 for i in (7, 15, 22))  # scaling coefficient, base, points per level
+            effects[sid] = int(fields[16])
+assert spells == spell_enchants.keys() and effects == spell_enchants
+print(f'Verified {len(pairs)} neck scroll pairs with identical native ratings')
