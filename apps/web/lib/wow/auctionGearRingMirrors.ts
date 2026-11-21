@@ -27,8 +27,16 @@ function bareRingIdentity(option: AuctionGearOption, engine: string) {
       !validAuctionItemContext(variant.contextId) || !supportedAuctionModifiers(variant.modifiers ?? []) ||
       !Array.isArray(variant.bonusIds) || variant.bonusIds.length > 20 || !variant.bonusIds.every((id, i, bonuses) =>
         Number.isInteger(id) && id > 0 && id <= 1_000_000 && (!i || id > bonuses[i - 1]))) return;
+  // The bare Bronze Band of Force has a single equip record, Weapon Damage
+  // (26596). Its driver has zero proc flags and no native initializer, so
+  // SimC drops it before registering any item callbacks. Bonus lists may
+  // supply additional effects. Only the original DBC item qualifies here.
+  const inactiveWeaponDamage = candidate.itemId === 30804 && variant.bonusIds.length === 0 &&
+    (variant.modifiers ?? []).every(modifier => modifier.type === 28) &&
+    Array.isArray(resolution?.effects) && !resolution.effects.length &&
+    enhancements?.status === "verified" && enhancements.socketCount === 0 && enhancements.socketBonusId === 0;
   if (!resolution || resolution.engine !== engine ||
-      (resolution.nativeNoItemEffects !== true && resolution.nativeIgnoredRingUseV1 !== true) ||
+      (resolution.nativeNoItemEffects !== true && resolution.nativeIgnoredRingUseV1 !== true && !inactiveWeaponDamage) ||
       resolution.metadataVersion !== 3 || resolution.weapon || resolution.effects?.length ||
       !Array.isArray(resolution.appliedStatsV1) || resolution.appliedStatsV1.length !== 46 ||
       !resolution.appliedStatsV1.every(Number.isSafeInteger)) return;

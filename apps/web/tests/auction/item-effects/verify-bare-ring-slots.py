@@ -56,3 +56,23 @@ planner = Path(__file__).resolve().parents[3] / "lib/wow/auctionGearRingMirrors.
 listed = re.search(r"statOnlyRingSocketBonuses = new Set\(\[([^\]]+)\]", planner.read_text())
 assert listed and set(map(int, re.findall(r"\d+", listed[1]))) == socket_bonuses
 print(f"Verified {len(rings)} rings and {len(socket_bonuses)} stat-only socket bonuses across {parsed} pinned item records")
+
+# The original Bronze Band of Force has one on-equip spell and no use spell.
+# When its bonus list is empty the local item parser cannot add another effect.
+band = 30804
+driver = 26596
+effects = []
+for line in (root / "item_effect.inc").open():
+    row = re.match(r"\s*\{\s*\d+,\s*(\d+),\s*(\d+),\s*\d+,\s*(\d+),", line)
+    if row and int(row[2]) == band:
+        effects.append((int(row[1]), int(row[3])))
+assert band in rings and effects == [(driver, 1)]
+spells = [line for line in (root / "sc_spell_data.inc").open()
+          if re.match(r'\s*\{ "Weapon Damage"\s*,\s*26596,', line)]
+assert len(spells) == 1 and int(spells[0].split(",")[32], 0) == 0
+# A custom or passive initializer for this driver would supersede usable_proc.
+engine = root.parent.parent
+for ext in ("*.cpp", "*.hpp"):
+    for path in engine.rglob(ext):
+        assert not re.search(r"\b26596\b|bronze_band_of_force", path.read_text(errors="replace"), re.I), path
+print("Verified the sole Bronze Band of Force driver has no proc flags or custom initializer")

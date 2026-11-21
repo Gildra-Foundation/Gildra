@@ -54,6 +54,32 @@ test('mirrors require two interchangeable native inputs and two independent purc
   assert.equal(auctionRingMirrorOrder(groupFixture(),slots,engine,63),undefined);
   assert.equal(auctionRingMirrorOrder(groupFixture(),slots,'different',72),undefined);
 });
+test('bare Weapon Damage ring swaps only with an unmodified native effect program', () => {
+  const groups = [slots[0], slots[1]].map(slot => [
+    {options: [offer(1, 30804, slot, 10)]}, {options: [offer(10, 21768, slot, 20)]},
+  ]);
+  const eachBand = update => groups.forEach(axis => update(axis[0].options[0]));
+  const skips = () => auctionRingMirrorOrder(groups, slots.slice(0, 2), engine, 72)?.skips([1, 2]) ?? false;
+  eachBand(o => {
+    delete o.candidate.variants[0].resolution.nativeNoItemEffects;
+    o.candidate.variants[0].resolution.effects = [];
+    o.candidate.variants[0].modifiers = [{type: 28, value: 1418}];
+  });
+  assert(skips());
+  for (const mutation of [
+    o => o.candidate.itemId++,
+    o => o.candidate.variants[0].bonusIds.push(13668),
+    o => o.candidate.variants[0].modifiers.push({type: 9, value: 82}),
+    o => delete o.candidate.variants[0].resolution.effects,
+    o => o.candidate.variants[0].resolution.effects = [{spellId: 123}],
+    o => o.customization = {enchantId: 7964},
+  ]) {
+    const changed = structuredClone(groups);
+    for (const axis of changed) mutation(axis[0].options[0]);
+    assert(!auctionRingMirrorOrder(changed, slots.slice(0, 2), engine, 72)?.skips([1, 2]));
+  }
+});
+
 test('bare rings with matching empty prismatic sockets can move between fingers',()=>{
   const groups=groupFixture();
   const copies=groups.slice(0,2).flatMap(axis=>axis[0].options);
