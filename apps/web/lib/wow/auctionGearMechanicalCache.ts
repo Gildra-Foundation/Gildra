@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, purchasedRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
-import { ownedMidnightGemScore } from "./auctionMidnightGemRatings";
+import { midnightGemRating90, ownedMidnightGemScore } from "./auctionMidnightGemRatings";
 import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity, bareWeaponCurveIdentity, bareArmorConstantCurveIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
@@ -264,26 +264,33 @@ function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: 
 /** Explicit replacements remove the same installed data. A positively
  * identified bare ring enchant also contributes zero for score reuse. */
 function explicitOwnedJewelry(owned: readonly OwnedAuctionGearChange[], hosts: ReadonlyMap<string, number>,
-  purchased: readonly SimcGearChange[], removed: readonly string[] | undefined, bareRings?: ReadonlySet<string>) {
+  purchased: readonly SimcGearChange[], removed: readonly string[] | undefined, bareRings?: ReadonlySet<string>, physicalFinalist = false) {
   if (new Set(owned.map(edit => edit.slotType)).size !== owned.length) return;
   const ratings = [0, 0, 0, 0];
-  let changed = false;
+  const slots: string[] = [], descriptions: number[] = [];
   const edits = owned.map(edit => {
     const ring = edit.slotType === "FINGER_1" || edit.slotType === "FINGER_2";
     const knownEnchant = ring ? Boolean(edit.enchantId) || edit.enchantId === undefined && bareRings?.has(edit.slotType)
       : edit.enchantId === undefined;
-    if (!knownEnchant || (!ring && edit.slotType !== "NECK") || hosts.get(edit.slotType) !== edit.itemId ||
-        removed?.includes(edit.slotType) || purchased.some(c => jewelrySlots[c.slot] === edit.slotType) ||
+    if (!knownEnchant || (!ring && edit.slotType !== "NECK") || !hosts.has(edit.slotType) || hosts.get(edit.slotType) !== edit.itemId ||
+        removed?.some(slot => slot === edit.slotType || jewelrySlots[slot] === edit.slotType) || purchased.some(c => jewelrySlots[c.slot] === edit.slotType) ||
         edit.gems.length !== 1 || edit.gems[0].index !== 0 || !edit.gems[0].itemId) return edit;
-    const contribution = combinedRingRatings90(edit.enchantId ?? 0, edit.gems[0].itemId);
+    const id = edit.gems[0].itemId;
+    const midnight = physicalFinalist ? midnightGemRating90(id) : undefined;
+    const contribution = combinedRingRatings90(edit.enchantId ?? 0, midnight ? 0 : id);
     if (!contribution) return edit;
-    for (const [index, amount] of contribution.entries()) ratings[index] += amount;
-    changed = true;
+    for (const [index, amount] of contribution.entries()) ratings[index] += amount + (midnight?.ratings[index] ?? 0);
+    slots.push(edit.slotType);
+    if (midnight) descriptions.push(midnight.descriptionId);
     // Zeroes are placeholders only in the hash. Keep the physical hosts,
     // socket position and every unrelated edit in the comparison.
     return { ...edit, enchantId: ring ? 0 : undefined, gems: [{ ...edit.gems[0], itemId: 0 }] };
   });
-  return changed ? { edits, ratings } : undefined;
+  // Legacy gems have no description. Midnight observers count colors across
+  // sockets. Include the normalized hosts so a retained or empty socket can
+  // never substitute for an explicitly replaced gem on another item.
+  return slots.length ? { edits, ratings, gemColors: descriptions.length
+    ? { slots: slots.sort(), descriptions: descriptions.sort((a, b) => a - b) } : undefined } : undefined;
 }
 
 // These permanent neck enchants only add a rating computed from the player.
@@ -403,7 +410,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   const midnight = worn && native?.physicalFinalist
     ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots) : undefined;
   const jewelry = worn && native && !midnight
-    ? explicitOwnedJewelry(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings) : undefined;
+    ? explicitOwnedJewelry(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings, native.physicalFinalist) : undefined;
   // Assign the total to one stable field. Keep the original purchased-only
   // key when there are no qualifying worn edits so saved scores still match.
   if (gear && (jewelry || certifiedJewelry.length >= 2)) {
@@ -445,7 +452,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   }
   const changes = (gear ?? request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, purchasedScrollTotal90: purchasedScrollTotal || undefined, explicitJewelryRatings90: jewelry?.ratings, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
-    ownedMidnightGems90: midnight?.signature, actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
+    ownedMidnightGems90: midnight?.signature, mixedJewelryGemColors90: jewelry?.gemColors, actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 
 export function createAuctionGearMechanicalCache(now = Date.now, capacity = maximum, lifetime = ttlMs) {

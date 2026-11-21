@@ -316,3 +316,42 @@ test("three explicit Midnight gems share a single physical finalist fight and re
   assert.notEqual(key(source), key(otherEnchant));
   assert.notEqual(key(source), key([...replacement, { slotType: "CHEST", itemId: 600, enchantId: 1984, gems: [] }]));
 });
+
+test("mixed and partially replaced prismatic gems share only the physical finalist measurement", async () => {
+  const verifiedEngine = "SimulationCraft fixture · 18428cd";
+  const slots = ["FINGER_1", "FINGER_2", "NECK"];
+  const equipped = slots.map((slot, i) => ({slot: {type: slot}, item: {id: 500 + i},
+    item_class: {id: 4}, level: {value: 200}, inventory_type: {type: i === 2 ? "NECK" : "FINGER"},
+    sockets: [{socket_type: {type: "PRISMATIC"}}]}));
+  const build = (ids, enchants = [7964, 7964]) => ids.map((itemId, i) => ({
+    slotType: slots[i], itemId: 500 + i, gems: [{index: 0, itemId}],
+    ...(i < 2 ? {enchantId: enchants[i]} : {}),
+  }));
+  const source = build([240855, 127761]), replacement = build([115804, 240856]);
+  const {run, calls} = simulator(() => ({...wires[0], engine: verifiedEngine}), {equipped, level: 90, verifiedEngine});
+  assert.notEqual(run.finalistKey([], source), run.finalistKey([], replacement));
+  const signal = new AbortController().signal;
+  await Promise.all([run([], signal, source, "finalist"), run([], signal, replacement, "finalist")]);
+  assert.equal(calls(), 1);
+
+  const native = {engine: verifiedEngine, playerLevel: 90, physicalFinalist: true,
+    changes: [], wornPrismatic: new Map(slots.map((s, i) => [s, 500 + i]))};
+  const key = (ownedChanges, options = {}, request = {}) => auctionGearMechanicalKey("character",
+    {spec: "fury-warrior", scenario: "single-target", fightLengthSeconds: 120, targets: 1,
+      precision: "finalist", ownedChanges, ...request}, {...native, ...options});
+  assert.equal(key(build([240855, 127761, 240863])), key(build([115804, 240863, 240856])));
+  assert.equal(key(build([240895, 115804])), key(build([240864, 115804], [7965, 7964])));
+  assert.equal(key(build([240855, 127761, 240966])), key(build([115804, 240856, 240966])));
+  assert.notEqual(key(build([240855, 127761, 240966])), key(build([115804, 240856, 240967])));
+  // Same four ratings, different counts of Peridot and Garnet.
+  assert.notEqual(key(build([240855, 240905, 151583])), key(build([240857, 240858, 151580])));
+  for (const options of [{physicalFinalist: false}, {playerLevel: 89}, {engine: "unknown"},
+    {changes: [{slot: "finger1", itemId: 500}]}, {wornPrismatic: new Map([["FINGER_1", 500]])}]) {
+    assert.notEqual(key(source, options), key(replacement, options));
+  }
+  for (const slot of ["FINGER_1", "finger1"]) {
+    assert.notEqual(key(source, {}, {removedSlots: [slot]}), key(replacement, {}, {removedSlots: [slot]}));
+  }
+  assert.notEqual(key(build([240855, 127761], [9999, 7964])), key(build([115804, 240856], [9999, 7964])));
+  assert.notEqual(key(source), key(build([240855, 130220])));
+});
