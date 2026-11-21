@@ -1075,7 +1075,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
   const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; armorKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
-  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", shareBareRingScores = false) => {
+  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", physicalScore = false) => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const verifiedEngine = engine() || measuredEngine;
     const jewelryScore = mode && selections.length
@@ -1085,7 +1085,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
     const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic,
-      barePrismaticRings: shareBareRingScores ? barePrismaticRings : undefined });
+      barePrismaticRings: physicalScore ? barePrismaticRings : undefined, physicalFinalist: physicalScore && mode === "finalist" });
     return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>

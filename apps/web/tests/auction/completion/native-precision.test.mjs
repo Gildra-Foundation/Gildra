@@ -162,3 +162,32 @@ test('finalist simulations reuse an equal gem and enchant total on bare rings wh
    assert.equal(await count(other,90),3);
  }
 });
+
+test('paid legacy ring scrolls with equal total ratings share a finalist fight', () => {
+ const engine='SimulationCraft 1210-01 · 18428cd';
+ function ring(slot,itemId,enchantId,gemId) {
+   const name=slot==='finger1'?'FINGER_1':'FINGER_2';
+   const variant={key:'base',itemLevel:49,contextId:13,bonusIds:[],modifiers:[{type:29,value:32}],
+     resolution:{engine,metadataVersion:3,nativeNoItemEffects:true,enhancements:{status:'verified'}}};
+   return {option:{variantKey:'base',candidate:{itemId,slotType:name,itemClassId:4,itemSubclassId:0,inventoryType:11,
+     variants:[variant]},customization:{enchantId,gemIds:[gemId]}},
+     change:{slot,itemId,contextId:13,modifiers:variant.modifiers,bonusIds:[],enchantId,gemIds:[gemId]}};
+ }
+ const make=(a,b)=>[ring('finger1',173131,a,130219),ring('finger2',173132,b,130220)];
+ const key=(rings,settings={},request={})=>auctionGearMechanicalKey('same-character',{
+   spec:'fury-warrior',scenario:'single-target',targets:1,fightLengthSeconds:120,precision:'finalist',...request
+ },{changes:rings.map(x=>x.change),options:rings.map(x=>x.option),playerLevel:90,engine,physicalFinalist:true,...settings});
+ const different=make(5326,5326), a=make(5325,5326),b=make(5425,5424);
+ assert.equal(key(a),key(b));
+ assert.notEqual(key(a),key(different));
+ for(const settings of [{physicalFinalist:false},{playerLevel:89},{engine:'unknown'}])assert.notEqual(key(a,settings),key(b,settings));
+ assert.notEqual(key(a,{}, {precision:undefined}),key(b,{}, {precision:undefined}));
+ for(const alter of [r=>r.change.gemIds=[115804],r=>r.change.bonusIds=[13500],r=>r.change.contextId++,
+   r=>r.option.candidate.variants[0].itemLevel=121,r=>r.option.candidate.variants[0].resolution.nativeNoItemEffects=false,
+   r=>r.option.customization.enchantId=7967]){
+   const changed=structuredClone(b);alter(changed[0]);assert.notEqual(key(a),key(changed));
+ }
+ assert.notEqual(key(a,{}, {ownedChanges:[{slotType:'FINGER_1',itemId:173131,gems:[]}]}),
+                 key(b,{}, {ownedChanges:[{slotType:'FINGER_1',itemId:173131,gems:[]}]}));
+ assert.equal(a[0].change.enchantId,5325);
+});

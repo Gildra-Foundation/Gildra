@@ -133,6 +133,8 @@ for line in (data / 'spell_item_enchantment.inc').open():
         continue
     eid, _, scaling, scaling_min, cap, minimum, maximum, skill, rank = map(int, row[1].split(','))
     if eid in joint_ratings or eid in paired_ids:
+        if eid in ring_ids:
+            assert (minimum, maximum) == (10, 120), eid
         assert scaling != 0 and skill == rank == 0
         fallback[eid] = (scaling, scaling_min, cap, minimum, maximum, row[2], row[3], row[4])
         if int(row[5]):

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
-import { combinedRingRatings90, isDirectRingEnchant, ringGemRepresentative90 } from "./auctionRingRatings";
+import { combinedRingRatings90, isDirectRingEnchant, legacyRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
 import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
@@ -299,11 +299,12 @@ export function directNeckEnchantGroup(id: number) {
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number>; barePrismaticRings?: ReadonlySet<string> }) {
+}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number>; barePrismaticRings?: ReadonlySet<string>; physicalFinalist?: boolean }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
   const certifiedJewelry: { index: number; slot: string; ratings: number[] }[] = [];
+  let purchasedScrollTotal = 0;
   const gear = native?.changes.map((change, i) => {
     const option = native.options?.[i];
     const variant = option?.candidate.variants.find(row => row.key === option.variantKey);
@@ -314,11 +315,12 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     const bonuses = variant?.bonusIds;
     const sameProgram = option?.candidate.itemId === change.itemId && Array.isArray(bonuses) &&
       bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
+    const sameVariant = sameProgram && (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
+      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []);
     const directNeck = change.slot === "neck" && change.enchantId && directNeckEnchants.has(change.enchantId) &&
       option?.customization?.enchantId === change.enchantId && !option.customization.gemIds?.length;
-    const suffix = sameProgram && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
-      (!change.enchantId || directNeck) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
-      (change.contextId ?? 0) === (variant.contextId ?? 0) && JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant.modifiers ?? [])
+    const suffix = sameVariant && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
+      (!change.enchantId || directNeck) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
       ? bareJewelrySuffixIdentity(directNeck ? { ...option, customization: undefined } : option, native.engine) : undefined;
     const curve = reuseCandidateInputs && sameProgram ? proof?.nativeDropCurveV1 : undefined;
     // A finalist can reuse a previous 750-iteration fight only within its
@@ -334,22 +336,32 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     // Replace only the bonus list in the comparison key. Every other slot,
     // enchant, modifier, owned edit and the physical purchase stays intact.
     const chestSuffix = request.precision === "finalist" && change.slot === "chest" && change.enchantId &&
-      option?.candidate.slotType === "CHEST" && sameProgram && proof?.nativeSuffixProgramV1 &&
+      option?.candidate.slotType === "CHEST" && sameVariant && proof?.nativeSuffixProgramV1 &&
       option.customization?.enchantId === change.enchantId && !change.gemIds?.length &&
-      !request.ownedChanges?.some(edit => edit.slotType === "CHEST") &&
-      (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
-      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? [])
+      !request.ownedChanges?.some(edit => edit.slotType === "CHEST")
       ? auctionAppliedStatsKey([option], native.engine, "enchanted-suffix") : undefined;
     // A local purchase replaces the entire jewelry piece. These prismatic gems have
     // no observable name family, description tag, proc or socket bonus. Only
     // the final integer contribution changes combat. Keep the real receipt.
-    const ratings = native.playerLevel === 90 && ignoresItemContext(native.engine) && sameProgram && option &&
+    const ratings = native.playerLevel === 90 && ignoresItemContext(native.engine) && sameVariant && option &&
       (change.slot !== "neck" || !change.enchantId) && (change.gemIds?.length ?? 0) <= 1 &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
-      (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
-      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []) &&
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
+    // Legacy permanent ring scrolls add player-level ratings. Keep each host
+    // and its actual gems in place. The summed field is used only to look up
+    // a measured finalist, so checkpoint IDs and receipt tie order stay stable.
+    const legacyScroll = native.physicalFinalist && request.precision === "finalist" && native.playerLevel === 90 &&
+      ignoresItemContext(native.engine) && sameVariant && variant && option &&
+      (change.slot === "finger1" || change.slot === "finger2") && jewelrySlots[change.slot] === option.candidate.slotType &&
+      option.candidate.inventoryType === 11 && option.candidate.itemClassId === 4 && option.candidate.itemSubclassId === 0 &&
+      proof?.nativeNoItemEffects === true && proof.metadataVersion === 3 && proof.enhancements?.status === "verified" &&
+      !proof.effects?.length && !proof.weapon && Number.isSafeInteger(variant.itemLevel) && variant.itemLevel >= 10 && variant.itemLevel <= 120 &&
+      !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+      !request.removedSlots?.includes(option.candidate.slotType) &&
+      change.enchantId && option.customization?.enchantId === change.enchantId
+      ? legacyRingScrollRating90(change.enchantId) : undefined;
+    if (legacyScroll !== undefined) purchasedScrollTotal += legacyScroll;
     // These prismatic gems and direct enchants cannot read the original
     // scaling bonus ID. Retain their existing rating key and the real receipt.
     const ringCurve = ratings && option ? auctionSocketedRingCurve(option, native.engine) : undefined;
@@ -361,6 +373,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
       ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
       ...(suffix ? { bonusIds: [], bareSuffix: suffix } : {}),
+      ...(legacyScroll !== undefined ? { enchantId: undefined } : {}),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
@@ -410,7 +423,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     ownedChanges = edits.length ? edits : undefined;
   }
   const changes = (gear ?? request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
-  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, explicitJewelryRatings90: jewelry?.ratings, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
+  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, purchasedScrollTotal90: purchasedScrollTotal || undefined, explicitJewelryRatings90: jewelry?.ratings, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
     actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 
