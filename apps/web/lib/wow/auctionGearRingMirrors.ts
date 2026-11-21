@@ -27,7 +27,8 @@ function bareRingIdentity(option: AuctionGearOption, engine: string) {
       !validAuctionItemContext(variant.contextId) || !supportedAuctionModifiers(variant.modifiers ?? []) ||
       !Array.isArray(variant.bonusIds) || variant.bonusIds.length > 20 || !variant.bonusIds.every((id, i, bonuses) =>
         Number.isInteger(id) && id > 0 && id <= 1_000_000 && (!i || id > bonuses[i - 1]))) return;
-  if (!resolution || resolution.engine !== engine || resolution.nativeNoItemEffects !== true ||
+  if (!resolution || resolution.engine !== engine ||
+      (resolution.nativeNoItemEffects !== true && resolution.nativeIgnoredRingUseV1 !== true) ||
       resolution.metadataVersion !== 3 || resolution.weapon || resolution.effects?.length ||
       !Array.isArray(resolution.appliedStatsV1) || resolution.appliedStatsV1.length !== 46 ||
       !resolution.appliedStatsV1.every(Number.isSafeInteger)) return;

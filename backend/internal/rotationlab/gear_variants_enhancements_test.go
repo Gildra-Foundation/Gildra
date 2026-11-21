@@ -138,6 +138,22 @@ func TestNativeNoItemEffectsRequiresPositiveProof(t *testing.T) {
 	}
 }
 
+func TestIgnoredRingUseRequiresIndependentNativeProof(t *testing.T) {
+	for _, tc := range []struct {
+		inventory int
+		flag      any
+		want      bool
+	}{{11, true, true}, {1, true, false}, {11, "true", false}, {11, nil, false}} {
+		row := enhancementReport(t, func(item map[string]any) {
+			item["inventory_type"] = tc.inventory
+			item["gildra_ignored_ring_use_v1"] = tc.flag
+		})
+		if (row.NativeIgnoredRingUseV1 != nil) != tc.want || row.NativeNoItemEffects {
+			t.Fatalf("unexpected ring proof for %+v: %+v", tc, row)
+		}
+	}
+}
+
 func TestAppliedStatsRequireCompleteNativeVector(t *testing.T) {
 	values := make([]any, 46)
 	for i := range values {

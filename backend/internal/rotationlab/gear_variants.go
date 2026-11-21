@@ -63,6 +63,7 @@ type GearVariantMetadata struct {
 	NativeContentTuningV1   *[2]int                 `json:"nativeContentTuningV1,omitempty"`
 	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
 	AppliedStatsV1          []float64               `json:"appliedStatsV1,omitempty"`
+	NativeIgnoredRingUseV1  *[]int                  `json:"nativeIgnoredRingUseV1,omitempty"`
 	NativeNoItemEffects     bool                    `json:"nativeNoItemEffects,omitempty"`
 	Stats                   map[string]float64      `json:"stats"`
 	Weapon                  *GearVariantWeapon      `json:"weapon,omitempty"`
@@ -313,6 +314,10 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		if reportVersion == 2 {
 			result.MetadataVersion = 3
 			result.NativeNoItemEffects = string(item["gildra_no_item_effects"]) == "true"
+			if auditedItemRevision(r.Git) && n("inventory_type") == 11 && string(item["gildra_ignored_ring_use_v1"]) == "true" {
+				bonuses := append([]int{}, v.Change.BonusIDs...)
+				result.NativeIgnoredRingUseV1 = &bonuses
+			}
 			if nativeCraftedSymmetryV1(r.Git, v.Change.Modifiers, item["gildra_crafted_symmetry_v1"]) {
 				// Auction variant IDs may sort bonuses. Bind the proof to the exact
 				// order sent to SimC, including an explicitly empty bonus list.

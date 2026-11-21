@@ -28,6 +28,7 @@ export type ResolvedAuctionVariant = {
   nativeDropCurveV1?: number[];
   nativeScalingInputsV1?: number[];
   appliedStatsV1?: number[];
+  nativeIgnoredRingUseV1?: number[];
   nativeNoItemEffects?: boolean;
   metadataVersion?: number;
   enhancements?: GearEnhancementMetadata;
@@ -75,6 +76,8 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
         ? { nativeScalingInputsV1: [...resolved.nativeScalingInputsV1] } : {}),
       ...(Array.isArray(resolved.appliedStatsV1) && resolved.appliedStatsV1.length === 46 && resolved.appliedStatsV1.every(Number.isFinite)
         ? { appliedStatsV1: [...resolved.appliedStatsV1] } : {}),
+      ...(Array.isArray(resolved.nativeIgnoredRingUseV1) && resolved.nativeIgnoredRingUseV1.length === offer.bonusIds.length &&
+        resolved.nativeIgnoredRingUseV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeIgnoredRingUseV1: true } : {}),
       ...(resolved.nativeNoItemEffects === true ? { nativeNoItemEffects: true } : {}),
       ...(resolved.metadataVersion !== undefined ? { metadataVersion: resolved.metadataVersion, enhancements } : {}),
       ...(validAuctionWeapon(resolved.weapon) ? { weapon: { ...resolved.weapon } } : {}),
