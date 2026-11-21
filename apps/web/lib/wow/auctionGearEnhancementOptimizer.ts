@@ -58,6 +58,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   /** Older cursors continue with their original single-ring price guards. */
   pairedRingPrices?: true;
   pairedNeckPrices?: true;
+  ringNeckPricePairs?: true;
   pairedScrollPrices?: true;
   tiedJewelryReceipts?: true;
   jewelryTiePruning?: { branches: string; configurations: string };
@@ -83,6 +84,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   ratingRingSlots?: ReadonlySet<string>;
   preciseReceiptKey?: (configuration: PricedEnhancementConfiguration) => string;
   ratingOwnedNeck?: boolean;
+  ringNeckPricePairs?: boolean;
   bareRingScrolls90?: boolean;
   bareOwnedRingRatings?: ReadonlySet<string>;
   bareArmorSlots90?: ReadonlySet<string>;
@@ -209,7 +211,7 @@ function ringRatingKey(ratings: number[]) {
 type RingPriceOptions = {
   enchantAxis: number;
   gemAxis: number;
-  byGem: Map<Choice, Map<Choice, { rating: number; lower: number }>>;
+  byGem: Map<Choice, Map<Choice, { rating: number; lower: number; upper: number }>>;
   upper: Map<number, number>;
 };
 type NeckGemPrices = {
@@ -314,6 +316,50 @@ function pairedRingPriceGuard({ rings, neck }: JewelryPrices): PairedRingPrices 
   };
 }
 
+/** The other ring is unchanged, including any unrecognized gem, proc or
+ * enchant. Maximum marginal prices already allow for its shared purchases. */
+function ringNeckPriceGuards(rings: RingPriceOptions[], neck: NeckGemPrices, axes: Choice[][], slots: readonly EnhancementSlot[]) {
+  const guards = new Map<number, (selected: Choice[]) => boolean>();
+  for (const ring of rings) {
+    // Sorted slot axes put both finger choices before the neck. At the
+    // enchant stride all three purchases are fixed, including the ring gem.
+    if (ring.gemAxis >= neck.axis) continue;
+    const owned = slots[axes[ring.enchantAxis][0].slot].owned;
+    // A worn ring with no paid enchant retains a distinct public finalist
+    // identity. Preserve its receipts even when a shared simulator score exists.
+    let upper = ring.upper;
+    if (owned) {
+      upper = new Map();
+      for (const enchants of ring.byGem.values()) for (const [enchant, offer] of enchants) {
+        if (enchant.enhancement && offer.upper < (upper.get(offer.rating) ?? Infinity))
+          upper.set(offer.rating, offer.upper);
+      }
+    }
+    if (!upper.size) continue;
+    const minimum = new Map<number, number>();
+    guards.set(ring.enchantAxis, selected => {
+      const enchant = selected[ring.enchantAxis];
+      if (owned && !enchant.enhancement) return false;
+      const a = ring.byGem.get(selected[ring.gemAxis])?.get(enchant);
+      const b = neck.byGem.get(selected[neck.axis]);
+      if (!a || !b || !Number.isSafeInteger(a.lower + b.lower)) return false;
+      const rating = a.rating + b.rating;
+      let price = minimum.get(rating);
+      if (price === undefined) {
+        price = Infinity;
+        for (const [neckRating, neckPrice] of neck.upper) {
+          const ringPrice = upper.get(rating - neckRating);
+          if (ringPrice !== undefined && Number.isSafeInteger(ringPrice + neckPrice))
+            price = Math.min(price, ringPrice + neckPrice);
+        }
+        minimum.set(rating, price);
+      }
+      return price < a.lower + b.lower;
+    });
+  }
+  return guards;
+}
+
 /** Removing both source purchases saves at least their first-unit prices. Adding
  * both replacements costs at most their last potentially required units. A
  * strict gap therefore holds for every completion, including shared stock. */
@@ -371,7 +417,7 @@ function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot
       if (ring && Number.isSafeInteger(lower)) {
         let byEnchant = ring.byGem.get(gem.choice);
         if (!byEnchant) ring.byGem.set(gem.choice, byEnchant = new Map());
-        byEnchant.set(enchant.choice, { rating: key, lower });
+        byEnchant.set(enchant.choice, { rating: key, lower, upper });
       }
     }
     if (paired && ring) {
@@ -612,23 +658,26 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     }
   }
   const pairProofAllowed = !input.checkpoint || input.checkpoint.pairedRingPrices === true ||
-    input.checkpoint.bareOwnedRingRatings === true || pricedAxes === "combined_ring_cost";
+    input.checkpoint.bareOwnedRingRatings === true || input.checkpoint.ringNeckPricePairs === true || pricedAxes === "combined_ring_cost";
   const pairGuards: RingPairGuards | undefined = exact && pairProofAllowed && input.ratingRingSlots?.size ? new Map() : undefined;
   const conditionalAllowed = pairProofAllowed || pricedAxes === "conditional_ring_gems";
   const gemProofAllowed = conditionalAllowed || pricedAxes === "equivalent_gems";
   const conditional = exact && (input.purchasedGemEffect || input.ownedGemEffect) && conditionalAllowed
     ? new Map<Choice, {axis: number; enchants: Set<number>}>() : undefined;
-  const pairedRings: JewelryPrices | undefined = pairGuards && input.ratingRingSlots?.has("FINGER_1") &&
-    input.ratingRingSlots.has("FINGER_2") && (!input.checkpoint || input.checkpoint.pairedRingPrices) ? {
-      rings: [], includeNeck: !!input.ratingOwnedNeck && (!input.checkpoint || input.checkpoint.pairedNeckPrices === true),
-    } : undefined;
+  const ringNeckPairs = input.ratingOwnedNeck && input.ringNeckPricePairs && (!input.checkpoint || input.checkpoint.ringNeckPricePairs);
+  const bothRings = input.ratingRingSlots?.has("FINGER_1") && input.ratingRingSlots.has("FINGER_2") &&
+    (!input.checkpoint || input.checkpoint.pairedRingPrices);
+  const pairedRings: JewelryPrices | undefined = pairGuards && (bothRings || ringNeckPairs) ? {
+    rings: [], includeNeck: !!ringNeckPairs || !!input.ratingOwnedNeck && (!input.checkpoint || input.checkpoint.pairedNeckPrices === true),
+  } : undefined;
   const bareOwnedRings = exact && pairGuards && (!input.checkpoint || input.checkpoint.bareOwnedRingRatings) &&
     slots.some(slot => slot.owned && input.ratingRingSlots?.has(slot.slotType) && input.bareOwnedRingRatings?.has(slot.slotType))
     ? input.bareOwnedRingRatings : undefined;
   const compact = exact && (gemProofAllowed || pricedAxes === "equivalent_scrolls")
     ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined,
         gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect, pairedRings, bareOwnedRings) : undefined;
-  const pairedPrice = pairedRings && pairedRingPriceGuard(pairedRings);
+  const pairedPrice = bothRings && pairedRings ? pairedRingPriceGuard(pairedRings) : undefined;
+  const ringNeckGuards = ringNeckPairs && pairedRings?.neck ? ringNeckPriceGuards(pairedRings.rings, pairedRings.neck, axes, slots) : undefined;
   const scrollPairs = exact && pricedAxes && input.bareRingScrolls90 && (!input.checkpoint || input.checkpoint.pairedScrollPrices)
     ? costlierRingScrollPairs(axes, slots, commodityPrices.cost) : undefined;
   const armorGuards = exact && pricedAxes && input.bareArmorSlots90?.has("HEAD") && input.bareArmorSlots90.size > 1 &&
@@ -646,6 +695,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     ...(armorGuards?.size ? { pairedArmorPrices: [...input.bareArmorSlots90!].sort() } : {}),
     ...(pairedPrice ? { pairedRingPrices: 1 } : {}),
     ...(pairedNeck ? { pairedNeckPrices: 1 } : {}),
+    ...(ringNeckGuards?.size ? { ringNeckPricePairs: 1 } : {}),
     ...(pairGuards?.size ? { costlierRingPairs: [...pairGuards].map(([gem, guard]) =>
       [gem.slot, gem.enhancement?.key ?? null, guard.enchantAxis, [...guard.enchants].map(c => c.enhancement?.key ?? null)]) } : {}),
     ...(conditional?.size ? { conditionalRingGems: [...conditional].map(([choice, guard]) =>
@@ -661,6 +711,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     ...(armorGuards?.size ? {pairedArmorPrices:true} : {}),
     ...(pairedPrice ? {pairedRingPrices:true} : {}),
     ...(pairedNeck ? {pairedNeckPrices:true} : {}),
+    ...(ringNeckGuards?.size ? {ringNeckPricePairs:true} : {}),
     ...(exact ? {exactNextConfiguration:"0", pricedAxes:compact ?? "within_budget"} : {}),
   };
   if (!Number.isSafeInteger(checkpoint.nextConfiguration) || checkpoint.nextConfiguration < 0) throw new Error("invalid_enhancement_checkpoint");
@@ -746,7 +797,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       const skip = conditional?.get(selected[axis]);
       if (skip && skip.enchants.has(selected[skip.axis].enhancement?.simulationId ?? 0)) return { valid: false, pruneAxis: skip.axis };
       // Every lower digit can vary without changing the purchases in this proof.
-      if (axis === pairedPrice?.axis && pairedPrice.skips(selected))
+      if (ringNeckGuards?.get(axis)?.(selected) || axis === pairedPrice?.axis && pairedPrice.skips(selected))
         return { valid: false, pruneAxis: axis, ringPriceProof: true };
       const {enhancement:e, retained} = selected[axis];
       if (e) {

@@ -648,6 +648,66 @@ test('a purchased neck gem can exchange integer ratings with both rings at a str
   }
 });
 
+test('one certified ring and a worn neck can exchange ratings while the other ring keeps its own effects', async () => {
+  const gem = id => ({key:String(id),kind:'gem',simulationId:id,consumableItemId:id});
+  const haste = new Map([[115804,2],[130216,3],[130220,4]]);
+  const choices = [...haste.keys()].map(gem), unknown = gem(999999);
+  const sourceUpdatedAt = new Date().toISOString();
+  const knownRing = 'FINGER_2', otherRing = 'FINGER_1';
+  const group = c => {
+    const fixed = c.slots.find(s => s.slotType === otherRing).gemIds[0];
+    const amount = c.slots.filter(s => s.slotType !== otherRing).reduce((v,s) => v + (haste.get(s.gemIds[0]) ?? 0),0);
+    return [fixed,amount];
+  };
+  async function run(mode, scarce = false, tied = false, wornRing = false) {
+    const h = fixture({slots:3,limits:{simulations:12}});
+    for (const [i,slot] of h.input.slots.entries()) slot.slotType = [otherRing,knownRing,'NECK'][i];
+    Object.assign(h.input.slots[2],{owned:true,allowOwnedChanges:true,ownedItemId:123});
+    if (wornRing) {
+      Object.assign(h.input.slots[1],{owned:true,allowOwnedChanges:true,ownedItemId:124});
+      h.input.bareOwnedRingRatings = new Set([knownRing]);
+    }
+    h.input.catalog.resolve = slot => ({verified:true,enchantApplicable:slot.slotType === knownRing,enchantChoices:[],
+      gemChoices:{'0':slot.slotType === otherRing ? [unknown,choices[0]] : choices}});
+    h.input.prices = {sourceUpdatedAt,prices:Object.fromEntries([...choices,unknown].map(e => [e.consumableItemId,
+      {ladder:[[!tied && e.simulationId === 130216 ? 9 : 1,scarce && e.simulationId === 115804 ? 1 : 4]]}]))};
+    h.input.ratingOwnedNeck = true;
+    h.input.ratingRingSlots = new Set([knownRing]);
+    h.input.ringNeckPricePairs = mode === 'on';
+    h.input.simulate = async c => {
+      h.calls.push(c); const [fixed,points]=group(c); return measurement(1100 + (fixed === unknown.simulationId ? 50 : 0) - (6-points)**2);
+    };
+    const first = mode === 'restore' ? await optimizeAuctionGearEnhancements(h.input) : undefined;
+    if (first) h.input.ringNeckPricePairs = true;
+    const result = await complete(h,first);
+    return {rows:h.calls,cp:result.checkpoint};
+  }
+  const ordinary=await run('off'), candidate=await run('on');
+  assert.equal(candidate.cp.ringNeckPricePairs,true);
+  assert.equal(candidate.cp.pairedRingPrices,undefined);
+  assert(candidate.rows.length < ordinary.rows.length);
+  const check = (actual,control) => {
+    const keys = new Set(actual.rows.map(c=>c.key));
+    for(const row of control.rows) if(!keys.has(row.key)){
+      assert(actual.rows.some(c => c.totalCopper < row.totalCopper && String(group(c)) === String(group(row))));
+    }
+    for(const key of ['bestDpsConfirmed','bestValueConfirmed']) assert.deepEqual(actual.cp[key],control.cp[key]);
+  };
+  check(candidate,ordinary);
+  for(const [scarce,tied] of [[true,false],[false,true]]) {
+    const gold=await run('off',scarce,tied), trial=await run('on',scarce,tied);
+    check(trial,gold);
+    if(tied) {
+      const equalCost = rows => rows.filter(c => group(c)[1] === 6).map(c=>c.key);
+      assert.deepEqual(equalCost(trial.rows),equalCost(gold.rows));
+    }
+  }
+  assert.deepEqual((await run('restore')).rows,ordinary.rows);
+  const worn=await run('on',false,false,true);
+  assert.equal(worn.cp.ringNeckPricePairs,undefined);
+  assert.deepEqual(worn.rows,(await run('off',false,false,true)).rows);
+});
+
 test('head and armor exchanges honor ties, stock, slot restrictions, and the restored traversal', async () => {
   const enchant = (id, extra = {}) => ({key:String(id),kind:'enchant',consumableItemId:id,simulationId:id,...extra});
   const run = async ({headCost=4, shoulderCost=5, freeCost=8, shared=false, restricted=false,
