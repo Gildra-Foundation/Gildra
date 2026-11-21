@@ -11,6 +11,8 @@ import {applyOwnedAuctionGearChanges} from "../../../lib/wow/auctionGearEnhanced
 import {auctionGearProfileFingerprint} from "../../../lib/wow/auctionGearFingerprint.ts";
 import {assertFreshMarket} from "../../../lib/wow/auctionMarket.ts";
 import {auctionAppliedStatsKey} from "../../../lib/wow/auctionGearEffects.ts";
+import {fixedEagleGemEdits} from "../../../lib/wow/auctionRingRatings.ts";
+import {ignoresItemContext} from "../../../lib/wow/gearItemModifiers.ts";
 import {assembleAuctionGear,searchAuctionGearOptions} from "../../../lib/wow/auctionGearPlanner.ts";
 
 const engine="SimulationCraft native-precision-test";
@@ -23,7 +25,7 @@ function simulator(response, {equipped=[], level, verifiedEngine=wires[0].engine
  const source=readFileSync(new URL("../../../lib/wow/auctionGearRunner.ts",import.meta.url),"utf8");
  const body=stripTypeScriptTypes(source.slice(source.indexOf("const runDiagnostics ="), source.indexOf("/** Private, in-process diagnostics")) + source.slice(source.indexOf("function createAuctionSimulator(")),{mode:"strip"});
  let calls=0;
- const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics,
+ const create=new vm.Script(body+"\n;createAuctionSimulator").runInNewContext({ createAuctionGearDiagnostics, fixedEagleGemEdits, ignoresItemContext,
   ...gear,applyOwnedAuctionGearChanges,auctionAppliedStatsKey,auctionGearMechanicalKey, purchasedJewelryScoreChanges,auctionGearMechanicalCache:createAuctionGearMechanicalCache(),auctionGearProfileFingerprint,assertFreshMarket,process,AbortSignal,Number,Error,JSON,
   fetch:async(_url,request)=>{calls++;const selection=JSON.parse(request.body).gearChanges?.length?1:0;
    return {ok:true,headers:{get:()=>"simulationcraft"},json:async()=>response(selection,JSON.parse(request.body))};}
