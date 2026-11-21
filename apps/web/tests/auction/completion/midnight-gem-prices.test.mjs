@@ -150,3 +150,43 @@ for (const mixed of [false,true]) test(`streaming ${mixed ? "mixed" : "Midnight"
   assert(current.cut>reference.cut);
   assert(current.calls<reference.calls);
 });
+
+test("cheaper weapon scrolls can pay for three differently ranked gemstone receipts", () => {
+  const low = 38991, high = 38878;
+  const gem = [240869,240867,240877];
+  const levels = Object.fromEntries(gem.map(id => [id,{ladder:[[10,3]]}]));
+  function books(lowLadder = [[12,2]], highPrice = 25, mutate = () => {}) {
+    const slots = ["MAIN_HAND","FINGER_1","FINGER_2","NECK","OFF_HAND"].map(slotType => {
+      const owned = positions.includes(slotType);
+      return {slotType,owned,allowOwnedChanges:owned,ownedItemId:owned ? itemIds[positions.indexOf(slotType)] : undefined,
+        sockets:owned ? [{key:"0",type:"14"}] : []};
+    });
+    const axes = slots.map((host,slot) => host.owned ? gem.map(id => ({slot,socket:0,retained:false,
+      enhancement:{kind:"gem",simulationId:id,consumableItemId:id}})) : [0,3830,2505].map(id =>
+      ({slot,socket:null,retained:false,enhancement:id ? {kind:"enchant",simulationId:id,consumableItemId:id === 3830 ? low : high} : null})));
+    mutate(axes,slots);
+    const cost=createExactCommodityPriceCache({...levels,[low]:{ladder:lowLadder},[high]:{ladder:[[highPrice,2]]}}).cost;
+    const enabled=midnightGemPrices(axes,slots,cost,()=>false,false,true);
+    const previous=midnightGemPrices(axes,slots,cost,()=>false);
+    const row=(left,right,ids)=>axes.map((axis,i)=>i===0?axis[left]:i===4?axis[right]:i<4?axis[ids[i-1]]:axis[0]);
+    return {row,enabled,previous};
+  }
+  const {row,enabled,previous}=books();
+  const expensive=row(2,0,[0,0,1]);
+  assert.equal(previous.cutAxis(expensive),undefined);
+  assert.equal(enabled.cutAxis(expensive),0); // The first hand is below all three socket digits.
+  for(const indices of [[0,0,1],[0,1,0],[1,0,0]]) assert.equal(enabled.cutAxis(row(1,1,indices)),undefined);
+  assert.equal(enabled.cutAxis(row(2,0,[0,0,0])),undefined); // Only one distinct gemstone arrangement.
+  for(const fixture of [
+    books([[12,1]]), books([[12,1],[13,1]]), books([[12,1],[14,1]]),
+    books([[12,2]],25,(axes)=>{axes[0][1].enhancement.profession={id:1,rank:1};}),
+    books([[12,2]],25,(axes)=>{axes[0][1].enhancement.category={id:"limit",limit:1};}),
+    books([[12,2]],25,(axes)=>{axes[4][1].enhancement.uniqueEquipped=true;}),
+    books([[12,2]],25,(axes)=>{axes[4][1].retained=true;}),
+    books([[12,2]],25,(_,slots)=>{slots[0].owned=true;}),
+    books([[12,2]],25,(_,slots)=>{slots[4].sockets=[{key:"0",type:"14"}];}),
+    books([[12,2]],25,(axes,slots)=>{slots.push({slotType:"HEAD",sockets:[],owned:true});
+      axes.push([{...axes[0][1],slot:5}]);}),
+    books([[12,2]],25,(axes)=>{axes[4][1].enhancement.simulationId=4083;}),
+  ]) assert.equal(fixture.enabled.cutAxis(fixture.row(2,0,[0,0,1])),undefined);
+});

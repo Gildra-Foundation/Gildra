@@ -1,3 +1,4 @@
+import { weaponScrollPower90 } from "./auctionGearMechanicalCache";
 import type { Enhancement, EnhancementSlot } from "./auctionGearEnhancementOptimizer";
 import { midnightGemRating90 } from "./auctionMidnightGemRatings";
 import { combinedRingRatings90, isDirectRingEnchant } from "./auctionRingRatings";
@@ -13,11 +14,55 @@ function price(a: Offer, b: Offer, c: Offer) {
   return a.one + b.one + c.one;
 }
 
+// Holding the two purchased weapons fixed, find the cheapest reachable pair of
+// scrolls for each integer spell-power total. Exclude commodities that other
+// axes can consume, and global enchant restrictions on any applicable host.
+function cheaperWeaponScrolls(axes: Choice[][], slots: readonly EnhancementSlot[], cost: (id: number, n: number) => number) {
+  const hands = ["MAIN_HAND", "OFF_HAND"].map(slot => axes.findIndex(choices => {
+    const first = choices[0], host = slots[first.slot];
+    return first.socket === null && host.slotType === slot && !host.owned && !host.sockets.length && !host.installed;
+  }));
+  if (hands.includes(-1)) return;
+  const shared = new Set<number>(), unique = new Set<number>();
+  for (const [axis, choices] of axes.entries()) for (const { enhancement: e, retained } of choices) {
+    if (!e) continue;
+    if (!hands.includes(axis) && !retained) shared.add(e.consumableItemId);
+    if (e.kind === "enchant" && e.uniqueEquipped) unique.add(e.simulationId);
+  }
+  const offers = hands.map(axis => axes[axis].flatMap(choice => {
+    const e = choice.enhancement, power = weaponScrollPower90(e?.simulationId ?? 0);
+    if (power === undefined || choice.retained || e && (e.kind !== "enchant" || e.profession || e.category ||
+        unique.has(e.simulationId) || shared.has(e.consumableItemId))) return [];
+    return [{ choice, power, id: e?.consumableItemId ?? 0, one: e ? cost(e.consumableItemId, 1) : 0 }];
+  }));
+  const minimum = new Map<number, number>();
+  let hasSavings = false;
+  const pairs = new Map<Choice, Map<Choice, { power: number; price: number }>>();
+  for (const left of offers[0]) {
+    const byRight = new Map<Choice, { power: number; price: number }>();
+    for (const right of offers[1]) {
+      const price = left.id && left.id === right.id ? cost(left.id, 2) : left.one + right.one;
+      if (!Number.isSafeInteger(price)) continue;
+      const power = left.power + right.power;
+      byRight.set(right.choice, { power, price });
+      const previous = minimum.get(power);
+      if (previous !== undefined && price !== previous) hasSavings = true;
+      minimum.set(power, Math.min(price, previous ?? Infinity));
+    }
+    pairs.set(left.choice, byRight);
+  }
+  if (!hasSavings) return;
+  return { axis: Math.min(...hands), savings(selected: Choice[]) {
+    const pair = pairs.get(selected[hands[0]])?.get(selected[hands[1]]);
+    return pair ? pair.price - minimum.get(pair.power)! : 0;
+  }};
+}
+
 /** A source can never win a public comparison when three different original
  * finalist keys give its exact score and error at strictly smaller prices.
  * Equal-priced receipts still compete by their original physical hashes. */
 export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementSlot[],
-  cost: (id: number, quantity: number) => number | null, hasOtherProof: (choice: Choice) => boolean, mixed = false) {
+  cost: (id: number, quantity: number) => number | null, hasOtherProof: (choice: Choice) => boolean, mixed = false, includeWeaponSavings = false) {
   const positions = ["FINGER_1", "FINGER_2", "NECK"];
   const sockets = positions.map(position => axes.findIndex(choices => {
     const { slot, socket } = choices[0], host = slots[slot];
@@ -122,8 +167,9 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
     thresholds.set(target, third);
     return third;
   }
+  const weapons = includeWeaponSavings ? cheaperWeaponScrolls(axes, slots, multiUnitCost) : undefined;
   return {
-    axis,
+    axis, weaponAxis: weapons?.axis,
     cutAxis(selected: Choice[]) {
       if (neckEnchant >= 0 && selected[neckEnchant].enhancement) return;
       const a = left.get(selected[sockets[0]]), b = right.get(selected[sockets[1]]), c = necklaces.get(selected[sockets[2]]);
@@ -137,8 +183,13 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
         return enchant && !isDirectRingEnchant(enchant.simulationId);
       })) return;
       const total = price(a,b,c);
-      if (Number.isSafeInteger(total) && total > thirdPrice(a.signature + b.signature + c.signature))
-        return modernCount === 2 ? mixedAxis : axis;
+      if (!Number.isSafeInteger(total)) return;
+      const third = thirdPrice(a.signature + b.signature + c.signature);
+      const gemAxis = modernCount === 2 ? mixedAxis : axis;
+      if (total > third) return gemAxis;
+      // The three witnesses keep three distinct original gem ranking keys
+      // even when all use the same cheaper equivalent pair of weapon scrolls.
+      if (weapons && third - total < weapons.savings(selected)) return Math.min(gemAxis, weapons.axis);
     },
   };
 }

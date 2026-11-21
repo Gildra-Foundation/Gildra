@@ -310,6 +310,22 @@ const directWeaponSpellPower90 = new Map<number, number>([
   [2504, 14], [2505, 14], [2669, 14], [3830, 7], [3834, 9], [3846, 7], [3854, 12], [3855, 10],
 ]);
 
+export function weaponScrollPower90(id: number) {
+  return id === 0 ? 0 : directWeaponSpellPower90.get(id);
+}
+
+export function isPlainScrollWeapon90(option: AuctionGearOption, variant: AuctionGearOption["candidate"]["variants"][number],
+  engine: string, playerLevel?: number) {
+  const item = option.candidate, proof = variant.resolution, sockets = proof?.enhancements;
+  return playerLevel === 90 && ignoresItemContext(engine) && proof?.engine === engine &&
+    proof.metadataVersion === 3 && proof.nativeNoItemEffects === true && !!proof.weapon && !proof.effects?.length &&
+    item.itemClassId === 2 && (item.slotType === "MAIN_HAND" || item.slotType === "OFF_HAND") &&
+    !!item.constraints && !item.constraints.setId && !item.constraints.setName &&
+    Number.isSafeInteger(variant.itemLevel) && variant.itemLevel >= 10 && variant.itemLevel <= 120 &&
+    sockets?.status === "verified" && sockets.socketCount === 0 && sockets.socketBonusId === 0 &&
+    sockets.requiredProfessionId === 0 && sockets.socketColors?.length === 3 && sockets.socketColors.every(color => color === 0);
+}
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
@@ -384,20 +400,14 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
         sockets.socketBonusId === 0 && sockets.requiredProfessionId === 0 && sockets.socketColors?.length === 3 &&
         sockets.socketColors[1] === 0 && sockets.socketColors[2] === 0 &&
         ((sockets.socketCount === 0 && sockets.socketColors[0] === 0) || (sockets.socketCount === 1 && sockets.socketColors[0] === 14))) : undefined;
-    if (native.physicalFinalist && request.precision === "finalist" && native.playerLevel === 90 &&
-        (change.slot === "main_hand" || change.slot === "off_hand") && ignoresItemContext(native.engine) &&
-        sameVariant && option && variant && proof?.metadataVersion === 3 && proof.nativeNoItemEffects === true &&
-        proof.weapon && !proof.effects?.length && option.candidate.itemClassId === 2 &&
-        option.candidate.constraints && !option.candidate.constraints.setId && !option.candidate.constraints.setName &&
-        option.candidate.slotType === (change.slot === "main_hand" ? "MAIN_HAND" : "OFF_HAND") &&
-        Number.isSafeInteger(variant.itemLevel) && variant.itemLevel >= 10 && variant.itemLevel <= 120 &&
+    if (native.physicalFinalist && request.precision === "finalist" && sameVariant && option && variant &&
+        (change.slot === "main_hand" || change.slot === "off_hand") && option.candidate.slotType.toLowerCase() === change.slot &&
+        isPlainScrollWeapon90(option, variant, native.engine, native.playerLevel) &&
         !change.gemIds?.length && !option.customization?.gemIds?.length &&
         (change.enchantId ?? 0) === (option.customization?.enchantId ?? 0) &&
-        sockets?.status === "verified" && sockets.socketCount === 0 && sockets.socketBonusId === 0 &&
-        sockets.requiredProfessionId === 0 && sockets.socketColors?.length === 3 && sockets.socketColors.every(color => color === 0) &&
         !request.removedSlots?.includes(option.candidate.slotType) && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
         !native.changes.some((other, j) => i !== j && other.slot === change.slot)) {
-      const power = change.enchantId ? directWeaponSpellPower90.get(change.enchantId) : 0;
+      const power = weaponScrollPower90(change.enchantId ?? 0);
       if (power !== undefined) weaponScrolls.push({ index: i, power });
     }
     if (scroll !== undefined) purchasedScrollTotal += scroll;

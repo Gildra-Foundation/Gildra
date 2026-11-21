@@ -63,6 +63,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   pairedScrollPrices?: true;
   midnightGemPrices?: true;
   mixedMidnightPrices?: true;
+  weaponGemPrices?: true;
   tiedJewelryReceipts?: true | "ring_and_gem";
   jewelryTiePruning?: { branches: string; configurations: string };
   bareOwnedRingRatings?: true;
@@ -89,6 +90,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   ratingOwnedNeck?: boolean;
   useMidnightGemPrices?: () => boolean;
   pruneMixedMidnightPrices?: boolean;
+  pruneWeaponGemPrices?: boolean;
   ringNeckPricePairs?: boolean;
   bareRingScrolls90?: boolean;
   bareOwnedRingRatings?: ReadonlySet<string>;
@@ -694,14 +696,16 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     swaps.some(swap => axes[swap.left][0].socket !== null)
     ? swaps.find(swap => axes[swap.left][0].socket === null) : undefined;
   const mixedMidnightPrices = input.pruneMixedMidnightPrices === true && (!input.checkpoint || input.checkpoint.mixedMidnightPrices === true);
+  const weaponGemPrices = input.pruneWeaponGemPrices === true && (!input.checkpoint || input.checkpoint.weaponGemPrices === true);
   const midnight = exact && pricedAxes && input.useMidnightGemPrices && input.preciseReceiptKey &&
     (!input.checkpoint || input.checkpoint.midnightGemPrices)
-    ? midnightGemPrices(axes, slots, commodityPrices.cost, c => Boolean(conditional?.has(c) || pairGuards?.has(c)), mixedMidnightPrices) : undefined;
+    ? midnightGemPrices(axes, slots, commodityPrices.cost, c => Boolean(conditional?.has(c) || pairGuards?.has(c)), mixedMidnightPrices, weaponGemPrices) : undefined;
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
     ...(midnight ? {midnightGemPrices:1} : {}),
+    ...(midnight?.weaponAxis !== undefined ? {weaponGemPrices:1} : {}),
     ...(midnight && mixedMidnightPrices ? {mixedMidnightPrices:1} : {}),
     ...(swaps.length ? { tiedJewelryReceipts: scrollSwap ? 2 : 1 } : {}),
     ...(bareOwnedRings ? { bareOwnedRingRatings: [...bareOwnedRings].sort() } : {}),
@@ -720,6 +724,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
     ...(midnight ? {midnightGemPrices:true} : {}),
+    ...(midnight?.weaponAxis !== undefined ? {weaponGemPrices:true} : {}),
     ...(midnight && mixedMidnightPrices ? {mixedMidnightPrices:true} : {}),
     ...(swaps.length ? {tiedJewelryReceipts:scrollSwap ? "ring_and_gem" : true} : {}),
     ...(bareOwnedRings ? {bareOwnedRingRatings:true} : {}),

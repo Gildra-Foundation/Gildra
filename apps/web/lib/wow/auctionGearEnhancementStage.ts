@@ -9,7 +9,7 @@ import { prepareGearLoadout, compareGearSimulationResults } from './gearSimulati
 import type { GearLoadoutItem } from './gearCompatibility';
 import type { AuctionGearOption, AuctionGearPurchase, GearPlanSimulation } from './auctionGearTypes';
 import type { AuctionGearEncounter } from './auctionGearScenarios';
-import { directNeckEnchantGroup, isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedJewelryGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
+import { isPlainScrollWeapon90, directNeckEnchantGroup, isWorldsoulCradle, neutralProfessionGloveEnchant, neutralShoulderIllusion, neutralWristHearthEnchant, pureArmorLeechEnchant, purchasedJewelryGemEffect, hasLevel90RingRatings } from './auctionGearMechanicalCache';
 import { ignoresItemContext } from './gearItemModifiers';
 import { isDirectRingEnchant, ringEnchantRepresentative90, ringGemRepresentative90 } from './auctionRingRatings';
 import { auctionGearSlots } from './auctionGearSelection';
@@ -88,6 +88,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   pruneOwnedJewelryGems?: boolean;
   useMidnightGemPrices?: () => boolean;
   pruneMixedMidnightPrices?: boolean;
+  pruneWeaponGemPrices?: boolean;
   pruneRingNeckPricePairs?: boolean;
   nativePlayerLevel?: number;
   preview?: boolean;
@@ -137,6 +138,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     const certifiedRing = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
       (input.pruneRingScrollPairs || input.pruneBareOwnedRingRatings) && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
       (slot === "FINGER_1" || slot === "FINGER_2") && inventory === 11 && itemClass === 4;
+    const scrollWeapons = new Set<string>();
     const bareArmorSlots90 = new Set<string>();
     const certifiedArmor = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
       input.pruneArmorEnchantPairs && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) && itemClass === 4 &&
@@ -185,6 +187,8 @@ export async function evaluateAuctionEnhancementStage(input: {
           (slot.slotType === 'MAIN_HAND' || slot.slotType === 'OFF_HAND') &&
           Number.isSafeInteger(target.itemLevel) && target.itemLevel >= 10 && target.itemLevel <= 120)
         purchasedWeaponRanks.add(slot.slotType);
+      if (input.pruneWeaponGemPrices && !option.customization && isPlainScrollWeapon90(option, variant, input.engine, input.nativePlayerLevel))
+        scrollWeapons.add(slot.slotType);
       const bareWeapon = !option.customization && eligibleWeapon(slot.slotType, target.itemClassId);
       resolutions.set(slot.slotType,{...resolved,
         enchantChoices:resolved.enchantChoices.filter(e =>
@@ -330,6 +334,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       preciseReceiptKey: input.preciseReceiptKey,
+      pruneWeaponGemPrices: scrollWeapons.size === 2 && !removed.has("MAIN_HAND") && !removed.has("OFF_HAND"),
       pruneMixedMidnightPrices: input.pruneMixedMidnightPrices && bareRingSlots.size === 2,
       useMidnightGemPrices: midnightHosts.size === 3 ? input.useMidnightGemPrices : undefined,
       // With two bought rings the finalist normalizer can move gems between
