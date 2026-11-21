@@ -326,7 +326,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     const armorConstantCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
       change.slot === option.candidate.slotType.toLowerCase() &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
-      ? bareArmorConstantCurveIdentity(option, native.engine) : undefined;
+      ? bareArmorConstantCurveIdentity(option, native.engine, reuseCandidateInputs || native.physicalFinalist === true) : undefined;
     const weaponCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
       ((change.slot === "main_hand" && option.candidate.slotType === "MAIN_HAND") ||
        (change.slot === "off_hand" && option.candidate.slotType === "OFF_HAND")) &&
@@ -386,7 +386,8 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
       ...(weaponCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, bonusIds: [], weaponCurve } : {}),
-      ...(armorConstantCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, armorConstantCurve } : {}),
+      ...(armorConstantCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, armorConstantCurve,
+        ...(armorConstantCurve[0] === "bare-armor-resolved-curve-v1" ? { bonusIds: [] } : {}) } : {}),
       ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
       ...(suffix ? { bonusIds: [], bareSuffix: suffix } : {}),
       ...(scroll !== undefined ? { enchantId: undefined } : {}),

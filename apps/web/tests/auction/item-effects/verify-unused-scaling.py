@@ -20,6 +20,9 @@ assert sum(map(len, bonuses.values())) == 20226
 assert bonuses[13668] == [(6, 1), (26, 5)]
 assert bonuses[13729] == [(27, 101224), (47, 2), (51, 434)]
 assert bonuses[13900] == [(27, 115477), (47, 2), (51, 481)]
+# Each prefix in the two bare armor programs is a single no-op. No suffix,
+# description tag, quality change or effect can distinguish these prefixes.
+assert bonuses[13578] == bonuses[13663] == [(0, 0)]
 
 
 # Automatic weapon oils and socket bonuses can reach apply_item_bonus via
@@ -44,6 +47,7 @@ while applied:
         assert kind not in (13, 49, 51), (list_id, kind)
         if kind == 50:
             applied.add(value)
+assert visited.isdisjoint({13578, 13663, 13729, 13900})
 print(f'Checked {enchantments} enchantments and {len(visited)} reachable bonus lists')
 
 # On weapons, the other accepted ordered program changes quality. It must

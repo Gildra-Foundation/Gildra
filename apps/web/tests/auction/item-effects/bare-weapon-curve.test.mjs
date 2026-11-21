@@ -95,7 +95,7 @@ test('a saved version-nine weapon traversal resumes its original groups', async 
   const resumed=await finish(checkpoint), fresh=await finish(undefined);
   assert.equal(resumed.checkpoint.nativeLotGroups,9);
   assert.equal(resumed.result.combinationCount,'9');
-  assert.equal(fresh.checkpoint.nativeLotGroups,11);
+  assert.equal(fresh.checkpoint.nativeLotGroups,12);
   assert.equal(fresh.result.combinationCount,'4');
   assert.deepEqual(fresh.result.bestDpsConfirmed,resumed.result.bestDpsConfirmed);
   assert.deepEqual(fresh.result.bestValueConfirmed,resumed.result.bestValueConfirmed);

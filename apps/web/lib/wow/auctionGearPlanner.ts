@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
 import { candidateLoadoutItem, compareGearSimulationResults } from "./gearSimulation";
 import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "./gearCompatibility";
-import { auctionAppliedStatsKey, auctionDominatedArmorOptions, auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionDominatedArmorOptions, auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, stableAuctionReceiptOrder, type AuctionEffectGroup } from "./auctionGearEffects";
 export { auctionSelectionEffectKey } from "./auctionGearEffects";
 import type {
   AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearOption, AuctionGearPlan,
@@ -396,15 +396,17 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
-  const equipmentGrouping = input.bareEquipmentProofs ? 11 : 6;
+  const equipmentGrouping = input.bareEquipmentProofs ? 12 : 6;
   const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
     input.reuseAppliedStats ? (input.groupCraftedEquipment ? equipmentGrouping : 1) : undefined;
-  if (grouping !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(grouping)) throw new Error("invalid_search_checkpoint");
+  if (grouping !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(grouping)) throw new Error("invalid_search_checkpoint");
   const groupEngine = grouping && engine && ignoresItemContext(engine) ? engine : undefined;
   const jewelry = (grouping ?? 0) >= 9 ? "jewelry-suffix" : grouping === 8 ? "socket-curve" : grouping === 7;
+  const armor = grouping === 12 && stableAuctionReceiptOrder(options) ? "equivalent-curves" : (grouping ?? 0) >= 11;
   const groups = auctionEffectGroups(options, slots, option =>
     auctionEffectGroupKey(option, groupEngine, (grouping ?? 0) >= 6 ? "missive" : (grouping ?? 0) >= 2,
-      (grouping ?? 0) >= 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3, jewelry, (grouping ?? 0) >= 10, grouping === 11));
+      (grouping ?? 0) >= 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3, jewelry, (grouping ?? 0) >= 10,
+      armor));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));

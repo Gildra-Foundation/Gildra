@@ -16,11 +16,11 @@ function offer(lot, drop, price) {
   return { id: lot + ":WRIST:" + variantKey, auctionId: lot, costCopper: price, quantity: 1, variantKey, candidate };
 }
 const group = (o, current = true) => auctionEffectGroupKey(o, engine, "missive", "drop-curve", "jewelry-suffix", true, current);
-function score(o, precision, altered = {}, ownedChanges = []) {
+function score(o, precision, altered = {}, ownedChanges = [], physicalFinalist = precision === "finalist") {
   const v = o.candidate.variants[0];
   const change = { slot: "wrist", itemId: o.candidate.itemId, contextId: v.contextId, bonusIds: v.bonusIds, modifiers: v.modifiers, ...altered };
   return auctionGearMechanicalKey("fixed-profile", { spec: "fury-warrior", scenario: "single-target", fightLengthSeconds: 120, targets: 1, precision, ownedChanges },
-    { engine, changes: [change], options: [o], physicalFinalist: precision === "finalist" });
+    { engine, changes: [change], options: [o], physicalFinalist });
 }
 test("a versioned armor curve shares bare scores and retains the available physical lot", async () => {
   const first = offer(11,80,9), second = offer(12,83,6);
@@ -75,8 +75,70 @@ test("a version-ten cursor keeps both old armor choices when a new search groups
   const resumed=await finish(checkpoint),fresh=await finish(undefined);
   assert.equal(resumed.checkpoint.nativeLotGroups,10);
   assert.equal(resumed.result.combinationCount,"3");
-  assert.equal(fresh.checkpoint.nativeLotGroups,11);
+  assert.equal(fresh.checkpoint.nativeLotGroups,12);
   assert.equal(fresh.result.combinationCount,"2");
   assert.deepEqual(fresh.result.bestDpsConfirmed,resumed.result.bestDpsConfirmed);
   assert.deepEqual(fresh.result.bestValueConfirmed,resumed.result.bestValueConfirmed);
+});
+
+test("two no-op armor prefixes can share a resolved curve with both precisions", () => {
+  const a=offer(1208555828,81,35000000), b=offer(1208961221,82,35000000);
+  a.candidate.variants[0].bonusIds=[13578,13729];
+  for (const x of [a,b]) x.candidate.variants[0].resolution.effects=[];
+  assert.notEqual(group(a),group(b));
+  assert.equal(group(a,"equivalent-curves"),group(b,"equivalent-curves"));
+  for (const precision of [undefined,"finalist"]) assert.equal(score(a,precision),score(b,precision));
+  assert.notEqual(score(a),score(b,"finalist"));
+  assert.notEqual(score(a,"finalist",{},[],false),score(b,"finalist",{},[],false));
+  for (const invalidate of [
+    v=>{v.bonusIds=[13578,13900];}, v=>{v.bonusIds=[13663,13729];},
+    v=>{v.bonusIds=[13663,13900,13901];}, v=>{v.bonusIds.reverse();},
+    v=>{v.resolution.effects=["equip"];}, v=>{delete v.resolution.effects;},
+    v=>{v.resolution.appliedStatsV1[45]++;}, v=>{v.resolution.nativeArmorCurveV1[2]++;},
+  ]) {
+    const changed=structuredClone(b);
+    invalidate(changed.candidate.variants[0]);
+    assert.notEqual(group(a,"equivalent-curves"),group(changed,"equivalent-curves"));
+    assert.notEqual(score(a,"finalist"),score(changed,"finalist"));
+  }
+});
+
+test("a resumed version-eleven search and new grouping keep the same physical DPS and value receipts", async () => {
+  async function compare(firstId, secondId, firstPrice, secondPrice, grouped) {
+    const a=offer(21,81,firstPrice), b=offer(32,82,secondPrice);
+    a.id=firstId; b.id=secondId;
+    a.candidate.variants[0].bonusIds=[13578,13729];
+    for (const x of [a,b]) x.candidate.variants[0].resolution.effects=[];
+    const head=offer(47,82,2);
+    head.id="z"; head.candidate.slotType="HEAD"; head.candidate.inventoryType=1; head.candidate.itemId=258947;
+    const baseline={engine,iterations:750,dpsError:0,confidence:95,dps:1000};
+    const input={searchId:"curve-program-receipts", options:[a,b,head],selectedSlots:["WRIST","HEAD"],
+      loadout:[],specId:72,budgetCopper:20,market:{sourceUpdatedAt:new Date().toISOString()},
+      signal:new AbortController().signal,baseline,reuseAppliedStats:true,groupCraftedEquipment:true,
+      bareEquipmentProofs:true,simulate:async selected=>({...baseline,dps:1000+(selected.length===2 ? 100 : 0)})};
+    // The legacy grouping has the same three physical groups in this fixture.
+    // Resume after an actual ordinal with cached fights and a partial result.
+    let prior;
+    for (let step=0;step<8;step++) {
+      const row=await assembleAuctionGear({...input,bareEquipmentProofs:false,maxAssignments:1,checkpoint:prior});
+      prior=row.checkpoint;
+      if (prior.cursor.some(Boolean)) break;
+    }
+    assert(prior.cursor.some(Boolean) && !prior.exhausted);
+    prior.nativeLotGroups=11;
+    const resumed=await assembleAuctionGear({...input,checkpoint:prior});
+    const fresh=await assembleAuctionGear(input);
+    assert.equal(resumed.checkpoint.nativeLotGroups,11);
+    assert.equal(resumed.result.exhaustiveComplete,true);
+    assert.equal(fresh.result.exhaustiveComplete,true);
+    assert.equal(resumed.result.combinationCount,"6");
+    assert.equal(fresh.result.combinationCount,grouped ? "4" : "6");
+    for (const k of ["best","bestDpsConfirmed","bestValueConfirmed"])
+      assert.deepEqual(fresh.checkpoint[k],resumed.checkpoint[k]);
+    return fresh.checkpoint.bestDpsConfirmed.optionIds.sort();
+  }
+  assert.deepEqual(await compare("a","b",3,3,true),["a","z"]);
+  assert.deepEqual(await compare("a","b",4,3,true),["b","z"]);
+  // Here "a0|z" wins the public tie against "a|z".
+  assert.deepEqual(await compare("a","a0",3,3,false),["a0","z"]);
 });

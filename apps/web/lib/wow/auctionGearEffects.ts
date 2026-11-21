@@ -124,6 +124,13 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
   return "applied-v2:" + createHash("sha256").update(JSON.stringify([auctionMeasurementContract, engine, pieces])).digest("hex");
 }
 
+/** For prefix-free IDs, inserting the same purchases preserves the order of
+ * the sorted, pipe-separated receipt used by the public tie-breaker. */
+export function stableAuctionReceiptOrder(options: AuctionGearOption[]) {
+  const ids = options.map(option => option.id).sort();
+  return ids.every((id, index) => !id.includes("|") && (!index || !id.startsWith(ids[index - 1])));
+}
+
 /** For every marked offer any legal completion can buy the cheaper equivalent
  * in the same slot. A shared lot or item identity could invalidate that receipt. */
 export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
@@ -138,10 +145,7 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
     recordSlot(itemSlots, candidate.itemId, candidate.slotType);
     recordSlot(lotSlots, auctionId, candidate.slotType);
   }
-  // The final tie-break compares sorted option IDs joined by "|". For
-  // prefix-free IDs, inserting the same suffix purchases preserves that order.
-  const ids = options.map(option => option.id).sort();
-  const stableTies = ids.every((id, index) => !id.includes("|") && (!index || !id.startsWith(ids[index - 1])));
+  const stableTies = stableAuctionReceiptOrder(options);
   const keyed: Array<[AuctionGearOption, string]> = [], cheapest = new Map<string, AuctionGearOption>();
   for (const option of options) {
     const { candidate, auctionId } = option;
@@ -259,11 +263,10 @@ export function bareWeaponCurveIdentity(option: AuctionGearOption, engine: strin
     w.minDamage, w.maxDamage, w.dps, w.speedSeconds, r.appliedStatsV1];
 }
 
-/** Stable across lot refreshes, but changes when native identity or equip constraints change. */
 /** At the pinned revision a positive certificate identifies a single type-51 level
- * write plus constant operations. Preserve the exact item and ordered bonus list,
- * including any quality write. Only drop level and content tuning are equivalent. */
-export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine: string) {
+ * write plus constant operations. The two verified programs below reach the same
+ * native state when their resolved level matches. Other programs keep their list. */
+export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine: string, equivalentPrograms = false) {
   const c = option.candidate, t = c.constraints;
   if (!ignoresItemContext(engine) || option.customization || c.itemClassId !== 4 || !plainArmorSlots.has(c.slotType) ||
       t.crafted || t.setId || t.setName || t.uniqueEquipped || t.limitCategoryId) return;
@@ -276,16 +279,25 @@ export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine
       e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
       verifiedAuctionDropCurve(v.modifiers ?? [], r.nativeArmorCurveV1) !== v.itemLevel ||
       r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
-  return ["bare-armor-constant-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId, v.bonusIds, v.itemLevel, r.appliedStatsV1];
+  // 13578/13663 perform no operation. 13729/13900 each write only the
+  // certified level and Midnight scaling flag. Neither list adds an equip
+  // effect, changes quality, supplies a suffix or carries a description tag.
+  const [first, second] = v.bonusIds;
+  const equivalent = equivalentPrograms && v.bonusIds.length === 2 && r.effects?.length === 0 &&
+    ((first === 13578 && second === 13729) || (first === 13663 && second === 13900));
+  if (equivalent) return ["bare-armor-resolved-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId,
+    v.itemLevel, r.appliedStatsV1] as const;
+  return ["bare-armor-constant-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId,
+    v.bonusIds, v.itemLevel, r.appliedStatsV1] as const;
 }
 
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant: boolean | "equivalent-curves" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
   const curve = typeof bareJewelry === "string" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
   const weapon = bareWeapon && engine ? bareWeaponCurveIdentity(option, engine) : undefined;
-  const armor = bareArmorConstant && engine ? bareArmorConstantCurveIdentity(option, engine) : undefined;
+  const armor = bareArmorConstant && engine ? bareArmorConstantCurveIdentity(option, engine, bareArmorConstant === "equivalent-curves") : undefined;
   const effect = armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
