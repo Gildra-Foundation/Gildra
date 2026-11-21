@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--remote-debugging-port=19222 --no-first-run'
 $settings = Join-Path $env:LOCALAPPDATA 'Gildra/Gear'
 New-Item -ItemType Directory -Force $settings | Out-Null
+& (Join-Path $AppDir 'runtime/node.exe') "$PSScriptRoot/native-batch.mjs" (Join-Path $AppDir 'runtime')
+if ($LASTEXITCODE) { throw 'Native batch regression failed' }
 Add-Type -AssemblyName UIAutomationClient
 Add-Type @'
 using System;

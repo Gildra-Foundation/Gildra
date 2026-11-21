@@ -207,6 +207,7 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 		reportArgument = filepath.Base(reportPath)
 	}
 	args := e.arguments(input, reportArgument, filepath.Base(profilePath))
+	baseArgumentCount := len(args)
 	if len(candidates) > 0 {
 		args = append(args, candidates[0].ownedLines...)
 	}
@@ -228,6 +229,12 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 		}
 	}
 	command := exec.CommandContext(runCtx, e.binary, args...)
+	// SimC reads the same generated directives from stdin with "-". This avoids
+	// the Windows command-line limit when comparing many complete loadouts.
+	if runtime.GOOS == "windows" && len(args) > baseArgumentCount {
+		command.Stdin = strings.NewReader(strings.Join(args[baseArgumentCount:], "\n") + "\n")
+		command.Args = append(command.Args[:baseArgumentCount+1], "-")
+	}
 	hideSimCWindow(command)
 	command.Dir = filepath.Dir(profilePath)
 	if len(candidates) > 1 {
