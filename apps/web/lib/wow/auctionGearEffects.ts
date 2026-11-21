@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
-import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext } from "./gearItemModifiers";
+import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
@@ -14,7 +14,10 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?:
     const curve = groupUnusedScaling === "drop-curve" ? resolution?.nativeDropCurveV1 : undefined;
     const tuning = typeof groupUnusedScaling === "string" && resolution
       ? resolution.nativeContentTuningV1 : undefined;
-    const item = engine ? auctionNativeItemOptions(variant, engine, bare, tuning, curve) : variant;
+    const missive = engine && craftedSymmetry === "missive" && !option.customization
+      ? auctionMissiveComparison(variant, option.candidate.slotType, engine) : undefined;
+    const source = missive ? { ...variant, ...missive } : variant;
+    const item = engine ? auctionNativeItemOptions(source, engine, bare, tuning, curve) : source;
     const cap = "dropCurveLevel" in item && item.dropCurveLevel !== undefined ? ["drop-curve-v1", item.dropCurveLevel] :
       "contentTuningCap" in item ? [item.contentTuningCap] : [];
     let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
@@ -31,7 +34,7 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?:
         return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds, item.contextId ?? 0, modifiers, "crafted-symmetry-v1", ...cap];
       }
     }
-    return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
+    return [option.candidate.slotType, option.candidate.itemId, source.bonusIds,
       item.contextId ?? 0, modifiers, ...cap,
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
@@ -170,7 +173,7 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");

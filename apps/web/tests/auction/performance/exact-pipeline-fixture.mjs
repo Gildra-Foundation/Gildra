@@ -20,6 +20,7 @@ import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } f
 import { evaluateAuctionEnhancementStage, auctionEnhancementScenarioFinalists } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { auctionEnhancementCatalogInfo } from '../../../lib/wow/auctionEnhancementCatalog.ts';
 import { customizedAuctionGearOptions, ownedAuctionGearChanges, applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
+import { auctionMissiveComparison } from '../../../lib/wow/gearItemModifiers.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { harness, strip, record, offer, character } from '../completion/priority-feedback-harness.mjs';
 
@@ -70,7 +71,7 @@ export async function exactPipeline({ ref, items=3, onPublication, onWrite, onEn
     snapshotAuctionGearContext:context=>runner.snapshotAuctionGearContext(context),restoreAuctionGearContext:data=>runner.restoreAuctionGearContext(data)});
   const quote=async(_region,ids)=>({prices:Object.fromEntries(ids.filter(id=>stockedConsumables.has(id)).map(id=>[String(id),{ladder:[[10,100]]}])),
     sourceUpdatedAt:fixture.state.market.sourceUpdatedAt,fetchedAt:fixture.state.market.fetchedAt});
-  const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,observeAuctionEquipment,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,compareGearSimulationResults,
+  const exact=evaluate(sources.auctionGearExhaustiveEnhancements,{...globals,auctionMissiveComparison,observeAuctionEquipment,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,compareGearSimulationResults,
     evaluateAuctionEnhancementStage:input=>measure('stage',()=>evaluateAuctionEnhancementStage({...input,quote})),
     auctionEnhancementCatalogInfo,exactCommodityPrices:quote,assertFreshMarket,auctionGearSlots:slots.auctionGearSlots});
   const requests=[], publications=[];

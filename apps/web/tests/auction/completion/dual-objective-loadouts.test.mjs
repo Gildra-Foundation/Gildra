@@ -316,7 +316,7 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  const old=await finish(h,partial.checkpoint);
  const fresh=await finish(h);
  assert.equal(old.result.combinationCount,'9');
- assert.equal(fresh.checkpoint.nativeLotGroups,5);
+ assert.equal(fresh.checkpoint.nativeLotGroups,6);
  assert.equal(fresh.checkpoint.version,4);
  assert.equal(old.checkpoint.version,3);
  assert.equal(fresh.result.combinationCount,'4');
@@ -325,6 +325,31 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  assert.deepEqual(ids(fresh.result.bestDpsConfirmed),[91,92]);
  assert.equal(fresh.result.bestDpsConfirmed.spentCopper,40);
  assert.deepEqual(ids(fresh.result.bestValueConfirmed),[91]);
+});
+
+test('missive ring groups preserve joint lot allocation and v5 cursor ordinals', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd', h = fixture();
+  const domain = [91,92].flatMap(lot => ['FINGER_1','FINGER_2'].map(slot => {
+    const row = option(lot,slot,10);
+    row.id = lot+'-'+slot;
+    Object.assign(row.candidate, { itemId: 215130, inventoryType: 11 });
+    Object.assign(row.candidate.variants[0], { bonusIds: [8790, lot === 91 ? 10394 : 10395],
+      modifiers: [{type:29,value:lot === 91 ? 32 : 49},{type:30,value:40}] });
+    return row;
+  }));
+  Object.assign(h.input, {options:domain, selectedSlots:['FINGER_1','FINGER_2'], reuseAppliedStats:true,
+    baseline:{...measurement(1000),engine}, simulate:async selected => ({...measurement([1000,1200,1300][selected.length]),engine})});
+  // Version 1 and 5 have identical groups on these two physical variants.
+  const partial = await assembleAuctionGear({...h.input,maxAssignments:1});
+  Object.assign(partial.checkpoint, {version:4,nativeLotGroups:5});
+  h.input.groupCraftedEquipment = true;
+  const old = await finish(h, partial.checkpoint), fresh = await finish(h);
+  assert.equal(old.result.combinationCount, '9');
+  assert.equal(fresh.result.combinationCount, '4');
+  assert.deepEqual(fresh.result.bestDpsConfirmed, old.result.bestDpsConfirmed);
+  assert.deepEqual(fresh.result.bestValueConfirmed, old.result.bestValueConfirmed);
+  assert.deepEqual(ids(fresh.result.bestDpsConfirmed), [91,92]);
+  assert.deepEqual(ids(fresh.result.bestValueConfirmed), [91]);
 });
 
 test('content tuning groups preserve both physical rings, cost ties and the old cursor', async () => {

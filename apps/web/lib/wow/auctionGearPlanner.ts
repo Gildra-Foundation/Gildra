@@ -266,7 +266,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
       const raw = auctionSelectionEffectKey([option]);
       // Use the same certified native inputs during discovery and assembly.
       // Each slot and raw offer keeps its own compatibility check and price.
-      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true, "drop-curve");
+      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, "missive", "drop-curve");
       schedulingKeys.set(raw, group);
       const members = equivalentLots.get(group);
       if (members) members.push(raw);
@@ -396,11 +396,12 @@ export async function assembleAuctionGear(input: PlannerInput & {
   // can assign one ordinal to lots that the worker parses identically.
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
   const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
-    input.reuseAppliedStats ? (input.groupCraftedEquipment ? 5 : 1) : undefined;
-  if (grouping !== undefined && grouping !== 1 && grouping !== 2 && grouping !== 3 && grouping !== 4 && grouping !== 5) throw new Error("invalid_search_checkpoint");
+    input.reuseAppliedStats ? (input.groupCraftedEquipment ? 6 : 1) : undefined;
+  if (grouping !== undefined && ![1, 2, 3, 4, 5, 6].includes(grouping)) throw new Error("invalid_search_checkpoint");
   const groupEngine = grouping && engine && ignoresItemContext(engine) ? engine : undefined;
   const groups = auctionEffectGroups(options, slots, option =>
-    auctionEffectGroupKey(option, groupEngine, (grouping ?? 0) >= 2, grouping === 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3));
+    auctionEffectGroupKey(option, groupEngine, grouping === 6 ? "missive" : (grouping ?? 0) >= 2,
+      (grouping ?? 0) >= 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));

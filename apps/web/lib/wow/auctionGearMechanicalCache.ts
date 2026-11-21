@@ -3,7 +3,7 @@ import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, ringGemRepresentative90 } from "./auctionRingRatings";
 import { auctionAppliedStatsKey } from "./auctionGearEffects";
-import { auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
+import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
 const ttlMs = 15 * 60_000;
@@ -268,8 +268,10 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
     if (ratings) certifiedJewelry.push({ index: i, slot: change.slot, ratings });
+    const missive = auctionMissiveComparison(change, change.slot, native.engine);
+    const source = missive ? { ...change, ...missive } : change;
     return {
-      ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
+      ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, curve),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)

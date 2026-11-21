@@ -18,6 +18,27 @@ export function validAuctionItemContext(contextId?: number) {
   return contextId === undefined || Number.isSafeInteger(contextId) && contextId >= 0 && contextId <= 10_000;
 }
 
+const jewelrySlots = new Set(["FINGER_1", "FINGER_2", "NECK", "finger1", "finger2", "neck"]);
+
+/** Local SimC items apply these missives before decode_stats reads crafted_stats.
+ * Each of their two type-25 operations replaces every occurrence of one remaining
+ * placeholder. There are only two placeholder types, and no pinned bonus adds
+ * either back. The paired rank markers below each contain just one type-0 no-op. */
+export function auctionMissiveComparison(item: { bonusIds?: number[]; modifiers?: AuctionModifier[]; contextId?: number },
+  slot: string, engine: string) {
+  const bonuses = item.bonusIds;
+  if (!jewelrySlots.has(slot) || !Array.isArray(bonuses) || !bonuses.some(id => id >= 8790 && id <= 8795) ||
+      !ignoresItemContext(engine) || !validAuctionItemContext(item.contextId) || !supportedAuctionModifiers(item.modifiers ?? [])) return;
+  if (bonuses.length > 20 || bonuses.some(id => !Number.isInteger(id) || id <= 0 || id > 1_000_000) ||
+      new Set(bonuses).size !== bonuses.length) return;
+  const rankMarkers = bonuses.map(id => id === 10395 ? 10394 : id === 10833 ? 10832 : id);
+  if (new Set(rankMarkers).size !== rankMarkers.length) return;
+  return {
+    bonusIds: rankMarkers,
+    modifiers: item.modifiers?.filter(m => m.type !== 29 && m.type !== 30),
+  };
+}
+
 export function verifiedAuctionDropCurve(modifiers: readonly AuctionModifier[], proof?: readonly number[]) {
   return Array.isArray(proof) && proof.length === 3 && Number.isSafeInteger(proof[2]) && proof[2] > 0 && proof[2] <= 2147483647 &&
     modifiers.some(m => m.type === 9 && m.value === proof[0]) &&

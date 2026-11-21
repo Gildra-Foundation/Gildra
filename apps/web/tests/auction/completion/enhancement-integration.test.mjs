@@ -151,6 +151,30 @@ test('empty-bonus local candidates omit unused scaling inputs from the measureme
   assert.notEqual(key({modifiers:[...modifiers,{type:64,value:123}]}),key({}));
 });
 
+test('missives override only the crafting placeholders at each independent precision', () => {
+  const engine = 'SimulationCraft fixture · 18428cd';
+  const request = {spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
+  const left = {slot:'finger1',itemId:215130,bonusIds:[8790,10394],modifiers:[{type:29,value:32},{type:30,value:40}],gemIds:[130215],enchantId:7964};
+  const right = {...left,bonusIds:[8790,10395],modifiers:[{type:29,value:49},{type:30,value:32}]};
+  const key = (change, precision, version=engine) => auctionGearMechanicalKey('profile',{...request,precision},{engine:version,changes:[change]});
+  for (const precision of [undefined,'finalist']) {
+    assert.equal(key(left,precision),key(right,precision));
+    assert.notEqual(key(left,precision,'SimulationCraft unpinned'),key(right,precision,'SimulationCraft unpinned'));
+    for (const different of [{slot:'finger2'}, {itemId:215137}, {bonusIds:[8791,10394]}, {bonusIds:[8790,10396]},
+      {enchantId:8022}, {gemIds:[130216]}, {modifiers:[...left.modifiers,{type:64,value:251220}]}]) {
+      assert.notEqual(key(left,precision),key({...right,...different},precision));
+    }
+    assert.notEqual(key({...left,bonusIds:[10394]},precision),key({...right,bonusIds:[10394]},precision));
+    for (const bonusIds of [[8790,10394,10395], [8790,10394,10394], [8790,-1], [8790,1.5]]) {
+      assert.notEqual(key({...left,bonusIds},precision),key({...right,bonusIds},precision));
+    }
+    assert.notEqual(key({...left,slot:'head'},precision),key({...right,slot:'head'},precision));
+  }
+  assert.notEqual(key(left),key(right,'finalist'));
+  assert.deepEqual(right.bonusIds,[8790,10395]);
+  assert.equal(right.modifiers[0].value,49);
+});
+
 test('candidate cache reuses verified armor and jewelry gem fights while purchases and finalists keep their actual IDs',()=>{
   const request={spec:'fury-warrior',scenario:'single-target',fightLengthSeconds:120,targets:1};
   const engine='SimulationCraft 1210-01 · 18428cd';
