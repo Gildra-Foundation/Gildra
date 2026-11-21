@@ -19,6 +19,19 @@ public static class GearWindows {
   [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern int GetClassName(IntPtr window, StringBuilder target, int length);
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern IntPtr SendMessageTimeout(IntPtr window, uint msg, UIntPtr limit, StringBuilder target, uint flags, uint timeout, out UIntPtr result);
+  public static string ControlText(IntPtr main) {
+    var labels = new StringBuilder();
+    EnumChildWindows(main, (child,data) => {
+      var name = new StringBuilder(256);
+      GetClassName(child,name,name.Capacity);
+      var label = new StringBuilder(512);
+      UIntPtr copied;
+      SendMessageTimeout(child, 0x000D, (UIntPtr)label.Capacity, label, 2, 100, out copied);
+      labels.AppendLine(name + " " + label);
+      return true;
+    },IntPtr.Zero);
+    return labels.ToString();
+  }
   public static bool HasOverlay(int appPid, IntPtr main, string text) {
     bool found = false;
     EnumWindows((window, ignored) => {
@@ -76,7 +89,9 @@ foreach ($mode in 'server','local') {
     $app.Refresh()
     Write-Host "App exited=$($app.HasExited) handle=$($app.MainWindowHandle) title=$($app.MainWindowTitle)"
     if (Test-Path $log) { Get-Content $log | Select-Object -Last 30 }
-    Get-Process msedgewebview2 -ErrorAction SilentlyContinue | Select-Object -First 5 Id,SessionId
+    Write-Host "Runner session=$([Diagnostics.Process]::GetCurrentProcess().SessionId)"
+    Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" | ForEach-Object { Write-Host "WebView process $($_.ProcessId) session=$($_.SessionId) debugger=$($_.CommandLine -match '19222')" }
+    Write-Host ([GearWindows]::ControlText($app.MainWindowHandle))
     Get-WinEvent -FilterHashtable @{ LogName='Application'; ProviderName='.NET Runtime'; StartTime=(Get-Date).AddMinutes(-4) } -ErrorAction SilentlyContinue | Select-Object -First 2 -ExpandProperty Message
     throw
   } finally {
