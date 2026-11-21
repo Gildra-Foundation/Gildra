@@ -22,6 +22,7 @@ type PrecisionPass = {
   /** Cheapest physical receipt per native input, while the whole market fits. */
   rankReceipts?: Record<string, Receipt>;
   rankedFromReceipts?: number;
+  rankReceiptsOverflow?: true;
   /** Completed gear layouts on a precise pass started before screening finished. */
   checkedEquipment?: number;
   peak?: Receipt; second?: Receipt; preferred?: Receipt; outsideValue?: Receipt; confirmedDps?: Receipt; tiedAlternative?: Receipt;
@@ -102,6 +103,7 @@ export type AuctionGearExhaustiveEnhancementState = Ranking & {
   pruneTiedJewelry?: true;
   pruneOwnedJewelryGems?: true;
   pruneRingNeckPricePairs?: true;
+  pruneMidnightGemPrices?: true;
   rangeCount?: number;
   replay?: OrdinalRange[];
   currentOrdinal?: string;
@@ -273,6 +275,8 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     (!input.selectedSlots || input.selectedSlots.some(slot => ["NECK", "FINGER_1", "FINGER_2"].includes(slot)));
   const pruneRingNeckPricePairs = pruneOwnedJewelryGems && (!input.state || input.state.pruneRingNeckPricePairs === true) &&
     (!input.selectedSlots || input.selectedSlots.includes("NECK") && input.selectedSlots.some(s => s === "FINGER_1" || s === "FINGER_2"));
+  const pruneMidnightGemPrices = directPrecision && pruneOwnedJewelryGems && (!input.state || input.state.pruneMidnightGemPrices === true) &&
+    (!input.selectedSlots || ["FINGER_1", "FINGER_2", "NECK"].every(slot => input.selectedSlots!.includes(slot)));
   // Older checkpoints ranked these chests as different finalists. Rebuild the
   // receipt index and the precise tie classification only on affected markets.
   const chestSuffixFinalists = collectReceipts && input.options.some(option => option.candidate.slotType === "CHEST" &&
@@ -287,9 +291,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
   const missiveFinalists = collectReceipts && input.options.some(option => option.candidate.variants.some(variant =>
     variant.key === option.variantKey && auctionMissiveComparison(variant, option.candidate.slotType, input.engine)));
   const byId = new Map(input.options.map(option => [option.id, option]));
-  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), ...(directPrecision ? ["direct-independent-joint-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, combatBaseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(jewelrySuffixFinalists ? ["bare-jewelry-suffix-finalists-v1"] : []), ...(neckSuffixFinalists ? ["direct-neck-suffix-finalists-v1"] : []), ...(ringCurveFinalists ? ["socketed-ring-curve-finalists-v1"] : []), ...(neckRatings ? ["level-90-neck-ratings-v1"] : []), ...(missiveFinalists ? ["missive-finalists-v1"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(omitShoulderIllusions ? ["bare-shoulder-illusions-v1"] : []), ...(omitWristHearthEnchants ? ["bare-wrist-hearth-v1"] : []), ...(pruneCradleEnchants ? ["worldsoul-cradle-v1"] : []), ...(pruneWeaponEnchantRanks ? ["priced-weapon-enchants-v1"] : []), ...(pruneNeckEnchantRanks ? ["priced-neck-enchants-v1"] : []), ...(pruneTiedJewelry ? ["tied-jewelry-receipts-v1"] : []), ...(pruneBareOwnedRingRatings ? ["bare-owned-ring-ratings-v1"] : []), ...(pruneRingScrollPairs ? ["priced-ring-scroll-pairs-v1"] : []), ...(pruneArmorEnchantPairs ? ["priced-armor-pairs-v1"] : []), ...(pruneRingEnchantRanks ? ["priced-ring-enchants-v1"] : []), ...(omitInertFuryLeech ? ["bare-fury-leech-v1"] : []), ...(pruneOwnedJewelryGems ? ["owned-jewelry-gems-v1"] : []), ...(pruneRingNeckPricePairs ? ["ring-neck-price-pairs-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
+  const inputKey = hash(["owned-enhancements-partial-coverage-v1", ...(input.trackBareEquipment ? ["bare-equipment-coverage-v1"] : []), ...(directPrecision ? ["direct-independent-joint-v1"] : []), iterator.inputKey, input.profileFingerprint, input.engine, input.encounter, input.objective, combatBaseline, auctionEnhancementCatalogInfo.revision, ...(collectReceipts ? ["all-finalist-inputs-v1"] : []), ...(chestSuffixFinalists ? ["direct-chest-finalists-v1"] : []), ...(ringRatings ? ["level-90-ring-ratings-v2"] : []), ...(jewelrySuffixFinalists ? ["bare-jewelry-suffix-finalists-v1"] : []), ...(neckSuffixFinalists ? ["direct-neck-suffix-finalists-v1"] : []), ...(ringCurveFinalists ? ["socketed-ring-curve-finalists-v1"] : []), ...(neckRatings ? ["level-90-neck-ratings-v1"] : []), ...(missiveFinalists ? ["missive-finalists-v1"] : []), ...(omitNeutralGloveEnchants ? ["bare-glove-enchants-v1"] : []), ...(omitShoulderIllusions ? ["bare-shoulder-illusions-v1"] : []), ...(omitWristHearthEnchants ? ["bare-wrist-hearth-v1"] : []), ...(pruneCradleEnchants ? ["worldsoul-cradle-v1"] : []), ...(pruneWeaponEnchantRanks ? ["priced-weapon-enchants-v1"] : []), ...(pruneNeckEnchantRanks ? ["priced-neck-enchants-v1"] : []), ...(pruneTiedJewelry ? ["tied-jewelry-receipts-v1"] : []), ...(pruneBareOwnedRingRatings ? ["bare-owned-ring-ratings-v1"] : []), ...(pruneRingScrollPairs ? ["priced-ring-scroll-pairs-v1"] : []), ...(pruneArmorEnchantPairs ? ["priced-armor-pairs-v1"] : []), ...(pruneRingEnchantRanks ? ["priced-ring-enchants-v1"] : []), ...(omitInertFuryLeech ? ["bare-fury-leech-v1"] : []), ...(pruneOwnedJewelryGems ? ["owned-jewelry-gems-v1"] : []), ...(pruneRingNeckPricePairs ? ["ring-neck-price-pairs-v1"] : []), ...(pruneMidnightGemPrices ? ["three-cheaper-midnight-gems-v1"] : []), ...(valueBaseline ? ["value-precision-v1"] : []), ...(input.recheck ? [aliases?.byOption.size ? "finalist-precision-v3" : "finalist-precision-v2"] : [])]);
   const initial = (stage: AuctionEnhancementStageState = { checkpoints: {} }): AuctionGearExhaustiveEnhancementState => ({
-    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(directPrecision ? {directPrecision:true} : collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), ...(omitShoulderIllusions ? {omitShoulderIllusions:true} : {}), ...(omitWristHearthEnchants ? {omitWristHearthEnchants:true} : {}), ...(pruneCradleEnchants ? {pruneCradleEnchants:true} : {}), ...(pruneWeaponEnchantRanks ? {pruneWeaponEnchantRanks:true} : {}), ...(pruneNeckEnchantRanks ? {pruneNeckEnchantRanks:true} : {}), ...(pruneTiedJewelry ? {pruneTiedJewelry:true} : {}), ...(pruneBareOwnedRingRatings ? {pruneBareOwnedRingRatings:true} : {}), ...(pruneRingScrollPairs ? {pruneRingScrollPairs:true} : {}), ...(pruneArmorEnchantPairs ? {pruneArmorEnchantPairs:true} : {}), ...(pruneRingEnchantRanks ? {pruneRingEnchantRanks:true} : {}), ...(omitInertFuryLeech ? {omitInertFuryLeech:true} : {}), ...(pruneOwnedJewelryGems ? {pruneOwnedJewelryGems:true} : {}), ...(pruneRingNeckPricePairs ? {pruneRingNeckPricePairs:true} : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
+    version: 1, inputKey, cursor: iterator.initialState(), stage, ...(input.trackBareEquipment ? {bareEquipment:bareEquipmentCoverage(input.baseline,iterator.totalAssignments)} : {}), ...(directPrecision ? {directPrecision:true} : collectReceipts ? { finalistReceipts: {} } : {}), ...(omitNeutralGloveEnchants ? { omitNeutralGloveEnchants: true } : {}), ...(omitShoulderIllusions ? {omitShoulderIllusions:true} : {}), ...(omitWristHearthEnchants ? {omitWristHearthEnchants:true} : {}), ...(pruneCradleEnchants ? {pruneCradleEnchants:true} : {}), ...(pruneWeaponEnchantRanks ? {pruneWeaponEnchantRanks:true} : {}), ...(pruneNeckEnchantRanks ? {pruneNeckEnchantRanks:true} : {}), ...(pruneTiedJewelry ? {pruneTiedJewelry:true} : {}), ...(pruneBareOwnedRingRatings ? {pruneBareOwnedRingRatings:true} : {}), ...(pruneRingScrollPairs ? {pruneRingScrollPairs:true} : {}), ...(pruneArmorEnchantPairs ? {pruneArmorEnchantPairs:true} : {}), ...(pruneRingEnchantRanks ? {pruneRingEnchantRanks:true} : {}), ...(omitInertFuryLeech ? {omitInertFuryLeech:true} : {}), ...(pruneOwnedJewelryGems ? {pruneOwnedJewelryGems:true} : {}), ...(pruneRingNeckPricePairs ? {pruneRingNeckPricePairs:true} : {}), ...(pruneMidnightGemPrices ? {pruneMidnightGemPrices:true} : {}), equipmentChecked: 0, reasons: [], unavailable: false, priceGroups: {}, rangeCount: 0,
   });
   let state = input.state?.version === 1 && input.state.inputKey === inputKey ? input.state : initial();
   // Validate even an exhausted restored cursor without advancing it. Completed
@@ -648,6 +652,9 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
     const newScreenKeys = new Set<string>();
 
     const result = await evaluateAuctionEnhancementStage({ ...input, exhaustive: true, omitNeutralGloveEnchants, omitShoulderIllusions, omitWristHearthEnchants, omitInertFuryLeech, pruneCradleEnchants, pruneWeaponEnchantRanks, pruneNeckEnchantRanks, pruneRingEnchantRanks, pruneArmorEnchantPairs, pruneRingScrollPairs, pruneBareOwnedRingRatings, pruneOwnedJewelryGems, pruneRingNeckPricePairs, pruneEquivalentRingGems: collectReceipts, includeObjectiveAlternatives: true, includePrecisionContenders: Boolean(input.recheck),
+      // Preserve the exact small-market receipt index and its overflow boundary.
+      // Only the bounded public leaders are kept on the subsequent streaming pass.
+      useMidnightGemPrices: pass && pruneMidnightGemPrices ? () => pass.rankReceiptsOverflow === true : undefined,
       preciseReceiptKey: pass && pruneTiedJewelry ? config => input.finalistKey!(selected, config) : undefined,
       finalists: [{ label: "exhaustive", options: selected }], state: state.stage,
       shouldYield: () => input.shouldYield() || (!pass && state.finalistReceipts === "overflow"),
@@ -688,9 +695,11 @@ export async function advanceAuctionGearExhaustiveEnhancements(input: Input): Pr
           if (pass.phase === "peak" && pass.rankReceipts) {
             const key = input.finalistKey!(selected, configuration);
             const prior = pass.rankReceipts[key];
-            if (prior && (prior.simulation.dps !== receipt.simulation.dps || prior.simulation.dpsError !== receipt.simulation.dpsError) ||
-                !prior && Object.keys(pass.rankReceipts).length >= maxFinalistReceipts) {
+            if (prior && (prior.simulation.dps !== receipt.simulation.dps || prior.simulation.dpsError !== receipt.simulation.dpsError)) {
               delete pass.rankReceipts;
+            } else if (!prior && Object.keys(pass.rankReceipts).length >= maxFinalistReceipts) {
+              delete pass.rankReceipts;
+              if (pruneMidnightGemPrices) pass.rankReceiptsOverflow = true;
             } else if (!prior || rankMeasured(receipt, prior) < 0) pass.rankReceipts[key] = receipt;
           }
           return;

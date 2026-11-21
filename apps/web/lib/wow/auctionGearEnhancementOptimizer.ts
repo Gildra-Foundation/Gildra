@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { midnightGemPrices } from "./auctionMidnightGemPrices";
 import { combinedRingRatings90, ringScrollRating90 } from "./auctionRingRatings";
 import { compareGearSimulationResults } from "./gearSimulation";
 import { assertFreshMarket } from "./auctionMarket";
@@ -60,6 +61,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   pairedNeckPrices?: true;
   ringNeckPricePairs?: true;
   pairedScrollPrices?: true;
+  midnightGemPrices?: true;
   tiedJewelryReceipts?: true | "ring_and_gem";
   jewelryTiePruning?: { branches: string; configurations: string };
   bareOwnedRingRatings?: true;
@@ -84,6 +86,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   ratingRingSlots?: ReadonlySet<string>;
   preciseReceiptKey?: (configuration: PricedEnhancementConfiguration) => string;
   ratingOwnedNeck?: boolean;
+  useMidnightGemPrices?: () => boolean;
   ringNeckPricePairs?: boolean;
   bareRingScrolls90?: boolean;
   bareOwnedRingRatings?: ReadonlySet<string>;
@@ -688,10 +691,15 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const scrollSwap = (!input.checkpoint || input.checkpoint.tiedJewelryReceipts === "ring_and_gem") &&
     swaps.some(swap => axes[swap.left][0].socket !== null)
     ? swaps.find(swap => axes[swap.left][0].socket === null) : undefined;
+  const midnight = exact && pricedAxes && input.useMidnightGemPrices && input.preciseReceiptKey &&
+    (!input.checkpoint || input.checkpoint.midnightGemPrices)
+    ? midnightGemPrices(axes, slots, commodityPrices.cost, c => Boolean(conditional?.has(c) || pairGuards?.has(c) ||
+        combinedRingRatings90(0, c.enhancement!.simulationId))) : undefined;
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(midnight ? {midnightGemPrices:1} : {}),
     ...(swaps.length ? { tiedJewelryReceipts: scrollSwap ? 2 : 1 } : {}),
     ...(bareOwnedRings ? { bareOwnedRingRatings: [...bareOwnedRings].sort() } : {}),
     ...(scrollPairs ? { pairedScrollPrices: 1 } : {}),
@@ -708,6 +716,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
+    ...(midnight ? {midnightGemPrices:true} : {}),
     ...(swaps.length ? {tiedJewelryReceipts:scrollSwap ? "ring_and_gem" : true} : {}),
     ...(bareOwnedRings ? {bareOwnedRingRatings:true} : {}),
     ...(scrollPairs ? {pairedScrollPrices:true} : {}),
@@ -800,6 +809,8 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       const skip = conditional?.get(selected[axis]);
       if (skip && skip.enchants.has(selected[skip.axis].enhancement?.simulationId ?? 0)) return { valid: false, pruneAxis: skip.axis };
       // Every lower digit can vary without changing the purchases in this proof.
+      if (axis === midnight?.axis && input.useMidnightGemPrices!() && midnight.skips(selected))
+        return { valid: false, pruneAxis: axis, ringPriceProof: true };
       if (ringNeckGuards?.get(axis)?.(selected) || axis === pairedPrice?.axis && pairedPrice.skips(selected))
         return { valid: false, pruneAxis: axis, ringPriceProof: true };
       const {enhancement:e, retained} = selected[axis];

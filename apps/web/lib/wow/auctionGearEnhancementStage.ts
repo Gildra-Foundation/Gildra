@@ -86,6 +86,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   preciseReceiptKey?: (configuration: PricedEnhancementConfiguration) => string;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
+  useMidnightGemPrices?: () => boolean;
   pruneRingNeckPricePairs?: boolean;
   nativePlayerLevel?: number;
   preview?: boolean;
@@ -139,7 +140,7 @@ export async function evaluateAuctionEnhancementStage(input: {
     const certifiedArmor = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
       input.pruneArmorEnchantPairs && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) && itemClass === 4 &&
       (slot === "HEAD" && inventory === 1 || slot === "SHOULDER" && inventory === 3 || slot === "FEET" && inventory === 8);
-    const ownedGemSlots = new Set<string>();
+    const ownedGemSlots = new Set<string>(), midnightHosts = new Set<string>();
     let bareOwnedNeck = false;
     const slots: EnhancementSlot[] = [], resolutions = new Map<string, EnhancementResolution>();
     const replaced = new Set(finalist.options.map(o => o.candidate.slotType));
@@ -253,6 +254,10 @@ export async function evaluateAuctionEnhancementStage(input: {
               (neck || ring) && target.itemClassId === 4 && target.itemLevel >= 120 && gems.length === 1 && socketColors[0] === 14)
             ownedGemSlots.add(slotType);
           if (neck && unenchanted && ownedGemSlots.has(slotType)) bareOwnedNeck = true;
+          if (input.useMidnightGemPrices && ownedGemSlots.has(slotType) && obj(item.item_class).id === 4 &&
+              Number.isSafeInteger(obj(item.item).id) && itemId > 0 && Number.isSafeInteger(obj(item.level).value) &&
+              Array.isArray(item.sockets) && item.sockets.length === 1 && (!neck || unenchanted))
+            midnightHosts.add(slotType);
           slot.ownedItemId = itemId;
           slot.allowOwnedChanges = true;
           slot.sockets = gems.map((_,index)=>({key:String(index),type:String(socketColors[index])}));
@@ -324,6 +329,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
       preciseReceiptKey: input.preciseReceiptKey,
+      useMidnightGemPrices: midnightHosts.size === 3 ? input.useMidnightGemPrices : undefined,
       // With two bought rings the finalist normalizer can move gems between
       // their physical hosts. Keep that case on its existing joint price proof.
       ringNeckPricePairs: input.pruneRingNeckPricePairs && bareOwnedNeck &&
