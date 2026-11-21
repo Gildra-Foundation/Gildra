@@ -39,6 +39,7 @@ function HudItem({row,lang}){
   return <div className="hud-item"><GearPlannerItem item={{...item,...extra}} locale={lang} verified={row.verified!==false}/>{row.detail&&<small>{row.detail}</small>}</div>;
 }
 function Overlay({s,t}){
+  const [opacity,setOpacity]=useState(s.opacity);
   const data=s.hud;
   return <div className="hud">
     <header className="chrome hud-chrome"><Layers size={16} aria-hidden="true"/><strong>{t('Оверлей','Overlay')}</strong><GripHorizontal className="grip" size={19} aria-hidden="true"/><WindowButtons s={s} t={t} hud/></header>
@@ -47,7 +48,7 @@ function Overlay({s,t}){
     {!!data?.metrics?.length&&<dl className="hud-metrics">{data.metrics.map(m=><div key={m.label}><dt>{m.label}</dt><dd>{m.value}</dd></div>)}</dl>}
     {data?.rows?.length ? <ul className="hud-list">{data.rows.map(row=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<HudItem row={row} lang={s.lang}/>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
       !data?.metrics?.length&&<p className="hud-empty">{data?.title?t('Запустите подбор в приложении.','Start a gear search in the app.'):t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
-    <footer><label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={s.opacity} onChange={e=>api.action('opacity',Number(e.target.value))}/><output>{s.opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
+    <footer><label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
   </div>;
 }
 function Desk({s,t}){
