@@ -17,6 +17,7 @@ let settings = {mode:'server',lang:'ru',slug:''};
 try { Object.assign(settings,JSON.parse(fs.readFileSync(settingsFile,'utf8'))); } catch {}
 if (!['local','server'].includes(settings.mode)) settings.mode='server';
 if (!['ru','en'].includes(settings.lang)) settings.lang='ru';
+if(!Number.isInteger(settings.opacity)||settings.opacity<20||settings.opacity>100)settings.opacity=85;
 const json = (value,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const error=(name,status)=>json({error:name},status);
 let main, hud, login, signingIn, identity, planner, authHost='', overlayShown=false, hudData=null, reading=false, exiting=false, loggingOut=false;
@@ -26,7 +27,7 @@ function save(){
   fs.writeFileSync(tmp,JSON.stringify(settings),{mode:0o600});fs.renameSync(tmp,settingsFile);
 }
 function windowState(w){
-  return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,
+  return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
     hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
 }
 function announce(){for(const w of [main,hud,login]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
@@ -121,6 +122,7 @@ function toggleHud(){
     const onScreen=bounds&&[bounds.x,bounds.y,bounds.width,bounds.height].every(Number.isFinite)&&bounds.width>=260 && bounds.height>=170 &&
       screen.getAllDisplays().some(({workArea:r})=>bounds.x+40>=r.x && bounds.x+40<r.x+r.width && bounds.y+20>=r.y && bounds.y+20<r.y+r.height);
     hud=buildWindow({title:'Gildra Gear · Overlay',...(onScreen?bounds:{x:area.x+area.width-380,y:area.y+20,width:360,height:440}),minWidth:260,minHeight:170,show:false,skipTaskbar:true,minimizable:false,maximizable:false,fullscreenable:false,alwaysOnTop:true,backgroundMaterial:'acrylic',backgroundColor:'#00000000'});
+    hud.setOpacity(settings.opacity/100);
     hud.setAlwaysOnTop(true,'screen-saver');
     hud.on('blur',()=>setImmediate(raiseHud));
     hud.on('close',e=>{if(!exiting){e.preventDefault();hideHud();}});
@@ -219,6 +221,18 @@ function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
   const w=localWindow(e);
   if(!w)throw Error('invalid_source');
+  if(w===hud && name==='opacity' && Number.isInteger(value) && value>=20 && value<=100){
+    settings.opacity=value;hud.setOpacity(value/100);save();announce();return;
+  }
+  if(w===hud && name==='item-media'){
+    const row=hudData?.rows.find(row=>row.item?.itemId===value);
+    if(!row || !Number.isSafeInteger(value)||value<=0)return {};
+    const query={id:String(value),region:settings.slug.split('--')[0],locale:settings.lang==='ru'?'ru_RU':'en_GB'};
+    const read=async kind=>{const reply=await readInput({...query,read:kind});return reply.status===200?JSON.parse(reply.body):{};};
+    const [media,base]=await Promise.all([read('icon'),row.consumable?read('item'):{}]);
+    const iconUrl=media.assets?.find(asset=>asset.key==='icon'&&asset.value?.startsWith('https://'))?.value;
+    return {iconUrl,...(row.consumable?{name:base.name,quality:base.quality?.id,effects:base.description?[base.description]:undefined}:{})};
+  }
   if(name==='window-close'){if(w===hud)hideHud();else w.close();return;}
   if(w!==hud && name==='window-minimize'){w.minimize();return;}
   if(w!==hud && name==='window-maximize'){if(w.isMaximized())w.unmaximize();else w.maximize();return;}

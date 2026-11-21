@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {Layers,RefreshCw,LogOut,Monitor,Server,Minus,Square,Copy,X,ArrowUpRight,ArrowRight,GripHorizontal,ShieldCheck,ShoppingBag,Compass,Activity,TriangleAlert,Check} from 'lucide-react';
 import {CharacterUpgrades} from '@/components/wow/audit/CharacterUpgrades';
 import {characterSlug} from '@/lib/wow/characterSlug';
+import {GearPlannerItem} from '@/components/wow/audit/GearPlannerItem';
 import './shell.css';
 
 const api=window.gear;
@@ -25,6 +26,18 @@ function AuthBar({s,t}){
     <WindowButtons s={s} t={t}/></header>;
 }
 const rowIcons={alert:TriangleAlert,status:Activity,result:Check,item:ShoppingBag,farm:Compass};
+function HudItem({row,lang}){
+  const [extra,setExtra]=useState({});
+  const {item}=row;
+  useEffect(()=>{
+    let active=true;setExtra({});
+    if(!item.iconUrl && item.itemId)api.action('item-media',item.itemId).then(value=>{
+      if(active && value)setExtra(Object.fromEntries(Object.entries(value).filter(([,v])=>v!=null)));
+    }).catch(()=>{});
+    return ()=>{active=false;};
+  },[item.itemId,item.iconUrl,lang]);
+  return <div className="hud-item"><GearPlannerItem item={{...item,...extra}} locale={lang} verified={row.verified!==false}/>{row.detail&&<small>{row.detail}</small>}</div>;
+}
 function Overlay({s,t}){
   const data=s.hud;
   return <div className="hud">
@@ -32,9 +45,9 @@ function Overlay({s,t}){
     <main className="hud-scroll"><div className="hud-identity"><img src={art+'/icons/equipment.webp'} alt=""/><h1>{data?.title||t('Подбор предметов','Gear planner')}</h1></div>
     {data?.progress&&<div className="hud-progress"><progress aria-label={t('Ход подбора','Search progress')} value={data.progress.value} max={data.progress.max}/><span>{data.progress.value} / {data.progress.max}</span></div>}
     {!!data?.metrics?.length&&<dl className="hud-metrics">{data.metrics.map(m=><div key={m.label}><dt>{m.label}</dt><dd>{m.value}</dd></div>)}</dl>}
-    {data?.rows?.length ? <ul className="hud-list">{data.rows.map(row=>{const Icon=rowIcons[row.kind];return <li key={row.label+'\n'+row.detail} data-kind={row.kind}><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></li>;})}</ul> :
+    {data?.rows?.length ? <ul className="hud-list">{data.rows.map(row=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<HudItem row={row} lang={s.lang}/>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
       !data?.metrics?.length&&<p className="hud-empty">{data?.title?t('Запустите подбор в приложении.','Start a gear search in the app.'):t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
-    <footer><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
+    <footer><label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={s.opacity} onChange={e=>api.action('opacity',Number(e.target.value))}/><output>{s.opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
   </div>;
 }
 function Desk({s,t}){

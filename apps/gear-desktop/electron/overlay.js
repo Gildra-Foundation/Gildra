@@ -4,13 +4,17 @@
   if (!visible(root)) return null;
   const text = node => (node?.innerText || '').replace(/\s+/g, ' ').trim();
   const first = (s, base = root) => [...base.querySelectorAll(s)].find(visible);
-  const nameOf = node => node?.querySelector('button[data-quality]')?.getAttribute('aria-label')?.replace(/\. (?:Описание предмета|Item details)$/, '') || '';
+  const descriptor = node => {
+    const trigger = node?.querySelector('[data-overlay-item]');
+    return trigger ? JSON.parse(trigger.dataset.overlayItem) : null;
+  };
   const rows = [], metrics = [], seen = new Set();
   let progress = null;
-  function add(kind, label, detail = '') {
-    if (!label || seen.has(label+'\n'+detail)) return;
-    seen.add(label+'\n'+detail);
-    rows.push({kind, label, detail});
+  function add(kind, label, detail = '', payload = null) {
+    const key = JSON.stringify([kind,label,detail,payload]);
+    if (!label || seen.has(key)) return;
+    seen.add(key);
+    rows.push({kind,label,detail,...payload});
   }
   const statuses = root.querySelectorAll('[role="alert"], [data-auction-gear] strong[role="status"], [data-gear-farm][aria-busy="true"] [role="status"]');
   for (const entry of [...statuses].filter(visible)) {
@@ -28,17 +32,19 @@
       if (field) metrics.push({label:text(field.querySelector('dt')),value:text(field.querySelector('dd'))});
     }
     for (const row of [...auction.querySelectorAll('[data-auction-shopping-row]:not([data-purchased])')].filter(visible)) {
-      add('item',nameOf(row)||text(row.querySelector('strong')),
-        [text(row.firstElementChild?.lastElementChild),text(row.querySelector('[data-shopping-status]'))].filter(Boolean).join(' · '));
+      const name=text(row.querySelector('strong'));
+      const payload=descriptor(row.firstElementChild) || {item:{itemId:Number(row.dataset.shoppingItemId),name},consumable:true};
+      add('item',payload.item.name,[text(row.firstElementChild?.lastElementChild),text(row.querySelector('[data-shopping-status]'))].filter(Boolean).join(' · '),payload);
     }
   }
-  const badges = [...root.querySelectorAll('[data-upgrade-slot] [data-source]')].filter(visible);
-  for (const badge of badges) add('item',nameOf(badge)||text(badge),nameOf(badge)?text(badge):'');
-  if (!badges.length) {
-    for (const target of [...root.querySelectorAll('[data-farm-verification="simulated"]')].filter(visible)) {
-      const activity=text(target.closest('[data-farm-access]')?.querySelector('h4'));
-      add('farm',activity||text(target),activity?text(target):'');
-    }
+  for (const badge of [...root.querySelectorAll('[data-upgrade-slot] [data-source]')].filter(visible)) {
+    const payload=descriptor(badge);
+    add('item',payload?.item.name || text(badge),text(badge),payload);
+  }
+  for (const target of [...root.querySelectorAll('[data-farm-verification="simulated"]')].filter(visible)) {
+    const payload=descriptor(target);
+    const activity=text(target.closest('[data-farm-access]')?.querySelector('h4'));
+    add('farm',payload?.item.name || text(target),activity,payload);
   }
   if (!rows.length && !metrics.length) for(const entry of [...root.querySelectorAll('[role="status"]')].filter(visible))add('status',text(entry));
   return {title:text(document.querySelector('[data-character-identity] h1')),rows,metrics,progress};

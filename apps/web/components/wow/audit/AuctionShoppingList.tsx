@@ -95,7 +95,7 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
       const item = row.kind === "item" ? result.purchases.find(item => item.auctionId === row.auctionId) : null;
       const name = row.name || (row.kind === "gem" ? t("Камень", "Gem") : t("Чары", "Enchant"));
       const checked = check?.rows.find(current => current.key === row.key);
-      return <li className={styles.lot} key={row.key} data-auction-shopping-row data-purchased={purchased.has(row.key) || undefined}>
+      return <li className={styles.lot} key={row.key} data-auction-shopping-row data-shopping-item-id={row.itemId} data-purchased={purchased.has(row.key) || undefined}>
         <div className={styles.lotHeader}><div className={styles.purchase}>{item ? <GearPlannerItem item={item} locale={locale} /> : <strong>{name}</strong>}</div>
           <div className={styles.price}><strong>{money(checked && !purchased.has(row.key) ? checked.currentCopper : row.quotedCopper)}</strong>{row.quantity > 1 ? <span>× {auctionFormats[locale].numeric.format(row.quantity)}</span> : null}</div></div>
         <div className={tools.actions}><label className={styles.include}><input type="checkbox" checked={purchased.has(row.key)} aria-label={`${t("Куплено", "Purchased")}: ${name}`} disabled={!loaded} onChange={event => toggle(row.key, event.target.checked)} /><span>{t("Куплено", "Purchased")}</span></label>

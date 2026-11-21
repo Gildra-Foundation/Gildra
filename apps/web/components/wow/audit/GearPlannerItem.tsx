@@ -80,7 +80,7 @@ export function GearPlannerItem({ item, locale, verified = true, compact = false
     {item.source ? <div className={styles.source}><span>{t("Источник", "Source")}</span><p>{item.source}</p></div> : null}
   </div>;
   return <WarcraftTooltip content={content} pinned={pinned} onPinnedClose={() => setPinned(false)} locale={locale} atlasScope className={styles.tooltip}>
-    {tooltipId => <button type="button" className={`${styles.trigger} ${compact ? styles.compact : ""}`} style={qualityStyle(item.quality)} data-quality={item.quality} aria-pressed={pinned} aria-describedby={tooltipId} aria-label={`${item.name}${verified && item.itemLevel !== undefined ? `, ${t("уровень предмета", "item level")} ${item.itemLevel}` : ""}. ${t("Описание предмета", "Item details")}`} onClick={() => setPinned(value => !value)}>
+    {tooltipId => <button type="button" className={`${styles.trigger} ${compact ? styles.compact : ""}`} data-overlay-item={typeof location !== "undefined" && location.protocol === "gear:" && location.hostname !== "overlay" ? JSON.stringify({ item, verified }) : undefined} style={qualityStyle(item.quality)} data-quality={item.quality} aria-pressed={pinned} aria-describedby={tooltipId} aria-label={`${item.name}${verified && item.itemLevel !== undefined ? `, ${t("уровень предмета", "item level")} ${item.itemLevel}` : ""}. ${t("Описание предмета", "Item details")}`} onClick={() => setPinned(value => !value)}>
       <FramedIcon item={item} showLevel={verified} />
       {!compact ? <span className={styles.name}>{item.name}</span> : null}
     </button>}
