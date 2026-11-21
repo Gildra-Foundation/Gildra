@@ -18,7 +18,7 @@ try{
  page.on('pageerror',e=>console.error('renderer:',e.message));
  await app.evaluate(({session}, {profile,slug})=>{
    const account=session.fromPartition('persist:gildra-account');
-   globalThis.testGear={reads:[],cloud:[],pages:[],signed:false};
+   globalThis.testGear={reads:[],cloud:[],pages:[],callbacks:[],authorizations:0,signed:false};
    const qa=globalThis.testGear;
    const char={id:42,name:'GildraReleaseSmoke',level:90,realm:{id:1,slug:'synthetic',name:'Synthetic'},region:'eu',playableClass:{id:1,name:'Warrior'},playableRace:{id:3},faction:{type:'ALLIANCE'},accountId:5};
    const armory={...profile.armory,activeSpecializationId:72,activeTalentLoadout:profile.talentLoadout};
@@ -29,7 +29,10 @@ try{
      const u=new URL(input), path=u.pathname,q=u.searchParams;
      if(u.origin!=='https://wowarcana.com'||!path.startsWith('/api/')){qa.pages.push(u.href);return Response.json({},{status:404});}
      if(path==='/api/auth/csrf')return Response.json({csrfToken:'test'});
-     if(path==='/api/auth/signin/battlenet')return Response.json({url:'https://eu.battle.net/oauth/authorize'});
+     if(path==='/api/auth/signin/battlenet'){
+       const flow=++qa.authorizations;
+       return Response.json({url:'https://eu.battle.net/oauth/authorize?flow='+flow});
+     }
      if(!qa.signed)return Response.json({error:'session_expired'},{status:401});
      if(path.endsWith('/roster'))return Response.json({regions:[{region:'eu',status:200,characters:[char]}]});
      if(path.startsWith('/api/wow/characters/'))return Response.json({snapshot:{slug,character:{name:char.name,itemLevel:270},gear:[],specialization:{slug:'fury-warrior'}},fingerprint:'test-fingerprint'});
@@ -42,7 +45,26 @@ try{
      if(path.endsWith('/auction-gear-plans')&&q.has('active'))return Response.json({hosted:true});
      return Response.json({},{status:404});
    };
-   account.protocol.handle('https',req=>new Response('<html><h1>Battle.net test</h1></html>',{headers:{'Content-Type':'text/html'}}));
+   account.protocol.handle('https',req=>{
+     const u=new URL(req.url);
+     const html=body=>new Response(body,{headers:{'Content-Type':'text/html'}});
+     const redirect=location=>new Response(null,{status:302,headers:{Location:location}});
+     const oauth='https://eu.battle.net/oauth/authorize';
+     const returnTo='https://account.battle.net/overview';
+     const registered='https://gildra.net/api/auth/callback/battlenet';
+     const canonical='https://wowarcana.com/api/auth/callback/battlenet';
+     if(u.origin+u.pathname===oauth){
+       if(u.searchParams.get('flow')==='2')return html('<a href="'+registered+'?code=fixture">Approve</a>');
+       return redirect('https://eu.account.battle.net/login/en-us/?ref='+encodeURIComponent(oauth+'?state=fixture'));
+     }
+     if(u.origin==='https://eu.account.battle.net'&&u.pathname==='/login/en-us/'){
+       if(u.searchParams.get('ref')!==returnTo)return html('The provided callback URL is invalid.');
+       return html('<a href="'+returnTo+'">Continue</a>');
+     }
+     if(u.origin+u.pathname===registered){qa.callbacks.push(u.origin);return redirect(canonical+u.search);}
+     if(u.origin+u.pathname===canonical){qa.callbacks.push(u.origin);qa.signed=true;return redirect('https://wowarcana.com/api/wow/gear-desktop-data?read=session');}
+     return new Response(null,{status:404});
+   });
  },{profile,slug});
  await page.reload();
  await page.getByRole('button',{name:'Войти через Battle.net'}).waitFor();
@@ -50,8 +72,10 @@ try{
  const opened=app.waitForEvent('window');
  await page.getByRole('button',{name:'Войти через Battle.net'}).click();
  const login=await opened;
- await login.waitForURL('https://eu.battle.net/**');
- await app.evaluate(({BrowserWindow})=>{globalThis.testGear.signed=true;const w=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('https://eu.battle.net/'));w.close();});
+ await login.getByRole('link',{name:'Continue'}).click();
+ await login.getByRole('link',{name:'Approve'}).click();
+ await page.getByRole('combobox',{name:'Персонаж',exact:true}).waitFor();
+ assert.deepEqual(await app.evaluate(()=>globalThis.testGear.callbacks),['https://gildra.net','https://wowarcana.com']);
  await page.getByRole('combobox',{name:'Персонаж',exact:true}).selectOption(slug);
  await page.locator('[data-tool-panel="upgrades"] h3').first().waitFor();
  assert.equal(await page.evaluate(async()=> (await (await fetch('/api/wow/auction-gear-plans?active=1')).json()).hosted),true);
@@ -100,6 +124,6 @@ try{
  await page.getByRole('button',{name:'Sign in with Battle.net'}).waitFor();
  const reopened=app.waitForEvent('window');
  await page.getByRole('button',{name:'Sign in with Battle.net'}).click();
- await (await reopened).waitForURL('https://eu.battle.net/**');
+ await (await reopened).getByRole('link',{name:'Continue'}).waitFor();
  console.log(JSON.stringify({electron:await app.evaluate(()=>process.versions.electron),...baseline,alwaysTop,sitePages:0,cloudSubmissionsInLocalMode:0}));
 } finally { await app.close(); }

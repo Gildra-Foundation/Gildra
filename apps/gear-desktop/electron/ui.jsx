@@ -59,7 +59,7 @@ function Desk({s,t}){
   {account.status==='auth'?<main className="welcome"><div><img src="/assets/wow/characters/frost-login/crest.webp" alt=""/><h1>{t('Подбор предметов','Gear planner')}</h1>
     <p>{t('Войдите в Battle.net, чтобы подобрать экипировку для своего персонажа.','Sign in to Battle.net to find upgrades for your character.')}</p>
     <button className="primary" disabled={s.authOpen} onClick={()=>{setSignError(false);api.action('login').catch(()=>setSignError(true));}}>{t('Войти через Battle.net','Sign in with Battle.net')}</button>
-    {signError&&<p role="alert">{t('Не удалось открыть вход в Battle.net. Попробуйте ещё раз.','Could not open Battle.net sign-in. Try again.')}</p>}</div></main>:
+    {signError&&<p role="alert">{t('Не удалось войти через Battle.net. Попробуйте ещё раз.','Could not sign in with Battle.net. Try again.')}</p>}</div></main>:
     <main className="workspace"><div className="context"><div data-character-identity><h1>{selected?.name||t('Персонажи','Characters')}</h1>
     {selected&&<p>{selected.realm.name} · {selected.playableClass.name} · {selected.level}</p>}</div>
     <div className="selectors"><select aria-label={t('Регион','Region')} value={region} onChange={e=>{localStorage.setItem('region',e.target.value);setRegion(e.target.value);}}>{['eu','us','kr','tw'].map(v=><option key={v} value={v}>{v.toUpperCase()}</option>)}</select>

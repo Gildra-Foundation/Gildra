@@ -6,6 +6,8 @@ const {Planner} = require('./planner.cjs');
 
 const site = 'https://wowarcana.com';
 const handshake = site + '/api/wow/gear-desktop-data?read=session';
+const callbackPath = '/api/auth/callback/battlenet';
+const accountReturn = 'https://account.battle.net/overview';
 const calc = new Set(['/api/wow/auction-gear-plans','/api/wow/gear-farm-plans','/api/wow/auction-shopping-list']);
 const reads = new Set(['session','character','snapshot','market','equipment','icon','item','prices']);
 const extractHud = fs.readFileSync(join(__dirname,'overlay.js'),'utf8');
@@ -109,8 +111,7 @@ function toggleHud(){
   }
   hud.showInactive();announce();void updateHud();
 }
-async function authenticate(){
-  if(login){login.focus();return;}
+async function authorizationURL(){
   const csrf=await (await api('/api/auth/csrf')).json();
   if(typeof csrf.csrfToken!=='string')throw Error('auth_unavailable');
   const reply=await identity.fetch(site+'/api/auth/signin/battlenet',{method:'POST',credentials:'include',
@@ -118,22 +119,60 @@ async function authenticate(){
     body:new URLSearchParams({csrfToken:csrf.csrfToken,callbackUrl:handshake}).toString(),redirect:'error'});
   const start=new URL((await reply.json()).url);
   if(!reply.ok||!safeProvider(start))throw Error('auth_unavailable');
+  return start.href;
+}
+async function authenticate(){
+  if(login){login.focus();return;}
+  const start=await authorizationURL();
   if(exiting || main.isDestroyed())return;
   const dialog=login=new BrowserWindow({parent:main,width:700,height:760,title:'Battle.net',autoHideMenuBar:true,webPreferences:{...secureWeb,session:identity}});
   dialog.webContents.setWindowOpenHandler(()=>({action:'deny'}));
-  const allow=(e,address)=>{
-    const u=new URL(address||e.url);
-    if(u.origin===site&&u.pathname==='/api/auth/callback/battlenet'){dialog.hide();return;}
-    if(u.href===handshake){e.preventDefault();dialog.close();return;}
-    if(!safeProvider(u)){e.preventDefault();dialog.close();}
+  let accountLoginUsed=false, awaitingAccount=false, failed=false;
+  const finish=(error=false)=>{
+    if(dialog.isDestroyed())return;
+    failed=error;
+    dialog.close();
+  };
+  const navigate=async(url)=>{
+    try{if(!dialog.isDestroyed())await dialog.loadURL(url);}
+    catch(err){if(err.code!=='ERR_ABORTED')finish(true);}
+  };
+  const allow=e=>{
+    if(!e.isMainFrame)return;
+    const u=new URL(e.url);
+    // Battle.net's shared sign-in / sign-up form rejects the nested OAuth URL
+    // when it passes it to account creation. Finish that form on Battle.net,
+    // then request fresh OAuth state and PKCE using the same cookie session.
+    if(!accountLoginUsed && safeProvider(u) &&
+        (u.hostname==='account.battle.net'||u.hostname.endsWith('.account.battle.net')) &&
+        /^\/login(?:\/|$)/.test(u.pathname) && u.searchParams.has('ref')){
+      e.preventDefault();
+      accountLoginUsed=true;awaitingAccount=true;
+      const form=new URL(u.pathname,u.origin);
+      form.searchParams.set('ref',accountReturn);
+      void navigate(form.href);
+      return;
+    }
+    if(awaitingAccount && u.origin==='https://account.battle.net' && /^\/overview\/?$/.test(u.pathname)){
+      e.preventDefault();awaitingAccount=false;
+      void authorizationURL().then(navigate,()=>finish(true));
+      return;
+    }
+    if((u.origin===site||u.origin==='https://gildra.net') && u.pathname===callbackPath){
+      dialog.hide();return;
+    }
+    if(u.href===handshake){e.preventDefault();finish();return;}
+    if(!safeProvider(u)){e.preventDefault();finish(true);}
   };
   dialog.webContents.on('will-navigate',allow);dialog.webContents.on('will-redirect',allow);
-  dialog.webContents.on('did-fail-load',(_event,code,_message,_url,top)=>{if(top&&code!==-3&&!dialog.isDestroyed())dialog.close();});
+  dialog.webContents.on('did-fail-load',(_event,code,_message,_url,top)=>{if(top&&code!==-3)finish(true);});
   dialog.webContents.on('did-finish-load',()=>{
-    if(dialog.webContents.getURL().startsWith(site+'/api/auth/callback/'))dialog.close();
+    if(!dialog.isDestroyed() && dialog.webContents.getURL().startsWith(site+callbackPath))finish(true);
   });
-  dialog.on('closed',()=>{login=null;announce();});
-  announce();await dialog.loadURL(start.href).catch(()=>{});
+  const closed=new Promise(resolve=>dialog.once('closed',()=>{login=null;announce();resolve();}));
+  announce();void navigate(start);
+  await closed;
+  if(failed)throw Error('auth_unavailable');
 }
 function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
