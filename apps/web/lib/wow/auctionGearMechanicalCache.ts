@@ -325,11 +325,6 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
     const sameVariant = sameProgram && (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
       JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []);
-    const directNeck = change.slot === "neck" && change.enchantId && directNeckEnchants.has(change.enchantId) &&
-      option?.customization?.enchantId === change.enchantId && !option.customization.gemIds?.length;
-    const suffix = sameVariant && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
-      (!change.enchantId || directNeck) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
-      ? bareJewelrySuffixIdentity(directNeck ? { ...option, customization: undefined } : option, native.engine) : undefined;
     const armorConstantCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
       change.slot === option.candidate.slotType.toLowerCase() &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
@@ -383,6 +378,14 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
         sockets.socketColors[1] === 0 && sockets.socketColors[2] === 0 &&
         ((sockets.socketCount === 0 && sockets.socketColors[0] === 0) || (sockets.socketCount === 1 && sockets.socketColors[0] === 14))) : undefined;
     if (scroll !== undefined) purchasedScrollTotal += scroll;
+    const directNeck = change.slot === "neck" && change.enchantId && directNeckEnchants.has(change.enchantId) &&
+      option?.customization?.enchantId === change.enchantId && !option.customization.gemIds?.length;
+    // A verified direct scroll adds a player rating independently of the
+    // two ratings written by the suffix. Keep its contribution in the key.
+    const directScroll = directNeck || (scroll !== undefined && !option?.customization?.gemIds?.length);
+    const suffix = sameVariant && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
+      (!change.enchantId || directScroll) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
+      ? bareJewelrySuffixIdentity(directScroll ? { ...option, customization: undefined } : option, native.engine) : undefined;
     // These prismatic gems and direct enchants cannot read the original
     // scaling bonus ID. Retain their existing rating key and the real receipt.
     const ringCurve = ratings && option ? auctionSocketedRingCurve(option, native.engine) : undefined;

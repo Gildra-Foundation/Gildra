@@ -193,7 +193,7 @@ export function bareJewelrySuffixIdentity(option: AuctionGearOption, engine: str
   const ring = c.slotType === "FINGER_1" || c.slotType === "FINGER_2";
   const neck = !legacyRings && c.slotType === "NECK" && c.itemId !== 158075;
   if (option.customization || !(ring && c.inventoryType === 11 || neck && c.inventoryType === 2) ||
-      c.itemClassId !== 4 || c.itemSubclassId !== 0 || c.constraints.crafted ||
+      c.itemClassId !== 4 || c.itemSubclassId !== 0 || !c.constraints || c.constraints.crafted ||
       c.constraints.setId || c.constraints.setName || !ignoresItemContext(engine)) return;
   const v = c.variants.find(row => row.key === option.variantKey);
   if (!v || !Array.isArray(v.bonusIds) || v.bonusIds.length !== 1 || !Number.isSafeInteger(v.bonusIds[0]) ||

@@ -332,3 +332,30 @@ test('socketless jewelry retains suffix names, physical stat vectors and indepen
   assert.equal(key(c),key(d));
   assert.notEqual(key(c),key(b));
 });
+
+test('purchased direct ring scrolls share only the physical fight of certified equivalent rating suffixes', () => {
+  const first = suffixOffer(201, slots[0], 20, 1679), second = suffixOffer(202, slots[0], 20, 1680);
+  function score(original, enchantId, configure = () => {}) {
+    const option = structuredClone(original), variant = option.candidate.variants[0];
+    option.customization = {enchantId};
+    const change = {slot:'finger1', itemId:option.candidate.itemId, bonusIds:variant.bonusIds, modifiers:variant.modifiers, enchantId};
+    const request = {spec:'fury', scenario:'single-target', targets:1, fightLengthSeconds:120, precision:'finalist'};
+    const native = {changes:[change], options:[option], engine, playerLevel:90, physicalFinalist:true};
+    configure({option, variant, change, request, native});
+    return auctionGearMechanicalKey('profile',request,native);
+  }
+  for (const enchant of [5940,5941,5299]) assert.equal(score(first,enchant),score(second,enchant));
+  assert.notEqual(score(first,5940),score(second,5941));
+  assert.notEqual(score(first,5940),score(second,5299));
+  for (const configure of [
+    ({native}) => {native.physicalFinalist=false;}, ({native}) => {native.playerLevel=89;},
+    ({request}) => {delete request.precision;}, ({change}) => {change.gemIds=[130219];},
+    ({option}) => {option.customization.gemIds=[130219];}, ({change}) => {change.enchantId=5439;},
+    ({option}) => {delete option.candidate.constraints;},
+    ({native,change}) => {native.changes.push(change);}, ({request}) => {request.removedSlots=[slots[0]];},
+    ({request}) => {request.ownedChanges=[{slotType:slots[0], enchantId:5940}];},
+    ({variant}) => {variant.resolution.nativeNoItemEffects=false;},
+    ({variant}) => {variant.resolution.enhancements.socketCount=1;},
+  ]) assert.notEqual(score(first,5940,configure),score(second,5940,configure));
+  assert.notEqual(score(first,5439), score(second,5439));
+});
