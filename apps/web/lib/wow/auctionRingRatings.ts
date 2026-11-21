@@ -63,7 +63,10 @@ for (const [id, rating] of enchants) scrollRatings90.set(id, rating.amount * 128
 
 export const ringScrollRating90 = (id: number) => scrollRatings90.get(id);
 
-export const legacyRingScrollRating90 = (id: number) => legacyRingEnchantRepresentatives.has(id) ? scrollRatings90.get(id) : undefined;
+export function purchasedRingScrollRating90(id: number, itemLevel: number, emptyPlainSockets: boolean) {
+  if (legacyRingEnchantRepresentatives.has(id) && itemLevel >= 10 && itemLevel <= 120) return scrollRatings90.get(id);
+  if (id >= 7329 && id <= 7352 && itemLevel >= 70 && itemLevel <= 170 && emptyPlainSockets) return scrollRatings90.get(id);
+}
 
 export const isDirectRingEnchant = (id: number) => enchants.has(id);
 export const ringGemRepresentative90 = (id: number) => gems.get(id)?.representative;

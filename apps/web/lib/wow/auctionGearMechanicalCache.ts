@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
-import { combinedRingRatings90, isDirectRingEnchant, legacyRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
+import { combinedRingRatings90, isDirectRingEnchant, purchasedRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
 import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
@@ -348,20 +348,24 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
-    // Legacy permanent ring scrolls add player-level ratings. Keep each host
-    // and its actual gems in place. The summed field is used only to look up
-    // a measured finalist, so checkpoint IDs and receipt tie order stay stable.
-    const legacyScroll = native.physicalFinalist && request.precision === "finalist" && native.playerLevel === 90 &&
+    // A direct scroll adds a player-level rating once on its final host.
+    // A second replacement in the same slot can overwrite the first enchant.
+    // Keep the real order and receipt for checkpoint ranking and purchases.
+    const scroll = native.physicalFinalist && request.precision === "finalist" && native.playerLevel === 90 &&
       ignoresItemContext(native.engine) && sameVariant && variant && option &&
       (change.slot === "finger1" || change.slot === "finger2") && jewelrySlots[change.slot] === option.candidate.slotType &&
       option.candidate.inventoryType === 11 && option.candidate.itemClassId === 4 && option.candidate.itemSubclassId === 0 &&
-      proof?.nativeNoItemEffects === true && proof.metadataVersion === 3 && proof.enhancements?.status === "verified" &&
-      !proof.effects?.length && !proof.weapon && Number.isSafeInteger(variant.itemLevel) && variant.itemLevel >= 10 && variant.itemLevel <= 120 &&
+      proof?.nativeNoItemEffects === true && proof.metadataVersion === 3 && sockets?.status === "verified" &&
+      !proof.effects?.length && !proof.weapon && Number.isSafeInteger(variant.itemLevel) &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
       !request.removedSlots?.includes(option.candidate.slotType) &&
-      change.enchantId && option.customization?.enchantId === change.enchantId
-      ? legacyRingScrollRating90(change.enchantId) : undefined;
-    if (legacyScroll !== undefined) purchasedScrollTotal += legacyScroll;
+      change.enchantId && option.customization?.enchantId === change.enchantId &&
+      !native.changes.some((other, index) => index !== i && other.slot === change.slot)
+      ? purchasedRingScrollRating90(change.enchantId, variant.itemLevel, !change.gemIds?.length && !option.customization.gemIds?.length &&
+        sockets.socketBonusId === 0 && sockets.requiredProfessionId === 0 && sockets.socketColors?.length === 3 &&
+        sockets.socketColors[1] === 0 && sockets.socketColors[2] === 0 &&
+        ((sockets.socketCount === 0 && sockets.socketColors[0] === 0) || (sockets.socketCount === 1 && sockets.socketColors[0] === 14))) : undefined;
+    if (scroll !== undefined) purchasedScrollTotal += scroll;
     // These prismatic gems and direct enchants cannot read the original
     // scaling bonus ID. Retain their existing rating key and the real receipt.
     const ringCurve = ratings && option ? auctionSocketedRingCurve(option, native.engine) : undefined;
@@ -373,7 +377,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
       ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
       ...(suffix ? { bonusIds: [], bareSuffix: suffix } : {}),
-      ...(legacyScroll !== undefined ? { enchantId: undefined } : {}),
+      ...(scroll !== undefined ? { enchantId: undefined } : {}),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),

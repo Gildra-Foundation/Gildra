@@ -191,3 +191,65 @@ test('paid legacy ring scrolls with equal total ratings share a finalist fight',
                  key(b,{}, {ownedChanges:[{slotType:'FINGER_1',itemId:173131,gems:[]}]}));
  assert.equal(a[0].change.enchantId,5325);
 });
+
+test('purchased War Within scrolls share only a verified, unmasked finalist fight', () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const first = [7329, 7330], swapped = [7330, 7329];
+  function ring(index, enchantId) {
+    const itemId = [244473, 233483][index];
+    const slotType = ['FINGER_1', 'FINGER_2'][index];
+    const enhancements = { status: 'verified', socketCount: 0, socketBonusId: 0,
+      socketColors: [0, 0, 0], requiredProfessionId: 0 };
+    const variant = { key: 'base', contextId: 13, itemLevel: [100, 98][index], bonusIds: [6652], modifiers: [],
+      resolution: { engine, metadataVersion: 3, nativeNoItemEffects: true, enhancements } };
+    return {
+      option: { variantKey: 'base', candidate: { itemId, slotType, itemClassId: 4, itemSubclassId: 0,
+        inventoryType: 11, variants: [variant] }, customization: { enchantId } },
+      change: { slot: ['finger1', 'finger2'][index], itemId, enchantId, contextId: 13, bonusIds: [6652] },
+    };
+  }
+  function key(ids, { adjust, ownedChanges, removedSlots, physicalFinalist = true, playerLevel = 90 } = {}) {
+    const rings = ids.map((id, index) => ring(index, id));
+    adjust?.(rings);
+    return auctionGearMechanicalKey('same-character', {
+      spec: 'fury-warrior', scenario: 'single-target', targets: 1, fightLengthSeconds: 120,
+      precision: 'finalist', ownedChanges, removedSlots,
+    }, { engine, playerLevel, physicalFinalist, changes: rings.map(r => r.change), options: rings.map(r => r.option) });
+  }
+  assert.equal(key(first), key(swapped));
+  assert.equal(key([7329, 5325]), key([5325, 7329]), 'legacy and War Within scrolls');
+  assert.notEqual(key(first), key([7329, 7335]), 'different rating types');
+
+  for (const itemLevel of [70, 170]) {
+    const adjust = rings => {
+      for (const { option } of rings) {
+        const variant = option.candidate.variants[0];
+        variant.itemLevel = itemLevel;
+        Object.assign(variant.resolution.enhancements, { socketCount: 1, socketColors: [14, 0, 0] });
+      }
+    };
+    assert.equal(key(first, { adjust }), key(swapped, { adjust }), `empty prismatic at item level ${itemLevel}`);
+  }
+  const rejected = {
+    'receipt identity': { physicalFinalist: false },
+    'other player level': { playerLevel: 89 },
+    'removed ring': { removedSlots: ['FINGER_1'] },
+    'owned ring override': { ownedChanges: [{ slotType: 'FINGER_1', itemId: 244473, gems: [] }] },
+    'later replacement masks the scroll': { adjust: rings => rings.push(ring(0, 7967)) },
+    'different native context': { adjust: ([r]) => r.change.contextId++ },
+    'different native bonus list': { adjust: ([r]) => { r.change.bonusIds = [233] } },
+    'different selected enchant': { adjust: ([r]) => { r.option.customization.enchantId = 7967 } },
+    'socket modified by selection': { adjust: ([r]) => { r.option.customization.gemIds = [130219] } },
+    'socket modified by native change': { adjust: ([r]) => { r.change.gemIds = [130219] } },
+    'below native minimum': { adjust: ([r]) => { r.option.candidate.variants[0].itemLevel = 69 } },
+    'above native maximum': { adjust: ([r]) => { r.option.candidate.variants[0].itemLevel = 171 } },
+    'possible item effect': { adjust: ([r]) => { r.option.candidate.variants[0].resolution.nativeNoItemEffects = false } },
+  };
+  for (const update of [{ socketColors: [1, 0, 0] }, { socketBonusId: 12 }, { requiredProfessionId: 333 }]) {
+    const adjust = ([r]) => Object.assign(r.option.candidate.variants[0].resolution.enhancements, update);
+    assert.notEqual(key(first, { adjust }), key(swapped, { adjust }), JSON.stringify(update));
+  }
+  for (const [reason, settings] of Object.entries(rejected)) {
+    assert.notEqual(key(first, settings), key(swapped, settings), reason);
+  }
+});
