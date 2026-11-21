@@ -21,12 +21,12 @@ armory.equipment.character = { id: character.id, realm: { id: 1 } };
 for (const row of armory.equipment.equipped_items) Object.assign(row, { name: 'Fixture ' + row.slot.type, level: { value: 270 } });
 const market = { id: 'smoke-market', region: 'eu', connectedRealmId: 1, sourceUpdatedAt: new Date().toISOString(), fetchedAt: new Date().toISOString(), offers: [] };
 const owner = '3'.repeat(64);
-let browser;
+let browser, connectError;
 for (let i = 0; i < 75 && !browser; i++) {
   try { browser = await chromium.connectOverCDP('http://127.0.0.1:19222', {timeout: 2000}); }
-  catch { await delay(800); }
+  catch (error) { connectError = error; await delay(800); }
 }
-assert.ok(browser, 'No WebView2 debugging endpoint');
+if (!browser) throw new Error('No WebView2 debugging endpoint', {cause:connectError});
 const context = browser.contexts()[0];
 const page = context.pages()[0] ?? await context.waitForEvent('page', { timeout: 30000 });
 let session = false, hosted = 0;

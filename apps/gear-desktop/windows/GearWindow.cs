@@ -78,9 +78,10 @@ internal sealed class GearWindow : Form
         try {
             environment ??= await CoreWebView2Environment.CreateAsync(null, Path.Combine(Program.DataDir, "Browser"));
             await SelectMode(prefs.Local);
-        } catch (WebView2RuntimeNotFoundException) {
+        } catch (WebView2RuntimeNotFoundException ex) {
+            Console.Error.WriteLine(ex);
             Status(T("Для запуска установите Microsoft Edge WebView2 Runtime.", "Install Microsoft Edge WebView2 Runtime to start."));
-        } catch { Status(T("Не удалось открыть приложение. Нажмите «Обновить».", "Could not open the app. Select Reload.")); }
+        } catch (Exception ex) { Console.Error.WriteLine(ex); Status(T("Не удалось открыть приложение. Нажмите «Обновить».", "Could not open the app. Select Reload.")); }
     }
     async Task SelectMode(bool local)
     {
@@ -112,7 +113,7 @@ internal sealed class GearWindow : Form
             var target = prior != null && LocalPlanner.OnSite(prior.AbsoluteUri) && prior.AbsolutePath.Contains("/wow/characters") ? prior.AbsoluteUri : RosterUrl;
             if (view.Source == null || view.Source.AbsoluteUri != target) view.Source = new Uri(target);
             view.Focus();
-        } catch { Status(T("Не удалось открыть режим. Проверьте файлы приложения и повторите попытку.", "Could not open this mode. Check the app files and try again.")); }
+        } catch (Exception ex) { Console.Error.WriteLine(ex); Status(T("Не удалось открыть режим. Проверьте файлы приложения и повторите попытку.", "Could not open this mode. Check the app files and try again.")); }
         finally { switching = false; }
     }
 

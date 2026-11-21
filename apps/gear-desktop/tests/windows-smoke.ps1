@@ -41,9 +41,22 @@ public static class GearWindows {
   }
 }
 '@
+$runtimePaths = @("${env:ProgramFiles(x86)}/Microsoft/EdgeWebView/Application/*/msedgewebview2.exe", "$env:LOCALAPPDATA/Microsoft/EdgeWebView/Application/*/msedgewebview2.exe")
+$webview = Get-Item -Path $runtimePaths -ErrorAction SilentlyContinue | Select-Object -Last 1
+if (!$webview) {
+  $installer = Join-Path $env:RUNNER_TEMP 'MicrosoftEdgeWebview2Setup.exe'
+  Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $installer
+  $signature = Get-AuthenticodeSignature $installer
+  if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'Invalid WebView2 installer signature' }
+  $install = Start-Process $installer -ArgumentList '/silent','/install' -Wait -PassThru
+  $webview = Get-Item -Path $runtimePaths -ErrorAction SilentlyContinue | Select-Object -Last 1
+  if (!$webview) { throw "WebView2 installer exit $($install.ExitCode)" }
+}
+Write-Host "WebView2 $($webview.VersionInfo.ProductVersion)"
 foreach ($mode in 'server','local') {
   @{Local=($mode -eq 'local');Russian=$false} | ConvertTo-Json | Set-Content -Encoding utf8NoBOM (Join-Path $settings 'settings.json')
-  $app = Start-Process (Join-Path $AppDir 'Gildra Gear.exe') -PassThru
+  $log = Join-Path $env:RUNNER_TEMP "gear-$mode.log"
+  $app = Start-Process (Join-Path $AppDir 'Gildra Gear.exe') -PassThru -RedirectStandardError $log
   try {
     node "$PSScriptRoot/windows-smoke.mjs" $mode
     if ($LASTEXITCODE) { throw "WebView2 test failed in $mode mode" }
@@ -59,6 +72,13 @@ foreach ($mode in 'server','local') {
       if (!$found) { throw 'Always-on-top overlay did not show the selected result' }
       Write-Host 'Verified native always-on-top overlay and result text.'
     }
+  } catch {
+    $app.Refresh()
+    Write-Host "App exited=$($app.HasExited) handle=$($app.MainWindowHandle) title=$($app.MainWindowTitle)"
+    if (Test-Path $log) { Get-Content $log | Select-Object -Last 30 }
+    Get-Process msedgewebview2 -ErrorAction SilentlyContinue | Select-Object -First 5 Id,SessionId
+    Get-WinEvent -FilterHashtable @{ LogName='Application'; ProviderName='.NET Runtime'; StartTime=(Get-Date).AddMinutes(-4) } -ErrorAction SilentlyContinue | Select-Object -First 2 -ExpandProperty Message
+    throw
   } finally {
     $app.Refresh()
     if (!$app.HasExited) {

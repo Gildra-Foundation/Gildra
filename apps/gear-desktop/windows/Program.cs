@@ -10,6 +10,7 @@ internal static class Program
     {
         using var mutex = new Mutex(true, @"Local\Gildra.Gear.Desktop", out bool first);
         if (!first) { MessageBox.Show("Gildra Gear уже открыта. / Gildra Gear is already open."); return; }
+        Microsoft.Web.WebView2.Core.CoreWebView2Environment.SetLoaderDllFolderPath(AppContext.BaseDirectory);
         ApplicationConfiguration.Initialize();
         Directory.CreateDirectory(DataDir);
         Application.Run(new GearWindow());
