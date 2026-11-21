@@ -32,6 +32,13 @@ cp "$NUGET_PACKAGES/microsoft.web.webview2/1.0.4370.26/runtimes/win-x64/native/W
 cp "$repo/LICENSE" "$out/licenses/Gildra.txt"
 cp "$repo/NOTICE" "$out/licenses/Gildra-NOTICE.txt"
 cp "$(go env GOROOT)/LICENSE" "$out/licenses/Go-runtime.txt"
+(cd "$repo/backend" && go list -deps -f '{{if .Module}}{{if not .Module.Main}}{{.Module.Path}} {{.Module.Dir}}{{end}}{{end}}' ./cmd/gear-desktop-engine) |
+  sort -u | while read -r module path; do
+    if [[ -z "$module" ]]; then continue; fi
+    for file in "$path"/{LICENSE*,COPYING*,NOTICE*}; do
+      if [[ -f "$file" ]]; then cp "$file" "$out/licenses/${module//\//-}-$(basename "$file")"; fi
+    done
+  done
 cp "$node_win/LICENSE" "$out/licenses/Node.txt"
 cp "$engine/COPYING" "$out/licenses/SimulationCraft.txt"
 for license in "$engine"/LICENSE.*; do cp "$license" "$out/licenses/SimulationCraft-${license##*.}.txt"; done

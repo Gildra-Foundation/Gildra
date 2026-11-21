@@ -194,7 +194,7 @@ try {
     assert.fail(`Unexpected offline fixture endpoint: ${endpoint.pathname}`);
   };
   const canonical = await getBattleNetSimulationSnapshot(tokenA, character);
-  const verifiedOption = { id: "verified-option", auctionId: lot.id, quantity: lot.quantity, costCopper: lot.buyout, variantKey: auctionVariantKey(offer), candidate: { itemId: offer.itemId } };
+  const verifiedOption = { id: "verified-option", auctionId: lot.id, quantity: lot.quantity, costCopper: lot.buyout, variantKey: auctionVariantKey(offer), candidate: { itemId: offer.itemId, variants: [{ key: auctionVariantKey(offer) }] } };
   const verifiedContext = {
     input: { characterSlug: "eu--synthetic-api--synthetic", locale: "ru", budgetCopper: 100001, selectedSlots: ["WRIST"] }, character,
     options: [verifiedOption],
