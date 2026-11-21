@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { auctionEffectGroupKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { auctionRingMirrorOrder } from '../../../lib/wow/auctionGearRingMirrors.ts';
 import { assembleAuctionGear } from '../../../lib/wow/auctionGearPlanner.ts';
 
@@ -105,4 +106,68 @@ test('full bare search skips equivalent ring branches and preserves both physica
   }
   assert(candidate.calls.length<control.calls.length);
   assert(BigInt(candidate.result.pruningCounts.substitutionBranches)>0n);
+});
+
+function suffixOffer(lot, slot, price, bonus) {
+  const o = offer(lot, 21768, slot, price, String(bonus));
+  const v = o.candidate.variants[0];
+  Object.assign(v, {itemLevel:13, bonusIds:[bonus], modifiers:[{type:28,value:1418}]});
+  v.resolution.nativeScalingInputsV1 = [0,0,0,0];
+  return o;
+}
+
+test('bare ring suffix grouping requires identical certified native inputs and equip constraints', () => {
+  const a = suffixOffer(101, slots[0], 10, 1679);
+  const b = suffixOffer(102, slots[0], 20, 1680);
+  const key = (o, bare = true, build = engine) => auctionEffectGroupKey(o, build, "missive", "drop-curve", bare);
+  assert.equal(key(a), key(b));
+  assert.notEqual(key(a, false), key(b, false));
+  assert.notEqual(key(a, true, 'other'), key(b, true, 'other'));
+  for (const change of [
+    o => o.customization = {enchantId:123}, o => o.candidate.itemId++,
+    o => o.candidate.constraints.uniqueEquipped = true, o => o.candidate.slotType = slots[1],
+    (_, v) => v.itemLevel++, (_, v) => v.bonusIds.push(9), (_, v) => v.bonusIds = [1676],
+    (_, v) => v.modifiers[0].value++, (_, v) => v.resolution.nativeScalingInputsV1[0]++,
+    (_, v) => v.resolution.appliedStatsV1[1]++, (_, v) => v.resolution.appliedStatsV1.pop(),
+    (_, v) => v.resolution.enhancements.socketCount++, (_, v) => v.resolution.nativeNoItemEffects = false,
+    (_, v) => v.resolution.effects = [{id:1}], (_, v) => v.resolution.metadataVersion--,
+  ]) {
+    const changed = structuredClone(b);
+    change(changed, changed.candidate.variants[0]);
+    assert.notEqual(key(a), key(changed));
+  }
+});
+
+test('bare ring suffix lots preserve exact stock, prices, both winners and preexisting cursors', async () => {
+  for (const unique of [false, true]) for (const quantity of [1, 2]) for (const price of [10, 15]) {
+    const options = slots.slice(0,2).flatMap(slot => {
+      const a = suffixOffer(91, slot, 10, 1679), b = suffixOffer(92, slot, price, 1680);
+      a.quantity = quantity;
+      for (const o of [a, b]) o.candidate.constraints.uniqueEquipped = unique;
+      return [b, a, offer(95, 31, slot, 3)];
+    });
+    const input = {searchId:'suffix', options, selectedSlots:slots.slice(0,2), objective:'value',
+      specId:72, loadout:[], budgetCopper:25, market:{sourceUpdatedAt:new Date().toISOString()}, baseline:{engine,iterations:750,dpsError:0,confidence:95,dps:1000}, signal:new AbortController().signal,
+      reuseAppliedStats:true, groupCraftedEquipment:true, maxAssignments:2,
+      simulate:async selection=>({engine, iterations:750, dpsError:0, confidence:95,
+        dps:1000 + selection.reduce((sum, o) => sum + (o.candidate.itemId === 21768 ? 90 : 45), 0)})};
+    const finish = async (proof, cursor) => {
+      for (let i=0; i<100; i++) {
+        const step = await assembleAuctionGear({...input,bareEquipmentProofs:proof,checkpoint:cursor});
+        if (step.result.exhaustiveComplete) return step;
+        cursor = structuredClone(step.checkpoint);
+      }
+      assert.fail('incomplete market');
+    };
+    const partial = await assembleAuctionGear({...input,bareEquipmentProofs:false});
+    const control = await finish(true, structuredClone(partial.checkpoint)), fresh = await finish(true);
+    assert.equal(control.checkpoint.nativeLotGroups,6);
+    assert.equal(fresh.checkpoint.nativeLotGroups,7);
+    assert.equal(control.result.combinationCount,'16');
+    assert.equal(fresh.result.combinationCount,'9');
+    for (const key of ['bestDpsConfirmed','bestValueConfirmed']) {
+      assert(fresh.result[key]?.purchases.length);
+      assert.deepEqual(fresh.result[key],control.result[key]);
+    }
+  }
 });

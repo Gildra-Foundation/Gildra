@@ -172,11 +172,35 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
+/** On this DBC, 1679 and 1680 insert crit then versatility, followed by
+ * the same name suffix (13152). Only the allocation percentages differ.
+ * Bare combat sees the rounded ratings. Keep the host, level, all other
+ * native inputs and equip constraints, and let the allocator choose lots. */
+function bareRingSuffixIdentity(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  if (option.customization || (c.slotType !== "FINGER_1" && c.slotType !== "FINGER_2") ||
+      c.inventoryType !== 11 || c.itemClassId !== 4 || c.itemSubclassId !== 0 || c.constraints.crafted ||
+      c.constraints.setId || c.constraints.setName || !ignoresItemContext(engine)) return;
+  const v = c.variants.find(row => row.key === option.variantKey);
+  if (!v || v.bonusIds.length !== 1 || (v.bonusIds[0] !== 1679 && v.bonusIds[0] !== 1680) ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
+      !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 28)) return;
+  const r = v.resolution, e = r?.enhancements;
+  if (!r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
+      r.nativeScalingInputsV1?.length !== 4 || !r.nativeScalingInputsV1.every(value => value === 0) ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      e.socketColors?.length !== 3 || !e.socketColors.every(value => value === 0) ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  return ["bare-ring-suffix-13152", c.itemId, v.itemLevel, v.contextId ?? 0, v.modifiers ?? [], r.appliedStatsV1];
+}
+
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareRingSuffix = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");
+  const suffix = bareRingSuffix && engine ? bareRingSuffixIdentity(option, engine) : undefined;
+  const effect = suffix ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */

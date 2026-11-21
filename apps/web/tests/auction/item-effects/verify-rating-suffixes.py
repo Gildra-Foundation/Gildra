@@ -9,8 +9,16 @@ for line in (Path(sys.argv[1]) / 'item_bonus.inc').open():
     match = re.fullmatch(r'\s*\{\s*([\d,\s-]+)\},\s*', line)
     if match:
         _, bonus, *operation = map(int, match[1].split(','))
-        if 1 <= bonus <= 250:
+        if 1 <= bonus <= 250 or bonus in (1679, 1680):
             programs[bonus].append(operation)
+
+# Both native programs introduce exactly the same ordered rating types and
+# suffix name. No other bonus operation or tag is present.
+for bonus, crit, vers in [(1679, 3500, 3500), (1680, 3000, 4000)]:
+    assert programs.pop(bonus) == [
+        [2, 32, crit, 0, 0, 0], [2, 40, vers, 0, 0, 1], [5, 13152, 0, 0, 0, 2]
+    ]
+print('Verified both bare ring suffix programs')
 
 verified = 0
 for bonus, program in programs.items():
