@@ -131,6 +131,8 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	missing := input
 	missing.Variants = nil
 	var positions []int
+	first := make(map[gearVariantKey]int)
+	aliases := make(map[int]int)
 	var missingKeys []gearVariantKey
 	for i, hit := range hits {
 		if hit.engine != "" {
@@ -141,6 +143,11 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 			out.Engine = hit.engine
 			continue
 		}
+		if source, ok := first[keys[i]]; ok {
+			aliases[i] = source
+			continue
+		}
+		first[keys[i]] = i
 		positions = append(positions, i)
 		missingKeys = append(missingKeys, keys[i])
 		missing.Variants = append(missing.Variants, input.Variants[i])
@@ -166,6 +173,17 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	}
 	for n, i := range positions {
 		out.Variants[i] = resolved.Variants[n]
+	}
+	for alias, source := range aliases {
+		// Give each caller-owned row independent maps and slices as on cache hits.
+		data, err := json.Marshal(out.Variants[source])
+		if err != nil {
+			return GearVariantResponse{}, err
+		}
+		if err := json.Unmarshal(data, &out.Variants[alias]); err != nil {
+			return GearVariantResponse{}, err
+		}
+		out.Variants[alias].Key = input.Variants[alias].Key
 	}
 	after, _ := os.Stat(e.binary)
 	if !sameVariantBinary(binary, after) && binary != nil {
