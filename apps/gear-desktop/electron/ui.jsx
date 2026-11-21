@@ -77,7 +77,7 @@ function Desk({s,t}){
     <button className="lang" onClick={()=>api.action('lang',lang==='ru'?'en':'ru')}>{lang==='ru'?'EN':'RU'}</button>
     {account.status==='ready'&&<button aria-label={t('Выйти','Sign out')} title={t('Выйти','Sign out')} onClick={()=>api.action('logout')}><LogOut size={16}/></button>}</div><WindowButtons s={s} t={t}/>
   </header>
-  {account.status==='auth'?<main className="welcome"><img className="login-portrait" src="/assets/wow/character-book/intro/arthas-strike-v1.webp" alt=""/><div className="login-card"><img className="welcome-emblem" src={art+'/icons/equipment.webp'} alt=""/><h1>{t('Подбор предметов','Gear planner')}</h1>
+  {account.status==='auth'?<main className="welcome"><div className="login-card"><img className="welcome-emblem" src={art+'/icons/equipment.webp'} alt=""/><h1>{t('Подбор предметов','Gear planner')}</h1>
     <p>{t('Найдите добычу в рейдах и подземельях. Сравните вещи с аукциона по цене и приросту DPS.','Find dungeon and raid drops. Compare auction upgrades by price and DPS gain.')}</p>
     <button className="primary" disabled={s.authOpen} onClick={()=>{setSignError(false);api.action('login').catch(()=>setSignError(true));}}>{t('Войти через Battle.net','Sign in with Battle.net')}<ArrowRight size={17} aria-hidden="true"/></button>
     {signError&&<p role="alert">{t('Не удалось войти через Battle.net. Попробуйте ещё раз.','Could not sign in with Battle.net. Try again.')}</p>}</div></main>:

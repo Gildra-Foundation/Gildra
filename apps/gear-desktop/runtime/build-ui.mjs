@@ -8,7 +8,7 @@ await mkdir(pub,{recursive:true});
 for(const name of ['package.json','main.cjs','preload.cjs','planner.cjs','overlay.js'])await cp(join(app,name),join(dest,name));
 await cp(join(app,'index.html'),join(pub,'index.html'));
 await cp(join(web,'app/favicon.ico'),join(pub,'brand.ico'));
-for(const folder of ['assets/wow/slim/characters','assets/wow/characters/frost-login/crest.webp','assets/wow/characters/frost-login/icons/equipment.webp','assets/og/fonts/alegreya-500.ttf','assets/og/fonts/inter-400.ttf','assets/og/fonts/inter-600.ttf','assets/wow/character-book/intro/arthas-strike-v1.webp','assets/wow/loading/characters-icecrown-20261106.webp','assets/wow/fonts/grimoire']){
+for(const folder of ['assets/wow/slim/characters','assets/wow/characters/frost-login/crest.webp','assets/wow/characters/frost-login/icons/equipment.webp','assets/og/fonts/alegreya-500.ttf','assets/og/fonts/inter-400.ttf','assets/og/fonts/inter-600.ttf','assets/wow/loading/characters-icecrown-20261106.webp','assets/wow/fonts/grimoire']){
   const path=join(pub,folder);await mkdir(dirname(path),{recursive:true});await cp(join(web,'public',folder),path,{recursive:true});
 }
 const output=await build({absWorkingDir:repo,entryPoints:[join(app,'ui.jsx')],outfile:join(pub,'ui.js'),bundle:true,format:'iife',platform:'browser',
