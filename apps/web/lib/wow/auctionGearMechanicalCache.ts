@@ -3,7 +3,7 @@ import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, purchasedRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
 import { midnightGemRating90, ownedMidnightGemScore } from "./auctionMidnightGemRatings";
-import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity, bareWeaponCurveIdentity, bareArmorConstantCurveIdentity, armorMissiveInputs } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity, bareWeaponCurveIdentity, bareArmorConstantCurveIdentity, armorMissiveInputs, indestructibleItemIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
@@ -423,6 +423,8 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     // scaling bonus ID. Retain their existing rating key and the real receipt.
     const ringCurve = ratings && option ? auctionSocketedRingCurve(option, native.engine) : undefined;
     if (ratings) certifiedJewelry.push({ index: i, slot: change.slot, ratings });
+    const durability = (reuseCandidateInputs || native.physicalFinalist) && sameVariant && option && !change.gemIds?.length &&
+      change.slot === option.candidate.slotType.toLowerCase() ? indestructibleItemIdentity(option, native.engine) : undefined;
     const armorMissive = (reuseCandidateInputs || native.physicalFinalist) && sameVariant && option &&
       change.slot === option.candidate.slotType.toLowerCase() ? armorMissiveInputs(option, native.engine) : undefined;
     const missive = armorMissive?.missive ?? auctionMissiveComparison(change, change.slot, native.engine);
@@ -430,6 +432,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     return {
       ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
+      ...(durability ? { bonusIds: [], durability } : {}),
       ...(armorMissive ? { armorMissiveStats: armorMissive.stats, armorMissiveLevel: armorMissive.level } : {}),
       ...(weaponCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, bonusIds: [], weaponCurve } : {}),
       ...(armorConstantCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, armorConstantCurve,

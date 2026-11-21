@@ -189,7 +189,7 @@ test('bare ring suffix lots preserve exact stock, prices, both winners and preex
     const partial = await assembleAuctionGear({...input,bareEquipmentProofs:false});
     const control = await finish(true, structuredClone(partial.checkpoint)), fresh = await finish(true);
     assert.equal(control.checkpoint.nativeLotGroups,6);
-    assert.equal(fresh.checkpoint.nativeLotGroups,13);
+    assert.equal(fresh.checkpoint.nativeLotGroups,14);
     assert.equal(control.result.combinationCount,'16');
     assert.equal(fresh.result.combinationCount,'9');
     for (const key of ['bestDpsConfirmed','bestValueConfirmed']) {

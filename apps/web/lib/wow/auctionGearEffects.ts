@@ -278,6 +278,32 @@ export function bareWeaponCurveIdentity(option: AuctionGearOption, engine: strin
     w.minDamage, w.maxDamage, w.dps, w.speedSeconds, r.appliedStatsV1];
 }
 
+/** On these socketless programs the first list is either a no-op (6652)
+ * or indestructibility (43). The latter's stat 64 translates to STAT_NONE
+ * and its type-9 repair operation is ignored. Neither adds an observable
+ * suffix or description. Keep every subsequent list and native input. */
+export function indestructibleItemIdentity(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  const hand = c.itemClassId === 2 && (c.slotType === "MAIN_HAND" || c.slotType === "OFF_HAND");
+  if (!hand && !(c.itemClassId === 4 && plainArmorSlots.has(c.slotType))) return;
+  const v = c.variants.find(row => row.key === option.variantKey), b = v?.bonusIds;
+  if (!v || !b || (b[0] !== 43 && b[0] !== 6652)) return;
+  const program = hand ? b.length === 2 && (b[1] === 12769 || b[1] === 13901)
+    : b.length === 3 && b[1] === 12817 && b[2] === 13663;
+  const r = v.resolution, e = r?.enhancements, weapon = r?.weapon;
+  if (!program || !ignoresItemContext(engine) || !validAuctionItemContext(v.contextId) ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !supportedAuctionModifiers(v.modifiers ?? []) ||
+      v.modifiers?.some(m => m.type !== 9 && m.type !== 28) || r?.engine !== engine || r.metadataVersion !== 3 ||
+      r.nativeNoItemEffects !== true || r.effects?.length || c.constraints.crafted || c.constraints.setId || c.constraints.setName ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      e.socketColors?.length !== 3 || e.socketColors.some(color => color !== 0) ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  if (hand ? !weapon || ![weapon.minDamage, weapon.maxDamage, weapon.dps, weapon.speedSeconds].every(Number.isFinite) ||
+      weapon.minDamage < 0 || weapon.maxDamage < weapon.minDamage || weapon.dps <= 0 || weapon.speedSeconds <= 0 : !!weapon) return;
+  return ["indestructible-v1", c.itemId, c.inventoryType, c.itemSubclassId, b.slice(1), v.itemLevel,
+    auctionNativeItemOptions(v, engine, false, r.nativeContentTuningV1), r.appliedStatsV1, weapon] as const;
+}
+
 /** At the pinned revision a positive certificate identifies a single type-51 level
  * write plus constant operations. The two verified programs below reach the same
  * native state when their resolved level matches. Other programs keep their list. */
@@ -306,7 +332,7 @@ export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine
     v.bonusIds, v.itemLevel, r.appliedStatsV1] as const;
 }
 
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant: boolean | "equivalent-curves" | "curves-and-missives" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant: boolean | "equivalent-curves" | "curves-and-missives" = false, groupIndestructible = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
@@ -316,7 +342,8 @@ export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string
   const crafted = bareArmorConstant === "curves-and-missives" && engine && !option.customization ? armorMissiveInputs(option, engine) : undefined;
   const missive = crafted && engine ? ["armor-missive-v1", option.candidate.itemId, crafted.level, crafted.stats,
     crafted.missive.bonusIds, auctionNativeItemOptions(crafted.missive, engine)] : undefined;
-  const effect = missive ?? armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  const durability = groupIndestructible && engine && !option.customization ? indestructibleItemIdentity(option, engine) : undefined;
+  const effect = durability ?? missive ?? armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 

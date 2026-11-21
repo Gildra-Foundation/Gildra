@@ -75,7 +75,7 @@ test("a version-ten cursor keeps both old armor choices when a new search groups
   const resumed=await finish(checkpoint),fresh=await finish(undefined);
   assert.equal(resumed.checkpoint.nativeLotGroups,10);
   assert.equal(resumed.result.combinationCount,"3");
-  assert.equal(fresh.checkpoint.nativeLotGroups,13);
+  assert.equal(fresh.checkpoint.nativeLotGroups,14);
   assert.equal(fresh.result.combinationCount,"2");
   assert.deepEqual(fresh.result.bestDpsConfirmed,resumed.result.bestDpsConfirmed);
   assert.deepEqual(fresh.result.bestValueConfirmed,resumed.result.bestValueConfirmed);
@@ -197,7 +197,7 @@ test("the bare missive branch preserves both recommendations, each lot card, and
     const old = await assembleAuctionGear({...input, screeningGroupVersion: 12, maxAssignments: 1});
     const resumed = await assembleAuctionGear({...input, checkpoint: old.checkpoint});
     const fresh = await assembleAuctionGear(input);
-    for (const [run, version, count] of [[resumed, 12, "6"], [fresh, 13, expectedCount]]) {
+    for (const [run, version, count] of [[resumed, 12, "6"], [fresh, 14, expectedCount]]) {
       assert.equal(run.checkpoint.nativeLotGroups, version);
       assert.equal(run.checkpoint.equipmentVerification.nativeLotGroups, version);
       assert.equal(run.result.exhaustiveComplete, true);
