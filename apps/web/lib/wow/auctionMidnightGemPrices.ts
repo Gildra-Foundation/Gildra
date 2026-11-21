@@ -167,9 +167,40 @@ export function midnightGemPrices(axes: Choice[][], slots: readonly EnhancementS
     thresholds.set(target, third);
     return third;
   }
+  const socketOffers = sockets.map((axis, i) => {
+    const byId = new Map<number, number>();
+    for (const [index, choice] of axes[axis].entries()) {
+      const offer = offers[i].get(choice);
+      if (offer?.modern) byId.set(offer.id, index);
+    }
+    return byId;
+  });
   const weapons = includeWeaponSavings ? cheaperWeaponScrolls(axes, slots, multiUnitCost) : undefined;
   return {
     axis, weaponAxis: weapons?.axis,
+    // These orders buy exactly the same three SKUs. Check the live choices
+    // for each destination, since a retained or restricted gem is not a witness.
+    tiedGemOrders(indices: number[]) {
+      if (neckEnchant >= 0 && axes[neckEnchant][indices[neckEnchant]].enhancement) return;
+      const ids = sockets.map((axis, i) => {
+        const offer = offers[i].get(axes[axis][indices[axis]]);
+        return offer?.modern ? offer.id : 0;
+      });
+      if (ids.includes(0) || new Set(ids).size !== 3) return;
+      const orders: number[][] = [];
+      for (let first = 0; first < 3; first++) for (let second = 0; second < 3; second++) {
+        if (first === second || (first === 0 && second === 1)) continue;
+        const a = socketOffers[0].get(ids[first]), b = socketOffers[1].get(ids[second]);
+        const c = socketOffers[2].get(ids[3 - first - second]);
+        if (a === undefined || b === undefined || c === undefined) continue;
+        const other = indices.slice();
+        other[sockets[0]] = a;
+        other[sockets[1]] = b;
+        other[sockets[2]] = c;
+        orders.push(other);
+      }
+      return orders.length >= 3 ? orders : undefined;
+    },
     cutAxis(selected: Choice[]) {
       if (neckEnchant >= 0 && selected[neckEnchant].enhancement) return;
       const a = left.get(selected[sockets[0]]), b = right.get(selected[sockets[1]]), c = necklaces.get(selected[sockets[2]]);

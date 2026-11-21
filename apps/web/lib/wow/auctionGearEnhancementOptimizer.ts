@@ -63,6 +63,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   pairedScrollPrices?: true;
   midnightGemPrices?: true;
   mixedMidnightPrices?: true;
+  tiedMidnightGems?: true;
   weaponGemPrices?: true;
   tiedJewelryReceipts?: true | "ring_and_gem";
   jewelryTiePruning?: { branches: string; configurations: string };
@@ -90,6 +91,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   ratingOwnedNeck?: boolean;
   useMidnightGemPrices?: () => boolean;
   pruneMixedMidnightPrices?: boolean;
+  pruneTiedMidnightGems?: boolean;
   pruneWeaponGemPrices?: boolean;
   ringNeckPricePairs?: boolean;
   bareRingScrolls90?: boolean;
@@ -700,10 +702,12 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   const midnight = exact && pricedAxes && input.useMidnightGemPrices && input.preciseReceiptKey &&
     (!input.checkpoint || input.checkpoint.midnightGemPrices)
     ? midnightGemPrices(axes, slots, commodityPrices.cost, c => Boolean(conditional?.has(c) || pairGuards?.has(c)), mixedMidnightPrices, weaponGemPrices) : undefined;
+  const tiedMidnight = midnight && input.pruneTiedMidnightGems && (!input.checkpoint || input.checkpoint.tiedMidnightGems);
   const pairedNeck = !!pairedPrice && !!pairedRings?.neck;
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(tiedMidnight ? {tiedMidnightGems:1} : {}),
     ...(midnight ? {midnightGemPrices:1} : {}),
     ...(midnight?.weaponAxis !== undefined ? {weaponGemPrices:1} : {}),
     ...(midnight && mixedMidnightPrices ? {mixedMidnightPrices:1} : {}),
@@ -723,6 +727,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
+    ...(tiedMidnight ? {tiedMidnightGems:true} : {}),
     ...(midnight ? {midnightGemPrices:true} : {}),
     ...(midnight?.weaponAxis !== undefined ? {weaponGemPrices:true} : {}),
     ...(midnight && mixedMidnightPrices ? {mixedMidnightPrices:true} : {}),
@@ -796,6 +801,14 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   // Main traversal and lookahead use exactly the same compatibility, ladder
   // pricing and positional configuration construction. Lookahead has no cursor
   // or ranking effects and cannot certify a configuration out of order.
+  // Only the slot edits vary during this traversal. Keep the canonical JSON
+  // order of the existing SHA-256 receipt, including omitted optional fields.
+  const header = JSON.stringify(canonical({catalog:catalog.version, identity:input.simulationIdentity, metadata:slots.map(s => s.metadataKey)}));
+  const receiptHeader = createHash("sha256").update(header.slice(0, -1) + ',"slots":');
+  const receiptKey = (edits: PricedEnhancementConfiguration["slots"]) => {
+    const ordered = edits.map(({enchantId, gemIds, slotType, variantKey}) => ({enchantId, gemIds, slotType, variantKey}));
+    return receiptHeader.copy().update(JSON.stringify(ordered)).update("}").digest("hex");
+  };
   const prepare = (indices: number[], configurationReasons: Set<string>):
     { valid: false; pruneAxis: number; ringPriceProof?: true; armorPriceProof?: true; jewelryTieProof?: true } | { valid: true; config: PricedEnhancementConfiguration } => {
     const selected = axes.map((axis,index)=>axis[indices[index]]);
@@ -883,7 +896,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     const totalCopper = known ? input.itemsCopper + consumables.reduce((sum,c)=>sum+c.quotedCopper!,0) : null;
     if (totalCopper !== null && !Number.isSafeInteger(totalCopper)) throw new Error("invalid_budget");
     const status = !marketVerified ? "market_unverified" : !known ? "price_unknown" : totalCopper! > input.budgetCopper ? "over_budget" : "priced";
-    const config: PricedEnhancementConfiguration = {key:hash({identity:input.simulationIdentity,catalog:catalog.version,slots:configurationSlots,metadata:slots.map(s=>s.metadataKey)}),
+    const config: PricedEnhancementConfiguration = {key:receiptKey(configurationSlots),
       slots:configurationSlots,...(ownedChanges.size ? {ownedChanges:[...ownedChanges.values()]} : {}),consumables,itemsCopper:input.itemsCopper,totalCopper,fullyEnhanced,status,sourceUpdatedAt:input.prices.sourceUpdatedAt};
     return { valid: true, config };
   };
@@ -901,16 +914,20 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   // A tie is resolved using the hash of the complete receipt. A winning
   // mirror of this receipt says nothing about another assignment of a lower
   // digit, so this proof skips exactly one configuration.
-  const prepareReceipt: typeof prepare = preciseReceiptKey && swaps.length ? (indices, reasons) => {
+  // Local to a single traversal with fixed gear, prices and rank identity.
+  // Lookahead and the cursor often revisit siblings from the same cohort.
+  const tiedOrders = new Map<string, boolean>();
+  const prepareReceipt: typeof prepare = input.preciseReceiptKey && (swaps.length || tiedMidnight) ? (indices, reasons) => {
     const result = prepare(indices, reasons);
     if (!result.valid || result.config.status !== "priced") return result;
+    const rankKey = input.preciseReceiptKey!;
     let sourceKey: string | undefined;
     const wins = (other: number[]) => {
       const mirror = prepare(other, new Set());
       if (!mirror.valid || mirror.config.status !== "priced" || mirror.config.totalCopper !== result.config.totalCopper ||
           mirror.config.key.localeCompare(result.config.key) >= 0) return false;
-      sourceKey ??= preciseReceiptKey(result.config);
-      return Boolean(sourceKey && preciseReceiptKey(mirror.config) === sourceKey);
+      sourceKey ??= rankKey(result.config);
+      return Boolean(sourceKey && rankKey(mirror.config) === sourceKey);
     };
     let exchangedScrolls: number[] | undefined;
     for (const swap of swaps) {
@@ -925,6 +942,33 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       if (swap === scrollSwap) continue;
       const other = exchange(exchangedScrolls, swap);
       if (other && wins(other)) return {valid:false, pruneAxis:0, jewelryTieProof:true};
+    }
+    if (tiedMidnight && input.useMidnightGemPrices!()) {
+      const positionKey = indices.join(",");
+      let cut = tiedOrders.get(positionKey);
+      if (cut === undefined) {
+        const orders = midnight.tiedGemOrders(indices);
+        if (!orders) return result;
+        const siblings = [{position:positionKey, config:result.config}];
+        for (const order of orders) {
+          const mirror = prepare(order, new Set());
+          if (mirror.valid && mirror.config.status === "priced" && mirror.config.totalCopper === result.config.totalCopper)
+            siblings.push({position:order.join(","), config:mirror.config});
+        }
+        siblings.sort((a, b) => a.config.key.localeCompare(b.config.key));
+        const betterRanks = new Set<string>();
+        if (tiedOrders.size + siblings.length > 4096) tiedOrders.clear();
+        for (const sibling of siblings) {
+          const dominated = betterRanks.size >= 3;
+          tiedOrders.set(sibling.position, dominated);
+          if (!dominated) {
+            const rank = rankKey(sibling.config);
+            if (rank) betterRanks.add(rank);
+          }
+        }
+        cut = tiedOrders.get(positionKey);
+      }
+      if (cut) return {valid:false, pruneAxis:0, jewelryTieProof:true};
     }
     return result;
   } : prepare;
