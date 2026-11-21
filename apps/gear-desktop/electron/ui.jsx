@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Layers,RefreshCw,LogOut,Monitor,Server} from 'lucide-react';
+import {Layers,RefreshCw,LogOut,Monitor,Server,Minus,Square,Copy,X,ArrowUpRight,ArrowRight,GripHorizontal,ShieldCheck,ShoppingBag,Compass,Activity,TriangleAlert,Check} from 'lucide-react';
 import {CharacterUpgrades} from '@/components/wow/audit/CharacterUpgrades';
 import {characterSlug} from '@/lib/wow/characterSlug';
 import './shell.css';
@@ -11,11 +11,31 @@ function useShell(){
   useEffect(()=>{const off=api.subscribe(set);api.state().then(set);return off;},[]);
   return s;
 }
+const art='/assets/wow/characters/frost-login';
+function WindowButtons({s,t,hud=false}){
+  const button=(action,label,Icon)=> <button type="button" className={'caption '+action} aria-label={label} title={label} onClick={()=>api.action(action)}><Icon aria-hidden="true" size={15}/></button>;
+  return <div className="window-buttons">{!hud&&<>
+    {button('window-minimize',t('Свернуть','Minimize'),Minus)}
+    {button('window-maximize',s.maximized?t('Восстановить размер','Restore down'):t('Развернуть','Maximize'),s.maximized?Copy:Square)}
+  </>}{button('window-close',hud?t('Скрыть оверлей','Hide overlay'):t('Закрыть','Close'),X)}</div>;
+}
+function AuthBar({s,t}){
+  return <header className="chrome auth-chrome"><img className="crest-small" src={art+'/crest.webp'} alt=""/>
+    <strong>Battle.net</strong>{s.authHost&&<span className="domain"><ShieldCheck size={14} aria-hidden="true"/>{s.authHost}</span>}
+    <WindowButtons s={s} t={t}/></header>;
+}
+const rowIcons={alert:TriangleAlert,status:Activity,result:Check,item:ShoppingBag,farm:Compass};
 function Overlay({s,t}){
   const data=s.hud;
-  return <div className="hud"><header><img src="/brand.ico" alt=""/><strong>{data?.title||t('Подбор предметов','Gear planner')}</strong></header>
-    <main>{data?.lines?.length?<ul>{data.lines.map((line,i)=><li key={i}>{line}</li>)}</ul>:<p>{data?.empty||t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
-    <footer><button onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}</button></footer></div>;
+  return <div className="hud">
+    <header className="chrome hud-chrome"><Layers size={16} aria-hidden="true"/><strong>{t('Оверлей','Overlay')}</strong><GripHorizontal className="grip" size={19} aria-hidden="true"/><WindowButtons s={s} t={t} hud/></header>
+    <main className="hud-scroll"><div className="hud-identity"><img src={art+'/icons/equipment.webp'} alt=""/><h1>{data?.title||t('Подбор предметов','Gear planner')}</h1></div>
+    {data?.progress&&<div className="hud-progress"><progress aria-label={t('Ход подбора','Search progress')} value={data.progress.value} max={data.progress.max}/><span>{data.progress.value} / {data.progress.max}</span></div>}
+    {!!data?.metrics?.length&&<dl className="hud-metrics">{data.metrics.map(m=><div key={m.label}><dt>{m.label}</dt><dd>{m.value}</dd></div>)}</dl>}
+    {data?.rows?.length ? <ul className="hud-list">{data.rows.map(row=>{const Icon=rowIcons[row.kind];return <li key={row.label+'\n'+row.detail} data-kind={row.kind}><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></li>;})}</ul> :
+      !data?.metrics?.length&&<p className="hud-empty">{data?.title?t('Запустите подбор в приложении.','Start a gear search in the app.'):t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
+    <footer><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
+  </div>;
 }
 function Desk({s,t}){
   const [version,bump]=useState(0),[region,setRegion]=useState(()=>localStorage.getItem('region')||'eu');
@@ -48,17 +68,18 @@ function Desk({s,t}){
     return ()=>c.abort();
   },[selected,s.slug,lang]);
   const refresh=()=>bump(v=>v+1);
-  return <div className="desktop gildra-atlas" data-atlas-scope="" data-theme="dark"><header className="toolbar">
-    <div className="wordmark"><img src="/brand.ico" alt=""/><b>Gildra Gear</b></div>
+  return <div className="desktop gildra-atlas" data-atlas-scope="" data-theme="dark"><header className="chrome toolbar">
+    <div className="wordmark"><img className="crest-small" src={art+'/crest.webp'} alt=""/><b>Gildra <em>Gear</em></b></div>
+    <div className="tools">
     <label className="mode">{s.mode==='local'?<Monitor size={16}/>:<Server size={16}/>}<select aria-label={t('Где выполнять расчёт','Calculation mode')} value={s.mode} onChange={e=>api.action('mode',e.target.value)}>
       <option value="server">{t('Сервер Gildra','Gildra server')}</option><option value="local">{t('На моём ПК','On my PC')}</option></select></label>
     <button aria-pressed={s.overlay} onClick={()=>api.action('overlay')} title="Ctrl+Alt+G"><Layers size={16}/>{t('Оверлей','Overlay')}</button>
     <button className="lang" onClick={()=>api.action('lang',lang==='ru'?'en':'ru')}>{lang==='ru'?'EN':'RU'}</button>
-    {account.status==='ready'&&<button aria-label={t('Выйти','Sign out')} title={t('Выйти','Sign out')} onClick={()=>api.action('logout')}><LogOut size={16}/></button>}
+    {account.status==='ready'&&<button aria-label={t('Выйти','Sign out')} title={t('Выйти','Sign out')} onClick={()=>api.action('logout')}><LogOut size={16}/></button>}</div><WindowButtons s={s} t={t}/>
   </header>
-  {account.status==='auth'?<main className="welcome"><div><img src="/assets/wow/characters/frost-login/crest.webp" alt=""/><h1>{t('Подбор предметов','Gear planner')}</h1>
+  {account.status==='auth'?<main className="welcome"><div className="login-card"><img className="welcome-emblem" src={art+'/icons/equipment.webp'} alt=""/><h1>{t('Подбор предметов','Gear planner')}</h1>
     <p>{t('Войдите в Battle.net, чтобы подобрать экипировку для своего персонажа.','Sign in to Battle.net to find upgrades for your character.')}</p>
-    <button className="primary" disabled={s.authOpen} onClick={()=>{setSignError(false);api.action('login').catch(()=>setSignError(true));}}>{t('Войти через Battle.net','Sign in with Battle.net')}</button>
+    <button className="primary" disabled={s.authOpen} onClick={()=>{setSignError(false);api.action('login').catch(()=>setSignError(true));}}>{t('Войти через Battle.net','Sign in with Battle.net')}<ArrowRight size={17} aria-hidden="true"/></button>
     {signError&&<p role="alert">{t('Не удалось войти через Battle.net. Попробуйте ещё раз.','Could not sign in with Battle.net. Try again.')}</p>}</div></main>:
     <main className="workspace"><div className="context"><div data-character-identity><h1>{selected?.name||t('Персонажи','Characters')}</h1>
     {selected&&<p>{selected.realm.name} · {selected.playableClass.name} · {selected.level}</p>}</div>
@@ -76,6 +97,7 @@ function App(){
   const s=useShell();const t=(ru,en)=>s?.lang==='en'?en:ru;
   useEffect(()=>{document.documentElement.lang=s?.lang||'ru';},[s?.lang]);
   if(!s)return null;
+  if(location.hostname==='auth')return <AuthBar s={s} t={t}/>;
   return location.hostname==='overlay'?<Overlay s={s} t={t}/>:<Desk s={s} t={t}/>;
 }
 createRoot(document.getElementById('root')).render(<App/>);

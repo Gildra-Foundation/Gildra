@@ -1,4 +1,4 @@
-const {app, BrowserWindow, globalShortcut, ipcMain, Menu, net, protocol, screen, session} = require('electron');
+const {app, BrowserWindow, WebContentsView, globalShortcut, ipcMain, Menu, net, protocol, screen, session} = require('electron');
 const fs = require('node:fs');
 const {join, resolve, sep} = require('node:path');
 const {pathToFileURL} = require('node:url');
@@ -19,14 +19,21 @@ if (!['local','server'].includes(settings.mode)) settings.mode='server';
 if (!['ru','en'].includes(settings.lang)) settings.lang='ru';
 const json = (value,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const error=(name,status)=>json({error:name},status);
-let main, hud, login, signingIn, identity, planner, hudData=null, reading=false, exiting=false, loggingOut=false;
+let main, hud, login, signingIn, identity, planner, authHost='', overlayShown=false, hudData=null, reading=false, exiting=false, loggingOut=false;
 function save(){
   const tmp=settingsFile+'.tmp';
   fs.mkdirSync(dataDir,{recursive:true});
   fs.writeFileSync(tmp,JSON.stringify(settings),{mode:0o600});fs.renameSync(tmp,settingsFile);
 }
-function state(){return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:!!hud&&!hud.isDestroyed()&&hud.isVisible(),hud:hudData,authOpen:!!login};}
-function announce(){for(const w of [main,hud]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',state());}
+function windowState(w){
+  return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,
+    hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
+}
+function announce(){for(const w of [main,hud,login]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
+function localWindow(e){
+  if(e.senderFrame!==e.sender.mainFrame || !e.senderFrame.url.startsWith('gear://'))return null;
+  return [main,hud,login].find(w=>w&&!w.isDestroyed()&&w.webContents===e.sender);
+}
 function safeProvider(u) {
   return u.protocol==='https:' && !u.username && !u.password && !u.port &&
     ['battle.net','blizzard.com','battlenet.com.cn'].some(h=>u.hostname===h || u.hostname.endsWith('.'+h));
@@ -48,7 +55,7 @@ function localPlanner(){
 }
 async function gearProtocol(request){
   const url=new URL(request.url), {hostname,pathname}=url;
-  if(!['server','local','overlay'].includes(hostname)) return error('not_found',404);
+  if(!['server','local','overlay','auth'].includes(hostname)) return error('not_found',404);
   if(pathname.startsWith('/api/')){
     if(hostname==='overlay' || hostname!==settings.mode || loggingOut) return error('inactive_mode',409);
     const method=request.method;
@@ -83,33 +90,45 @@ async function gearProtocol(request){
   return net.fetch(pathToFileURL(file).href);
 }
 function buildWindow(options){
-  const w=new BrowserWindow({...options,icon:join(__dirname,'public','brand.ico'),backgroundColor:'#111a22',autoHideMenuBar:true,
+  const w=new BrowserWindow({frame:false,backgroundColor:'#101721',autoHideMenuBar:true,icon:join(__dirname,'public','brand.ico'),...options,
     webPreferences:{...secureWeb,preload:join(__dirname,'preload.cjs'),backgroundThrottling:false}});
   w.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   w.webContents.on('will-navigate',e=>e.preventDefault());
+  w.on('maximize',announce);w.on('unmaximize',announce);
   return w;
 }
 async function updateHud(){
   if(reading||!hud?.isVisible()||!main||main.isDestroyed())return;
   reading=true;const page=main.webContents.getURL();
-  try{const data=await main.webContents.executeJavaScript(extractHud);if(page===main.webContents.getURL()){hudData=data;announce();}}
-  catch{hudData=null;announce();}finally{reading=false;}
+  try{const data=await main.webContents.executeJavaScript(extractHud);if(page===main.webContents.getURL()&&JSON.stringify(hudData)!==JSON.stringify(data)){hudData=data;announce();}}
+  catch{}finally{reading=false;}
+}
+function raiseHud(){
+  if(!overlayShown || !hud || hud.isDestroyed() || exiting)return;
+  if(!hud.isVisible())hud.showInactive();
+  hud.moveTop();
+}
+function hideHud(){
+  overlayShown=false;
+  hud?.hide();
+  announce();
 }
 function toggleHud(){
-  if(hud?.isVisible()){hud.hide();announce();return;}
+  if(overlayShown){hideHud();return;}
   if(!hud){
     const area=screen.getPrimaryDisplay().workArea;
     const bounds=settings.bounds;
     const onScreen=bounds&&[bounds.x,bounds.y,bounds.width,bounds.height].every(Number.isFinite)&&bounds.width>=260 && bounds.height>=170 &&
       screen.getAllDisplays().some(({workArea:r})=>bounds.x+40>=r.x && bounds.x+40<r.x+r.width && bounds.y+20>=r.y && bounds.y+20<r.y+r.height);
-    hud=buildWindow({title:'Gildra Gear · Overlay',...(onScreen?bounds:{x:area.x+area.width-380,y:area.y+20,width:360,height:440}),minWidth:260,minHeight:170,show:false,skipTaskbar:true,alwaysOnTop:true});
-    hud.setAlwaysOnTop(true,'floating');
-    hud.on('close',e=>{if(!exiting){e.preventDefault();hud.hide();announce();}});
+    hud=buildWindow({title:'Gildra Gear · Overlay',...(onScreen?bounds:{x:area.x+area.width-380,y:area.y+20,width:360,height:440}),minWidth:260,minHeight:170,show:false,skipTaskbar:true,minimizable:false,maximizable:false,fullscreenable:false,alwaysOnTop:true,backgroundMaterial:'acrylic',backgroundColor:'#00000000'});
+    hud.setAlwaysOnTop(true,'screen-saver');
+    hud.on('blur',()=>setImmediate(raiseHud));
+    hud.on('close',e=>{if(!exiting){e.preventDefault();hideHud();}});
     const storeBounds=()=>{if(!exiting){settings.bounds=hud.getBounds();save();}};
     hud.on('moved',storeBounds);hud.on('resized',storeBounds);
     void hud.loadURL('gear://overlay/');
   }
-  hud.showInactive();announce();void updateHud();
+  overlayShown=true;hud.showInactive();raiseHud();announce();void updateHud();
 }
 async function authorizationURL(){
   const csrf=await (await api('/api/auth/csrf')).json();
@@ -125,8 +144,22 @@ async function authenticate(){
   if(login){login.focus();return;}
   const start=await authorizationURL();
   if(exiting || main.isDestroyed())return;
-  const dialog=login=new BrowserWindow({parent:main,width:700,height:760,title:'Battle.net',autoHideMenuBar:true,webPreferences:{...secureWeb,session:identity}});
-  dialog.webContents.setWindowOpenHandler(()=>({action:'deny'}));
+  const dialog=login=buildWindow({parent:main,width:700,height:760,minWidth:360,minHeight:320,title:'Battle.net',show:false});
+  const provider=new WebContentsView({webPreferences:{...secureWeb,session:identity}});
+  const remote=provider.webContents;
+  remote.setWindowOpenHandler(()=>({action:'deny'}));
+  dialog.contentView.addChildView(provider);
+  // The local title bar owns the first 44 device-independent pixels.
+  const layout=()=>{
+    const [width,height]=dialog.getContentSize();
+    provider.setBounds({x:0,y:44,width,height:Math.max(0,height-44)});
+  };
+  layout();dialog.on('resize',layout);
+  remote.on('did-navigate',(_event,address)=>{
+    const url=new URL(address);
+    authHost=safeProvider(url)?url.hostname:'';
+    announce();
+  });
   let accountLoginUsed=false, awaitingAccount=false, failed=false;
   const finish=(error=false)=>{
     if(dialog.isDestroyed())return;
@@ -134,7 +167,7 @@ async function authenticate(){
     dialog.close();
   };
   const navigate=async(url)=>{
-    try{if(!dialog.isDestroyed())await dialog.loadURL(url);}
+    try{if(!dialog.isDestroyed())await remote.loadURL(url);}
     catch(err){if(err.code!=='ERR_ABORTED')finish(true);}
   };
   const allow=e=>{
@@ -164,23 +197,35 @@ async function authenticate(){
     if(u.href===handshake){e.preventDefault();finish();return;}
     if(!safeProvider(u)){e.preventDefault();finish(true);}
   };
-  dialog.webContents.on('will-navigate',allow);dialog.webContents.on('will-redirect',allow);
-  dialog.webContents.on('did-fail-load',(_event,code,_message,_url,top)=>{if(top&&code!==-3)finish(true);});
-  dialog.webContents.on('did-finish-load',()=>{
-    if(!dialog.isDestroyed() && dialog.webContents.getURL().startsWith(site+callbackPath))finish(true);
+  remote.on('will-navigate',allow);remote.on('will-redirect',allow);
+  remote.on('did-fail-load',(_event,code,_message,_url,top)=>{if(top&&code!==-3)finish(true);});
+  remote.on('did-finish-load',()=>{
+    if(!remote.isDestroyed() && remote.getURL().startsWith(site+callbackPath))finish(true);
   });
-  const closed=new Promise(resolve=>dialog.once('closed',()=>{login=null;announce();resolve();}));
-  announce();void navigate(start);
+  const closed=new Promise(resolve=>dialog.once('closed',()=>{
+    login=null;authHost='';
+    if(!remote.isDestroyed())remote.close();
+    announce();resolve();
+  }));
+  announce();
+  try{
+    await dialog.loadURL('gear://auth/');
+    if(!dialog.isDestroyed()){dialog.show();remote.focus();void navigate(start);}
+  }catch{finish(true);}
   await closed;
   if(failed)throw Error('auth_unavailable');
 }
 function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
-  const own=e.sender===main?.webContents, overlay=e.sender===hud?.webContents;
-  if((!own&&!overlay)||e.senderFrame!==e.sender.mainFrame||!e.senderFrame.url.startsWith('gear://'))throw Error('invalid_source');
-  if(name==='overlay')return toggleHud();
-  if(name==='open'){main.restore();main.show();main.focus();return;}
-  if(!own) return;
+  const w=localWindow(e);
+  if(!w)throw Error('invalid_source');
+  if(name==='window-close'){if(w===hud)hideHud();else w.close();return;}
+  if(w!==hud && name==='window-minimize'){w.minimize();return;}
+  if(w!==hud && name==='window-maximize'){if(w.isMaximized())w.unmaximize();else w.maximize();return;}
+  if(w===login)return;
+  if(w===main && name==='overlay')return toggleHud();
+  if(w===hud && name==='open'){if(main.isMinimized())main.restore();main.show();main.focus();return;}
+  if(w!==main)return;
   if(name==='login'){signingIn??=authenticate().finally(()=>{signingIn=null;});return signingIn;}
   if(name==='logout'){
     loggingOut=true;
@@ -207,8 +252,10 @@ else {
     session.defaultSession.setPermissionCheckHandler(mayCopy);
     session.defaultSession.protocol.handle('gear',gearProtocol);
     ipcMain.handle('gear:action',action);
-    ipcMain.handle('gear:state',e=>([main?.webContents,hud?.webContents].includes(e.sender)&&e.senderFrame===e.sender.mainFrame)?state():null);
+    ipcMain.handle('gear:state',e=>{const w=localWindow(e);return w?windowState(w):null;});
     main=buildWindow({title:'Gildra Gear',width:1180,height:820,minWidth:390,minHeight:360});
+    main.on('minimize',()=>setImmediate(raiseHud));
+    main.on('focus',()=>setImmediate(raiseHud));
     main.on('closed',()=>{if(!exiting)app.quit();});
     void main.loadURL('gear://'+settings.mode+'/');
     globalShortcut.register('CommandOrControl+Alt+G',toggleHud);

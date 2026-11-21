@@ -1,47 +1,45 @@
 (() => {
-  // Read the current character tab, including the user's selected result.
-  // Closed disclosures and inactive tabs can contain older suggestions.
   const root = document.querySelector('[data-tool-panel="upgrades"]');
   const visible = node => node && node.getClientRects().length && !node.closest('[hidden]');
   if (!visible(root)) return null;
   const text = node => (node?.innerText || '').replace(/\s+/g, ' ').trim();
   const first = (s, base = root) => [...base.querySelectorAll(s)].find(visible);
   const nameOf = node => node?.querySelector('button[data-quality]')?.getAttribute('aria-label')?.replace(/\. (?:Описание предмета|Item details)$/, '') || '';
-  const parts = [];
-  const add = (s, base = root) => { const v = text(first(s, base)); if (v) parts.push(v); };
+  const rows = [], metrics = [], seen = new Set();
+  let progress = null;
+  function add(kind, label, detail = '') {
+    if (!label || seen.has(label+'\n'+detail)) return;
+    seen.add(label+'\n'+detail);
+    rows.push({kind, label, detail});
+  }
+  const statuses = root.querySelectorAll('[role="alert"], [data-auction-gear] strong[role="status"], [data-gear-farm][aria-busy="true"] [role="status"]');
+  for (const entry of [...statuses].filter(visible)) {
+    add(entry.matches('[role="alert"]') ? 'alert' : 'status', text(entry));
+    const meter = entry.parentElement?.querySelector('progress[value]');
+    if (meter?.max > 0) progress = {value:meter.value, max:meter.max};
+  }
   const auction = first('[data-auction-assembly-result]');
-  const badges = [...root.querySelectorAll('[data-upgrade-slot] [data-source]')].filter(visible);
-  const section = document.querySelector('[data-character-identity] h1');
-  const ru = document.documentElement.lang.startsWith('ru');
-  const statuses = [...root.querySelectorAll('[role="alert"], [data-auction-gear] strong[role="status"], [data-gear-farm][aria-busy="true"] [role="status"]')].filter(visible);
-  for (const entry of statuses) {
-    parts.push(text(entry));
-    const progress = entry.parentElement?.querySelector('progress[value]');
-    if (progress) parts.push(progress.value + ' / ' + progress.max);
-  }
   if (auction) {
-    add('[data-auction-primary-title]', auction);
-    if (auction.dataset.exhaustive === 'false') parts.push(ru ? 'Проверена часть вариантов.' : 'Search is partial.');
-    add('[role="status"]', auction);
-    add('[data-auction-primary-dps]', auction);
-    add('[data-auction-primary-cost]', auction);
-    for (const row of auction.querySelectorAll('[data-auction-shopping-row]:not([data-purchased])')) {
-      const name = nameOf(row) || text(row.querySelector('strong'));
-      const price = text(row.firstElementChild?.lastElementChild);
-      if (name) parts.push([name, price, text(row.querySelector('[data-shopping-status]'))].filter(Boolean).join(' · '));
+    add('result', text(first('[data-auction-primary-title]', auction)));
+    if (auction.dataset.exhaustive === 'false') add('status', document.documentElement.lang==='ru'?'Проверена часть вариантов.':'Search is partial.');
+    add('status', text(first('[role="status"]', auction)));
+    for (const attr of ['dps','cost']) {
+      const field = first('[data-auction-primary-'+attr+']', auction);
+      if (field) metrics.push({label:text(field.querySelector('dt')),value:text(field.querySelector('dd'))});
+    }
+    for (const row of [...auction.querySelectorAll('[data-auction-shopping-row]:not([data-purchased])')].filter(visible)) {
+      add('item',nameOf(row)||text(row.querySelector('strong')),
+        [text(row.firstElementChild?.lastElementChild),text(row.querySelector('[data-shopping-status]'))].filter(Boolean).join(' · '));
     }
   }
-  if (badges.length) {
-    for (const badge of badges) parts.push([nameOf(badge), text(badge)].filter(Boolean).join(' · '));
-  } else {
+  const badges = [...root.querySelectorAll('[data-upgrade-slot] [data-source]')].filter(visible);
+  for (const badge of badges) add('item',nameOf(badge)||text(badge),nameOf(badge)?text(badge):'');
+  if (!badges.length) {
     for (const target of [...root.querySelectorAll('[data-farm-verification="simulated"]')].filter(visible)) {
-      const activity = text(target.closest('[data-farm-access]')?.querySelector('h4'));
-      parts.push([activity,text(target)].filter(Boolean).join(' · '));
+      const activity=text(target.closest('[data-farm-access]')?.querySelector('h4'));
+      add('farm',activity||text(target),activity?text(target):'');
     }
   }
-  if (!parts.length) {
-    for (const status of [...root.querySelectorAll('[role="status"]')].filter(visible)) parts.push(text(status));
-  }
-  return { title: text(section), lines: [...new Set(parts.filter(Boolean))],
-    empty: ru ? 'Запустите подбор в приложении.' : 'Start a gear search in the app.' };
+  if (!rows.length && !metrics.length) for(const entry of [...root.querySelectorAll('[role="status"]')].filter(visible))add('status',text(entry));
+  return {title:text(document.querySelector('[data-character-identity] h1')),rows,metrics,progress};
 })()

@@ -12,6 +12,22 @@ const args=['--user-data-dir='+dir];
 if(process.platform==='linux')args.push('--no-sandbox');
 if(process.argv[3])args.push(resolve(process.argv[3]));
 const app=await _electron.launch({executablePath:resolve(process.argv[2]),args,timeout:60000});
+async function providerLink(label,click){
+ for(let n=0;n<120;n++){
+   const found=await app.evaluate(async({BrowserWindow},args)=>{
+     const host=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()==='gear://auth/');
+     const wc=host?.contentView.children.at(-1)?.webContents;
+     if(!wc || !wc.getURL().startsWith('https://eu.'))return false;
+     const link=await wc.executeJavaScript("document.querySelector('a')?.textContent");
+     if(link!==args.label)return false;
+     if(args.click)await wc.executeJavaScript("document.querySelector('a').click()");
+     return true;
+   },{label,click});
+   if(found)return;
+   await new Promise(r=>setTimeout(r,150));
+ }
+ throw Error('Missing provider link '+label);
+}
 try{
  const page=await app.firstWindow();
  page.setDefaultTimeout(30000);
@@ -72,8 +88,9 @@ try{
  const opened=app.waitForEvent('window');
  await page.getByRole('button',{name:'Войти через Battle.net'}).click();
  const login=await opened;
- await login.getByRole('link',{name:'Continue'}).click();
- await login.getByRole('link',{name:'Approve'}).click();
+ await login.getByRole('button',{name:'Свернуть'}).waitFor();
+ await providerLink('Continue',true);
+ await providerLink('Approve',true);
  await page.getByRole('combobox',{name:'Персонаж',exact:true}).waitFor();
  assert.deepEqual(await app.evaluate(()=>globalThis.testGear.callbacks),['https://gildra.net','https://wowarcana.com']);
  await page.getByRole('combobox',{name:'Персонаж',exact:true}).selectOption(slug);
@@ -115,6 +132,21 @@ try{
  await hud.getByText('GildraReleaseSmoke',{exact:true}).waitFor();
  const alwaysTop=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://overlay')).isAlwaysOnTop());
  assert.equal(alwaysTop,true);
+ const outside=app.waitForEvent('window');
+ await app.evaluate(({BrowserWindow})=>{
+   const main=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://local'));
+   main.minimize();
+   const peer=globalThis.gearTestPeer=new BrowserWindow({x:10,y:10,width:220,height:160});
+   return peer.loadURL('data:text/html,<button>Outside</button>');
+ });
+ const peerPage=await outside;
+ await peerPage.getByRole('button',{name:'Outside'}).click();
+ await app.evaluate(()=>new Promise(r=>setTimeout(r,350)));
+ assert.equal(await app.evaluate(({BrowserWindow})=>{
+   const overlay=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://overlay'));
+   return overlay.isVisible()&&overlay.isAlwaysOnTop()&&!overlay.isMinimized();
+ }),true);
+ await app.evaluate(()=>globalThis.gearTestPeer.destroy());
  await hud.getByRole('button',{name:'Открыть подбор'}).click();
  await page.getByRole('button',{name:'EN',exact:true}).click();
  await page.getByRole('combobox',{name:'Calculation mode'}).waitFor();
@@ -124,6 +156,7 @@ try{
  await page.getByRole('button',{name:'Sign in with Battle.net'}).waitFor();
  const reopened=app.waitForEvent('window');
  await page.getByRole('button',{name:'Sign in with Battle.net'}).click();
- await (await reopened).getByRole('link',{name:'Continue'}).waitFor();
+ await (await reopened).getByRole('button',{name:'Close'}).waitFor();
+ await providerLink('Continue',false);
  console.log(JSON.stringify({electron:await app.evaluate(()=>process.versions.electron),...baseline,alwaysTop,sitePages:0,cloudSubmissionsInLocalMode:0}));
 } finally { await app.close(); }
