@@ -14,6 +14,7 @@ if(process.argv[3])args.push(resolve(process.argv[3]));
 const app=await _electron.launch({executablePath:resolve(process.argv[2]),args,timeout:60000});
 try{
  const page=await app.firstWindow();
+ page.setDefaultTimeout(30000);
  page.on('pageerror',e=>console.error('renderer:',e.message));
  await app.evaluate(({session}, {profile,slug})=>{
    const account=session.fromPartition('persist:gildra-account');
@@ -60,10 +61,15 @@ try{
  await new Promise(r=>setTimeout(r,500));
  const posted=()=>app.evaluate(()=>globalThis.testGear.cloud.filter(([method])=>method==='POST').length);
  const before=await posted();
- const baseline=await page.evaluate(async slug=>{
+ const accepted=page.waitForResponse(r=>r.url()==='gear://local/api/wow/gear-farm-plans' && r.request().method()==='POST');
+ await page.getByRole('button',{name:'Проверить добычу'}).click();
+ const farmResponse=await accepted;
+ assert.equal(farmResponse.status(),202);
+ const farmId=(await farmResponse.json()).id;
+ const {clientRequestId,...farmScope}=farmResponse.request().postDataJSON();
+ const baseline=await page.evaluate(async ({slug,farmId,farmScope})=>{
    const send=async(path,body)=>{const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const job=await r.json();if(!r.ok)throw Error(JSON.stringify(job));return job;};
-   const work=async(base,opts,scope={})=>{
-     const job=await send(base,opts);
+   const finish=async(base,job,scope={})=>{
      for(let i=0;i<140;i++){
        const j=await send(base+'?'+new URLSearchParams({...scope,id:job.id}));
        if(j.status==='completed')return j.result;
@@ -71,11 +77,11 @@ try{
        await new Promise(r=>setTimeout(r,650));
      } throw Error('Timed out');
    };
-   const result=await work('/api/wow/auction-gear-plans',{characterSlug:slug,budgetGold:'1000',selectedSlots:['HEAD'],locale:'en',scenario:'single-target',fightLengthSeconds:30});
-   const scope={characterSlug:slug,profileKey:'test-farm',locale:'ru',dungeonDifficulty:'heroic',raidDifficulty:'heroic'};
-   const farm=await work('/api/wow/gear-farm-plans',{...scope,clientRequestId:Date.now()+':'+crypto.randomUUID()},scope);
+   const auction='/api/wow/auction-gear-plans';
+   const result=await finish(auction,await send(auction,{characterSlug:slug,budgetGold:'1000',selectedSlots:['HEAD'],locale:'en',scenario:'single-target',fightLengthSeconds:30}));
+   const farm=await finish('/api/wow/gear-farm-plans',{id:farmId},farmScope);
    return {baseline:result.baseline,activities:farm.activities.length};
- },slug);
+ },{slug,farmId,farmScope});
  assert.ok(baseline.baseline.dps>0&&baseline.baseline.engine.includes('18428cd')&&baseline.activities>0,JSON.stringify(baseline));
  assert.equal(await posted(),before);
  const openedHud=app.waitForEvent('window');
@@ -89,5 +95,11 @@ try{
  await page.getByRole('button',{name:'EN',exact:true}).click();
  await page.getByRole('combobox',{name:'Calculation mode'}).waitFor();
  assert.deepEqual(await app.evaluate(()=>globalThis.testGear.pages),[]);
+ await app.evaluate(()=>{globalThis.testGear.signed=false;});
+ await page.getByRole('button',{name:'Sign out',exact:true}).click();
+ await page.getByRole('button',{name:'Sign in with Battle.net'}).waitFor();
+ const reopened=app.waitForEvent('window');
+ await page.getByRole('button',{name:'Sign in with Battle.net'}).click();
+ await (await reopened).waitForURL('https://eu.battle.net/**');
  console.log(JSON.stringify({electron:await app.evaluate(()=>process.versions.electron),...baseline,alwaysTop,sitePages:0,cloudSubmissionsInLocalMode:0}));
 } finally { await app.close(); }

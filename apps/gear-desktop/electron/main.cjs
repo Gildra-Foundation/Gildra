@@ -23,7 +23,7 @@ function save(){
   fs.mkdirSync(dataDir,{recursive:true});
   fs.writeFileSync(tmp,JSON.stringify(settings),{mode:0o600});fs.renameSync(tmp,settingsFile);
 }
-function state(){return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:!!hud?.isVisible(),hud:hudData,authOpen:!!login};}
+function state(){return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:!!hud&&!hud.isDestroyed()&&hud.isVisible(),hud:hudData,authOpen:!!login};}
 function announce(){for(const w of [main,hud]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',state());}
 function safeProvider(u) {
   return u.protocol==='https:' && !u.username && !u.password && !u.port &&
@@ -162,11 +162,16 @@ else {
     ipcMain.handle('gear:action',action);
     ipcMain.handle('gear:state',e=>([main?.webContents,hud?.webContents].includes(e.sender)&&e.senderFrame===e.sender.mainFrame)?state():null);
     main=buildWindow({title:'Gildra Gear',width:1180,height:820,minWidth:390,minHeight:360});
-    main.on('closed',()=>app.quit());
+    main.on('closed',()=>{if(!exiting)app.quit();});
     void main.loadURL('gear://'+settings.mode+'/');
     globalShortcut.register('CommandOrControl+Alt+G',toggleHud);
     setInterval(updateHud,1200).unref();
   });
-  app.on('before-quit',()=>{exiting=true;resetPlanner();});
+  app.on('before-quit',()=>{
+    exiting=true;
+    if(login&&!login.isDestroyed())login.destroy();
+    if(hud&&!hud.isDestroyed())hud.destroy();
+    resetPlanner();
+  });
   app.on('will-quit',()=>globalShortcut.unregisterAll());
 }
