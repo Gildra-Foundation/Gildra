@@ -792,7 +792,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             context.simulate.finalistKey(customizedAuctionGearOptions(selected, configuration), ownedAuctionGearChanges(configuration))),
           recheckBaseline: simSignal => context.simulate([], simSignal, undefined, "finalist"),
           recheck: (selected, configuration, simSignal) => context.simulate(
-            customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
+            customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist",
+            checkpoint.baseline.furyWithoutLeechHealingV1 === true ? checkpoint.baseline.engine : undefined),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
           specId: context.specId, level: context.character.level, professions: context.armory.professions, faction: context.character.faction?.type, region: context.character.region,
           engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
@@ -1032,6 +1033,12 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const matches = equipped.filter(item => item?.slot?.type === slot);
     return matches.length === 1 ? matches[0] : undefined;
   };
+  const bareLeechHosts = new Map<string, number>();
+  for (const [slot, inventory] of [["WRIST", "WRIST"], ["BACK", "CLOAK"]]) {
+    const item = itemInSlot(slot);
+    if (item?.inventory_type?.type === inventory && item.item_class?.id === 4 && Number.isSafeInteger(item.item?.id) && item.item.id > 0 &&
+        (item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length)) bareLeechHosts.set(slot, item.item.id);
+  }
   const gloves = itemInSlot("HANDS");
   const unenchantedHandsId = gloves && (gloves.enchantments === undefined ||
     Array.isArray(gloves.enchantments) && !gloves.enchantments.length) ? gloves.item?.id : undefined;
@@ -1079,7 +1086,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
   const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; armorKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
-  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", physicalScore = false) => {
+  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", physicalScore = false, furyLeechEngine?: string) => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const verifiedEngine = engine() || measuredEngine;
     const jewelryScore = mode && selections.length
@@ -1092,7 +1099,8 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       wornPrismatic.size && ignoresItemContext(verifiedEngine)
       ? { ...request, ownedChanges: fixedEagleGemEdits(scoreOwned, wornPrismatic, installedRingEnchants, prepared.changes, prepared.removedSlots) } : request;
     const cacheKey = auctionGearMechanicalKey(fingerprint, keyRequest, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic,
-      barePrismaticRings: physicalScore ? barePrismaticRings : undefined, physicalFinalist: physicalScore && mode === "finalist" });
+      barePrismaticRings: physicalScore ? barePrismaticRings : undefined, physicalFinalist: physicalScore && mode === "finalist",
+      furyLeechHosts: verified && furyLeechEngine === verifiedEngine && specId === 72 ? bareLeechHosts : undefined });
     return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
@@ -1105,12 +1113,12 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const key = projected ? finalistKey(selections, projected) : bareArmor.size ? physicalKey : undefined;
     return key && `armor:${mask}:${key}`;
   };
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", furyLeechEngine?: string): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
     simSignal.throwIfAborted();
     // Receipts keep their existing identity for checkpoint ranking and tie
     // breaking. Only the physical simulation cache can share this extra proof.
-    const { prepared, verifiedEngine, scoreChanges, request, cacheKey } = prepareScore(selections, ownedChanges, mode, true);
+    const { prepared, verifiedEngine, scoreChanges, request, cacheKey } = prepareScore(selections, ownedChanges, mode, true, furyLeechEngine);
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;

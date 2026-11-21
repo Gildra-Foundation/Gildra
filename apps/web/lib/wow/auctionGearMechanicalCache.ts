@@ -102,8 +102,17 @@ export function isWorldsoulCradle(id: number) {
   return id === 8006 || id === 8007;
 }
 
-// Pure leech rating on a bare helm or shoulder. The caller must have an
+// Direct leech rating on bare armor. The caller must have an
 // attestation from the unchanged native Fury actor that healing is disabled.
+export function pureWristBackLeechEnchant(slot: string, inventory: number, id: number) {
+  if (!Number.isSafeInteger(id)) return false;
+  if (slot === "WRIST" && inventory === 9)
+    return (id >= 6575 && id <= 6580) || (id >= 7386 && id <= 7391);
+  if (slot === "BACK" && inventory === 16)
+    return (id >= 6593 && id <= 6595) || (id >= 7404 && id <= 7406);
+  return false;
+}
+
 export function pureArmorLeechEnchant(slot: string, inventory: number, id: number) {
   if (slot === "HEAD" && inventory === 1) return id === 7958 || id === 7959;
   return slot === "SHOULDER" && inventory === 3 && (id === 8028 || id === 8029 || id === 8030 || id === 8031);
@@ -329,8 +338,12 @@ export function isPlainScrollWeapon90(option: AuctionGearOption, variant: Auctio
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number>; barePrismaticRings?: ReadonlySet<string>; physicalFinalist?: boolean }) {
+}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number>; barePrismaticRings?: ReadonlySet<string>; physicalFinalist?: boolean; furyLeechHosts?: ReadonlyMap<string, number> }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
+  // Presence certifies this actor's healing mode. The map records which owned
+  // slots can take a scroll without overwriting their original enchant.
+  const furyLeechHosts = native?.physicalFinalist && request.precision === "finalist" &&
+    request.spec === "fury-warrior" && ignoresItemContext(native.engine) ? native.furyLeechHosts : undefined;
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
   const certifiedJewelry: { index: number; slot: string; ratings: number[] }[] = [];
@@ -348,6 +361,15 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
     const sameVariant = sameProgram && (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
       JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []);
+    if (furyLeechHosts && sameVariant && option && proof?.metadataVersion === 3 && proof.enhancements?.status === "verified" &&
+        option.candidate.itemClassId === 4 && change.slot === option.candidate.slotType.toLowerCase() &&
+        !native.changes.some((other, index) => index !== i && other.slot === change.slot) &&
+        !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+        !request.removedSlots?.includes(option.candidate.slotType) &&
+        change.enchantId && option.customization?.enchantId === change.enchantId && pureWristBackLeechEnchant(option.candidate.slotType, option.candidate.inventoryType, change.enchantId)) {
+      // The native call and the logical finalist keep the real scroll.
+      change = { ...change, enchantId: undefined };
+    }
     const armorConstantCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
       change.slot === option.candidate.slotType.toLowerCase() &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
@@ -478,6 +500,15 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
   let ownedChanges = midnight?.edits ?? jewelry?.edits ?? request.ownedChanges;
+  if (ownedChanges?.length && native && furyLeechHosts) {
+    const edits = ownedChanges.flatMap(edit => {
+      if (!edit.enchantId || furyLeechHosts.get(edit.slotType) !== edit.itemId ||
+          request.removedSlots?.includes(edit.slotType) || native.changes.some(c => c.slot === edit.slotType.toLowerCase()) ||
+          !pureWristBackLeechEnchant(edit.slotType, edit.slotType === "BACK" ? 16 : 9, edit.enchantId)) return [edit];
+      return edit.gems.length ? [{ ...edit, enchantId: undefined }] : [];
+    });
+    ownedChanges = edits.length ? edits : undefined;
+  }
   let ringEnchants: number[] | undefined;
   if (reuseCandidateInputs && ownedChanges?.length) {
     if (native.wornRings && !native.changes.some(item => item.slot === "finger1" || item.slot === "finger2"))

@@ -448,3 +448,62 @@ test("two Midnight gems with a fixed Eyes of the Eagle proc share a physical fig
   const other=build([0,2],[240855,240866]);
   assert.notEqual(key(other),key([...other,{slotType:"FINGER_2",itemId:501,enchantId:7964,gems:[]}]));
 });
+
+test("attested Fury shares the fight for a pure leech scroll and keeps every finalist receipt", () => {
+  const pinned = "SimulationCraft 1210-01 · 18428cd";
+  const request = {spec:"fury-warrior", scenario:"single-target", fightLengthSeconds:120, targets:1, precision:"finalist"};
+  const slots = [
+    ["WRIST", 9, [6575,6576,6577,6578,6579,6580,7386,7387,7388,7389,7390,7391]],
+    ["BACK", 16, [6593,6594,6595,7404,7405,7406]],
+  ];
+  for (const [slot, inventory, enchants] of slots) {
+    const itemId = 1001;
+    const variant = {key:"test", bonusIds:[123], contextId:5, itemLevel:82,
+      resolution:{engine:pinned, metadataVersion:3, enhancements:{status:"verified",socketColors:[0,0,0]}}};
+    const candidate = {...option.candidate, itemId, slotType:slot, inventoryType:inventory, variants:[variant]};
+    const hosts = new Map([[slot,itemId]]);
+    const key = (enchantId, {params, native, edit, item, owned=false, gemIds=[], ...customization} = {}) => {
+      const gear = { ...option, variantKey:"test", candidate:{...candidate,...item}, customization:{enchantId, gemIds, ...customization} };
+      const change = {slot:slot.toLowerCase(), itemId, bonusIds:[123], contextId:5, gemIds, enchantId, ...edit};
+      const ownedChanges = owned && (enchantId || gemIds.length)
+        ? [{slotType:slot,itemId,gems:gemIds.map((id,index)=>({index,itemId:id})),enchantId}] : undefined;
+      return auctionGearMechanicalKey("fury", {...request, ownedChanges, ...params},
+        {engine:pinned, changes:owned ? [] : [change], options:owned ? [] : [gear], physicalFinalist:true, furyLeechHosts:hosts, ...native});
+    };
+    for (const id of enchants) {
+      assert.equal(key(id), key(undefined));
+      assert.equal(key(id,{owned:true}), key(undefined,{owned:true}));
+      for (const change of [
+        {native:{physicalFinalist:false}}, {native:{furyLeechHosts:undefined}},
+        {native:{engine:"other"}}, {params:{spec:"fire-mage"}}, {params:{precision:undefined}},
+        {params:{removedSlots:[slot]}}, {edit:{bonusIds:[456]}}, {edit:{contextId:9}},
+        {item:{itemClassId:2}}, {item:{inventoryType:1}}, {enchantId:99},
+      ]) assert.notEqual(key(id,change), key(undefined,change));
+      for (const owned of [true,false]) {
+        assert.equal(key(id,{owned,gemIds:[123]}),key(undefined,{owned,gemIds:[123]}));
+        assert.notEqual(key(id,{owned,gemIds:[123]}),key(undefined,{owned,gemIds:[456]}));
+      }
+    }
+    for (const id of [5948,7370,6593.5, inventory===9 ? 6593 : 6575])
+      assert.notEqual(key(id),key(undefined));
+    assert.notEqual(key(enchants[0],{owned:true,native:{furyLeechHosts:new Map()}}),key(undefined,{owned:true}));
+  }
+});
+
+test("only an attested current engine shares pending Fury fights on an originally bare wrist", async () => {
+  const pinned = "SimulationCraft 1210-01 · 18428cd";
+  const item = {slot:{type:"WRIST"}, inventory_type:{type:"WRIST"}, item_class:{id:4}, item:{id:222477}, level:{value:79}};
+  const sig = new AbortController().signal;
+  const source = [{slotType:"WRIST",itemId:222477,enchantId:6578,gems:[]}];
+  for (const [equipped, proof, expectedCalls] of [
+    [[item], pinned, 1],
+    [[item], undefined, 2],
+    [[item], "SimulationCraft previous", 2],
+    [[{...item,enchantments:[{enchantment_id:248,enchantment_slot:{id:0}}]}], pinned, 2],
+  ]) {
+    const {run,calls} = simulator(() => ({...wires[0], engine:pinned}), {equipped,level:90,verifiedEngine:pinned});
+    assert.notEqual(run.finalistKey([],source),run.finalistKey([]));
+    await Promise.all([run([],sig,source,"finalist",proof),run([],sig,undefined,"finalist",proof)]);
+    assert.equal(calls(),expectedCalls);
+  }
+});
