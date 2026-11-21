@@ -8,7 +8,8 @@ import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagno
 import { auctionAppliedStatsKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
-import { equivalentBootEnchants, auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { projectUnreadArmor, equivalentBootEnchants, auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { ignoresItemContext } from '../../../lib/wow/gearItemModifiers.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { nativeGearSimulationMeasurement, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 
@@ -50,7 +51,7 @@ function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGea
   };
   const diagnostics = createAuctionGearDiagnostics();
   const create = vm.runInNewContext(code, { fetch, process, Date:clock, AbortSignal:signals, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
-    assertFreshMarket, equivalentBootEnchants, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
+    assertFreshMarket, equivalentBootEnchants, projectUnreadArmor, ignoresItemContext, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => diagnostics });
   const armory = { profile, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
@@ -631,6 +632,35 @@ test('a measured boot rating mask reuses only the same-rank finalist with the sa
     assert.equal(state.requests.length,before+1);
     state.requests.at(-1).finish();
     await result;
+  }
+});
+
+test('a joint armor certificate covers simultaneous edits only inside the observed rating class', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd';
+  const equipment = {equipped_items:['HEAD','SHOULDER','FEET'].map((type,i)=>({slot:{type},item:{id:20+i}}))};
+  const {run,state} = fixture({ownedBatch:true, workerEngine, equipment});
+  await run.concurrency(signal());
+  const edits = ids => ids.map((enchantId,i)=>({slotType:equipment.equipped_items[i].slot.type,itemId:20+i,enchantId,gems:[]}));
+  const physical = (ids,mode='finalist') => run([],signal(),edits(ids),mode);
+  const warm = [[100,101,7962],[8014,7998,7962],[8015,7999,7963],[103,102,7963]].map(ids=>physical(ids));
+  await tick();
+  for (let i=0; i<state.requests.length; i++) {
+    const req = state.requests[i];
+    if (req.batch) req.finish({results:req.ids.map((id,index)=>({dps:id,dpsMean:id+0.25,dpsError:0.12,confidence:95,
+      iterations:750,engine:workerEngine,unreadArmorRatingsV1:index===0?6:4}))});
+    else req.finish();
+    await tick();
+  }
+  await Promise.all(warm);
+  const before=state.requests.length;
+  // Leech and avoidance unread on the first representative; speed stays protected.
+  assert.equal((await physical([7958,8031,7992])).dps,8014.25);
+  assert.equal(state.requests.length,before);
+  for (const job of [()=>physical([7988,8031,7992]),()=>physical([7958,8031,7993]),
+      ()=>physical([7958,8031]),()=>physical([7958,8031,7992],'certified-candidate')]) {
+    const count=state.requests.length, promise=job();
+    await tick(); assert.equal(state.requests.length,count+1);
+    state.requests.at(-1).finish(); await promise;
   }
 });
 

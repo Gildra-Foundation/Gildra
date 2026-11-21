@@ -31,11 +31,12 @@ import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { auctionGearMechanicalCache, auctionGearMechanicalKey, equivalentBootEnchants, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, equivalentBootEnchants, projectUnreadArmor, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
+import { ignoresItemContext } from "./gearItemModifiers";
 import { prepareGearLoadout, nativeGearSimulationMeasurement, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, auctionEquipmentWinners, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
@@ -1077,6 +1078,13 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
     prepareScore(selections, ownedChanges, "finalist").cacheKey;
+  const observedArmorMasks = new Set<number>();
+  const armorScoreKey = (selections: AuctionGearOption[], edits: readonly OwnedAuctionGearChange[], mask: number) => {
+    const projected = projectUnreadArmor(edits, mask);
+    // Partition certificates by mask: an unread speed score must never serve
+    // a build covered only by a different packet's unread avoidance rating.
+    return projected && `armor:${mask}:${finalistKey(selections, projected)}`;
+  };
   const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
     simSignal.throwIfAborted();
@@ -1111,6 +1119,13 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
     const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
+    if (verified && mode === "finalist" && ownedChanges?.length) {
+      for (const mask of observedArmorMasks) {
+        const key = armorScoreKey(selections, ownedChanges, mask);
+        const measured = key && auctionGearMechanicalCache.get(key, verifiedEngine);
+        if (measured) { metrics.cacheHit(); return measured; }
+      }
+    }
     // Precision is part of cacheKey. Two finalists can join the same precise
     // fight under exactly the same conditions as a completed cache hit.
     const share = verified && verifiedEngine.startsWith("SimulationCraft");
@@ -1150,14 +1165,22 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
           (share && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
-      // The native mask covers every iteration of this physical build. Switch
-      // only the unread rating, preserving the rank's stamina and the receipt.
-      if (mode === "finalist" && ownedBatch && verifiedEngine === simulation.engine &&
-          result && typeof result === "object" && "equivalentBootRatingsV1" in result) {
-        const boot = ownedBatch.changes.find(edit => edit.slotType === "FEET");
-        for (const enchantId of equivalentBootEnchants(boot?.enchantId, result.equivalentBootRatingsV1, verifiedEngine)) {
-          const other = ownedBatch.changes.map(edit => edit === boot ? { ...edit, enchantId } : edit);
-          auctionGearMechanicalCache.set(finalistKey(selections, other), simulation);
+      if (mode === "finalist" && ownedBatch && verifiedEngine === simulation.engine && result && typeof result === "object") {
+        if ("unreadArmorRatingsV1" in result) {
+          const mask = result.unreadArmorRatingsV1;
+          if (typeof mask === "number" && Number.isInteger(mask) && mask > 0 && mask <= 7 && ignoresItemContext(verifiedEngine)) {
+            const key = armorScoreKey(selections, ownedBatch.changes, mask);
+            if (key) {
+              auctionGearMechanicalCache.set(key, simulation);
+              observedArmorMasks.add(mask);
+            }
+          }
+        } else if ("equivalentBootRatingsV1" in result) {
+          const boot = ownedBatch.changes.find(edit => edit.slotType === "FEET");
+          for (const enchantId of equivalentBootEnchants(boot?.enchantId, result.equivalentBootRatingsV1, verifiedEngine)) {
+            const other = ownedBatch.changes.map(edit => edit === boot ? { ...edit, enchantId } : edit);
+            auctionGearMechanicalCache.set(finalistKey(selections, other), simulation);
+          }
         }
       }
       measuredEngine = simulation.engine;

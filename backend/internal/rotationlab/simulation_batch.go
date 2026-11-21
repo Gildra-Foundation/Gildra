@@ -40,6 +40,7 @@ type batchMeasurement struct {
 
 	// Measured on this physical build, at this precision and seed.
 	EquivalentBootRatings byte `json:"equivalentBootRatingsV1,omitempty"`
+	UnreadArmorRatings    byte `json:"unreadArmorRatingsV1,omitempty"`
 
 	furyWithoutLeechHealing bool
 }

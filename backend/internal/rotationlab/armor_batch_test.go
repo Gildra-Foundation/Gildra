@@ -97,6 +97,23 @@ func TestBootEvidenceRequiresAnUnreadPhysicalRatingAtFinalistPrecision(t *testin
 	}
 }
 
+func TestExplicitArmorMasksPreserveReadSlots(t *testing.T) {
+	row := batchCandidate{OwnedChanges: []ownedEdit{
+		{SlotType: "HEAD", EnchantID: 8014}, {SlotType: "SHOULDER", EnchantID: 7970}, {SlotType: "FEET", EnchantID: 7992},
+	}}
+	for reads := byte(0); reads <= allArmorRatings; reads++ {
+		armor, boots := unreadArmorRatings(row, reads)
+		if armor != allArmorRatings&^reads || (boots != 0) != (reads&armorLeech == 0) {
+			t.Fatalf("read %d: armor=%d boots=%d", reads, armor, boots)
+		}
+	}
+	for _, edit := range []ownedEdit{{SlotType: "HANDS", EnchantID: 8014}, {SlotType: "HEAD", EnchantID: 7970}, {SlotType: "SHOULDER", EnchantID: 0}} {
+		if armor, _ := unreadArmorRatings(batchCandidate{OwnedChanges: []ownedEdit{edit}}, 0); armor != 0 {
+			t.Fatal("marked unrelated edit substitutable", edit)
+		}
+	}
+}
+
 func TestArmorBatchKeepsInstancesAndUnsupportedEditsSeparate(t *testing.T) {
 	ix := 0
 	r := batchCandidate{OwnedChanges: []ownedEdit{{SlotType: "FEET", ItemID: 1, EnchantID: 7962}}}
@@ -179,6 +196,10 @@ func TestNativeArmorBatchObservesLaterProfilesets(t *testing.T) {
 		if observed&armorSpeed != 0 || (i == 0 && observed != armorLeech|armorAvoidance) {
 			t.Fatalf("row %d advertised unsafe boot ratings %d, union %d", i, observed, mask)
 		}
+		if got[i].UnreadArmorRatings != observed {
+			t.Fatalf("row %d disagrees on the boot and armor masks", i)
+		}
+		got[i].UnreadArmorRatings = 0
 		got[i].EquivalentBootRatings = 0
 	}
 	if mask&armorSpeed == 0 || mask == allArmorRatings || want[3].DPSMean == want[5].DPSMean || !reflect.DeepEqual(got, want) {

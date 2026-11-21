@@ -59,15 +59,18 @@ func armorEnchantKey(slot string, id int, reads byte) int {
 	return key
 }
 
-// Ratings available for a substitution of the same boot rank. A read of
-// the original enchant's rating makes it ineligible for substitution.
-func equivalentBootRatings(row batchCandidate, reads byte) byte {
+// A mask describes the entire measured packet, but is useful to the client
+// only if the physical build has at least one eligible, explicitly edited slot.
+func unreadArmorRatings(row batchCandidate, reads byte) (armor, boots byte) {
 	for _, edit := range row.OwnedChanges {
-		if edit.SlotType == "FEET" && armorEnchantKey("FEET", edit.EnchantID, reads) < 0 && edit.EnchantID > 0 {
-			return allArmorRatings &^ reads
+		if edit.EnchantID > 0 && armorEnchantKey(edit.SlotType, edit.EnchantID, reads) < 0 {
+			armor = allArmorRatings &^ reads
+			if edit.SlotType == "FEET" {
+				boots = armor
+			}
 		}
 	}
-	return 0
+	return armor, boots
 }
 
 // The armory, APL, seed, precision and encounter belong to the enclosing
@@ -82,7 +85,7 @@ func armorBatchKey(row batchCandidate, reads byte) string {
 	return string(key)
 }
 
-func simulateArmorBatch(candidates []batchCandidate, shareBootScores bool, run func([]batchCandidate, *byte) ([]batchMeasurement, error)) ([]batchMeasurement, error) {
+func simulateArmorBatch(candidates []batchCandidate, shareArmorScores bool, run func([]batchCandidate, *byte) ([]batchMeasurement, error)) ([]batchMeasurement, error) {
 	indices := make(map[string]int)
 	var anchors []batchCandidate
 	anchorFor := make([]int, len(candidates))
@@ -97,17 +100,17 @@ func simulateArmorBatch(candidates []batchCandidate, shareBootScores bool, run f
 		anchorFor[i] = index
 	}
 	if len(anchors) == len(candidates) {
-		if !shareBootScores {
+		if !shareArmorScores {
 			return run(candidates, nil)
 		}
-		hasBoots := false
+		hasArmor := false
 		for _, row := range anchors {
-			if equivalentBootRatings(row, 0) != 0 {
-				hasBoots = true
+			if mask, _ := unreadArmorRatings(row, 0); mask != 0 {
+				hasArmor = true
 				break
 			}
 		}
-		if !hasBoots {
+		if !hasArmor {
 			return run(candidates, nil)
 		}
 	}
@@ -131,8 +134,8 @@ func simulateArmorBatch(candidates []batchCandidate, shareBootScores bool, run f
 		anchor := anchorFor[i]
 		if keys[anchor] == armorBatchKey(row, reads) {
 			results[i] = measured[anchor]
-			if shareBootScores {
-				results[i].EquivalentBootRatings = equivalentBootRatings(row, reads)
+			if shareArmorScores {
+				results[i].UnreadArmorRatings, results[i].EquivalentBootRatings = unreadArmorRatings(row, reads)
 			}
 		} else {
 			positions = append(positions, i)

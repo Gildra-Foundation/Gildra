@@ -26,6 +26,30 @@ export function equivalentBootEnchants(original: number | undefined, unread: unk
   return rank.filter((id, index) => id !== original && (unread & (1 << index)));
 }
 
+// A worker certificate applies only to explicit replacements. Retained
+// enchants can have other effects. Unknown IDs and any observed rating keep
+// their original slot, instance, enchant and socket data in the score key.
+const armorEnchants = new Map<number, { slot: string; axis: number; group: number }>();
+for (const [rank, ids] of bootEnchantRanks.entries())
+  ids.forEach((id, index) => armorEnchants.set(id, {slot: "FEET", axis: 1 << index, group: -1 - rank}));
+for (const [slot, families] of [
+  ["HEAD", [[7988, 7989], [7958, 7959], [8014, 8015]]],
+  ["SHOULDER", [[7970, 7971, 7972, 7973], [8028, 8029, 8030, 8031], [7998, 7999, 8000, 8001]]],
+] as const) {
+  families.forEach((ids, index) => ids.forEach(id => armorEnchants.set(id, {slot, axis: 1 << index, group: -1})));
+}
+
+export function projectUnreadArmor(edits: readonly OwnedAuctionGearChange[], unread: number) {
+  let projected: OwnedAuctionGearChange[] | undefined;
+  for (const [index, edit] of edits.entries()) {
+    const effect = edit.enchantId && armorEnchants.get(edit.enchantId);
+    if (!effect || effect.slot !== edit.slotType || !(effect.axis & unread)) continue;
+    projected ??= edits.slice();
+    projected[index] = { ...edit, enchantId: effect.group };
+  }
+  return projected;
+}
+
 // Pinned SimC gems with identical ordered direct stats at every level
 // from 1 to 90, socket color, description ID and item-level requirements.
 // These IDs have no spell, profession, relic, punchcard or gem-name proc.
