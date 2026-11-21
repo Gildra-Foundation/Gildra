@@ -253,3 +253,64 @@ test('purchased War Within scrolls share only a verified, unmasked finalist figh
     assert.notEqual(key(first, settings), key(swapped, settings), reason);
   }
 });
+
+test("three explicit Midnight gems share a single physical finalist fight and retain separate ranked receipts", async () => {
+  const verifiedEngine = "SimulationCraft 1210-01 · 18428cd";
+  const signal = new AbortController().signal;
+  const slots = ["FINGER_1", "FINGER_2", "NECK"];
+  const equipped = slots.map((slot, i) => ({
+    slot: { type: slot }, item: { id: 500 + i }, item_class: { id: 4 }, level: { value: 200 },
+    inventory_type: { type: slot === "NECK" ? "NECK" : "FINGER" }, sockets: [{ socket_type: { type: "PRISMATIC" } }],
+  }));
+  const build = ids => ids.map((itemId, i) => ({
+    slotType: slots[i], itemId: 500 + i, gems: [{ index: 0, itemId }], ...(i < 2 ? { enchantId: 7966 + i } : {}),
+  }));
+  const source = build([240887, 240879, 240904]);
+  const replacement = build([240871, 240887, 240882]); // Different SKUs and colors on different hosts.
+  const requests = [];
+  const { run, calls } = simulator((_i, request) => {
+    requests.push(request);
+    return { ...wires[0], engine: verifiedEngine, iterations: request.precision === "auction-finalist" ? 750 : 100 };
+  }, { equipped, level: 90, verifiedEngine });
+  assert.notEqual(run.finalistKey([], source), run.finalistKey([], replacement));
+  await Promise.all([run([], signal, source, "finalist"), run([], signal, replacement, "finalist")]);
+  assert.equal(calls(), 1);
+  const sent = requests[0].armory.equipment.equipped_items;
+  assert.deepEqual(sent.map(item => item.sockets[0].item.id), [240887, 240879, 240904]);
+  assert.deepEqual(sent.slice(0, 2).map(item => item.enchantments[0].enchantment_id), [7966, 7967]);
+  await run([], signal, replacement, "finalist");
+  assert.equal(calls(), 1);
+  await run([], signal, replacement, "certified-candidate");
+  assert.equal(calls(), 2);
+
+  const native = { engine: verifiedEngine, playerLevel: 90, changes: [], physicalFinalist: true,
+    wornPrismatic: new Map(equipped.map(item => [item.slot.type, item.item.id])) };
+  const key = (ownedChanges, settings = {}, request = {}) => auctionGearMechanicalKey("same-character",
+    { spec: "fury-warrior", scenario: "single-target", fightLengthSeconds: 120, targets: 1, precision: "finalist", ownedChanges, ...request },
+    { ...native, ...settings });
+  assert.equal(key(source), key(replacement));
+  assert.notEqual(key(source), key(build([240871, 240888, 240882])), "rating changed");
+  // Both builds have 23 crit, 22 haste, and both gem colors. Their color multiplicities differ.
+  assert.notEqual(key(build([240856, 240873, 240874])), key(build([240857, 240857, 240903])));
+  for (const settings of [
+    { playerLevel: 89 }, { engine: "unknown" }, { physicalFinalist: false }, { wornPrismatic: new Map() },
+    { wornPrismatic: new Map([["NECK", 888], ["FINGER_1", 500], ["FINGER_2", 501]]) },
+    { changes: [{ slot: "neck", itemId: 502 }] },
+  ]) assert.notEqual(key(source, settings), key(replacement, settings));
+  for (const request of [{ precision: undefined }, { removedSlots: ["FINGER_1"] }])
+    assert.notEqual(key(source, {}, request), key(replacement, {}, request));
+  for (const invalidate of [
+    edits => edits.pop(), edits => edits.push(edits[0]), edits => { edits[0].gems[0].index = 1; },
+    edits => { edits[0].gems.push({ index: 1, itemId: 240887 }); }, edits => { edits[1].gems = []; },
+    edits => { edits[2].enchantId = 5439; }, edits => { edits[2].gems[0].itemId = 240966; },
+  ]) {
+    const left = structuredClone(source), right = structuredClone(replacement);
+    invalidate(left);
+    invalidate(right);
+    assert.notEqual(key(left), key(right));
+  }
+  const otherEnchant = structuredClone(replacement);
+  otherEnchant[0].enchantId = 7967;
+  assert.notEqual(key(source), key(otherEnchant));
+  assert.notEqual(key(source), key([...replacement, { slotType: "CHEST", itemId: 600, enchantId: 1984, gems: [] }]));
+});

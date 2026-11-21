@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, purchasedRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
+import { ownedMidnightGemScore } from "./auctionMidnightGemRatings";
 import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity, bareWeaponCurveIdentity, bareArmorConstantCurveIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
@@ -395,9 +396,13 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       ...(ratings && (change.enchantId || change.gemIds?.some(Boolean)) ? { gemIds: undefined, enchantId: undefined, ringRatings90: ratings } : {}),
     };
   });
-  const jewelry = request.precision === "finalist" && native?.playerLevel === 90 && native.wornPrismatic?.size &&
+  const worn = request.precision === "finalist" && native?.playerLevel === 90 && native.wornPrismatic?.size &&
     ignoresItemContext(native.engine) && request.ownedChanges?.length
-    ? explicitOwnedJewelry(request.ownedChanges, native.wornPrismatic, native.changes, request.removedSlots, native.barePrismaticRings) : undefined;
+    ? { edits: request.ownedChanges, hosts: native.wornPrismatic } : undefined;
+  const midnight = worn && native?.physicalFinalist
+    ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots) : undefined;
+  const jewelry = worn && native && !midnight
+    ? explicitOwnedJewelry(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings) : undefined;
   // Assign the total to one stable field. Keep the original purchased-only
   // key when there are no qualifying worn edits so saved scores still match.
   if (gear && (jewelry || certifiedJewelry.length >= 2)) {
@@ -418,7 +423,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   }
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
-  let ownedChanges = jewelry?.edits ?? request.ownedChanges;
+  let ownedChanges = midnight?.edits ?? jewelry?.edits ?? request.ownedChanges;
   let ringEnchants: number[] | undefined;
   if (reuseCandidateInputs && ownedChanges?.length) {
     if (native.wornRings && !native.changes.some(item => item.slot === "finger1" || item.slot === "finger2"))
@@ -439,7 +444,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   }
   const changes = (gear ?? request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, purchasedScrollTotal90: purchasedScrollTotal || undefined, explicitJewelryRatings90: jewelry?.ratings, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
-    actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
+    ownedMidnightGems90: midnight?.signature, actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 
 export function createAuctionGearMechanicalCache(now = Date.now, capacity = maximum, lifetime = ttlMs) {
