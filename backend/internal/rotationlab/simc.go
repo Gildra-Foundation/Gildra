@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	auctionQuickProbePrecision  = "auction-quick-32"
 	auctionCandidatePrecision   = "auction-candidate"
 	auctionFinalistPrecision    = "auction-finalist"
 	defaultSimCIterations       = 750
@@ -681,6 +682,8 @@ func containsString(values []string, target string) bool {
 func (e *SimCEngine) iterationBudget(input SimulationInput) int {
 	iterations := e.iterations
 	switch input.Precision {
+	case auctionQuickProbePrecision:
+		iterations = 32
 	case auctionCandidatePrecision:
 		iterations = 100
 	case auctionFinalistPrecision:

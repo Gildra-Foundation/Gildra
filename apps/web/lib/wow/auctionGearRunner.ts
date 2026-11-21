@@ -627,7 +627,10 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       entry.allowedKey = allowedKey;
       scheduleAuctionGearSearchSave(entry);
     }
-    const capacity = fullMarket && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
+    const quickEquipment = !fullMarket && context.input.enhancementMode === "equipment";
+    const workerCapacity = (fullMarket || quickEquipment) && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
+    const screenQuick = quickEquipment && context.simulate.quickProbe;
+    const capacity = fullMarket || screenQuick ? workerCapacity : 1;
     const assemblyBatchSize = capacity === 2 ? context.simulate.batchSize : undefined;
     const currentPreview = () => {
       const cached = entry.enhancementPreview;
@@ -654,6 +657,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
+        quickProbe: screenQuick
+          ? (selected, sig) => context.simulate(selected, sig, undefined, "quick-probe") : undefined,
         incumbents: entry.retainedIncumbents,
         reuseAppliedStats: fullMarket,
         // This pass measures bare gear. The enhancement iterator below receives
@@ -666,7 +671,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             entry.assemblyCheckpoint?.equipmentVerification !== undefined)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
-        maxNewSimulations: advanceTogether ? 1 : assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
+        maxNewSimulations: screenQuick ? 8 : advanceTogether ? 1 : assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
         shouldYield: advanceTogether && entry.assemblyCheckpoint ? () => true : shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
       }));
@@ -705,7 +710,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         publishResult?.(published);
       }
     }
-    for (let step = 1; !advanceTogether && publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
+    for (let step = 1; !screenQuick && !advanceTogether && publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
       ({ checkpoint, published, poolComplete } = await advanceAssembly());
     }
     if (!shouldYield()) setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
@@ -1086,10 +1091,10 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
   const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; armorKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
-  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", physicalScore = false, furyLeechEngine?: string) => {
+  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate" | "quick-probe", physicalScore = false, furyLeechEngine?: string) => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const verifiedEngine = engine() || measuredEngine;
-    const jewelryScore = mode && selections.length
+    const jewelryScore = mode && mode !== "quick-probe" && selections.length
       ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings, mode === "finalist" ? mode : undefined) : undefined;
     const scoreChanges = jewelryScore?.changes ?? prepared.changes;
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
@@ -1101,7 +1106,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const cacheKey = auctionGearMechanicalKey(fingerprint, keyRequest, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic,
       barePrismaticRings: physicalScore ? barePrismaticRings : undefined, physicalFinalist: physicalScore && mode === "finalist",
       furyLeechHosts: verified && furyLeechEngine === verifiedEngine && specId === 72 ? bareLeechHosts : undefined });
-    return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
+    return { prepared, verifiedEngine, scoreChanges, request, cacheKey: mode === "quick-probe" ? "quick32:" + cacheKey : cacheKey };
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
     prepareScore(selections, ownedChanges, "finalist").cacheKey;
@@ -1113,7 +1118,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const key = projected ? finalistKey(selections, projected) : bareArmor.size ? physicalKey : undefined;
     return key && `armor:${mask}:${key}`;
   };
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate", furyLeechEngine?: string): Promise<GearPlanSimulation> => {
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate" | "quick-probe", furyLeechEngine?: string): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
     simSignal.throwIfAborted();
     // Receipts keep their existing identity for checkpoint ranking and tie
@@ -1125,7 +1130,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     // A bare substitution can span different socket or suffix programs only
     // while all the purchased items are bare. Keep the native precision in
     // the cache key so each independent measurement still runs once.
-    const barePurchase = mode && selections.length > 0 && !ownedChanges?.length &&
+    const barePurchase = mode && mode !== "quick-probe" && selections.length > 0 && !ownedChanges?.length &&
       selections.every(option => !option.customization);
     if (barePurchase) {
       const proof = auctionAppliedStatsKey(selections, verifiedEngine, true);
@@ -1188,14 +1193,14 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const measurement = metrics.measure("simulation", async () => {
       const base = { spec: specSlug, scenario, ...encounter, actionListMode: "native", talentLoadout: armory.activeTalentLoadout,
         armory: { profile: armory.profile, specializations: armory.specializations, equipment },
-        precision: mode === "finalist" ? "auction-finalist" : "auction-candidate" };
+        precision: mode === "finalist" ? "auction-finalist" : mode === "quick-probe" ? "auction-quick-32" : "auction-candidate" };
       const ownedBatch = transport.ownedBatch && ownedChanges?.length
         ? { base: { ...base, armory: { ...base.armory, equipment: prepared.equipment } }, changes: ownedChanges }
         : undefined;
       // A mixed-slot worker starts each profileset from the original armory.
       // Owned edits and off-hand removal still require their own base and slot set.
       const batchEquipment = ownedBatch ? prepared.equipment : equipment;
-      const mixed = transport.mixedSlots && batchEquipment === armory.equipment && !ownedChanges?.length && base.precision === "auction-candidate";
+      const mixed = transport.mixedSlots && batchEquipment === armory.equipment && !ownedChanges?.length && base.precision !== "auction-finalist";
       const group = transport.batchSize && (prepared.changes.length || ownedBatch)
         ? JSON.stringify([base.precision, batchEquipment === armory.equipment ? null : batchEquipment,
           mixed ? "mixed" : prepared.changes.map(change => change.slot).sort(),
@@ -1204,7 +1209,7 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
       const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, probeArmor: Boolean(armorKey), signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
-      if (mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
+      if (mode === "quick-probe" && simulation.iterations !== 32 || mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
       const catalogEngine = engine();
       if ((catalogEngine && simulation.engine !== catalogEngine) ||
           (measuredEngine && simulation.engine !== measuredEngine) ||
@@ -1241,9 +1246,10 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     try { return await measurement; }
     finally { pending.delete(entry); }
   };
-  return Object.defineProperties(Object.assign(simulate, { finalistKey, concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
+  return Object.defineProperties(Object.assign(simulate, { finalistKey, concurrency: transport.concurrency, batchSize: 0, ownedBatch: false, quickProbe: false }), {
     batchSize: { get: () => transport.batchSize },
     ownedBatch: { get: () => transport.ownedBatch },
+    quickProbe: { get: () => transport.quickProbe },
   });
 }
 
@@ -1300,7 +1306,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
   const pending: AuctionNativeJob[] = [];
   const subscribers = new Map<AbortSignal, { jobs: Set<AuctionNativeJob>; abort: () => void }>();
-  let ownedBatch = false, mixedSlots = false, armorProbe = false;
+  let ownedBatch = false, mixedSlots = false, armorProbe = false, quickProbe = false;
   let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
 
   const requestDeadlineMs = 190_000;
@@ -1482,6 +1488,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       batchSize = permits === 2 && /^\d+$/.test(advertised) && Number(advertised) >= 2 ? Math.min(25, Number(advertised)) : 0;
       mixedSlots = batchSize > 0 && response.headers.get("x-gildra-simulation-mixed-slots") === "1";
       ownedBatch = batchSize > 0 && response.headers.get("x-gildra-simulation-owned-batch") === "1";
+      quickProbe = response.ok && response.headers.get("x-gildra-simulation-quick-probe") === "32";
       armorProbe = ownedBatch && response.headers.get("x-gildra-simulation-armor-probe") === "1";
       schedule();
       return capacity;
@@ -1491,8 +1498,9 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       batchSize = 0;
       mixedSlots = false;
       ownedBatch = false;
+      quickProbe = false;
       return capacity;
     }
   }
-  return { submit, concurrency, get armorProbe() { return ownedBatch && armorProbe; }, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
+  return { submit, concurrency, get quickProbe() { return quickProbe; }, get armorProbe() { return ownedBatch && armorProbe; }, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
 }

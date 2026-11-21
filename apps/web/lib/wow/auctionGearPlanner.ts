@@ -389,6 +389,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   bareEquipmentProofs?: boolean;
   recheckEquipment?: PlannerInput["simulate"];
   preciseSingleCards?: boolean;
+  quickProbe?: PlannerInput["simulate"];
   screeningGroupVersion?: AuctionGearAssemblyCheckpoint["nativeLotGroups"];
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
@@ -396,6 +397,12 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const { options, slots, inputKey, max, maxAssignments } = prepare(input);
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
+  // Exact continuations replay a screened quick cursor from the start.
+  if (!input.quickProbe && input.checkpoint?.quickScreenedOut) {
+    requireCheckpoint(inputKey, input.checkpoint, (input.checkpoint.nativeLotGroups ?? 0) >= 3 ? 4 : 3);
+    input = { ...input, baseline: input.baseline ?? input.checkpoint.baseline,
+      simulationCache: { ...input.checkpoint.simulationCache, ...input.simulationCache }, checkpoint: undefined };
+  }
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
   const equipmentGrouping = input.screeningGroupVersion ?? (input.bareEquipmentProofs ? 14 : 6);
   const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
@@ -647,7 +654,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const signal = AbortSignal.any([input.signal, controller.signal]);
   const pending = new Map<string, Promise<PromiseSettledResult<GearPlanSimulation>>>();
   const selections: { selection: AuctionGearOption[]; key: string }[] = [];
-  const evaluate = (selection: AuctionGearOption[]) => {
+  const measureSelection = (selection: AuctionGearOption[]) => {
     const exact = auctionSelectionEffectKey(selection);
     const equivalent = reuseAppliedStats && auctionAppliedStatsKey(selection, checkpoint.baseline.engine, input.bareEquipmentProofs);
     const cachedExact = checkpoint.simulationCache[exact];
@@ -668,7 +675,43 @@ export async function assembleAuctionGear(input: PlannerInput & {
     selections.push({ selection, key });
     return true;
   };
+  const quickQueue: AuctionGearOption[][] = [];
+  const evaluate = (selection: AuctionGearOption[]) => {
+    if (!input.quickProbe || !selection.length || checkpoint.simulationCache[auctionSelectionEffectKey(selection)])
+      return measureSelection(selection);
+    if (calls + pending.size + quickQueue.length >= max) return false;
+    quickQueue.push(selection);
+    return true;
+  };
+  const screenQuickWindow = async () => {
+    const candidates = quickQueue.splice(0);
+    const probes = await Promise.all(candidates.map(async selection => {
+      const score = validSimulation(await input.quickProbe!(selection, signal), checkpoint.baseline.engine);
+      if (score.iterations !== 32) throw new Error("invalid_simulation_result");
+      return { selection, score, price: auctionPlanCost(selection) };
+    }));
+    // A noisy first pass competes on both objectives. Only ordinary
+    // measurements may become published leaders or seed a full continuation.
+    const radius = (score: GearPlanSimulation) => 3 * Math.max(score.dpsError, 0.1 * score.dps / Math.sqrt(score.iterations));
+    const baseline = checkpoint.baseline, baselineLower = baseline.dps - radius(baseline), baselineUpper = baseline.dps + radius(baseline);
+    const peak = checkpoint.bestDpsConfirmed?.simulation ?? baseline, value = checkpoint.bestValueConfirmed;
+    let dpsFloor = Math.max(baselineLower, peak.dps - radius(peak));
+    let valueFloor = value ? Math.max(0, value.simulation.dps - radius(value.simulation) - baselineUpper) / auctionPlanCost(optionsFor(value)) : 0;
+    for (const { score, price } of probes) {
+      const lower = score.dps - radius(score);
+      dpsFloor = Math.max(dpsFloor, lower);
+      valueFloor = Math.max(valueFloor, (lower - baselineUpper) / price);
+    }
+    let discarded = 0;
+    for (const { selection, score, price } of probes) {
+      const upper = score.dps + radius(score);
+      if (upper >= dpsFloor || (upper - baselineLower) / price >= valueFloor) measureSelection(selection);
+      else discarded++;
+    }
+    return discarded;
+  };
   const commitWindow = async () => {
+    const discarded = quickQueue.length ? await screenQuickWindow() : 0;
     const measured = await Promise.all(pending.values());
     let index = 0;
     for (const key of pending.keys()) {
@@ -685,6 +728,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
       save();
       input.signal.throwIfAborted();
       throw failed.reason;
+    }
+    if (discarded) {
+      checkpoint.validCombinations += discarded;
+      checkpoint.quickScreenedOut = (checkpoint.quickScreenedOut ?? 0) + discarded;
+      calls += discarded;
     }
     for (const { selection, key } of selections) {
       // Discovery and warm-start scoring look up individual items by their original identity.
@@ -992,8 +1040,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
   assertFreshMarket(input.market);
   return { checkpoint, ...(preciseSingles ? { preciseSingles } : {}), result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
     ...auctionEquipmentWinners(leaders, optionsFor, input, slots),
-    simulations: checkpoint.simulations + (checkpoint.equipmentVerification?.simulations ?? 0), optionsConsidered: options.length, searchLimited: !complete,
-    exhaustiveComplete: complete, combinationsChecked: coverage.combinationsChecked,
+    simulations: checkpoint.simulations + (checkpoint.equipmentVerification?.simulations ?? 0), optionsConsidered: options.length, searchLimited: !complete || Boolean(checkpoint.quickScreenedOut),
+    exhaustiveComplete: complete && !checkpoint.quickScreenedOut, combinationsChecked: coverage.combinationsChecked,
     ...(coverage.proofPrunedAssignments ? { proofPrunedAssignments: coverage.proofPrunedAssignments } : {}),
     ...(coverage.pruningCounts ? { pruningCounts: coverage.pruningCounts } : {}),
     validCombinations: coverage.validCombinations, combinationCount: coverageCount, combinationKind: "effects" } };

@@ -173,6 +173,7 @@ export type AuctionGearSearchCheckpoint = {
 };
 export type AuctionGearAssemblyCheckpoint = {
   version: 3 | 4;
+  quickScreenedOut?: number;
   nativeLotGroups?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
   inputKey: string;
   /** Next mixed-radix effect-group assignment. Zero keeps the current item. */

@@ -56,14 +56,14 @@ func (b simulationBatch) validate() error {
 		return errors.New("invalid batch candidate count")
 	}
 	if b.Base.ActionListMode != ActionListModeNative ||
-		(b.Base.Precision != auctionCandidatePrecision && b.Base.Precision != auctionFinalistPrecision) ||
+		(b.Base.Precision != auctionCandidatePrecision && b.Base.Precision != auctionQuickProbePrecision && b.Base.Precision != auctionFinalistPrecision) ||
 		b.Base.GearChange != nil || len(b.Base.GearChanges) > 0 {
 		return errors.New("expected native auction simulation base without gear overrides")
 	}
 	if err := ValidateInput(b.Base); err != nil {
 		return err
 	}
-	if b.MixedSlots && (b.Base.Armory == nil || b.Base.Precision != auctionCandidatePrecision) {
+	if b.MixedSlots && (b.Base.Armory == nil || (b.Base.Precision != auctionCandidatePrecision && b.Base.Precision != auctionQuickProbePrecision)) {
 		return errors.New("mixed slots require a candidate armory")
 	}
 	// Homogeneous batches inherit row zero. Mixed batches use an untouched

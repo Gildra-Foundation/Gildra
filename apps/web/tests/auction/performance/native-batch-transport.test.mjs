@@ -1174,7 +1174,7 @@ test('equal verified tuning caps share only like-precision fights with the same 
     const bonusIds = [6652, 13668, 13901];
     const resolution = {engine, metadataVersion: 3, nativeContentTuningV1: [tuning, 90],
       enhancements: {status: 'verified', socketColors: [14, 0, 0]}, ...proof};
-    const option = {variantKey: 'offer', candidate: {itemId: 258910, variants: [{key: 'offer', bonusIds, modifiers, resolution}]}};
+    const option = {variantKey: 'offer', candidate: {itemId: 258910, slotType: 'FINGER_1', variants: [{key: 'offer', bonusIds, modifiers, resolution}]}};
     const change = {slot: 'finger1', itemId: 258910, modifiers, bonusIds, gemIds: [130215], enchantId: 7964, ...changes};
     const request = {precision, spec: 'fury-warrior', scenario: 'single-target', targets: 1, fightLengthSeconds: 120};
     return auctionGearMechanicalKey('fixed-profile', request, {engine, changes: [change], options: [option]});

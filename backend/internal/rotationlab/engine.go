@@ -37,7 +37,7 @@ func ValidateInput(input SimulationInput) error {
 	}
 	switch input.Precision {
 	case "":
-	case "finalist", auctionCandidatePrecision, auctionFinalistPrecision:
+	case "finalist", auctionQuickProbePrecision, auctionCandidatePrecision, auctionFinalistPrecision:
 		if input.ActionListMode != ActionListModeNative {
 			return errors.New("invalid native simulation precision")
 		}
