@@ -52,6 +52,24 @@ test('mirrors require two interchangeable native inputs and two independent purc
   assert.equal(auctionRingMirrorOrder(groupFixture(),slots,engine,63),undefined);
   assert.equal(auctionRingMirrorOrder(groupFixture(),slots,'different',72),undefined);
 });
+test('bare rings with matching empty prismatic sockets can move between fingers',()=>{
+  const groups=groupFixture();
+  const copies=groups.slice(0,2).flatMap(axis=>axis[0].options);
+  for(const o of copies) Object.assign(o.candidate.variants[0].resolution.enhancements,{socketColors:[14,0,0],socketCount:1});
+  const skips=()=>auctionRingMirrorOrder(groups,slots,engine,72)?.skips([1,2,1])??false;
+  assert(skips());
+  const o=copies[0], sockets=o.candidate.variants[0].resolution.enhancements;
+  for(const change of [
+    {socketColors:[0,14,0]}, {socketColors:[2,0,0]}, {socketCount:0}, {socketBonusId:5203}, {requiredProfessionId:755},
+  ]) {
+    const original={...sockets};
+    Object.assign(sockets,change);
+    assert(!skips());
+    Object.assign(sockets,original);
+  }
+  for(const copy of copies) copy.customization={gemIds:[192982]};
+  assert(!skips());
+});
 test('full bare search skips equivalent ring branches and preserves both physical winners across restores',async()=>{
   const options=groupFixture().flat(2).flatMap(g=>g.options);
   const run=async proof=>{
