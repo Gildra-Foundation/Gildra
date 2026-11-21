@@ -18,6 +18,7 @@ import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiv
 import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { auctionAppliedStatsKey, auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
+import { fixedEagleGemEdits } from "./auctionRingRatings";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import { applyOwnedAuctionGearChanges, ownedAuctionGearChanges, customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
@@ -1071,6 +1072,9 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
   }
   const firstRing = wornRing("FINGER_1"), secondRing = wornRing("FINGER_2");
   const wornRings = firstRing && secondRing ? [firstRing, secondRing] as const : undefined;
+  const installedRingEnchants = new Map<string, number>();
+  if (firstRing) installedRingEnchants.set("FINGER_1", firstRing.enchantId);
+  if (secondRing) installedRingEnchants.set("FINGER_2", secondRing.enchantId);
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
@@ -1084,7 +1088,10 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic,
+    const keyRequest = mode === "finalist" && physicalScore && scoreOwned?.length &&
+      wornPrismatic.size && ignoresItemContext(verifiedEngine)
+      ? { ...request, ownedChanges: fixedEagleGemEdits(scoreOwned, wornPrismatic, installedRingEnchants, prepared.changes, prepared.removedSlots) } : request;
+    const cacheKey = auctionGearMechanicalKey(fingerprint, keyRequest, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic,
       barePrismaticRings: physicalScore ? barePrismaticRings : undefined, physicalFinalist: physicalScore && mode === "finalist" });
     return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
   };

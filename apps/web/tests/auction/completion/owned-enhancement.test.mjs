@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { restoreAuctionGearContext } from '../../../lib/wow/auctionGearRunner.ts';
+import { fixedEagleGemEdits } from '../../../lib/wow/auctionRingRatings.ts';
 import { createAuctionGearDiscovery } from '../../../lib/wow/auctionGearDiscovery.ts';
 import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/auctionGearExhaustiveEnhancements.ts';
@@ -164,6 +165,21 @@ test('shoulder illusions cannot improve an unenchanted purchase or an unenchante
   }
   assert((await run(true,true,engine,true,true)).has(8028),'An existing shoulder enchant can be replaced');
   assert((await run(true,true)).has(6685),'An illusion can replace an existing combat enchant');
+});
+
+test('fixed Eyes of the Eagle distinguishes ranks and physical ring positions in the scoring input', () => {
+  const hosts=new Map([['FINGER_1',413],['FINGER_2',414]]);
+  const installed=new Map([['FINGER_1',7967]]);
+  const edit={slotType:'FINGER_1',itemId:413,gems:[{index:0,itemId:115811}]};
+  const normalized={...edit,gems:[{index:0,itemId:115804}]};
+  const key=(edits,changes=[],removed=[])=>fixedEagleGemEdits(edits,hosts,installed,changes,removed);
+  for (const rank of [7966,7967]) assert.deepEqual(key([{...edit,enchantId:rank}]),[{...normalized,enchantId:rank}]);
+  assert.deepEqual(key([edit]),[normalized]);
+  for (const other of [{...edit,enchantId:999999},{...edit,itemId:415},{...edit,gems:[{index:1,itemId:115811}]},
+    {...edit,gems:[{index:0,itemId:999999}]},{...edit,slotType:'FINGER_2',itemId:414}]) assert.deepEqual(key([other]),[other]);
+  assert.deepEqual(key([edit],[{slot:'finger1'}]),[edit]);
+  assert.deepEqual(key([edit],[],['FINGER_1']),[edit]);
+  assert.deepEqual(key([edit,edit]),[edit,edit]);
 });
 
 test('owned jewelry gem substitutions preserve scarce stock, installed gems, and receipt prices', async () => {

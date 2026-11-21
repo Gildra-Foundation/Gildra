@@ -1,3 +1,5 @@
+import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
+
 // Pinned 18428cd DBC, authenticated level-90 player. Rows are critical strike,
 // haste, mastery and versatility. Each column adds 1..5 integer gem rating.
 const gemRanks90 = [
@@ -68,6 +70,7 @@ export function purchasedRingScrollRating90(id: number, itemLevel: number, empty
   if (id >= 7329 && id <= 7352 && itemLevel >= 70 && itemLevel <= 170 && emptyPlainSockets) return scrollRatings90.get(id);
 }
 
+const isEyesOfTheEagle = (id: number | undefined) => id === 7966 || id === 7967;
 export const isDirectRingEnchant = (id: number) => enchants.has(id);
 export const ringGemRepresentative90 = (id: number) => gems.get(id)?.representative;
 
@@ -78,4 +81,21 @@ export function combinedRingRatings90(enchantId: number, gemId: number) {
   if (enchant) ratings[enchant.axis] += enchant.amount;
   if (gem) ratings[gem.axis] += gem.amount;
   return ratings;
+}
+
+/** These gems add identical rating on the same prismatic host. The fixed
+ * Eyes of the Eagle rank applies only its own crit damage/heal multiplier. */
+export function fixedEagleGemEdits(edits: readonly OwnedAuctionGearChange[], hosts: ReadonlyMap<string, number>,
+  installedEnchants: ReadonlyMap<string, number>, changes: readonly {slot: string}[], removed?: readonly string[]) {
+  if (new Set(edits.map(edit => edit.slotType)).size !== edits.length) return edits;
+  return edits.map(edit => {
+    const slot = edit.slotType;
+    if (slot !== "FINGER_1" && slot !== "FINGER_2" || hosts.get(slot) !== edit.itemId ||
+        removed?.includes(slot) || changes.some(change => change.slot === (slot === "FINGER_1" ? "finger1" : "finger2")) ||
+        !isEyesOfTheEagle(edit.enchantId ?? installedEnchants.get(slot)) ||
+        edit.gems.length !== 1 || edit.gems[0].index !== 0) return edit;
+    const representative = ringGemRepresentative90(edit.gems[0].itemId);
+    return representative && representative !== edit.gems[0].itemId
+      ? { ...edit, gems: [{ ...edit.gems[0], itemId: representative }] } : edit;
+  });
 }
