@@ -172,26 +172,42 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
-/** On this DBC, 1679 and 1680 insert crit then versatility, followed by
- * the same name suffix (13152). Only the allocation percentages differ.
- * Bare combat sees the rounded ratings. Keep the host, level, all other
- * native inputs and equip constraints, and let the allocator choose lots. */
-function bareRingSuffixIdentity(option: AuctionGearOption, engine: string) {
+// Inclusive bonus-list ranges with the same native suffix name. Each member
+// adds only two secondary ratings. verify-rating-suffixes.py checks all rows.
+const jewelrySuffixRanges = [
+  [19, 39, 13150], [45, 86, 13151], [87, 107, 13152], [108, 128, 13156],
+  [129, 149, 13150], [150, 170, 13157], [175, 195, 13156], [196, 216, 13161],
+  [217, 237, 13157], [238, 250, 13152], [1676, 1682, 13152], [1683, 1689, 13151],
+  [1690, 1696, 13150], [1697, 1703, 13156], [1704, 1710, 13157], [1711, 1717, 13161],
+] as const;
+
+/** Bare local jewelry contributes the final integer ratings. Retain the
+ * item ID, level and suffix name that other equipment and APLs can observe.
+ * Legacy assembly cursors must reproduce their original ring group keys. */
+export function bareJewelrySuffixIdentity(option: AuctionGearOption, engine: string, legacyRings = false) {
   const c = option.candidate;
-  if (option.customization || (c.slotType !== "FINGER_1" && c.slotType !== "FINGER_2") ||
-      c.inventoryType !== 11 || c.itemClassId !== 4 || c.itemSubclassId !== 0 || c.constraints.crafted ||
+  const ring = c.slotType === "FINGER_1" || c.slotType === "FINGER_2";
+  const neck = !legacyRings && c.slotType === "NECK" && c.itemId !== 158075;
+  if (option.customization || !(ring && c.inventoryType === 11 || neck && c.inventoryType === 2) ||
+      c.itemClassId !== 4 || c.itemSubclassId !== 0 || c.constraints.crafted ||
       c.constraints.setId || c.constraints.setName || !ignoresItemContext(engine)) return;
   const v = c.variants.find(row => row.key === option.variantKey);
-  if (!v || v.bonusIds.length !== 1 || (v.bonusIds[0] !== 1679 && v.bonusIds[0] !== 1680) ||
+  if (!v || !Array.isArray(v.bonusIds) || v.bonusIds.length !== 1 || !Number.isSafeInteger(v.bonusIds[0]) ||
       !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
       !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 28)) return;
+  const id = v.bonusIds[0];
+  if (legacyRings && id !== 1679 && id !== 1680) return;
+  const family = jewelrySuffixRanges.find(([first, last]) => first <= id && id <= last);
+  if (!family) return;
   const r = v.resolution, e = r?.enhancements;
   if (!r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
       r.nativeScalingInputsV1?.length !== 4 || !r.nativeScalingInputsV1.every(value => value === 0) ||
       e?.status !== "verified" || e.socketCount !== 0 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
       e.socketColors?.length !== 3 || !e.socketColors.every(value => value === 0) ||
       r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
-  return ["bare-ring-suffix-13152", c.itemId, v.itemLevel, v.contextId ?? 0, v.modifiers ?? [], r.appliedStatsV1];
+  if (legacyRings) return ["bare-ring-suffix-13152", c.itemId, v.itemLevel, v.contextId ?? 0, v.modifiers ?? [], r.appliedStatsV1];
+  if (id <= 250 && (typeof r.nativeSuffixProgramV1 !== "string" || !/^[a-f0-9]{64}$/.test(r.nativeSuffixProgramV1))) return;
+  return ["bare-jewelry-suffix-v1", family[2], c.itemId, v.itemLevel, v.modifiers ?? [], r.appliedStatsV1];
 }
 
 /** 13668 adds the same prismatic socket to either ring. The other list
@@ -216,11 +232,11 @@ export function auctionSocketedRingCurve(option: AuctionGearOption, engine: stri
 }
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareRings: boolean | "socket-curve" = false) {
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  const suffix = bareRings && engine ? bareRingSuffixIdentity(option, engine) : undefined;
-  const curve = bareRings === "socket-curve" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
+  const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
+  const curve = typeof bareJewelry === "string" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
   const effect = suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }

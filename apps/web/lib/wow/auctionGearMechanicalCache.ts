@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
 import { combinedRingRatings90, isDirectRingEnchant, ringGemRepresentative90 } from "./auctionRingRatings";
-import { auctionAppliedStatsKey, auctionSocketedRingCurve } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity } from "./auctionGearEffects";
 import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
@@ -303,6 +303,10 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     const bonuses = variant?.bonusIds;
     const sameProgram = option?.candidate.itemId === change.itemId && Array.isArray(bonuses) &&
       bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
+    const bareSuffix = sameProgram && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
+      !change.enchantId && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+      (change.contextId ?? 0) === (variant.contextId ?? 0) && JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant.modifiers ?? [])
+      ? bareJewelrySuffixIdentity(option, native.engine) : undefined;
     const curve = reuseCandidateInputs && sameProgram ? proof?.nativeDropCurveV1 : undefined;
     // A finalist can reuse a previous 750-iteration fight only within its
     // own precision key. Both native tuning handlers consume the same cap.
@@ -343,6 +347,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
       ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
+      ...(bareSuffix ? { bonusIds: [], bareSuffix } : {}),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),

@@ -9,19 +9,38 @@ for line in (Path(sys.argv[1]) / 'item_bonus.inc').open():
     match = re.fullmatch(r'\s*\{\s*([\d,\s-]+)\},\s*', line)
     if match:
         _, bonus, *operation = map(int, match[1].split(','))
-        if 1 <= bonus <= 250 or bonus in (1679, 1680):
+        if 1 <= bonus <= 250 or 1676 <= bonus <= 1717:
             programs[bonus].append(operation)
 
 # Both native programs introduce exactly the same ordered rating types and
 # suffix name. No other bonus operation or tag is present.
 for bonus, crit, vers in [(1679, 3500, 3500), (1680, 3000, 4000)]:
-    assert programs.pop(bonus) == [
+    assert programs[bonus] == [
         [2, 32, crit, 0, 0, 0], [2, 40, vers, 0, 0, 1], [5, 13152, 0, 0, 0, 2]
     ]
 print('Verified both bare ring suffix programs')
 
+# The name must agree even if an APL or equipment effect inspects the item.
+module = Path(__file__).resolve().parents[3] / 'lib/wow/auctionGearEffects.ts'
+ranges = module.read_text().split('const jewelrySuffixRanges = [', 1)[1].split('] as const;', 1)[0]
+family_stats = {13150: {32, 36}, 13151: {32, 49}, 13152: {32, 40},
+                13156: {36, 49}, 13157: {36, 40}, 13161: {40, 49}}
+claimed = set()
+for first, last, name in re.findall(r'\[(\d+), (\d+), (\d+)\]', ranges):
+    for bonus in range(int(first), int(last) + 1):
+        assert bonus not in claimed
+        claimed.add(bonus)
+        a, b, suffix = programs[bonus]
+        assert [a[0], b[0]] == [2, 2] and {a[1], b[1]} == family_stats[int(name)], bonus
+        assert a[2] > 0 and b[2] > 0 and a[3:] == [0, 0, 0] and b[3:] == [0, 0, 1], bonus
+        assert suffix == [5, int(name), 0, 0, 0, 2], bonus
+assert claimed and set(family_stats) == {programs[bonus][2][1] for bonus in claimed}
+print(f'Verified {len(claimed)} socketless jewelry suffix programs')
+
 verified = 0
 for bonus, program in programs.items():
+    if bonus > 250:
+        continue
     if [op[0] for op in program] != [2, 2, 5]:
         continue
     for kind, rating, allocation, third, fourth, index in program[:2]:
@@ -32,7 +51,6 @@ print(f'Verified {verified} pure secondary-rating suffix programs')
 
 # Pin every exception for enchanted armor to the operation types handled
 # directly by initialize_item_enchant and item_enchantment_effect_stats.
-module = Path(__file__).resolve().parents[3] / 'lib/wow/auctionGearEffects.ts'
 decl = module.read_text().split('const directChestEnchants = new Set([', 1)[1].split(']);', 1)[0]
 enabled = list(map(int, re.findall(r'\d+', decl)))
 assert enabled and len(set(enabled)) == len(enabled)

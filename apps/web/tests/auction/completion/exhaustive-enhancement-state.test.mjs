@@ -11,6 +11,7 @@ import { compareAuctionEnhancementValue, trackValuePrecision } from '../../../li
 import { createAuctionGearEnhancedLoadoutIterator, enhancedFinalistOptionKey } from '../../../lib/wow/auctionGearEnhancedLoadouts.ts';
 import { observeAuctionEquipment } from '../../../lib/wow/auctionGearPlanner.ts';
 import { compareGearSimulationResults } from '../../../lib/wow/gearSimulation.ts';
+import { bareJewelrySuffixIdentity } from '../../../lib/wow/auctionGearEffects.ts';
 import { auctionMissiveComparison } from '../../../lib/wow/gearItemModifiers.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { readAuctionState, writeAuctionState } from '../../../lib/wow/auctionGearPersistence.ts';
@@ -25,7 +26,7 @@ function fixture() {
   const h={price:10,stale:false,partial:false,stageCalls:[],screenCalls:[],slice:0,abortAfterQuotes:false};
   const quote=async()=>({prices:h.prices ?? {'1':{ladder:[[h.price,100]]}},sourceUpdatedAt:h.stale?'2000-01-01T00:00:00Z':new Date().toISOString(),fetchedAt:new Date().toISOString()});
   const advance=vm.runInNewContext(code+';advanceAuctionGearExhaustiveEnhancements',{
-    createHash,auctionMissiveComparison,observeAuctionEquipment,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
+    createHash,bareJewelrySuffixIdentity,auctionMissiveComparison,observeAuctionEquipment,createAuctionGearEnhancedLoadoutIterator,enhancedFinalistOptionKey,compareAuctionEnhancementValue,trackValuePrecision,assertFreshMarket,structuredClone,compareGearSimulationResults,
     auctionGearSlots:['HEAD'],auctionEnhancementCatalogInfo:{revision:'synthetic-state-v1'},exactCommodityPrices:quote,
     evaluateAuctionEnhancementStage:async input=>{
       const options=input.finalists[0].options,key=options.map(o=>o.id).join()||'baseline';

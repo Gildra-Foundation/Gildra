@@ -163,7 +163,7 @@ test('bare ring suffix lots preserve exact stock, prices, both winners and preex
     const partial = await assembleAuctionGear({...input,bareEquipmentProofs:false});
     const control = await finish(true, structuredClone(partial.checkpoint)), fresh = await finish(true);
     assert.equal(control.checkpoint.nativeLotGroups,6);
-    assert.equal(fresh.checkpoint.nativeLotGroups,8);
+    assert.equal(fresh.checkpoint.nativeLotGroups,9);
     assert.equal(control.result.combinationCount,'16');
     assert.equal(fresh.result.combinationCount,'9');
     for (const key of ['bestDpsConfirmed','bestValueConfirmed']) {
@@ -251,4 +251,44 @@ test('a v7 bare curve cursor resumes its original domain; new cursors allocate p
     assert.equal(peak.spentCopper, quantity===1 ? 120 : 60);
     assert.deepEqual(peak.purchases.map(o=>o.auctionId).sort(),quantity===1 ? [81,82] : [81,81]);
   }
+});
+
+test('socketless jewelry retains suffix names, physical stat vectors and independent finalist scores', () => {
+  const neck = (lot, bonus, context) => {
+    const o = suffixOffer(lot, 'NECK', 20, bonus);
+    Object.assign(o.candidate, {itemId:83794,inventoryType:2,itemSubclassId:0});
+    o.candidate.variants[0].contextId = context;
+    return o;
+  };
+  const a=neck(81,1677,0), b=neck(82,1678,1);
+  const key=(o,version="jewelry-suffix") => auctionEffectGroupKey(o,engine,"missive","drop-curve",version);
+  assert.equal(key(a),key(b));
+  assert.notEqual(key(a,"socket-curve"),key(b,"socket-curve"));
+  const score=(o,precision,mutate=()=>{}) => {
+    const v=o.candidate.variants[0], change={slot:'neck',itemId:o.candidate.itemId,contextId:v.contextId,
+      modifiers:v.modifiers,bonusIds:v.bonusIds};
+    mutate(change);
+    return auctionGearMechanicalKey('character',{spec:'fury',scenario:'single-target',targets:1,fightLengthSeconds:120,precision},
+      {changes:[change],options:[o],engine});
+  };
+  for (const precision of [undefined,'finalist']) {
+    assert.equal(score(a,precision),score(b,precision));
+    for (const mutate of [c=>c.enchantId=5439,c=>c.gemIds=[130219],c=>c.slot='finger1',c=>c.itemId++,
+      c=>c.modifiers=[],c=>c.contextId=175,c=>c.bonusIds=[c.bonusIds[0],6652]]) {
+      assert.notEqual(score(a,precision,mutate),score(b,precision,mutate));
+    }
+  }
+  assert.notEqual(score(a),score(b,'finalist'));
+  for(const change of [o=>o.customization={enchantId:5439},o=>o.candidate.itemId=158075,o=>o.candidate.constraints.uniqueEquipped=true,
+    (_,v)=>v.bonusIds=[1683],(_,v)=>v.contextId=-1,(_,v)=>v.itemLevel++,(_,v)=>v.resolution.appliedStatsV1[28]++,
+    (_,v)=>v.resolution.nativeScalingInputsV1[1]++,(_,v)=>v.resolution.metadataVersion=2,
+    (_,v)=>v.resolution.enhancements.socketColors=[14,0,0],(_,v)=>v.resolution.nativeNoItemEffects=false]) {
+    const altered=structuredClone(b);change(altered,altered.candidate.variants[0]);assert.notEqual(key(a),key(altered));
+  }
+  const c=neck(83,108,13), d=neck(84,188,13);
+  assert.notEqual(key(c),key(d));
+  c.candidate.variants[0].resolution.nativeSuffixProgramV1='a'.repeat(64);
+  d.candidate.variants[0].resolution.nativeSuffixProgramV1='b'.repeat(64);
+  assert.equal(key(c),key(d));
+  assert.notEqual(key(c),key(b));
 });
