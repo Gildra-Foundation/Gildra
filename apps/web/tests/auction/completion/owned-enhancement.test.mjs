@@ -442,3 +442,37 @@ test('a ring scroll can be exchanged across bare socketless worn rings only at c
     assert(full.size>small.size,JSON.stringify(args));
   }
 });
+
+test('a bare owned ring can supply a gem to a cheaper equal-rating two-ring purchase', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd', selectedSlots=['FINGER_1','FINGER_2'];
+  const loadout=selectedSlots.map((slotType,i)=>({slotType,itemId:[272150,251194][i],inventoryType:11,itemSubclassId:0}));
+  const source='8027:154128/0:115807', replacement='8026:154128/0:154128';
+  async function receipts({enabled=true,level=90,revision=engine,opaque=false,secondUnit=3,stock=2,single=false}={}) {
+    const items=loadout.map((s,i)=>({item:{id:s.itemId},slot:{type:s.slotType},inventory_type:{type:'FINGER'},
+      item_class:{id:4},item_subclass:{id:0},level:{value:i?292:321},sockets:[{socket_type:{type:'PRISMATIC'}}],
+      ...(opaque && i===1 ? {enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]} : {})}));
+    const ladder=[[3,secondUnit===3 ? stock : 1]];
+    if(stock>1 && secondUnit!==3)ladder.push([secondUnit,1]);
+    const prices={244017:{ladder:[[6,2]]},244016:{ladder:[[2,2]]},115807:{ladder:[[1,2]]},154128:{ladder}};
+    if(single){delete prices[244016];delete prices[244017];}
+    const state={checkpoints:{}},seen=new Map(),baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for(let i=0;i<100;i++){
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneOwnedJewelryGems:true,
+        pruneBareOwnedRingRatings:enabled,selectedSlots:single?['FINGER_1']:selectedSlots,finalists:[{label:'exhaustive',options:[]}],
+        equipment:{equipped_items:items},loadout,nativePlayerLevel:level,specId:72,level:90,region:'eu',engine:revision,
+        profileFingerprint:'owned-rating-substitution',encounter:{},budgetCopper:50,baseline,state,
+        signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.set(c.slots.map(s=>s.enchantId+':'+s.gemIds.join()).join('/'),c.totalCopper)});
+      if(result.complete)return seen;
+    }
+    assert.fail('owned ring-gem market did not finish');
+  }
+  // A resumable layout can have a bare host but no strictly cheaper witness.
+  assert((await receipts({single:true})).size>1);
+  const compact=await receipts();
+  assert(!compact.has(source));
+  assert.equal(compact.get(replacement),8);
+  for(const args of [{enabled:false},{level:89},{revision:'SimulationCraft 18428cd different build'},{opaque:true},{stock:1},{secondUnit:5}])
+    assert.equal((await receipts(args)).get(source),10,JSON.stringify(args));
+});

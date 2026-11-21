@@ -59,6 +59,7 @@ export type EnhancementCheckpoint = { version: 1; inputKey: string; nextConfigur
   pairedRingPrices?: true;
   pairedNeckPrices?: true;
   pairedScrollPrices?: true;
+  bareOwnedRingRatings?: true;
   pairedArmorPrices?: true;
   armorPricePruning?: { branches: string; configurations: string };
   pricedAxes?: true | "within_budget" | "equivalent_scrolls" | "equivalent_gems" | "conditional_ring_gems" | "combined_ring_cost";
@@ -80,6 +81,7 @@ export type EnhancementOptimizerInput = { slots: readonly EnhancementSlot[]; cat
   ratingRingSlots?: ReadonlySet<string>;
   ratingOwnedNeck?: boolean;
   bareRingScrolls90?: boolean;
+  bareOwnedRingRatings?: ReadonlySet<string>;
   bareArmorSlots90?: ReadonlySet<string>;
   purchasedEnchantEffect?: (slotType: string, id: number) => number | undefined;
   purchasedGemEffect?: (slotType: string, id: number, enchantId: number) => number | undefined;
@@ -313,7 +315,7 @@ function pairedRingPriceGuard({ rings, neck }: JewelryPrices): PairedRingPrices 
  * both replacements costs at most their last potentially required units. A
  * strict gap therefore holds for every completion, including shared stock. */
 function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot[], ringSlots: ReadonlySet<string>,
-  prices: ExactCommodityPrices, maximumMarginal: (id: number) => number, guards: RingPairGuards, unique: Set<string>, paired?: JewelryPrices) {
+  prices: ExactCommodityPrices, maximumMarginal: (id: number) => number, guards: RingPairGuards, unique: Set<string>, paired?: JewelryPrices, bareOwnedRings?: ReadonlySet<string>) {
   const allowed = (choice: Choice, owned: boolean) => {
     const e = choice.enhancement;
     // An unchanged owned socket or enchant may carry native instance data.
@@ -348,7 +350,10 @@ function markCostlierRingPairs(axes: Choice[][], slots: readonly EnhancementSlot
     const socketAxis = axes[enchantAxis + 1];
     if (!socketAxis || socketAxis[0].slot !== slot || socketAxis[0].socket !== 0) continue;
     const gems = socketAxis.filter(c => allowed(c, target.owned) && combinedRingRatings90(0, c.enhancement?.simulationId ?? 0)).map(priceRange);
-    const enchants = axis.filter(c => allowed(c, target.owned) && combinedRingRatings90(c.enhancement?.simulationId ?? 0, 0)).map(priceRange);
+    // An authenticated bare enchant contributes zero. Still require explicit
+    // gem purchases on owned rings so both receipts replace the same socket.
+    const preserveOwnedEnchant = target.owned && !bareOwnedRings?.has(target.slotType);
+    const enchants = axis.filter(c => allowed(c, preserveOwnedEnchant) && combinedRingRatings90(c.enhancement?.simulationId ?? 0, 0)).map(priceRange);
     const ring: RingPriceOptions | undefined = paired && (target.slotType === "FINGER_1" || target.slotType === "FINGER_2") ? {
       enchantAxis, gemAxis: enchantAxis + 1, byGem: new Map(), upper: new Map(),
     } : undefined;
@@ -387,7 +392,7 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
   ownedGemEffect: EnhancementOptimizerInput["ownedGemEffect"],
   conditional: Map<Choice, { axis: number; enchants: Set<number> }> | undefined,
   ringSlots?: ReadonlySet<string>, pairGuards?: RingPairGuards,
-  purchasedEnchantEffect?: EnhancementOptimizerInput["purchasedEnchantEffect"], paired?: JewelryPrices) {
+  purchasedEnchantEffect?: EnhancementOptimizerInput["purchasedEnchantEffect"], paired?: JewelryPrices, bareOwnedRings?: ReadonlySet<string>) {
   const originalAxes = axes.slice();
   const lastPrice = new Map<number, number>();
   const maximumMarginal = (id: number) => {
@@ -476,7 +481,7 @@ function pruneCostlierEnhancements(axes: Choice[][], prices: ExactCommodityPrice
     for (const axis of originalAxes) for (const { enhancement } of axis) {
       if (enhancement?.uniqueEquipped) unique.add(enhancement.kind + ":" + enhancement.simulationId);
     }
-    markCostlierRingPairs(axes, slots, ringSlots, prices, maximumMarginal, pairGuards, unique, paired);
+    markCostlierRingPairs(axes, slots, ringSlots, prices, maximumMarginal, pairGuards, unique, paired, bareOwnedRings);
     if (pairGuards.size) return "combined_ring_cost";
   }
   return conditional?.size ? "conditional_ring_gems" : removedGems ? "equivalent_gems" : dominated.size ? "equivalent_scrolls" : undefined;
@@ -575,7 +580,8 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
       addAxis(index, resolved.gemChoices[socket.key], slot.installed?.gems[index] ?? null);
     }
   }
-  const pairProofAllowed = !input.checkpoint || input.checkpoint.pairedRingPrices === true || pricedAxes === "combined_ring_cost";
+  const pairProofAllowed = !input.checkpoint || input.checkpoint.pairedRingPrices === true ||
+    input.checkpoint.bareOwnedRingRatings === true || pricedAxes === "combined_ring_cost";
   const pairGuards: RingPairGuards | undefined = exact && pairProofAllowed && input.ratingRingSlots?.size ? new Map() : undefined;
   const conditionalAllowed = pairProofAllowed || pricedAxes === "conditional_ring_gems";
   const gemProofAllowed = conditionalAllowed || pricedAxes === "equivalent_gems";
@@ -585,9 +591,12 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
     input.ratingRingSlots.has("FINGER_2") && (!input.checkpoint || input.checkpoint.pairedRingPrices) ? {
       rings: [], includeNeck: !!input.ratingOwnedNeck && (!input.checkpoint || input.checkpoint.pairedNeckPrices === true),
     } : undefined;
+  const bareOwnedRings = exact && pairGuards && (!input.checkpoint || input.checkpoint.bareOwnedRingRatings) &&
+    slots.some(slot => slot.owned && input.ratingRingSlots?.has(slot.slotType) && input.bareOwnedRingRatings?.has(slot.slotType))
+    ? input.bareOwnedRingRatings : undefined;
   const compact = exact && (gemProofAllowed || pricedAxes === "equivalent_scrolls")
     ? pruneCostlierEnhancements(axes, input.prices.prices, slots, gemProofAllowed ? input.purchasedGemEffect : undefined,
-        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect, pairedRings) : undefined;
+        gemProofAllowed ? input.ownedGemEffect : undefined, conditional, input.ratingRingSlots, pairGuards, input.purchasedEnchantEffect, pairedRings, bareOwnedRings) : undefined;
   const pairedPrice = pairedRings && pairedRingPriceGuard(pairedRings);
   const scrollPairs = exact && pricedAxes && input.bareRingScrolls90 && (!input.checkpoint || input.checkpoint.pairedScrollPrices)
     ? costlierRingScrollPairs(axes, slots, commodityPrices.cost) : undefined;
@@ -597,6 +606,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (slots.some(s=>s.owned && !s.allowOwnedChanges)) reasons.add("owned_equipment_preserved");
   const proofVersion = { combined_ring_cost: "priced-exhaustive-v7", conditional_ring_gems: "priced-exhaustive-v6", equivalent_gems: "priced-exhaustive-v5", equivalent_scrolls: "priced-exhaustive-v4" };
   const inputKey = hash({ traversal: compact ? proofVersion[compact] : pricedAxes === "within_budget" ? "priced-exhaustive-v3" : pricedAxes ? "priced-exhaustive-v2" : exact ? "priced-exhaustive-v1" : "priced-pruned-diverse-v4", slots, resolutions, catalog:catalog.version, character,
+    ...(bareOwnedRings ? { bareOwnedRingRatings: [...bareOwnedRings].sort() } : {}),
     ...(scrollPairs ? { pairedScrollPrices: 1 } : {}),
     ...(armorGuards?.size ? { pairedArmorPrices: [...input.bareArmorSlots90!].sort() } : {}),
     ...(pairedPrice ? { pairedRingPrices: 1 } : {}),
@@ -610,6 +620,7 @@ export async function optimizeAuctionGearEnhancements(input: EnhancementOptimize
   if (input.checkpoint && (input.checkpoint.version !== 1 || input.checkpoint.inputKey !== inputKey)) throw new Error("enhancement_checkpoint_changed");
   const checkpoint: EnhancementCheckpoint = input.checkpoint ? structuredClone(input.checkpoint) : {
     version:1, inputKey, nextConfiguration:0, cache:{},
+    ...(bareOwnedRings ? {bareOwnedRingRatings:true} : {}),
     ...(scrollPairs ? {pairedScrollPrices:true} : {}),
     ...(armorGuards?.size ? {pairedArmorPrices:true} : {}),
     ...(pairedPrice ? {pairedRingPrices:true} : {}),

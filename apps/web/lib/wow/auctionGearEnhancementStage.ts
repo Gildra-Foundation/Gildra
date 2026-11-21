@@ -73,6 +73,7 @@ export async function evaluateAuctionEnhancementStage(input: {
   pruneRingEnchantRanks?: boolean;
   pruneArmorEnchantPairs?: boolean;
   pruneRingScrollPairs?: boolean;
+  pruneBareOwnedRingRatings?: boolean;
   pruneEquivalentRingGems?: boolean;
   pruneOwnedJewelryGems?: boolean;
   nativePlayerLevel?: number;
@@ -120,7 +121,7 @@ export async function evaluateAuctionEnhancementStage(input: {
       ignoresItemContext(input.engine) && itemClass === 2 && (slot === 'MAIN_HAND' || slot === 'OFF_HAND');
     const bareRingSlots = new Set<string>();
     const certifiedRing = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
-      input.pruneRingScrollPairs && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
+      (input.pruneRingScrollPairs || input.pruneBareOwnedRingRatings) && input.nativePlayerLevel === 90 && ignoresItemContext(input.engine) &&
       (slot === "FINGER_1" || slot === "FINGER_2") && inventory === 11 && itemClass === 4;
     const bareArmorSlots90 = new Set<string>();
     const certifiedArmor = (slot: string, inventory: number, itemClass: number) => input.exhaustive &&
@@ -302,7 +303,8 @@ export async function evaluateAuctionEnhancementStage(input: {
       simulationBatchSize:batchSize, simulationOwnedBatch:input.simulationOwnedBatch,
       remainingScreenComparisons:input.remainingScreenComparisons, onPricedScreenWitness:input.onPricedScreenWitness,
       ...(input.exhaustive && input.simulationConcurrency===2 ? {limits:{simulations:2 * Math.max(1, batchSize)}} : {}),
-      bareRingScrolls90: bareRingSlots.size === 2, bareArmorSlots90, ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
+      bareRingScrolls90: input.pruneRingScrollPairs && bareRingSlots.size === 2,
+      bareOwnedRingRatings: input.pruneBareOwnedRingRatings ? bareRingSlots : undefined, bareArmorSlots90, ratingRingSlots, ratingOwnedNeck: ownedGemSlots.has("NECK"),
       purchasedEnchantEffect: cradleSlots.size || pricedNeck || pricedRings ? (slot: string, id: number) => {
         if (pricedRings && (slot === "FINGER_1" || slot === "FINGER_2")) return ringEnchantRepresentative90(id);
         if (pricedNeck && slot === "NECK") return directNeckEnchantGroup(id);
