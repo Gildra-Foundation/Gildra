@@ -197,23 +197,38 @@ const auctionClientRevision = (value: unknown): value is string => typeof value 
 
 /** Revision-aware GETs wait on owned server state. Legacy peers retain the
  * established polling cadence; transport cancellation never cancels the job. */
-export async function fetchAuctionClientUpdate<T extends { id: string; revision?: string }>(previous: T, scope: AuctionClientScope,
+export async function fetchAuctionClientUpdate<T extends { id: string; revision?: string; status?: string; result?: unknown }>(previous: T, scope: AuctionClientScope,
   signal: AbortSignal, onReconnect: () => void, attempt = 0): Promise<T> {
   signal.throwIfAborted();
   const url = auctionClientJobUrl(previous.id, scope);
   const read = async (target: string, timeoutMs = 10_000) => {
-    const result = await fetchAuctionClientResult<T>(target, signal, onReconnect, timeoutMs);
+    const result = await fetchAuctionClientResult<T & { resultUnchanged?: boolean }>(target, signal, onReconnect, timeoutMs);
     if (!result || result.id !== previous.id) throw new AuctionClientError("invalid_plan_result", false);
     return result;
   };
   if (auctionClientRevision(previous.revision)) {
     // The server may hold the response for five seconds. Preserve the original
     // ten-second network/transfer allowance after that intentional wait.
-    try { return await read(`${url}&${new URLSearchParams({ after: previous.revision })}`, 15_000); }
+    const params = new URLSearchParams({ after: previous.revision });
+    if (previous.result != null) params.set("haveResult", "1");
+    try {
+      const update = await read(`${url}&${params}`, 15_000);
+      if (!update.resultUnchanged) return update;
+      if (update.resultUnchanged === true && previous.result != null && !Object.hasOwn(update, "result") && update.revision === previous.revision &&
+          (update.status === "running" || update.status === "queued")) {
+        const job = { ...update, result: previous.result };
+        delete job.resultUnchanged;
+        return job;
+      }
+      // An unusable delta cannot establish either a result or completion.
+      // Recover from the ordinary scoped GET, which always returns a full job.
+    }
     catch (error) {
       if (!(error instanceof AuctionClientError) || error.status !== 429 || error.message !== "plan_wait_limit") throw error;
     }
   }
   await auctionClientDelay(auctionClientPollDelay(attempt), signal);
-  return read(url);
+  const full = await read(url);
+  if (full.resultUnchanged) throw new AuctionClientError("invalid_plan_result", false);
+  return full;
 }
