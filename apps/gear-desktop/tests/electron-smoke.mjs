@@ -132,6 +132,18 @@ try{
  await hud.getByText('GildraReleaseSmoke',{exact:true}).waitFor();
  const alwaysTop=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://overlay')).isAlwaysOnTop());
  assert.equal(alwaysTop,true);
+ const opacity=hud.getByRole('slider');
+ await opacity.focus();
+ await opacity.press('Home');
+ await opacity.press('ArrowRight');
+ await hud.getByText('21%',{exact:true}).waitFor();
+ const savedSettings=JSON.parse(await readFile(join(dir,'settings.json'),'utf8'));
+ assert.equal(savedSettings.opacity,21);
+ if(process.platform==='win32'){
+   const alpha=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://overlay')).getOpacity());
+   assert.ok(Math.abs(alpha-.21)<.01,'Window opacity was '+alpha);
+ }
+ await opacity.press('End');
  const outside=app.waitForEvent('window');
  await app.evaluate(({BrowserWindow})=>{
    const main=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://local'));
