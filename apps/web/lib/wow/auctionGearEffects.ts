@@ -260,13 +260,33 @@ export function bareWeaponCurveIdentity(option: AuctionGearOption, engine: strin
 }
 
 /** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false) {
+/** At the pinned revision a positive certificate identifies a single type-51 level
+ * write plus constant operations. Preserve the exact item and ordered bonus list,
+ * including any quality write. Only drop level and content tuning are equivalent. */
+export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine: string) {
+  const c = option.candidate, t = c.constraints;
+  if (!ignoresItemContext(engine) || option.customization || c.itemClassId !== 4 || !plainArmorSlots.has(c.slotType) ||
+      t.crafted || t.setId || t.setName || t.uniqueEquipped || t.limitCategoryId) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution, e = r?.enhancements;
+  if (!v || !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
+      !v.bonusIds?.length || !supportedAuctionModifiers(v.modifiers ?? []) ||
+      v.modifiers?.some(m => m.type !== 9 && m.type !== 28) ||
+      r?.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketColors?.length !== 3 || e.socketColors.some(Boolean) ||
+      e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      verifiedAuctionDropCurve(v.modifiers ?? [], r.nativeArmorCurveV1) !== v.itemLevel ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  return ["bare-armor-constant-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId, v.bonusIds, v.itemLevel, r.appliedStatsV1];
+}
+
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
   const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
   const curve = typeof bareJewelry === "string" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
   const weapon = bareWeapon && engine ? bareWeaponCurveIdentity(option, engine) : undefined;
-  const effect = weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  const armor = bareArmorConstant && engine ? bareArmorConstantCurveIdentity(option, engine) : undefined;
+  const effect = armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
   return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 

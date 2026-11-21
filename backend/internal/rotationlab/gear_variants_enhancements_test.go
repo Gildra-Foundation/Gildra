@@ -283,3 +283,20 @@ func TestWeaponCurveReportIsSeparateFromArmorAndChecksNativeClass(t *testing.T) 
 		}
 	}
 }
+
+func TestArmorConstantCurveRequiresNativeArmorCertificate(t *testing.T) {
+	mods := []ItemModifier{{Type: 9, Value: 81}, {Type: 28, Value: 3321}}
+	for _, class := range []int{2, 4} {
+		for _, certified := range []bool{false, true} {
+			report := enhancementReport(t, func(item map[string]any) {
+				item["item_class"] = class
+				if certified {
+					item["gildra_armor_constant_drop_curve_v1"] = []int{81, 3321, 133}
+				}
+			}, mods...)
+			if (report.NativeArmorCurveV1 != nil) != (class == 4 && certified) || report.NativeDropCurveV1 != nil || report.NativeWeaponCurveV1 != nil {
+				t.Fatalf("incorrect armor curve for class %d and certificate %v: %+v", class, certified, report)
+			}
+		}
+	}
+}

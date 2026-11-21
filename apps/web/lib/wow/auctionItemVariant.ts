@@ -27,6 +27,7 @@ export type ResolvedAuctionVariant = {
   nativeContentTuningV1?: number[];
   nativeDropCurveV1?: number[];
   nativeWeaponCurveV1?: number[];
+  nativeArmorCurveV1?: number[];
   nativeScalingInputsV1?: number[];
   appliedStatsV1?: number[];
   nativeIgnoredRingUseV1?: number[];
@@ -66,6 +67,9 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
         resolved.nativeCraftedSymmetryV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeCraftedSymmetryV1: true } : {}),
       ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
         ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
+      ...(resolved.itemClassId === 4 && Array.isArray(resolved.nativeArmorCurveV1) &&
+        verifiedAuctionDropCurve(offer.modifiers, resolved.nativeArmorCurveV1) === resolved.itemLevel
+        ? { nativeArmorCurveV1: [...resolved.nativeArmorCurveV1] } : {}),
       ...(resolved.itemClassId === 2 && Array.isArray(resolved.nativeWeaponCurveV1) && verifiedAuctionDropCurve(offer.modifiers, resolved.nativeWeaponCurveV1) === resolved.itemLevel
         ? { nativeWeaponCurveV1: [...resolved.nativeWeaponCurveV1] } : {}),
       ...(Array.isArray(resolved.nativeDropCurveV1) && verifiedAuctionDropCurve(offer.modifiers, resolved.nativeDropCurveV1) === resolved.itemLevel
