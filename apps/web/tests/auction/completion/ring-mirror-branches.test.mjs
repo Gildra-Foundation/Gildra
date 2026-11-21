@@ -278,6 +278,20 @@ test('socketless jewelry retains suffix names, physical stat vectors and indepen
       assert.notEqual(score(a,precision,mutate),score(b,precision,mutate));
     }
   }
+  const enchanted = (o,enchantId,gemIds) => ({...o,customization:{enchantId,gemIds}});
+  const scoreEnchant = (o,precision,id) => score(o,precision,c=>c.enchantId=id);
+  for (const precision of [undefined,'finalist']) {
+    const base=scoreEnchant(enchanted(a,5285),precision,5285);
+    assert.equal(base,scoreEnchant(enchanted(b,5285),precision,5285));
+    assert.notEqual(base,scoreEnchant(enchanted(b,5292),precision,5292));
+    assert.notEqual(base,scoreEnchant(enchanted(b,5292),precision,5285));
+    assert.notEqual(base,scoreEnchant(enchanted(b,5285,[130219]),precision,5285));
+    assert.notEqual(base,scoreEnchant(b,precision,5285));
+    assert.notEqual(base,score(b,precision));
+    assert.notEqual(scoreEnchant(enchanted(a,5437),precision,5437),scoreEnchant(enchanted(b,5437),precision,5437));
+    assert.notEqual(key(enchanted(a,5285)),key(enchanted(b,5285)));
+  }
+  assert.notEqual(scoreEnchant(enchanted(a,5285),undefined,5285),scoreEnchant(enchanted(b,5285),'finalist',5285));
   assert.notEqual(score(a),score(b,'finalist'));
   for(const change of [o=>o.customization={enchantId:5439},o=>o.candidate.itemId=158075,o=>o.candidate.constraints.uniqueEquipped=true,
     (_,v)=>v.bonusIds=[1683],(_,v)=>v.contextId=-1,(_,v)=>v.itemLevel++,(_,v)=>v.resolution.appliedStatsV1[28]++,

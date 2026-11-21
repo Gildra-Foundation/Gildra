@@ -66,3 +66,24 @@ for line in (Path(sys.argv[1]) / 'spell_item_enchantment.inc').open():
         verified_enchants.add(int(record[1]))
 assert verified_enchants == set(enabled), set(enabled) - verified_enchants
 print(f'Verified {len(enabled)} direct chest enchants')
+
+# Only the same enchant may reuse a suffix score. In the pinned engine a STAT
+# entry reads the player's level and spell data, and no host bonus operation.
+neck_module = module.with_name('auctionGearMechanicalCache.ts')
+decl = neck_module.read_text().split('const directNeckEnchants = new Set([', 1)[1].split(']);', 1)[0]
+enabled_neck = set(map(int, re.findall(r'\d+', decl)))
+data = Path(sys.argv[1])
+neck_rules = set()
+for line in (data / 'permanent_enchant.inc').open():
+    record = re.match(r'^  \{\s*(\d+),\s*\d+,\s*4,\s*(0x\w+),\s*(0x\w+)', line)
+    if record and int(record[2], 16) & (1 << 2) and int(record[3], 16) & 1:
+        neck_rules.add(int(record[1]))
+direct_neck = set()
+for line in (data / 'spell_item_enchantment.inc').open():
+    record = re.match(r'^  \{\s*(\d+),[^{}]+\{([^}]+)\},\s*\{[^}]+\},\s*\{([^}]+)\}', line)
+    if record and int(record[1]) in neck_rules:
+        kinds, stats = (list(map(int, record[i].split(','))) for i in (2, 3))
+        if kinds == [5, 0, 0] and stats[0] in (32, 36, 40, 49) and stats[1:] == [0, 0]:
+            direct_neck.add(int(record[1]))
+assert direct_neck and enabled_neck == direct_neck, (enabled_neck, direct_neck)
+print(f'Verified {len(direct_neck)} direct neck enchants')

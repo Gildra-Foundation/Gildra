@@ -285,6 +285,10 @@ function explicitOwnedJewelry(owned: readonly OwnedAuctionGearChange[], hosts: R
   return changed ? { edits, ratings } : undefined;
 }
 
+// These permanent neck enchants only add a rating computed from the player.
+// The final score key still contains the exact enchant ID and actual slot.
+const directNeckEnchants = new Set([5285, 5292, 5293, 5295, 5317, 5318, 5319, 5321, 5890, 5895, 5896, 5897, 5898]);
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
@@ -303,10 +307,12 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     const bonuses = variant?.bonusIds;
     const sameProgram = option?.candidate.itemId === change.itemId && Array.isArray(bonuses) &&
       bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
-    const bareSuffix = sameProgram && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
-      !change.enchantId && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+    const directNeck = change.slot === "neck" && change.enchantId && directNeckEnchants.has(change.enchantId) &&
+      option?.customization?.enchantId === change.enchantId && !option.customization.gemIds?.length;
+    const suffix = sameProgram && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
+      (!change.enchantId || directNeck) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
       (change.contextId ?? 0) === (variant.contextId ?? 0) && JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant.modifiers ?? [])
-      ? bareJewelrySuffixIdentity(option, native.engine) : undefined;
+      ? bareJewelrySuffixIdentity(directNeck ? { ...option, customization: undefined } : option, native.engine) : undefined;
     const curve = reuseCandidateInputs && sameProgram ? proof?.nativeDropCurveV1 : undefined;
     // A finalist can reuse a previous 750-iteration fight only within its
     // own precision key. Both native tuning handlers consume the same cap.
@@ -347,7 +353,7 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
       ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
         !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
       ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
-      ...(bareSuffix ? { bonusIds: [], bareSuffix } : {}),
+      ...(suffix ? { bonusIds: [], bareSuffix: suffix } : {}),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
