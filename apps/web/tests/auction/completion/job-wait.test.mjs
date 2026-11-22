@@ -53,7 +53,7 @@ test('durable publication wakes all held owners immediately with the exact resul
   const published = result(2); h.publish(published);
   const responses = await Promise.all(waits);
   for (const response of responses) {
-    assert.equal(response.result, published); assert.notEqual(response.revision, before.revision);
+    assert.deepEqual(response.result, published); assert.notEqual(response.revision, before.revision);
     assert.equal(response.status, 'running');
   }
   const retained = readAuctionState('job', h.job.id);
@@ -61,6 +61,14 @@ test('durable publication wakes all held owners immediately with the exact resul
   assert(!Object.hasOwn(retained.data, 'revision')); assert(!Object.hasOwn(retained.metadata, 'revision'));
   assert.equal(listenerCount(), 0);
 })));
+
+test('changing the task input after publishing cannot change what an owned revision means', async () => withJob(async h => {
+  const intermediate = result(1); h.publish(intermediate);
+  const before = h.current(); intermediate.items[0].optionId = 'still-being-computed';
+  h.progress({ phase: 'simulating', completed: 2, total: 10 });
+  const next = h.current(); assert.equal(next.revision, before.revision);
+  assert.equal(next.result.items[0].optionId, 'synthetic-1'); assert.equal(next.progress.completed, 2);
+}));
 
 test('completion and failure wake a waiter, and terminal or changed revisions never hold', async () => {
   for (const failed of [false, true]) await withJob(async h => {

@@ -1,0 +1,320 @@
+--- /dev/null
++++ b/engine/util/auction_armor_reads.hpp
+@@ -0,0 +1,51 @@
++#pragma once
++#include <atomic>
++#include <cstdio>
++#include <cstdlib>
++
++namespace auction_armor
++{
++enum rating : unsigned { speed = 1, leech = 2, avoidance = 4, all = 7 };
++
++// A request is one native process. Include every initialization thread and
++// profileset in the union. A previously seen bit never needs another atomic.
++inline std::atomic<unsigned> reads{0};
++inline thread_local unsigned seen = std::getenv("GILDRA_ARMOR_READS_FILE") ? 0U : static_cast<unsigned>(all);
++inline thread_local unsigned ignored = 0;
++inline thread_local bool copying_gear = false;
++
++inline void observe(unsigned bit)
++{
++  if ( !( (seen | ignored) & bit ) )
++  {
++    seen |= bit;
++    reads.fetch_or(bit, std::memory_order_relaxed);
++  }
++}
++
++struct report_field
++{
++  unsigned previous;
++  explicit report_field(unsigned bit) : previous(ignored) { ignored |= bit; }
++  ~report_field() { ignored = previous; }
++};
++
++struct copy_gear
++{
++  bool previous = copying_gear;
++  copy_gear() { copying_gear = true; }
++  ~copy_gear() { copying_gear = previous; }
++};
++
++// Called only after the final profileset has finished successfully and before
++// formatting the report, which itself queries all three ratings.
++inline void finish()
++{
++  if ( const char* path = std::getenv("GILDRA_ARMOR_READS_FILE") )
++    if ( auto file = std::fopen(path, "w") )
++    {
++      std::fprintf(file, "%u", reads.load(std::memory_order_relaxed));
++      std::fclose(file);
++    }
++}
++}
+--- a/engine/player/player.cpp
++++ b/engine/player/player.cpp
+@@ -2,6 +2,7 @@
+ // Dedmonwakeen's Raid DPS/TPS Simulator.
+ // Send questions to natehieter@gmail.com
+ // ==========================================================================
++#include "util/auction_armor_reads.hpp"
+ #include "player.hpp"
+
+ #include "action/action.hpp"
+@@ -1470,7 +1471,11 @@
+   // Ensure base stats have not been tampered with.
+   for ( stat_e stat = STAT_NONE; stat < STAT_MAX; ++stat )
+   {
+-    double stat_value = base.stats.get_stat( stat );
++    double stat_value;
++    {
++      auction_armor::copy_gear copying;
++      stat_value = base.stats.get_stat( stat );
++    }
+     if ( stat_value > 0 )
+     {
+       sim->error( "{} stat {} is {} != 0.0", name(), stat, stat_value );
+@@ -1738,7 +1743,11 @@
+   // Ensure initial stats have not been tampered with.
+   for ( stat_e stat = STAT_NONE; stat < STAT_MAX; ++stat )
+   {
+-    double stat_value = initial.stats.get_stat( stat );
++    double stat_value;
++    {
++      auction_armor::copy_gear copying;
++      stat_value = initial.stats.get_stat( stat );
++    }
+     if ( stat_value > 0 )
+     {
+       sim->error( "{} initial stat {} is {} != 0", *this, stat, stat_value );
+@@ -1754,20 +1763,23 @@
+   // initial value override (player_t::gear + player_t::enchant + sim_t::enchant).
+   if ( !is_pet() && !is_enemy() )
+   {
+-    gear_stats_t item_stats = range::accumulate( items, gear_stats_t{}, &item_t::total_stats );
+-
+-    for ( stat_e stat = STAT_NONE; stat < STAT_MAX; ++stat )
+-    {
+-      double scale_override = -1;
+-      if ( scale_player && sim->scaling->scale_stat == stat && sim->plot->dps_plot_stats.count( stat ) )
+-        scale_override = sim->plot->dps_plot_stats.at( stat );
+-
+-      if ( scale_override >= 0 )
+-        total_gear.add_stat( stat, scale_override );
+-      else if ( gear.get_stat( stat ) < 0 )
+-        total_gear.add_stat( stat, item_stats.get_stat( stat ) );
+-      else
+-        total_gear.add_stat( stat, gear.get_stat( stat ) );
++    {
++      auction_armor::copy_gear copying;
++      gear_stats_t item_stats = range::accumulate( items, gear_stats_t{}, &item_t::total_stats );
++
++      for ( stat_e stat = STAT_NONE; stat < STAT_MAX; ++stat )
++      {
++        double scale_override = -1;
++        if ( scale_player && sim->scaling->scale_stat == stat && sim->plot->dps_plot_stats.count( stat ) )
++          scale_override = sim->plot->dps_plot_stats.at( stat );
++
++        if ( scale_override >= 0 )
++          total_gear.add_stat( stat, scale_override );
++        else if ( gear.get_stat( stat ) < 0 )
++          total_gear.add_stat( stat, item_stats.get_stat( stat ) );
++        else
++          total_gear.add_stat( stat, gear.get_stat( stat ) );
++      }
+     }
+
+     sim->print_debug( "{} total gear stats: {}", *this, total_gear );
+@@ -5738,6 +5750,7 @@
+
+ double player_t::composite_movement_speed() const
+ {
++  auction_armor::observe(auction_armor::speed);
+   double speed = current.movement_speed;
+
+   double non_stacking = non_stacking_movement_modifier();
+@@ -5850,12 +5863,15 @@
+       v = current.stats.block_rating;
+       break;
+     case RATING_LEECH:
++      auction_armor::observe(auction_armor::leech);
+       v = current.stats.leech_rating;
+       break;
+     case RATING_SPEED:
++      auction_armor::observe(auction_armor::speed);
+       v = current.stats.speed_rating;
+       break;
+     case RATING_AVOIDANCE:
++      auction_armor::observe(auction_armor::avoidance);
+       v = current.stats.avoidance_rating;
+       break;
+     case RATING_CORRUPTION:
+--- a/engine/player/player_stat_cache.cpp
++++ b/engine/player/player_stat_cache.cpp
+@@ -3,6 +3,7 @@
+ // Send questions to natehieter@gmail.com
+ // ==========================================================================
+
++#include "util/auction_armor_reads.hpp"
+ #include "player_stat_cache.hpp"
+ #include "player.hpp"
+ #include "action/action_state.hpp"
+@@ -478,6 +479,7 @@
+
+ double player_stat_cache_t::leech() const
+ {
++  auction_armor::observe(auction_armor::leech);
+   if ( !active || !valid[ CACHE_LEECH ] )
+   {
+     valid[ CACHE_LEECH ] = true;
+@@ -490,6 +492,7 @@
+
+ double player_stat_cache_t::run_speed() const
+ {
++  auction_armor::observe(auction_armor::speed);
+   if ( !active || !valid[ CACHE_RUN_SPEED ] )
+   {
+     valid[ CACHE_RUN_SPEED ] = true;
+@@ -502,6 +505,7 @@
+
+ double player_stat_cache_t::avoidance() const
+ {
++  auction_armor::observe(auction_armor::avoidance);
+   if ( !active || !valid[ CACHE_AVOIDANCE ] )
+   {
+     valid[ CACHE_AVOIDANCE ] = true;
+@@ -605,9 +609,21 @@
+ double player_stat_cache_t::damage_versatility() const { return _player->composite_damage_versatility(); }
+ double player_stat_cache_t::heal_versatility() const { return _player->composite_heal_versatility(); }
+ double player_stat_cache_t::mitigation_versatility() const { return _player->composite_mitigation_versatility(); }
+-double player_stat_cache_t::leech() const { return _player->composite_leech(); }
+-double player_stat_cache_t::run_speed() const { return _player->composite_run_speed(); }
+-double player_stat_cache_t::avoidance() const { return _player->composite_avoidance(); }
++double player_stat_cache_t::leech() const
++{
++  auction_armor::observe(auction_armor::leech);
++  return _player->composite_leech();
++}
++double player_stat_cache_t::run_speed() const
++{
++  auction_armor::observe(auction_armor::speed);
++  return _player->composite_run_speed();
++}
++double player_stat_cache_t::avoidance() const
++{
++  auction_armor::observe(auction_armor::avoidance);
++  return _player->composite_avoidance();
++}
+ double player_stat_cache_t::corruption() const { return _player->composite_corruption(); }
+ double player_stat_cache_t::corruption_resistance() const { return _player->composite_corruption_resistance(); }
+ double player_stat_cache_t::player_multiplier( school_e s ) const { return _player->composite_player_multiplier( s ); }
+--- a/engine/sim/gear_stats.cpp
++++ b/engine/sim/gear_stats.cpp
+@@ -3,6 +3,7 @@
+ // Send questions to natehieter@gmail.com
+ // ==========================================================================
+
++#include "util/auction_armor_reads.hpp"
+ #include "player/gear_stats.hpp"
+ #include "util/util.hpp"
+ #include <sstream>
+@@ -209,9 +210,15 @@
+     case STAT_CRIT_RATING:  return crit_rating;
+     case STAT_HASTE_RATING: return haste_rating;
+     case STAT_VERSATILITY_RATING: return versatility_rating;
+-    case STAT_LEECH_RATING: return leech_rating;
+-    case STAT_SPEED_RATING: return speed_rating;
+-    case STAT_AVOIDANCE_RATING: return avoidance_rating;
++    case STAT_LEECH_RATING:
++      if ( !auction_armor::copying_gear ) auction_armor::observe(auction_armor::leech);
++      return leech_rating;
++    case STAT_SPEED_RATING:
++      if ( !auction_armor::copying_gear ) auction_armor::observe(auction_armor::speed);
++      return speed_rating;
++    case STAT_AVOIDANCE_RATING:
++      if ( !auction_armor::copying_gear ) auction_armor::observe(auction_armor::avoidance);
++      return avoidance_rating;
+
+     case STAT_WEAPON_DPS:   return weapon_dps;
+
+--- a/engine/action/snapshot_stats.cpp
++++ b/engine/action/snapshot_stats.cpp
+@@ -3,6 +3,7 @@
+ // Send questions to natehieter@gmail.com
+ // ==========================================================================
+
++#include "util/auction_armor_reads.hpp"
+ #include "snapshot_stats.hpp"
+
+ #include "action/attack.hpp"
+@@ -88,11 +89,20 @@
+   buffed_stats.damage_versatility = p->cache.damage_versatility();
+   buffed_stats.heal_versatility = p->cache.heal_versatility();
+   buffed_stats.mitigation_versatility = p->cache.mitigation_versatility();
+-  buffed_stats.run_speed = p->cache.run_speed();
+-  buffed_stats.avoidance = p->cache.avoidance();
++  {
++    auction_armor::report_field reporting(auction_armor::speed);
++    buffed_stats.run_speed = p->cache.run_speed();
++  }
++  {
++    auction_armor::report_field reporting(auction_armor::avoidance);
++    buffed_stats.avoidance = p->cache.avoidance();
++  }
+   buffed_stats.corruption = p->cache.corruption();
+   buffed_stats.corruption_resistance = p->cache.corruption_resistance();
+-  buffed_stats.leech = p->cache.leech();
++  {
++    auction_armor::report_field reporting(auction_armor::leech);
++    buffed_stats.leech = p->cache.leech();
++  }
+
+   buffed_stats.spell_crit_rating = p->composite_spell_crit_rating();
+   buffed_stats.melee_crit_rating = p->composite_melee_crit_rating();
+@@ -100,9 +110,18 @@
+   buffed_stats.melee_haste_rating = p->composite_melee_haste_rating();
+   buffed_stats.mastery_rating = p->composite_mastery_rating();
+   buffed_stats.versatility_rating = p->composite_damage_versatility_rating();
+-  buffed_stats.avoidance_rating = p->composite_avoidance_rating();
+-  buffed_stats.leech_rating = p->composite_leech_rating();
+-  buffed_stats.speed_rating = p->composite_speed_rating();
++  {
++    auction_armor::report_field reporting(auction_armor::avoidance);
++    buffed_stats.avoidance_rating = p->composite_avoidance_rating();
++  }
++  {
++    auction_armor::report_field reporting(auction_armor::leech);
++    buffed_stats.leech_rating = p->composite_leech_rating();
++  }
++  {
++    auction_armor::report_field reporting(auction_armor::speed);
++    buffed_stats.speed_rating = p->composite_speed_rating();
++  }
+
+   buffed_stats.spell_power =
+       static_cast<int>( p->cache.spell_power( SCHOOL_MAX ) * p->composite_spell_power_multiplier() );
+--- a/engine/sc_main.cpp
++++ b/engine/sc_main.cpp
+@@ -3,6 +3,7 @@
+ // Send questions to natehieter@gmail.com
+ // ==========================================================================
+
++#include "util/auction_armor_reads.hpp"
+ #include "class_modules/class_module.hpp"
+ #include "dbc/dbc.hpp"
+ #include "dbc/spell_query/spell_data_expr.hpp"
+@@ -365,7 +366,13 @@
+         if ( canceled == 0 && !profilesets->iterate( this ) )
+           canceled = true;
+         else
++        {
++          if ( deterministic && threads == 1 && player_no_pet_list.size() == 1 &&
++               ( player_no_pet_list[0]->specialization() == WARRIOR_FURY ||
++                 player_no_pet_list[0]->specialization() == MAGE_FIRE ) )
++            auction_armor::finish();
+           report::print_suite( this );
++        }
+       }
+       else
+       {

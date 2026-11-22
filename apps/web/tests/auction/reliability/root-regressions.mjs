@@ -51,6 +51,12 @@ check("crafted symmetry stays bound to the ordered bonuses measured by the worke
   assert.equal(resolvedAuctionVariant(listing, native, engine).resolution.nativeCraftedSymmetryV1, true);
   assert.equal(resolvedAuctionVariant({...listing,bonusIds:[1,2]}, native, engine).resolution.nativeCraftedSymmetryV1, undefined);
 });
+check("ignored ring use applies only to its resolved bonus order", () => {
+  const listing = {...offer, bonusIds:[2,1]};
+  const native = {...metadata, key:auctionVariantKey(listing), nativeIgnoredRingUseV1:[2,1]};
+  assert.equal(resolvedAuctionVariant(listing, native, engine).resolution.nativeIgnoredRingUseV1, true);
+  assert.equal(resolvedAuctionVariant({...listing,bonusIds:[1,2]}, native, engine).resolution.nativeIgnoredRingUseV1, undefined);
+});
 check("resolved content tuning must match the listing and carry a complete native cap", () => {
   const listing = {...offer, modifiers: [{type: 28, value: 3321}]};
   const resolved = proof => resolvedAuctionVariant(listing, {...metadata, key: auctionVariantKey(listing),

@@ -117,7 +117,12 @@ async function readPlan(request: Request) {
       // Ownership and character scope are checked before holding a request.
       // Waiting only observes this job; disconnecting does not cancel its work.
       const updated = await waitForAuctionGearJob(user.id, job.id, after, request.signal);
-      return updated ? reply(updated) : reply({ error: "plan_not_found" }, 404);
+      if (!updated) return reply({ error: "plan_not_found" }, 404);
+      if (params.get("haveResult") === "1" && updated.revision === after && updated.result &&
+          (updated.status === "running" || updated.status === "queued")) {
+        return reply({ ...updated, result: undefined, resultUnchanged: true });
+      }
+      return reply(updated);
     } catch (error) {
       if (error instanceof Error && error.message === "plan_wait_limit") return reply({ error: "plan_wait_limit" }, 429);
       throw error;

@@ -27,15 +27,18 @@ func (api measurementAPI) Simulate(ctx context.Context, input SimulationInput) (
 
 func TestAuctionReportsKeepLegacyPlaybackAndPrecision(t *testing.T) {
 	e := &SimCEngine{iterations: 750}
-	for _, precision := range []string{"", "finalist", auctionCandidatePrecision, auctionFinalistPrecision} {
+	for _, precision := range []string{"", "finalist", auctionQuickProbePrecision, auctionCandidatePrecision, auctionFinalistPrecision} {
 		input := nativeGearInput(t)
 		input.Precision = precision
-		compact := precision == auctionCandidatePrecision || precision == auctionFinalistPrecision
+		compact := precision == auctionQuickProbePrecision || precision == auctionCandidatePrecision || precision == auctionFinalistPrecision
 		details := "1"
 		if compact {
 			details = "0"
 		}
 		args := e.arguments(input, "report.json", "profile.simc")
+		if precision == auctionQuickProbePrecision && !slices.Contains(args, "iterations=32") {
+			t.Fatal("quick screening must request 32 native iterations")
+		}
 		for _, want := range []string{"report_details=" + details, "json=report.json,version=2,full_states=" + details,
 			"threads=1", "deterministic=1", "vary_combat_length=0", "fixed_time=1"} {
 			if !slices.Contains(args, want) {
@@ -55,7 +58,7 @@ func TestAuctionReportsKeepLegacyPlaybackAndPrecision(t *testing.T) {
 }
 
 func TestAuctionSingleMeasurementPreservesNativeUncertaintyAndRunEnvelope(t *testing.T) {
-	for _, precision := range []string{auctionCandidatePrecision, auctionFinalistPrecision} {
+	for _, precision := range []string{auctionQuickProbePrecision, auctionCandidatePrecision, auctionFinalistPrecision} {
 		t.Run(precision, func(t *testing.T) {
 			e, _ := admissionTestEngine(t)
 			input := nativeGearInput(t)

@@ -38,6 +38,10 @@ type batchMeasurement struct {
 	Confidence int     `json:"confidence"`
 	Engine     string  `json:"engine"`
 
+	// Measured on this physical build, at this precision and seed.
+	EquivalentBootRatings byte `json:"equivalentBootRatingsV1,omitempty"`
+	UnreadArmorRatings    byte `json:"unreadArmorRatingsV1,omitempty"`
+
 	furyWithoutLeechHealing bool
 }
 
@@ -52,14 +56,14 @@ func (b simulationBatch) validate() error {
 		return errors.New("invalid batch candidate count")
 	}
 	if b.Base.ActionListMode != ActionListModeNative ||
-		(b.Base.Precision != auctionCandidatePrecision && b.Base.Precision != auctionFinalistPrecision) ||
+		(b.Base.Precision != auctionCandidatePrecision && b.Base.Precision != auctionQuickProbePrecision && b.Base.Precision != auctionFinalistPrecision) ||
 		b.Base.GearChange != nil || len(b.Base.GearChanges) > 0 {
 		return errors.New("expected native auction simulation base without gear overrides")
 	}
 	if err := ValidateInput(b.Base); err != nil {
 		return err
 	}
-	if b.MixedSlots && (b.Base.Armory == nil || b.Base.Precision != auctionCandidatePrecision) {
+	if b.MixedSlots && (b.Base.Armory == nil || (b.Base.Precision != auctionCandidatePrecision && b.Base.Precision != auctionQuickProbePrecision)) {
 		return errors.New("mixed slots require a candidate armory")
 	}
 	// Homogeneous batches inherit row zero. Mixed batches use an untouched
@@ -106,6 +110,17 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 		return nil, err
 	}
 	defer e.release()
+	if owned && (len(b.Candidates) > 1 || b.Base.Precision == auctionFinalistPrecision) && (b.Base.Spec == "fury-warrior" || b.Base.Spec == "fire-mage") {
+		return simulateArmorBatch(b.Candidates, b.Base.Precision == auctionFinalistPrecision, func(candidates []batchCandidate, reads *byte) ([]batchMeasurement, error) {
+			subset := b
+			subset.Candidates = candidates
+			return e.runPreparedBatch(ctx, subset, reads)
+		})
+	}
+	return e.runPreparedBatch(ctx, b, nil)
+}
+
+func (e *SimCEngine) runPreparedBatch(ctx context.Context, b simulationBatch, reads *byte) ([]batchMeasurement, error) {
 	input := b.Base
 	// Mixed rows inherit the original armory. The extra primary measurement
 	// is never returned as a candidate or used in its confidence interval.
@@ -117,7 +132,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 	} else {
 		input.GearChanges = b.Candidates[0].GearChanges
 	}
-	payload, err := e.runReport(ctx, input, b.Candidates)
+	payload, err := e.runReportWithArmorReads(ctx, input, b.Candidates, reads)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +143,7 @@ func (e *SimCEngine) SimulateBatch(ctx context.Context, b simulationBatch) ([]ba
 		}
 		rows = rows[1:]
 	}
-	if err == nil && owned && !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
+	if err == nil && len(b.Candidates[0].OwnedChanges) > 0 && !strings.HasSuffix(rows[0].Engine, " · 18428cd") {
 		return nil, errUnsupportedOwnedBatch
 	}
 	return rows, err

@@ -78,13 +78,14 @@ func TestNativeMetadataPartialHitPreservesFailureAndDoesNotCacheIt(t *testing.T)
 		{Key: "missing", Change: GearChange{Slot: "head", ItemID: 101}},
 		{Key: "cached", Change: GearChange{Slot: "chest", ItemID: 102}},
 	}}
-	engine.variants.store(info, gearVariantKeys(in)[1:], GearVariantResponse{Engine: "fixture", Variants: []GearVariantMetadata{{ItemID: 102}}})
+	in.Variants = append(in.Variants, GearVariantInput{Key: "reagent-alias", Change: GearChange{Slot: "head", ItemID: 101, Modifiers: []ItemModifier{{Type: 38, Value: 55}}}})
+	engine.variants.store(info, gearVariantKeys(in)[1:2], GearVariantResponse{Engine: "fixture", Variants: []GearVariantMetadata{{ItemID: 102}}})
 	for i := 0; i < 2; i++ {
 		out, err := engine.ResolveGearVariants(context.Background(), in)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(out.Variants) != 2 || out.Engine != "fixture" || out.Variants[0].Error != "item_resolution_failed" ||
+		if len(out.Variants) != 3 || out.Variants[2].Error != "item_resolution_failed" || out.Variants[2].Key != "reagent-alias" || out.Engine != "fixture" || out.Variants[0].Error != "item_resolution_failed" ||
 			out.Variants[0].Key != "missing" || out.Variants[1].Key != "cached" || out.Variants[1].ItemID != 102 {
 			t.Fatalf("mixed response lost its ordering or failure: %+v", out)
 		}
@@ -92,5 +93,28 @@ func TestNativeMetadataPartialHitPreservesFailureAndDoesNotCacheIt(t *testing.T)
 	calls, err := os.ReadFile(logPath)
 	if err != nil || string(calls) != "called\ncalled\n" {
 		t.Fatalf("expected one native retry of the missing row per request: %q, %v", calls, err)
+	}
+}
+
+func TestReagentAliasPreservesEveryCombatInput(t *testing.T) {
+	base := GearChange{Slot: "main_hand", ItemID: 123, ContextID: 13, BonusIDs: []int{200, 201}, Modifiers: []ItemModifier{{Type: 9, Value: 90}, {Type: 29, Value: 32}}}
+	key := func(change GearChange) gearVariantKey {
+		return gearVariantKeys(GearVariantRequest{Spec: "fury-warrior", CharacterLevel: 90, Variants: []GearVariantInput{{Key: "lot", Change: change}}})[0]
+	}
+	alias := base
+	alias.Modifiers = []ItemModifier{{Type: 38, Value: 3}, base.Modifiers[0], {Type: 51, Value: 4}, base.Modifiers[1]}
+	if key(alias) != key(base) || serializeGearChange(alias) != serializeGearChange(base) || len(alias.Modifiers) != 4 || alias.Modifiers[0].Type != 38 {
+		t.Fatal("reagent alias changed the source lot, native profile or cache identity")
+	}
+	for _, edit := range []func(*GearChange){
+		func(c *GearChange) { c.Slot = "off_hand" }, func(c *GearChange) { c.ContextID++ }, func(c *GearChange) { c.EnchantID = 1 }, func(c *GearChange) { c.GemIDs = []int{2} },
+		func(c *GearChange) { c.BonusIDs = []int{201, 200} }, func(c *GearChange) { c.Modifiers = []ItemModifier{{Type: 9, Value: 89}, {Type: 29, Value: 32}} },
+		func(c *GearChange) { c.Modifiers = append(c.Modifiers, ItemModifier{Type: 64, Value: 1}) },
+	} {
+		other := base
+		edit(&other)
+		if key(other) == key(base) {
+			t.Fatalf("merged a different native input: %+v", other)
+		}
 	}
 }

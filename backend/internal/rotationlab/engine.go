@@ -37,7 +37,7 @@ func ValidateInput(input SimulationInput) error {
 	}
 	switch input.Precision {
 	case "":
-	case "finalist", auctionCandidatePrecision, auctionFinalistPrecision:
+	case "finalist", auctionQuickProbePrecision, auctionCandidatePrecision, auctionFinalistPrecision:
 		if input.ActionListMode != ActionListModeNative {
 			return errors.New("invalid native simulation precision")
 		}
@@ -312,7 +312,7 @@ func validateItemModifiers(change GearChange) error {
 				return errors.New("unsupported crafted stat")
 			}
 		default:
-			if m.Type < 38 || m.Type > 51 {
+			if !isRawReagent(m) {
 				return errors.New("unsupported item modifier")
 			}
 		}

@@ -321,7 +321,9 @@ async function drain() {
           if (jobs.get(j.id) !== j || j.status !== "running") return;
           if (j.searchId && j.searchId !== result.searchId) throw new Error("invalid_plan_request");
           const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract, mode: j.mode };
-          j.searchId = result.searchId; j.result = result;
+          // The task may continue mutating its search data after publication.
+          // A poll holding this revision must always refer to the same snapshot.
+          j.result = structuredClone(result); j.searchId = result.searchId;
           if (j.runMode === "full") j.mode = result.kind;
           j.resultMeasurementContract = auctionMeasurementContract; j.expires = activeExpiry(j);
           try { persist(j); } catch (error) { Object.assign(j, previous); throw error; }
@@ -332,7 +334,7 @@ async function drain() {
         signal.throwIfAborted();
         if (jobs.get(j.id) !== j || j.status !== "running") continue;
         const previous = { searchId: j.searchId, result: j.result, resultMeasurementContract: j.resultMeasurementContract, mode: j.mode };
-        j.result = result;
+        j.result = nextTask ? structuredClone(result) : result;
         if (j.runMode === "full") j.mode = result.kind;
         j.resultMeasurementContract = auctionMeasurementContract;
         j.searchId = result.searchId;

@@ -26,8 +26,11 @@ export type ResolvedAuctionVariant = {
   nativeSuffixProgramV1?: string;
   nativeContentTuningV1?: number[];
   nativeDropCurveV1?: number[];
+  nativeWeaponCurveV1?: number[];
+  nativeArmorCurveV1?: number[];
   nativeScalingInputsV1?: number[];
   appliedStatsV1?: number[];
+  nativeIgnoredRingUseV1?: number[];
   nativeNoItemEffects?: boolean;
   metadataVersion?: number;
   enhancements?: GearEnhancementMetadata;
@@ -64,6 +67,11 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
         resolved.nativeCraftedSymmetryV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeCraftedSymmetryV1: true } : {}),
       ...(typeof resolved.nativeSuffixProgramV1 === "string" && /^[a-f0-9]{64}$/.test(resolved.nativeSuffixProgramV1)
         ? { nativeSuffixProgramV1: resolved.nativeSuffixProgramV1 } : {}),
+      ...(resolved.itemClassId === 4 && Array.isArray(resolved.nativeArmorCurveV1) &&
+        verifiedAuctionDropCurve(offer.modifiers, resolved.nativeArmorCurveV1) === resolved.itemLevel
+        ? { nativeArmorCurveV1: [...resolved.nativeArmorCurveV1] } : {}),
+      ...(resolved.itemClassId === 2 && Array.isArray(resolved.nativeWeaponCurveV1) && verifiedAuctionDropCurve(offer.modifiers, resolved.nativeWeaponCurveV1) === resolved.itemLevel
+        ? { nativeWeaponCurveV1: [...resolved.nativeWeaponCurveV1] } : {}),
       ...(Array.isArray(resolved.nativeDropCurveV1) && verifiedAuctionDropCurve(offer.modifiers, resolved.nativeDropCurveV1) === resolved.itemLevel
         ? { nativeDropCurveV1: [...resolved.nativeDropCurveV1] } : {}),
       ...(Array.isArray(resolved.nativeContentTuningV1) && resolved.nativeContentTuningV1.length === 2 &&
@@ -75,6 +83,8 @@ export function resolvedAuctionVariant(offer: AuctionOffer, resolved: ResolvedAu
         ? { nativeScalingInputsV1: [...resolved.nativeScalingInputsV1] } : {}),
       ...(Array.isArray(resolved.appliedStatsV1) && resolved.appliedStatsV1.length === 46 && resolved.appliedStatsV1.every(Number.isFinite)
         ? { appliedStatsV1: [...resolved.appliedStatsV1] } : {}),
+      ...(Array.isArray(resolved.nativeIgnoredRingUseV1) && resolved.nativeIgnoredRingUseV1.length === offer.bonusIds.length &&
+        resolved.nativeIgnoredRingUseV1.every((bonus, index) => bonus === offer.bonusIds[index]) ? { nativeIgnoredRingUseV1: true } : {}),
       ...(resolved.nativeNoItemEffects === true ? { nativeNoItemEffects: true } : {}),
       ...(resolved.metadataVersion !== undefined ? { metadataVersion: resolved.metadataVersion, enhancements } : {}),
       ...(validAuctionWeapon(resolved.weapon) ? { weapon: { ...resolved.weapon } } : {}),

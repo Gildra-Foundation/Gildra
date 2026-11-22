@@ -13,6 +13,18 @@ for line in rows:
         bonuses[list_id].append((kind, value))
 assert sum(map(len, bonuses.values())) == 20226
 
+# Native type 51 sets only the resolved item level and the Midnight scaling
+# flag. Both lists have the same ignored operation types (27 and 47). The
+# socket is supplied by the common list. No list can install an item effect,
+# suffix, or a cross-item description tag.
+assert bonuses[13668] == [(6, 1), (26, 5)]
+assert bonuses[13729] == [(27, 101224), (47, 2), (51, 434)]
+assert bonuses[13900] == [(27, 115477), (47, 2), (51, 481)]
+# Each prefix in the two bare armor programs is a single no-op. No suffix,
+# description tag, quality change or effect can distinguish these prefixes.
+assert bonuses[13578] == bonuses[13663] == [(0, 0)]
+
+
 # Automatic weapon oils and socket bonuses can reach apply_item_bonus via
 # ITEM_ENCHANTMENT_APPLY_BONUS even when the replacement has no bonus_id.
 enchantments = 0
@@ -35,4 +47,10 @@ while applied:
         assert kind not in (13, 49, 51), (list_id, kind)
         if kind == 50:
             applied.add(value)
+assert visited.isdisjoint({13578, 13663, 13729, 13900})
 print(f'Checked {enchantments} enchantments and {len(visited)} reachable bonus lists')
+
+# On weapons, the other accepted ordered program changes quality. It must
+# remain distinct from the curve-only programs even when the level matches.
+assert bonuses[6652] == [(0, 0)]
+assert bonuses[13730] == [(27, 101224), (47, 2), (51, 435), (3, 3)]

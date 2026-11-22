@@ -59,10 +59,13 @@ type GearVariantMetadata struct {
 	SetID                   int                     `json:"setId"`
 	NativeCraftedSymmetryV1 *[]int                  `json:"nativeCraftedSymmetryV1,omitempty"`
 	NativeSuffixProgramV1   string                  `json:"nativeSuffixProgramV1,omitempty"`
+	NativeWeaponCurveV1     *[3]int                 `json:"nativeWeaponCurveV1,omitempty"`
+	NativeArmorCurveV1      *[3]int                 `json:"nativeArmorCurveV1,omitempty"`
 	NativeDropCurveV1       *[3]int                 `json:"nativeDropCurveV1,omitempty"`
 	NativeContentTuningV1   *[2]int                 `json:"nativeContentTuningV1,omitempty"`
 	NativeScalingInputsV1   *[4]int                 `json:"nativeScalingInputsV1,omitempty"`
 	AppliedStatsV1          []float64               `json:"appliedStatsV1,omitempty"`
+	NativeIgnoredRingUseV1  *[]int                  `json:"nativeIgnoredRingUseV1,omitempty"`
 	NativeNoItemEffects     bool                    `json:"nativeNoItemEffects,omitempty"`
 	Stats                   map[string]float64      `json:"stats"`
 	Weapon                  *GearVariantWeapon      `json:"weapon,omitempty"`
@@ -128,6 +131,8 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	missing := input
 	missing.Variants = nil
 	var positions []int
+	first := make(map[gearVariantKey]int)
+	aliases := make(map[int]int)
 	var missingKeys []gearVariantKey
 	for i, hit := range hits {
 		if hit.engine != "" {
@@ -138,6 +143,11 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 			out.Engine = hit.engine
 			continue
 		}
+		if source, ok := first[keys[i]]; ok {
+			aliases[i] = source
+			continue
+		}
+		first[keys[i]] = i
 		positions = append(positions, i)
 		missingKeys = append(missingKeys, keys[i])
 		missing.Variants = append(missing.Variants, input.Variants[i])
@@ -163,6 +173,17 @@ func (e *SimCEngine) ResolveGearVariants(ctx context.Context, input GearVariantR
 	}
 	for n, i := range positions {
 		out.Variants[i] = resolved.Variants[n]
+	}
+	for alias, source := range aliases {
+		// Give each caller-owned row independent maps and slices as on cache hits.
+		data, err := json.Marshal(out.Variants[source])
+		if err != nil {
+			return GearVariantResponse{}, err
+		}
+		if err := json.Unmarshal(data, &out.Variants[alias]); err != nil {
+			return GearVariantResponse{}, err
+		}
+		out.Variants[alias].Key = input.Variants[alias].Key
 	}
 	after, _ := os.Stat(e.binary)
 	if !sameVariantBinary(binary, after) && binary != nil {
@@ -313,11 +334,21 @@ func parseVariantReport(raw []byte, input GearVariantRequest) (GearVariantRespon
 		if reportVersion == 2 {
 			result.MetadataVersion = 3
 			result.NativeNoItemEffects = string(item["gildra_no_item_effects"]) == "true"
+			if auditedItemRevision(r.Git) && n("inventory_type") == 11 && string(item["gildra_ignored_ring_use_v1"]) == "true" {
+				bonuses := append([]int{}, v.Change.BonusIDs...)
+				result.NativeIgnoredRingUseV1 = &bonuses
+			}
 			if nativeCraftedSymmetryV1(r.Git, v.Change.Modifiers, item["gildra_crafted_symmetry_v1"]) {
 				// Auction variant IDs may sort bonuses. Bind the proof to the exact
 				// order sent to SimC, including an explicitly empty bonus list.
 				bonuses := append([]int{}, v.Change.BonusIDs...)
 				result.NativeCraftedSymmetryV1 = &bonuses
+			}
+			if n("item_class") == 4 {
+				result.NativeArmorCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_armor_constant_drop_curve_v1"])
+			}
+			if n("item_class") == 2 {
+				result.NativeWeaponCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_weapon_drop_curve_v1"])
 			}
 			result.NativeDropCurveV1 = nativeDropCurveV1(r.Git, v.Change.Modifiers, result.ItemLevel, item["gildra_drop_curve_v1"])
 			result.NativeContentTuningV1 = nativeContentTuningV1(r.Git, v.Change.Modifiers, item["gildra_content_tuning_v1"])

@@ -316,7 +316,7 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  const old=await finish(h,partial.checkpoint);
  const fresh=await finish(h);
  assert.equal(old.result.combinationCount,'9');
- assert.equal(fresh.checkpoint.nativeLotGroups,5);
+ assert.equal(fresh.checkpoint.nativeLotGroups,6);
  assert.equal(fresh.checkpoint.version,4);
  assert.equal(old.checkpoint.version,3);
  assert.equal(fresh.result.combinationCount,'4');
@@ -325,6 +325,31 @@ test('empty-bonus grouping keeps both physical rings and preserves a partially t
  assert.deepEqual(ids(fresh.result.bestDpsConfirmed),[91,92]);
  assert.equal(fresh.result.bestDpsConfirmed.spentCopper,40);
  assert.deepEqual(ids(fresh.result.bestValueConfirmed),[91]);
+});
+
+test('missive ring groups preserve joint lot allocation and v5 cursor ordinals', async () => {
+  const engine = 'SimulationCraft fixture · 18428cd', h = fixture();
+  const domain = [91,92].flatMap(lot => ['FINGER_1','FINGER_2'].map(slot => {
+    const row = option(lot,slot,10);
+    row.id = lot+'-'+slot;
+    Object.assign(row.candidate, { itemId: 215130, inventoryType: 11 });
+    Object.assign(row.candidate.variants[0], { bonusIds: [8790, lot === 91 ? 10394 : 10395],
+      modifiers: [{type:29,value:lot === 91 ? 32 : 49},{type:30,value:40}] });
+    return row;
+  }));
+  Object.assign(h.input, {options:domain, selectedSlots:['FINGER_1','FINGER_2'], reuseAppliedStats:true,
+    baseline:{...measurement(1000),engine}, simulate:async selected => ({...measurement([1000,1200,1300][selected.length]),engine})});
+  // Version 1 and 5 have identical groups on these two physical variants.
+  const partial = await assembleAuctionGear({...h.input,maxAssignments:1});
+  Object.assign(partial.checkpoint, {version:4,nativeLotGroups:5});
+  h.input.groupCraftedEquipment = true;
+  const old = await finish(h, partial.checkpoint), fresh = await finish(h);
+  assert.equal(old.result.combinationCount, '9');
+  assert.equal(fresh.result.combinationCount, '4');
+  assert.deepEqual(fresh.result.bestDpsConfirmed, old.result.bestDpsConfirmed);
+  assert.deepEqual(fresh.result.bestValueConfirmed, old.result.bestValueConfirmed);
+  assert.deepEqual(ids(fresh.result.bestDpsConfirmed), [91,92]);
+  assert.deepEqual(ids(fresh.result.bestValueConfirmed), [91]);
 });
 
 test('content tuning groups preserve both physical rings, cost ties and the old cursor', async () => {
@@ -734,4 +759,38 @@ test('bare assembly keeps an old tuning-cap cursor when a later worker supplies 
   assert.deepEqual(ids(current.result.bestDpsConfirmed), [51, 52]);
   assert.deepEqual(current.result.bestValueConfirmed, legacy.result.bestValueConfirmed);
   assert.deepEqual(current.result.bestDpsConfirmed, legacy.result.bestDpsConfirmed);
+});
+
+test('32-iteration quick exclusions can be recovered by a subsequent full equipment search', async () => {
+  const h = fixture(), probes = [];
+  const quickProbe = async selection => {
+    probes.push(selection.map(o => o.auctionId));
+    return { ...measurement(10), iterations: 32 };
+  };
+  const quick = await assembleAuctionGear({ ...h.input, quickProbe, maxNewSimulations: 100 });
+  assert(probes.length > 0);
+  assert(quick.checkpoint.quickScreenedOut > 0);
+  assert.equal(quick.result.exhaustiveComplete, false);
+  assert(Object.values(quick.checkpoint.simulationCache).every(s => s.iterations !== 32));
+  const exact = await finish(h, quick.checkpoint);
+  assert.deepEqual(ids(exact.result.bestDpsConfirmed), [2,4]);
+  assert.deepEqual(ids(exact.result.bestValueConfirmed), [1]);
+});
+
+test('quick screening retains a cheap value winner below the DPS threshold and never publishes pilot scores', async () => {
+  const h = fixture(), pool = [option(1,'HEAD',1),option(2,'HEAD',80),option(3,'HEAD',50)];
+  const exactScores = [1000,1300,2000,10], captured = [];
+  const result = await assembleAuctionGear({ ...h.input, options:pool, selectedSlots:['HEAD'],
+    simulate: async selected => {
+      const id = selected[0]?.auctionId ?? 0;
+      captured.push(id);
+      return { ...measurement(exactScores[id]), iterations:100 };
+    },
+    quickProbe: async selected => ({ ...measurement(exactScores[selected[0].auctionId]+3), iterations:32 }),
+    maxNewSimulations:8,
+  });
+  assert(!captured.includes(3));
+  assert.deepEqual(ids(result.result.bestValueConfirmed),[1]);
+  assert.deepEqual(ids(result.result.bestDpsConfirmed),[2]);
+  assert.equal(result.checkpoint.best.simulation.dps,2000);
 });

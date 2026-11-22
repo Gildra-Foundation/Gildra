@@ -138,6 +138,22 @@ func TestNativeNoItemEffectsRequiresPositiveProof(t *testing.T) {
 	}
 }
 
+func TestIgnoredRingUseRequiresIndependentNativeProof(t *testing.T) {
+	for _, tc := range []struct {
+		inventory int
+		flag      any
+		want      bool
+	}{{11, true, true}, {1, true, false}, {11, "true", false}, {11, nil, false}} {
+		row := enhancementReport(t, func(item map[string]any) {
+			item["inventory_type"] = tc.inventory
+			item["gildra_ignored_ring_use_v1"] = tc.flag
+		})
+		if (row.NativeIgnoredRingUseV1 != nil) != tc.want || row.NativeNoItemEffects {
+			t.Fatalf("unexpected ring proof for %+v: %+v", tc, row)
+		}
+	}
+}
+
 func TestAppliedStatsRequireCompleteNativeVector(t *testing.T) {
 	values := make([]any, 46)
 	for i := range values {
@@ -252,5 +268,35 @@ func TestDropCurveReportBindsDropTuningAndResolvedLevel(t *testing.T) {
 	report := enhancementReport(t, func(item map[string]any) { item["gildra_drop_curve_v1"] = valid }, mods...)
 	if report.NativeDropCurveV1 == nil || *report.NativeDropCurveV1 != [3]int{81, 3321, 133} {
 		t.Fatalf("missing curve in published variant metadata: %+v", report)
+	}
+}
+
+func TestWeaponCurveReportIsSeparateFromArmorAndChecksNativeClass(t *testing.T) {
+	mods := []ItemModifier{{Type: 9, Value: 81}, {Type: 28, Value: 3321}}
+	for _, class := range []int{2, 4} {
+		report := enhancementReport(t, func(item map[string]any) {
+			item["item_class"] = class
+			item["gildra_weapon_drop_curve_v1"] = []int{81, 3321, 133}
+		}, mods...)
+		if (report.NativeWeaponCurveV1 != nil) != (class == 2) || report.NativeDropCurveV1 != nil {
+			t.Fatalf("incorrect curve for item class %d: %+v", class, report)
+		}
+	}
+}
+
+func TestArmorConstantCurveRequiresNativeArmorCertificate(t *testing.T) {
+	mods := []ItemModifier{{Type: 9, Value: 81}, {Type: 28, Value: 3321}}
+	for _, class := range []int{2, 4} {
+		for _, certified := range []bool{false, true} {
+			report := enhancementReport(t, func(item map[string]any) {
+				item["item_class"] = class
+				if certified {
+					item["gildra_armor_constant_drop_curve_v1"] = []int{81, 3321, 133}
+				}
+			}, mods...)
+			if (report.NativeArmorCurveV1 != nil) != (class == 4 && certified) || report.NativeDropCurveV1 != nil || report.NativeWeaponCurveV1 != nil {
+				t.Fatalf("incorrect armor curve for class %d and certificate %v: %+v", class, certified, report)
+			}
+		}
 	}
 }

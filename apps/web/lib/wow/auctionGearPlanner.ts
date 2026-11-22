@@ -1,10 +1,11 @@
+import { auctionRingMirrorOrder } from "./auctionGearRingMirrors";
 import { ignoresItemContext } from "./gearItemModifiers";
 import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { createHash } from "node:crypto";
 import { assertFreshMarket, type AuctionSnapshot } from "./auctionMarket";
 import { candidateLoadoutItem, compareGearSimulationResults } from "./gearSimulation";
 import { isTwoHandWeapon, supportsTitanGrip, validateGearLoadout, type GearLoadoutItem } from "./gearCompatibility";
-import { auctionAppliedStatsKey, auctionDominatedArmorOptions, auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
+import { auctionAppliedStatsKey, auctionDominatedArmorOptions, auctionEffectGroupKey, auctionEffectGroups, auctionSelectionEffectKey, cheapestAuctionEffectSelection, stableAuctionReceiptOrder, type AuctionEffectGroup } from "./auctionGearEffects";
 export { auctionSelectionEffectKey } from "./auctionGearEffects";
 import type {
   AuctionGearAssemblyCheckpoint, AuctionGearAssemblyResult, AuctionGearOption, AuctionGearPlan,
@@ -266,7 +267,7 @@ export async function searchAuctionGearOptions(input: PlannerInput & {
       const raw = auctionSelectionEffectKey([option]);
       // Use the same certified native inputs during discovery and assembly.
       // Each slot and raw offer keeps its own compatibility check and price.
-      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, true, "drop-curve");
+      const group = auctionSelectionEffectKey([option], checkpoint.baseline.engine, "missive", "drop-curve");
       schedulingKeys.set(raw, group);
       const members = equivalentLots.get(group);
       if (members) members.push(raw);
@@ -388,19 +389,33 @@ export async function assembleAuctionGear(input: PlannerInput & {
   bareEquipmentProofs?: boolean;
   recheckEquipment?: PlannerInput["simulate"];
   preciseSingleCards?: boolean;
+  quickProbe?: PlannerInput["simulate"];
+  screeningGroupVersion?: AuctionGearAssemblyCheckpoint["nativeLotGroups"];
   checkpoint?: AuctionGearAssemblyCheckpoint;
   onCheckpoint?: (checkpoint: AuctionGearAssemblyCheckpoint) => void;
 }): Promise<{ result: AuctionGearAssemblyResult; checkpoint: AuctionGearAssemblyCheckpoint; preciseSingles?: PreciseSingles }> {
   const { options, slots, inputKey, max, maxAssignments } = prepare(input);
   // Existing cursors index their original groups. Only new pinned-engine searches
   // can assign one ordinal to lots that the worker parses identically.
+  // Exact continuations replay a screened quick cursor from the start.
+  if (!input.quickProbe && input.checkpoint?.quickScreenedOut) {
+    requireCheckpoint(inputKey, input.checkpoint, (input.checkpoint.nativeLotGroups ?? 0) >= 3 ? 4 : 3);
+    input = { ...input, baseline: input.baseline ?? input.checkpoint.baseline,
+      simulationCache: { ...input.checkpoint.simulationCache, ...input.simulationCache }, checkpoint: undefined };
+  }
   const engine = (input.checkpoint?.baseline ?? input.baseline)?.engine;
+  const equipmentGrouping = input.screeningGroupVersion ?? (input.bareEquipmentProofs ? 14 : 6);
   const grouping = input.checkpoint ? input.checkpoint.nativeLotGroups :
-    input.reuseAppliedStats ? (input.groupCraftedEquipment ? 5 : 1) : undefined;
-  if (grouping !== undefined && grouping !== 1 && grouping !== 2 && grouping !== 3 && grouping !== 4 && grouping !== 5) throw new Error("invalid_search_checkpoint");
+    input.reuseAppliedStats ? (input.groupCraftedEquipment ? equipmentGrouping : 1) : undefined;
+  if (grouping !== undefined && ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].includes(grouping)) throw new Error("invalid_search_checkpoint");
   const groupEngine = grouping && engine && ignoresItemContext(engine) ? engine : undefined;
+  const jewelry = (grouping ?? 0) >= 9 ? "jewelry-suffix" : grouping === 8 ? "socket-curve" : grouping === 7;
+  const stable = (grouping ?? 0) >= 12 && stableAuctionReceiptOrder(options);
+  const armor = stable ? ((grouping ?? 0) >= 13 ? "curves-and-missives" : "equivalent-curves") : (grouping ?? 0) >= 11;
   const groups = auctionEffectGroups(options, slots, option =>
-    auctionEffectGroupKey(option, groupEngine, (grouping ?? 0) >= 2, grouping === 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3));
+    auctionEffectGroupKey(option, groupEngine, (grouping ?? 0) >= 6 ? "missive" : (grouping ?? 0) >= 2,
+      (grouping ?? 0) >= 5 ? "drop-curve" : grouping === 4 ? "tuning-cap" : grouping === 3, jewelry, (grouping ?? 0) >= 10,
+      armor, stable && grouping === 14));
   const flatGroups = groups.flat();
   const cheapestSingles = flatGroups.map(group => group.options.reduce((best, option) =>
     option.costCopper < best.costCopper || option.costCopper === best.costCopper && option.id < best.id ? option : best));
@@ -555,6 +570,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const screenFinished = directVerification && checkpoint.seedSelections !== null &&
     checkpoint.nextSeed === checkpoint.seedSelections.length && checkpoint.nextEquipmentSingle === flatGroups.length;
   const yieldBeforeEnumeration = screenFinished || input.shouldYield?.() === true;
+  const ringMirrors = !directVerification && !yieldBeforeEnumeration && input.bareEquipmentProofs && reuseAppliedStats
+    ? auctionRingMirrorOrder(groups, slots, checkpoint.baseline.engine, input.specId) : undefined;
   const groupIndex = new Map(flatGroups.map((group, index) => [group, index]));
   const rankedBySlot = groups.map(slotGroups => slotGroups.map(group => groupIndex.get(group)!)
     .sort((a, b) => checkpoint.pairScores[b] - checkpoint.pairScores[a] || a - b));
@@ -637,7 +654,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
   const signal = AbortSignal.any([input.signal, controller.signal]);
   const pending = new Map<string, Promise<PromiseSettledResult<GearPlanSimulation>>>();
   const selections: { selection: AuctionGearOption[]; key: string }[] = [];
-  const evaluate = (selection: AuctionGearOption[]) => {
+  const measureSelection = (selection: AuctionGearOption[]) => {
     const exact = auctionSelectionEffectKey(selection);
     const equivalent = reuseAppliedStats && auctionAppliedStatsKey(selection, checkpoint.baseline.engine, input.bareEquipmentProofs);
     const cachedExact = checkpoint.simulationCache[exact];
@@ -658,7 +675,43 @@ export async function assembleAuctionGear(input: PlannerInput & {
     selections.push({ selection, key });
     return true;
   };
+  const quickQueue: AuctionGearOption[][] = [];
+  const evaluate = (selection: AuctionGearOption[]) => {
+    if (!input.quickProbe || !selection.length || checkpoint.simulationCache[auctionSelectionEffectKey(selection)])
+      return measureSelection(selection);
+    if (calls + pending.size + quickQueue.length >= max) return false;
+    quickQueue.push(selection);
+    return true;
+  };
+  const screenQuickWindow = async () => {
+    const candidates = quickQueue.splice(0);
+    const probes = await Promise.all(candidates.map(async selection => {
+      const score = validSimulation(await input.quickProbe!(selection, signal), checkpoint.baseline.engine);
+      if (score.iterations !== 32) throw new Error("invalid_simulation_result");
+      return { selection, score, price: auctionPlanCost(selection) };
+    }));
+    // A noisy first pass competes on both objectives. Only ordinary
+    // measurements may become published leaders or seed a full continuation.
+    const radius = (score: GearPlanSimulation) => 3 * Math.max(score.dpsError, 0.1 * score.dps / Math.sqrt(score.iterations));
+    const baseline = checkpoint.baseline, baselineLower = baseline.dps - radius(baseline), baselineUpper = baseline.dps + radius(baseline);
+    const peak = checkpoint.bestDpsConfirmed?.simulation ?? baseline, value = checkpoint.bestValueConfirmed;
+    let dpsFloor = Math.max(baselineLower, peak.dps - radius(peak));
+    let valueFloor = value ? Math.max(0, value.simulation.dps - radius(value.simulation) - baselineUpper) / auctionPlanCost(optionsFor(value)) : 0;
+    for (const { score, price } of probes) {
+      const lower = score.dps - radius(score);
+      dpsFloor = Math.max(dpsFloor, lower);
+      valueFloor = Math.max(valueFloor, (lower - baselineUpper) / price);
+    }
+    let discarded = 0;
+    for (const { selection, score, price } of probes) {
+      const upper = score.dps + radius(score);
+      if (upper >= dpsFloor || (upper - baselineLower) / price >= valueFloor) measureSelection(selection);
+      else discarded++;
+    }
+    return discarded;
+  };
   const commitWindow = async () => {
+    const discarded = quickQueue.length ? await screenQuickWindow() : 0;
     const measured = await Promise.all(pending.values());
     let index = 0;
     for (const key of pending.keys()) {
@@ -675,6 +728,11 @@ export async function assembleAuctionGear(input: PlannerInput & {
       save();
       input.signal.throwIfAborted();
       throw failed.reason;
+    }
+    if (discarded) {
+      checkpoint.validCombinations += discarded;
+      checkpoint.quickScreenedOut = (checkpoint.quickScreenedOut ?? 0) + discarded;
+      calls += discarded;
     }
     for (const { selection, key } of selections) {
       // Discovery and warm-start scoring look up individual items by their original identity.
@@ -715,7 +773,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       input.signal.throwIfAborted();
       const seed = seeds[traversal.nextSeed].map(index => flatGroups[index]);
       const purchase = seed.some(group => dominatedGroups.has(group)) ? null : await cheapestAuctionEffectSelection(seed, input.budgetCopper, input.signal);
-      if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
+      if (purchase && !ringMirrors?.skipsReceipt(purchase.options) && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextSeed++;
       traversal.combinationsChecked++;
       assignments++;
@@ -732,7 +790,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       const first = flatGroups[pair.first], second = flatGroups[pair.second];
       const purchase = dominatedGroups.has(first) || dominatedGroups.has(second) ? null :
         await cheapestAuctionEffectSelection([first, second], input.budgetCopper, input.signal);
-      if (purchase && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
+      if (purchase && !ringMirrors?.skipsReceipt(purchase.options) && compatibleSelection(purchase.options) && !evaluate(purchase.options)) break;
       traversal.nextPair++;
       traversal.combinationsChecked++;
       assignments++;
@@ -757,16 +815,22 @@ export async function assembleAuctionGear(input: PlannerInput & {
     // Adjacent cursor positions share their leading choices. Reuse only the
     // exact receipt for an unchanged prefix in this immutable offer pool.
     const previousChoices: number[] = [];
-    // A globally exclusive lot cannot contribute to the price of another slot.
-    const seenLots = new Set<number>(), repeatedLots = new Set<number>();
-    for (const option of options) {
-      if (seenLots.has(option.auctionId)) repeatedLots.add(option.auctionId);
-      seenLots.add(option.auctionId);
-    }
-    const independentOffers = new Map<AuctionEffectGroup, AuctionGearOption>();
-    for (const [index, group] of flatGroups.entries()) {
-      if (group.options.every(option => !repeatedLots.has(option.auctionId)))
-        independentOffers.set(group, cheapestSingles[index]);
+    // A multi-slot lot only couples prices when another selected group can
+    // use it. Index all offers in cursor order, including same-group duplicates.
+    const overlappingGroups = new Map<AuctionEffectGroup, Set<AuctionEffectGroup>>();
+    if (!directVerification && !yieldBeforeEnumeration && !traversal.exhausted) {
+      const groupsByLot = new Map<number, AuctionEffectGroup[]>();
+      for (const group of flatGroups) {
+        const overlaps = new Set<AuctionEffectGroup>();
+        for (const option of group.options) {
+          const prior = groupsByLot.get(option.auctionId);
+          if (prior) {
+            for (const other of prior) overlaps.add(other);
+            if (prior[prior.length - 1] !== group) prior.push(group);
+          } else groupsByLot.set(option.auctionId, [group]);
+        }
+        if (overlaps.size) overlappingGroups.set(group, overlaps);
+      }
     }
     const prefixReceipts: AuctionGearOption[][] = [[]];
     const prefixCosts = [0];
@@ -774,12 +838,14 @@ export async function assembleAuctionGear(input: PlannerInput & {
       input.signal.throwIfAborted();
       const dominatedAxis = dominatedGroups.size ? traversal.cursor.findIndex((choice, axis) =>
         choice > 0 && dominatedGroups.has(groups[axis][choice - 1])) : -1;
-      if (dominatedAxis >= 0) {
+      const substitutionAxis = dominatedAxis >= 0 ? dominatedAxis :
+        ringMirrors?.skips(traversal.cursor) ? ringMirrors.axis : -1;
+      if (substitutionAxis >= 0) {
         // A resume may already be partway through this suffix. Count only its
         // remaining cursor positions, regardless of warmup order or budget.
-        proofPruned += remainingInBranch(dominatedAxis);
+        proofPruned += remainingInBranch(substitutionAxis);
         substitutionBranches++;
-        advance(dominatedAxis);
+        advance(substitutionAxis);
         assignments++;
         if (assignments % 256 === 0) await yieldTraversal();
         continue;
@@ -812,8 +878,10 @@ export async function assembleAuctionGear(input: PlannerInput & {
         }
         previousChoices.length = index;
         if (choice) {
-          const offer = independentOffers.get(groups[index][choice - 1]);
-          if (offer && effectSelection.length <= 16) {
+          const group = groups[index][choice - 1];
+          const overlaps = overlappingGroups.get(group);
+          if (effectSelection.length <= 16 && (!overlaps || !effectSelection.some(selected => overlaps.has(selected)))) {
+            const offer = cheapestSingles[groupIndex.get(group)!];
             if (offer.costCopper > input.budgetCopper - costCopper) invalidPrefix = index;
             else {
               costCopper += offer.costCopper;
@@ -952,6 +1020,7 @@ export async function assembleAuctionGear(input: PlannerInput & {
       } else {
         const verification = await assembleAuctionGear({ ...input, searchId: input.searchId + ":equipment-750",
           baseline, simulate: recheck, simulationCache: warm, checkpoint: saved, incumbents: undefined,
+          screeningGroupVersion: grouping,
           maxNewSimulations: Math.max(1, max - calls), shouldYield: calls >= max ? () => true : input.shouldYield,
           recheckEquipment: undefined,
           onCheckpoint: state => { checkpoint.equipmentVerification = state; save(); } });
@@ -971,8 +1040,8 @@ export async function assembleAuctionGear(input: PlannerInput & {
   assertFreshMarket(input.market);
   return { checkpoint, ...(preciseSingles ? { preciseSingles } : {}), result: { kind: "assembly", objective: input.objective ?? "dps", searchId: input.searchId, selectedSlots: slots,
     ...auctionEquipmentWinners(leaders, optionsFor, input, slots),
-    simulations: checkpoint.simulations + (checkpoint.equipmentVerification?.simulations ?? 0), optionsConsidered: options.length, searchLimited: !complete,
-    exhaustiveComplete: complete, combinationsChecked: coverage.combinationsChecked,
+    simulations: checkpoint.simulations + (checkpoint.equipmentVerification?.simulations ?? 0), optionsConsidered: options.length, searchLimited: !complete || Boolean(checkpoint.quickScreenedOut),
+    exhaustiveComplete: complete && !checkpoint.quickScreenedOut, combinationsChecked: coverage.combinationsChecked,
     ...(coverage.proofPrunedAssignments ? { proofPrunedAssignments: coverage.proofPrunedAssignments } : {}),
     ...(coverage.pruningCounts ? { pruningCounts: coverage.pruningCounts } : {}),
     validCombinations: coverage.validCombinations, combinationCount: coverageCount, combinationKind: "effects" } };
