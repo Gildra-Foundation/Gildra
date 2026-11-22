@@ -65,3 +65,32 @@ jobs:
           & "$env:RUNNER_TEMP/Gildra Gear/runtime/node.exe" apps/gear-desktop/tests/native-batch.mjs "$env:RUNNER_TEMP/Gildra Gear/runtime"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           node apps/gear-desktop/tests/electron-smoke.mjs "$env:RUNNER_TEMP/Gildra Gear/Gildra Gear.exe"
+      - name: Build and test launcher on Windows
+        shell: pwsh
+        run: ./apps/gear-desktop/launcher/build.ps1 "$env:RUNNER_TEMP/launcher"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: launcher
+          path: ${{ runner.temp }}/launcher/Gildra-Gear-Launcher.zip
+          if-no-files-found: error
+  publish:
+    needs: windows
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: launcher
+          path: release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: Gildra-Gear-Windows-x64
+          path: portable
+      - name: Publish verified Windows packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GITHUB_RUN_NUMBER" > portable/gear-build.txt
+          (cd portable && zip -qr ../release/Gildra-Gear-Windows-x64.zip .)
+          gh release create "gear-desktop-build-$GITHUB_RUN_NUMBER" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest=false --title "Gildra Gear · Windows #$GITHUB_RUN_NUMBER" --notes "Скачайте Gildra-Gear-Launcher.zip, чтобы установить, обновить или запустить приложение."
