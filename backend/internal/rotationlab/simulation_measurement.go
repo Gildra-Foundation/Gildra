@@ -8,7 +8,7 @@ import (
 
 func isAuctionMeasurement(input SimulationInput) bool {
 	return input.ActionListMode == ActionListModeNative &&
-		(input.Precision == auctionCandidatePrecision || input.Precision == auctionFinalistPrecision)
+		(input.Precision == auctionQuickProbePrecision || input.Precision == auctionCandidatePrecision || input.Precision == auctionFinalistPrecision)
 }
 
 // Auction scoring needs native uncertainty, not the editor's playback data.

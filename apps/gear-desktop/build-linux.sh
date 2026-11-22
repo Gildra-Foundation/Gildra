@@ -13,7 +13,7 @@ out=$(realpath "$GEAR_DIST")
 engine=$(realpath "$SIMC_DIR")
 compiler=$(cd "$(dirname "$MINGW_CXX")" && pwd)/$(basename "$MINGW_CXX")
 node_win=$(realpath "$NODE_WIN_DIR")
-patches=("$repo/infra/simc/gear-metadata.patch" "$repo/infra/simc/batch-initialization.patch")
+patches=("$repo/infra/simc/gear-metadata.patch" "$repo/infra/simc/batch-initialization.patch" "$repo/infra/simc/auction-armor-reads.patch")
 if ! (cd "$engine" && git apply --reverse --check "${patches[@]}") 2>/dev/null; then
   (cd "$engine" && git apply --check "${patches[@]}" && git apply "${patches[@]}")
 fi

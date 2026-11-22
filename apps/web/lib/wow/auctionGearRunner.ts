@@ -18,6 +18,7 @@ import { advanceAuctionGearExhaustiveEnhancements } from "./auctionGearExhaustiv
 import { quickAuctionStatChoices } from "./auctionGearStatChoices";
 import { auctionAppliedStatsKey, auctionSelectionEffectKey } from "./auctionGearEffects";
 import { parseAuctionGearEnhancementMode, type AuctionGearEnhancementMode } from "./auctionGearEnhancementMode";
+import { fixedEagleGemEdits } from "./auctionRingRatings";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import { applyOwnedAuctionGearChanges, ownedAuctionGearChanges, customizedAuctionGearOptions } from "./auctionGearEnhancedConfiguration";
 import { talentSpecThemes } from "@/lib/talentSpecThemes";
@@ -31,11 +32,12 @@ import { equippedAuctionReferences } from "./auctionItemReference";
 import { auctionVariantKey, validAuctionWeapon } from "./auctionItemVariant";
 import { schedulePlannerItemIcons } from "./gearPlannerMedia";
 import { resolveAuctionVariants } from "./auctionVariantResolver";
-import { auctionGearMechanicalCache, auctionGearMechanicalKey, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
+import { auctionGearMechanicalCache, auctionGearMechanicalKey, equivalentBootEnchants, projectUnreadArmor, purchasedJewelryScoreChanges } from "./auctionGearMechanicalCache";
 import { getAuctionEquippedPresentation } from "./auctionGearEquipment";
 import { auctionGearSlots, parseAuctionGearSlots, type AuctionGearSlot } from "./auctionGearSelection";
 import { currentGearSeason, lookupGearEntities } from "./gearCandidateRepository";
 import { catalogLoadoutItem, gearSlotCategoryPaths } from "./gearCandidates";
+import { ignoresItemContext } from "./gearItemModifiers";
 import { prepareGearLoadout, nativeGearSimulationMeasurement, type GearSimulationScenario } from "./gearSimulation";
 import { planAuctionGear, searchAuctionGearOptions, assembleAuctionGear, auctionEquipmentWinners, captureAuctionGearIncumbents, type AuctionEquippedItem, type AuctionGearOption, type AuctionPlanProgress, type GearPlanSimulation } from "./auctionGearPlanner";
 import type { AuctionGearSearchResult, AuctionGearAssemblyResult } from "./auctionGearTypes";
@@ -215,7 +217,7 @@ function invalidateAuctionCursors(entry: AuctionGearSearchEntry) {
 
 const auctionFactsKey = (options: AuctionGearOption[]) => JSON.stringify(options.map(option =>
   [option.id, option.auctionId, option.costCopper, option.quantity, option.variantKey,
-    ...(option.candidate.variants.find(v => v.key === option.variantKey)?.resolution?.nativeCraftedSymmetryV1 ? [true] : [])]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
+    ...(option.candidate.variants?.find(v => v.key === option.variantKey)?.resolution?.nativeCraftedSymmetryV1 ? [true] : [])]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
 
 function synchronizeAuctionOptions(entry: AuctionGearSearchEntry, options: AuctionGearOption[]) {
   const context = entry.context;
@@ -625,7 +627,10 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
       entry.allowedKey = allowedKey;
       scheduleAuctionGearSearchSave(entry);
     }
-    const capacity = fullMarket && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
+    const quickEquipment = !fullMarket && context.input.enhancementMode === "equipment";
+    const workerCapacity = (fullMarket || quickEquipment) && !shouldYield() ? await context.simulate.concurrency?.(signal) : 1;
+    const screenQuick = quickEquipment && context.simulate.quickProbe;
+    const capacity = fullMarket || screenQuick ? workerCapacity : 1;
     const assemblyBatchSize = capacity === 2 ? context.simulate.batchSize : undefined;
     const currentPreview = () => {
       const cached = entry.enhancementPreview;
@@ -652,6 +657,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         selectedSlots: context.input.selectedSlots, loadout: context.loadout, specId: context.specId,
         market: context.market, signal, simulate: context.simulate, checkpoint: entry.assemblyCheckpoint,
         baseline: entry.retainedBaseline ?? entry.searchCheckpoint?.baseline, simulationCache: retainAuctionSimulations(entry),
+        quickProbe: screenQuick
+          ? (selected, sig) => context.simulate(selected, sig, undefined, "quick-probe") : undefined,
         incumbents: entry.retainedIncumbents,
         reuseAppliedStats: fullMarket,
         // This pass measures bare gear. The enhancement iterator below receives
@@ -664,7 +671,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             entry.assemblyCheckpoint?.equipmentVerification !== undefined)
           ? (selected, sig) => context.simulate(selected, sig, undefined, "finalist") : undefined,
         simulationConcurrency: capacity, simulationBatchSize: assemblyBatchSize,
-        maxNewSimulations: advanceTogether ? 1 : assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
+        maxNewSimulations: screenQuick ? 8 : advanceTogether ? 1 : assemblyBatchSize ? 2 * assemblyBatchSize : publishResult ? 1 : 8,
         shouldYield: advanceTogether && entry.assemblyCheckpoint ? () => true : shouldYield, onProgress: progress, onCacheHit: () => metricsFor(context.armory ?? context).cacheHit(),
         onCheckpoint: state => { entry.assemblyCheckpoint = state; scheduleAuctionGearSearchSave(entry); },
       }));
@@ -703,7 +710,7 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
         publishResult?.(published);
       }
     }
-    for (let step = 1; !advanceTogether && publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
+    for (let step = 1; !screenQuick && !advanceTogether && publishResult && step < 8 && !shouldYield() && !poolComplete; step++) {
       ({ checkpoint, published, poolComplete } = await advanceAssembly());
     }
     if (!shouldYield()) setAuctionGearPhase(entry, "nextAssemblyPhase", "discovery");
@@ -790,7 +797,8 @@ export async function assembleAuctionGearSearch(entry: AuctionGearSearchEntry, s
             context.simulate.finalistKey(customizedAuctionGearOptions(selected, configuration), ownedAuctionGearChanges(configuration))),
           recheckBaseline: simSignal => context.simulate([], simSignal, undefined, "finalist"),
           recheck: (selected, configuration, simSignal) => context.simulate(
-            customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist"),
+            customizedAuctionGearOptions(selected, configuration), simSignal, ownedAuctionGearChanges(configuration), "finalist",
+            checkpoint.baseline.furyWithoutLeechHealingV1 === true ? checkpoint.baseline.engine : undefined),
           options, selectedSlots: context.input.selectedSlots, equipment: context.armory.equipment, loadout: context.loadout,
           specId: context.specId, level: context.character.level, professions: context.armory.professions, faction: context.character.faction?.type, region: context.character.region,
           engine: checkpoint.baseline.engine, profileFingerprint: context.profileFingerprint,
@@ -1030,9 +1038,24 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     const matches = equipped.filter(item => item?.slot?.type === slot);
     return matches.length === 1 ? matches[0] : undefined;
   };
+  const bareLeechHosts = new Map<string, number>();
+  for (const [slot, inventory] of [["WRIST", "WRIST"], ["BACK", "CLOAK"]]) {
+    const item = itemInSlot(slot);
+    if (item?.inventory_type?.type === inventory && item.item_class?.id === 4 && Number.isSafeInteger(item.item?.id) && item.item.id > 0 &&
+        (item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length)) bareLeechHosts.set(slot, item.item.id);
+  }
   const gloves = itemInSlot("HANDS");
   const unenchantedHandsId = gloves && (gloves.enchantments === undefined ||
     Array.isArray(gloves.enchantments) && !gloves.enchantments.length) ? gloves.item?.id : undefined;
+  const bareArmor = new Map<string, number>();
+  for (const slot of ["HEAD", "SHOULDER"]) {
+    const item = itemInSlot(slot);
+    if (item?.inventory_type?.type === slot && item.item_class?.id === 4 &&
+        Number.isSafeInteger(item.item?.id) && item.item.id > 0 &&
+        (item.enchantments === undefined || Array.isArray(item.enchantments) && !item.enchantments.length)) {
+      bareArmor.set(slot, item.item.id);
+    }
+  }
   const wornRing = (slot: string) => {
     const ring = itemInSlot(slot);
     if (ring?.inventory_type?.type !== "FINGER" || !Number.isSafeInteger(ring.item?.id) || ring.item.id <= 0 ||
@@ -1044,37 +1067,70 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (permanent.length <= 1 && typeof enchantId === "number" && Number.isSafeInteger(enchantId) && enchantId >= 0)
       return {itemId: Number(ring.item.id), enchantId};
   };
+  const wornPrismatic = new Map<string, number>();
+  const barePrismaticRings = new Set<string>();
+  if (armory.profile?.level === 90) for (const slot of ["FINGER_1", "FINGER_2", "NECK"]) {
+    const item = itemInSlot(slot);
+    if (item?.inventory_type?.type !== (slot === "NECK" ? "NECK" : "FINGER") || item.item_class?.id !== 4 ||
+        !Number.isSafeInteger(item.item?.id) || item.item.id <= 0 || !Number.isSafeInteger(item.level?.value) ||
+        item.level.value < 120 || !Array.isArray(item.sockets) || item.sockets.length !== 1 ||
+        item.sockets[0]?.socket_type?.type !== "PRISMATIC") continue;
+    const bare = item.enchantments === undefined || Array.isArray(item.enchantments) && item.enchantments.length === 0;
+    // A neck enchant can change the behavior of its gem. An untouched ring
+    // enchant contributes zero only when the native input has no enchantments.
+    if (slot === "NECK" && !bare) continue;
+    if (slot !== "NECK" && bare) barePrismaticRings.add(slot);
+    wornPrismatic.set(slot, item.item.id);
+  }
   const firstRing = wornRing("FINGER_1"), secondRing = wornRing("FINGER_2");
   const wornRings = firstRing && secondRing ? [firstRing, secondRing] as const : undefined;
+  const installedRingEnchants = new Map<string, number>();
+  if (firstRing) installedRingEnchants.set("FINGER_1", firstRing.enchantId);
+  if (secondRing) installedRingEnchants.set("FINGER_2", secondRing.enchantId);
   const fingerprint = auctionGearProfileFingerprint(armory);
   const metrics = metricsFor(armory);
   const transport = createAuctionNativeTransport(metrics);
-  const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
-  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate") => {
+  const pending = new Set<{ engine: string; cacheKey: string; equivalentKey?: string; armorKey?: string; signal: AbortSignal; result: Promise<GearPlanSimulation> }>();
+  const prepareScore = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate" | "quick-probe", physicalScore = false, furyLeechEngine?: string) => {
     const prepared = prepareGearLoadout({ selections, equipment: armory.equipment, loadout, specId });
     const verifiedEngine = engine() || measuredEngine;
-    const jewelryScore = mode && selections.length
+    const jewelryScore = mode && mode !== "quick-probe" && selections.length
       ? purchasedJewelryScoreChanges(prepared.changes, selections, verifiedEngine, ownedChanges, wornRings, mode === "finalist" ? mode : undefined) : undefined;
     const scoreChanges = jewelryScore?.changes ?? prepared.changes;
     const scoreOwned = jewelryScore?.ownedChanges ?? ownedChanges;
     const request = { spec: specSlug, scenario, ...encounter, ...(prepared.removedSlots?.length ? { removedSlots: prepared.removedSlots } : {}),
       ...(scoreOwned?.length ? { ownedChanges: scoreOwned } : {}), ...(mode === "finalist" ? { precision: mode } : {}) };
-    const cacheKey = auctionGearMechanicalKey(fingerprint, request, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings });
-    return { prepared, verifiedEngine, scoreChanges, request, cacheKey };
+    const keyRequest = mode === "finalist" && physicalScore && scoreOwned?.length &&
+      wornPrismatic.size && ignoresItemContext(verifiedEngine)
+      ? { ...request, ownedChanges: fixedEagleGemEdits(scoreOwned, wornPrismatic, installedRingEnchants, prepared.changes, prepared.removedSlots) } : request;
+    const cacheKey = auctionGearMechanicalKey(fingerprint, keyRequest, { changes: scoreChanges, options: selections, engine: verifiedEngine, playerLevel: mode && armory.profile?.level === 90 ? 90 : undefined, unenchantedHandsId, wornRings, wornPrismatic,
+      barePrismaticRings: physicalScore ? barePrismaticRings : undefined, physicalFinalist: physicalScore && mode === "finalist",
+      furyLeechHosts: verified && furyLeechEngine === verifiedEngine && specId === 72 ? bareLeechHosts : undefined });
+    return { prepared, verifiedEngine, scoreChanges, request, cacheKey: mode === "quick-probe" ? "quick32:" + cacheKey : cacheKey };
   };
   const finalistKey = (selections: AuctionGearOption[], ownedChanges?: readonly OwnedAuctionGearChange[]) =>
     prepareScore(selections, ownedChanges, "finalist").cacheKey;
-  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate"): Promise<GearPlanSimulation> => {
+  const observedArmorMasks = new Set<number>();
+  const armorScoreKey = (selections: AuctionGearOption[], edits: readonly OwnedAuctionGearChange[], mask: number, physicalKey?: string) => {
+    const projected = projectUnreadArmor(edits, mask, bareArmor, selections);
+    // Partition certificates by mask: an unread speed score must never serve
+    // a build covered only by a different packet's unread avoidance rating.
+    const key = projected ? finalistKey(selections, projected) : bareArmor.size ? physicalKey : undefined;
+    return key && `armor:${mask}:${key}`;
+  };
+  const simulate = async (selections: AuctionGearOption[], simSignal: AbortSignal, ownedChanges?: readonly OwnedAuctionGearChange[], mode?: "finalist" | "certified-candidate" | "quick-probe", furyLeechEngine?: string): Promise<GearPlanSimulation> => {
     assertFreshMarket(market);
     simSignal.throwIfAborted();
-    const { prepared, verifiedEngine, scoreChanges, request, cacheKey } = prepareScore(selections, ownedChanges, mode);
+    // Receipts keep their existing identity for checkpoint ranking and tie
+    // breaking. Only the physical simulation cache can share this extra proof.
+    const { prepared, verifiedEngine, scoreChanges, request, cacheKey } = prepareScore(selections, ownedChanges, mode, true, furyLeechEngine);
     const equipment = ownedChanges?.length ? applyOwnedAuctionGearChanges(prepared.equipment, ownedChanges) : prepared.equipment;
     const exact = verified ? auctionGearMechanicalCache.get(cacheKey, verifiedEngine) : undefined;
     let equivalentKey: string | undefined;
     // A bare substitution can span different socket or suffix programs only
     // while all the purchased items are bare. Keep the native precision in
     // the cache key so each independent measurement still runs once.
-    const barePurchase = mode && selections.length > 0 && !ownedChanges?.length &&
+    const barePurchase = mode && mode !== "quick-probe" && selections.length > 0 && !ownedChanges?.length &&
       selections.every(option => !option.customization);
     if (barePurchase) {
       const proof = auctionAppliedStatsKey(selections, verifiedEngine, true);
@@ -1098,45 +1154,86 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     if (exact && equivalentKey) auctionGearMechanicalCache.set(equivalentKey, exact);
     const cached = exact ?? (verified && equivalentKey ? auctionGearMechanicalCache.get(equivalentKey, verifiedEngine) : undefined);
     if (cached) { metrics.cacheHit(); return cached; }
-    // Precision is part of cacheKey. Two finalists can join the same precise
-    // fight under exactly the same conditions as a completed cache hit.
+    const armorScore = () => {
+      if (verified && mode === "finalist" && ownedChanges?.length) {
+        for (const mask of observedArmorMasks) {
+          const key = armorScoreKey(selections, ownedChanges, mask, cacheKey);
+          const measured = key && auctionGearMechanicalCache.get(key, verifiedEngine);
+          if (measured) return measured;
+        }
+      }
+    };
+    const covered = armorScore();
+    if (covered) { metrics.cacheHit(); return covered; }
     const share = verified && verifiedEngine.startsWith("SimulationCraft");
+    const armorKey = share && mode === "finalist" && transport.armorProbe && ownedChanges?.length &&
+      (specSlug === "fury-warrior" || specSlug === "fire-mage") && ignoresItemContext(verifiedEngine)
+      ? armorScoreKey(selections, ownedChanges, 7) : undefined;
+    let probe: Promise<GearPlanSimulation> | undefined;
     if (share) for (const entry of pending) {
       if (entry.engine !== verifiedEngine || entry.signal !== simSignal) continue;
-      // Either proof used by the completed cache also suffices in flight.
-      if (entry.cacheKey !== cacheKey && (!equivalentKey || entry.equivalentKey !== equivalentKey)) continue;
-      const measured = await entry.result;
+      if (entry.cacheKey === cacheKey || equivalentKey && entry.equivalentKey === equivalentKey) {
+        const measured = await entry.result;
+        simSignal.throwIfAborted();
+        metrics.cacheHit();
+        return { ...measured };
+      }
+      if (armorKey && entry.armorKey === armorKey) probe ??= entry.result;
+    }
+    if (probe) {
+      // A matching unmeasured armor group is only a scheduling hint. If the
+      // native run read either rating, failed, or returned no certificate,
+      // continue with this caller's physical build.
+      await probe.catch(() => undefined);
       simSignal.throwIfAborted();
-      metrics.cacheHit();
-      return { ...measured };
+      const measured = armorScore();
+      if (measured) { metrics.cacheHit(); return measured; }
     }
     metrics.simulation();
     const measurement = metrics.measure("simulation", async () => {
       const base = { spec: specSlug, scenario, ...encounter, actionListMode: "native", talentLoadout: armory.activeTalentLoadout,
         armory: { profile: armory.profile, specializations: armory.specializations, equipment },
-        precision: mode === "finalist" ? "auction-finalist" : "auction-candidate" };
+        precision: mode === "finalist" ? "auction-finalist" : mode === "quick-probe" ? "auction-quick-32" : "auction-candidate" };
       const ownedBatch = transport.ownedBatch && ownedChanges?.length
         ? { base: { ...base, armory: { ...base.armory, equipment: prepared.equipment } }, changes: ownedChanges }
         : undefined;
       // A mixed-slot worker starts each profileset from the original armory.
       // Owned edits and off-hand removal still require their own base and slot set.
       const batchEquipment = ownedBatch ? prepared.equipment : equipment;
-      const mixed = transport.mixedSlots && batchEquipment === armory.equipment && !ownedChanges?.length && base.precision === "auction-candidate";
+      const mixed = transport.mixedSlots && batchEquipment === armory.equipment && !ownedChanges?.length && base.precision !== "auction-finalist";
       const group = transport.batchSize && (prepared.changes.length || ownedBatch)
         ? JSON.stringify([base.precision, batchEquipment === armory.equipment ? null : batchEquipment,
           mixed ? "mixed" : prepared.changes.map(change => change.slot).sort(),
           ownedBatch?.changes.map(change => [change.slotType, change.itemId]).sort()])
         : undefined;
-      const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, signal: simSignal});
+      const result = await transport.submit({base, changes: prepared.changes, group, ownedBatch, probeArmor: Boolean(armorKey), signal: simSignal});
       simSignal.throwIfAborted();
       const simulation = nativeGearSimulationMeasurement(result);
-      if (mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
+      if (mode === "quick-probe" && simulation.iterations !== 32 || mode === "finalist" && simulation.iterations !== 750) throw new Error("invalid_simulation_result");
       const catalogEngine = engine();
       if ((catalogEngine && simulation.engine !== catalogEngine) ||
           (measuredEngine && simulation.engine !== measuredEngine) ||
           (share && simulation.engine !== verifiedEngine)) throw new Error("simulation_version_changed");
       auctionGearMechanicalCache.set(cacheKey, simulation);
       if (equivalentKey && simulation.engine === verifiedEngine) auctionGearMechanicalCache.set(equivalentKey, simulation);
+      if (mode === "finalist" && ownedBatch && verifiedEngine === simulation.engine && result && typeof result === "object") {
+        if ("unreadArmorRatingsV1" in result) {
+          const mask = result.unreadArmorRatingsV1;
+          if (typeof mask === "number" && Number.isInteger(mask) && mask > 0 && mask <= 7 && ignoresItemContext(verifiedEngine)) {
+            const key = armorScoreKey(selections, ownedBatch.changes, mask);
+            if (key) {
+              auctionGearMechanicalCache.set(key, simulation);
+              observedArmorMasks.add(mask);
+            }
+          }
+        } else if ("equivalentBootRatingsV1" in result) {
+          const boot = ownedBatch.changes.find(edit => edit.slotType === "FEET");
+          for (const enchantId of equivalentBootEnchants(boot?.enchantId, result.equivalentBootRatingsV1, verifiedEngine)) {
+            const other = ownedBatch.changes.map(edit => edit === boot ? { ...edit, enchantId } : edit);
+            auctionGearMechanicalCache.set(finalistKey(selections, other), simulation);
+          }
+        }
+      }
       measuredEngine = simulation.engine;
       verified = true;
       return simulation;
@@ -1144,30 +1241,72 @@ function createAuctionSimulator({ armory, loadout, specId, specSlug, scenario, e
     // Start the native request immediately. Track at most one full two-lane
     // window, and only share work whose callers cancel together.
     if (!share || pending.size >= 2 * Math.max(1, transport.batchSize)) return measurement;
-    const entry = { engine: verifiedEngine, cacheKey, equivalentKey, signal: simSignal, result: measurement };
+    const entry = { engine: verifiedEngine, cacheKey, equivalentKey, armorKey, signal: simSignal, result: measurement };
     pending.add(entry);
     try { return await measurement; }
     finally { pending.delete(entry); }
   };
-  return Object.defineProperties(Object.assign(simulate, { finalistKey, concurrency: transport.concurrency, batchSize: 0, ownedBatch: false }), {
+  return Object.defineProperties(Object.assign(simulate, { finalistKey, concurrency: transport.concurrency, batchSize: 0, ownedBatch: false, quickProbe: false }), {
     batchSize: { get: () => transport.batchSize },
     ownedBatch: { get: () => transport.ownedBatch },
+    quickProbe: { get: () => transport.quickProbe },
   });
 }
 
-type AuctionNativeBase = { precision: string; armory: object };
+type AuctionNativeBase = { precision: string; armory: object; spec: string };
 type AuctionNativeChanges = ReturnType<typeof prepareGearLoadout>["changes"];
 type AuctionNativeJob = {
   base: AuctionNativeBase; changes: AuctionNativeChanges; group?: string; signal: AbortSignal;
+  probeArmor?: boolean;
   ownedBatch?: { base: AuctionNativeBase; changes: readonly OwnedAuctionGearChange[] };
   resolve: (result: unknown) => void; reject: (error: unknown) => void; checkGroupAbort?: () => void;
 };
+
+function selectNativeBatchPeers(first: AuctionNativeJob, compatible: AuctionNativeJob[], room: number) {
+  if (room <= 0) return [];
+  const armorSlots = ["FEET", "HEAD", "SHOULDER"];
+  if (compatible.length <= room || (first.base.spec !== "fury-warrior" && first.base.spec !== "fire-mage") ||
+      !first.ownedBatch?.changes.some(edit => armorSlots.includes(edit.slotType))) {
+    return compatible.slice(0, room);
+  }
+  // Pack similar owned armor edits together so the worker can test equivalence
+  // within a packet. This ordering hint never substitutes a physical edit.
+  const cohort = (job: AuctionNativeJob) => JSON.stringify([job.changes, job.ownedBatch?.changes.map(edit => {
+    if (edit.enchantId && armorSlots.includes(edit.slotType)) {
+      // The two boot ranks can carry different stamina.
+      return [edit.slotType, edit.itemId, edit.gems, edit.slotType === "FEET" ? edit.enchantId % 2 : 0];
+    }
+    return edit;
+  })]);
+  const groups = new Map<string, AuctionNativeJob[]>([[cohort(first), []]]);
+  for (const job of compatible) {
+    const key = cohort(job);
+    const group = groups.get(key);
+    if (group) group.push(job);
+    else groups.set(key, [job]);
+  }
+  const [peers, ...others] = groups.values();
+  if (peers.length >= room) return peers.slice(0, room);
+  // Find a full packet of whole cohorts, always including the oldest row
+  // and its peers. There are at most 24 places left in a native packet.
+  const remaining = room - peers.length;
+  const fills: (AuctionNativeJob[] | undefined)[] = new Array(remaining + 1);
+  fills[0] = [];
+  for (const group of others) {
+    for (let size = remaining; size >= group.length; size--) {
+      const prefix = fills[size - group.length];
+      if (prefix && !fills[size]) fills[size] = [...prefix, ...group];
+    }
+    if (fills[remaining]) return peers.concat(fills[remaining]);
+  }
+  return peers.concat(others.flat()).slice(0, room);
+}
 
 function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   const worker = () => (process.env.ROTATION_WORKER_URL ?? "http://127.0.0.1:58082").replace(/\/$/, "");
   const pending: AuctionNativeJob[] = [];
   const subscribers = new Map<AbortSignal, { jobs: Set<AuctionNativeJob>; abort: () => void }>();
-  let ownedBatch = false, mixedSlots = false;
+  let ownedBatch = false, mixedSlots = false, armorProbe = false, quickProbe = false;
   let capacity: 1 | 2 = 1, batchSize = 0, active = 0, activeCandidates = 0, scheduled = false;
 
   const requestDeadlineMs = 190_000;
@@ -1193,7 +1332,8 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
           // requests measure the cost of a finalist on this transport.
           const timeLimit = first.base.precision === "auction-finalist"
             ? Math.max(1, Math.min(finalistTimeoutCap, Math.floor(0.7 * requestDeadlineMs / finalistMsPerRow))) : Infinity;
-          for (const job of compatible.slice(0, Math.min(batchSize, limit, timeLimit) - 1)) {
+          const room = Math.min(batchSize, limit, timeLimit) - 1;
+          for (const job of selectNativeBatchPeers(first, compatible, room)) {
             jobs.push(job);
             pending.splice(pending.indexOf(job), 1);
           }
@@ -1216,7 +1356,8 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
   }
 
   async function send(jobs: AuctionNativeJob[]) {
-    const first = jobs[0], batch = jobs.length > 1;
+    const first = jobs[0];
+    const batch = jobs.length > 1 || Boolean(ownedBatch && armorProbe && first.group && first.ownedBatch && first.probeArmor);
     let requestSignal = first.signal;
     if (batch && jobs.some(job => job.signal !== first.signal)) {
       const controller = new AbortController();
@@ -1239,7 +1380,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
         gearChanges: job.changes, ...(job.ownedBatch ? {ownedChanges: job.ownedBatch.changes} : {}) })) }
         : { ...first.base, ...(first.changes.length ? { gearChanges: first.changes } : {}) }),
     }).catch(error => {
-      if (!finalist || !batch || !deadline.aborted || requestSignal.aborted) throw error;
+      if (!finalist || jobs.length < 2 || !deadline.aborted || requestSignal.aborted) throw error;
       // Retry only still-requested rows. Halving every timed-out packet
       // eventually reaches a single, whose failure is returned to the caller.
       finalistTimeoutCap = Math.min(finalistTimeoutCap, Math.floor(jobs.length / 2));
@@ -1320,7 +1461,7 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
     };
   }
 
-  function submit(input: Pick<AuctionNativeJob, "base" | "changes" | "group" | "signal" | "ownedBatch">) {
+  function submit(input: Pick<AuctionNativeJob, "base" | "changes" | "group" | "signal" | "ownedBatch" | "probeArmor">) {
     input.signal.throwIfAborted();
     let unsubscribe: () => void;
     return new Promise<unknown>((resolve, reject) => {
@@ -1347,6 +1488,8 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       batchSize = permits === 2 && /^\d+$/.test(advertised) && Number(advertised) >= 2 ? Math.min(25, Number(advertised)) : 0;
       mixedSlots = batchSize > 0 && response.headers.get("x-gildra-simulation-mixed-slots") === "1";
       ownedBatch = batchSize > 0 && response.headers.get("x-gildra-simulation-owned-batch") === "1";
+      quickProbe = response.ok && response.headers.get("x-gildra-simulation-quick-probe") === "32";
+      armorProbe = ownedBatch && response.headers.get("x-gildra-simulation-armor-probe") === "1";
       schedule();
       return capacity;
     } catch {
@@ -1355,8 +1498,9 @@ function createAuctionNativeTransport(metrics: ReturnType<typeof metricsFor>) {
       batchSize = 0;
       mixedSlots = false;
       ownedBatch = false;
+      quickProbe = false;
       return capacity;
     }
   }
-  return { submit, concurrency, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
+  return { submit, concurrency, get quickProbe() { return quickProbe; }, get armorProbe() { return ownedBatch && armorProbe; }, get mixedSlots() { return mixedSlots; }, get batchSize() { return batchSize; }, get ownedBatch() { return ownedBatch; } };
 }

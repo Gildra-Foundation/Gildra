@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { auctionEffectGroupKey, auctionEffectGroups, cheapestAuctionEffectSelection, type AuctionEffectGroup } from "./auctionGearEffects";
-import { auctionNativeItemOptions, ignoresItemContext, validAuctionItemContext } from "./gearItemModifiers";
+import { auctionNativeItemOptions, ignoresItemContext, validAuctionItemContext, verifiedAuctionDropCurve } from "./gearItemModifiers";
 import { auctionConflictingPurchaseSlot, auctionPlanCost, auctionPlanLoadout } from "./auctionGearPlanner";
 import { parseAuctionGearSlots } from "./auctionGearSelection";
 import { prepareGearLoadout } from "./gearSimulation";
@@ -10,7 +10,7 @@ import type { AuctionGearOption } from "./auctionGearTypes";
 export type AuctionGearEnhancedLoadoutInput = {
   loadout: GearLoadoutItem[];
   engine?: string;
-  nativeLotGroups?: 1 | 2 | 3;
+  nativeLotGroups?: 1 | 2 | 3 | 4 | 5;
   equipment: Record<string, unknown>;
   specId: number;
   options: AuctionGearOption[];
@@ -20,7 +20,7 @@ export type AuctionGearEnhancedLoadoutInput = {
 /** Points to the next complete assignment. Decimal strings keep large domains exact. */
 export type AuctionGearEnhancedLoadoutState = {
   version: 2;
-  nativeLotGroups?: 1 | 2 | 3;
+  nativeLotGroups?: 1 | 2 | 3 | 4 | 5;
   inputKey: string;
   cursor: number[];
   exhausted: boolean;
@@ -94,6 +94,102 @@ export function enhancedFinalistOptionKey(option: AuctionGearOption, engine: str
   return enhancedGroupKey(option, engine, 3, true);
 }
 
+/** A type-28 modifier can be substituted only when it resolves to the same
+ * native cap. The complete metadata and non-tuning inputs must still agree
+ * for the bare finalist, every permitted enchant and every later purchase. */
+function cappedEquipmentKey(option: AuctionGearOption, engine: string) {
+  const variant = option.candidate.variants.find(v => v.key === option.variantKey);
+  const resolution = variant?.resolution;
+  if (!variant || !resolution?.nativeContentTuningV1 || resolution.nativeNoItemEffects !== true ||
+      resolution.enhancements?.status !== "verified" || resolution.enhancements.socketCount !== 0 ||
+      (option.candidate.itemClassId !== 2 && option.candidate.itemClassId !== 4) ||
+      ["NECK", "FINGER_1", "FINGER_2", "TRINKET_1", "TRINKET_2"].includes(option.candidate.slotType)) return;
+  const alias = enhancedFinalistOptionKey(option, engine);
+  if (!alias) return;
+  const proof: Record<string, unknown> = { ...resolution, nativeContentTuningV1: resolution.nativeContentTuningV1[1] };
+  for (const kind of ["nativeDropCurveV1", "nativeArmorCurveV1", "nativeWeaponCurveV1"] as const) {
+    const curve = resolution[kind];
+    if (!curve) continue;
+    const level = verifiedAuctionDropCurve(variant.modifiers ?? [], curve);
+    if (level === undefined) return;
+    proof[kind] = [curve[0], level];
+  }
+  return JSON.stringify([alias, variant.bonusIds, variant.modifiers?.filter(m => m.type !== 28), proof]);
+}
+
+function cheaperCappedLots(axes: AuctionEffectGroup[][], engine: string, handFamilies?: Map<AuctionEffectGroup, AuctionEffectGroup>) {
+  const slotsByItem = new Map<number, Set<string>>();
+  const lots = new Map<number, AuctionGearOption>();
+  for (const axis of axes) {
+    const seen = new Set<number>();
+    for (const group of axis) for (const o of group.options) {
+      const prior = lots.get(o.auctionId);
+      if (seen.has(o.auctionId) || prior && (prior.candidate.itemId !== o.candidate.itemId ||
+          prior.variantKey !== o.variantKey || prior.quantity !== o.quantity || prior.costCopper !== o.costCopper)) return axes;
+      seen.add(o.auctionId);
+      lots.set(o.auctionId, o);
+      const slots = slotsByItem.get(o.candidate.itemId) ?? new Set<string>();
+      slots.add(o.candidate.slotType);
+      slotsByItem.set(o.candidate.itemId, slots);
+    }
+  }
+  return axes.map(groups => {
+    const families = new Map<string, { group: AuctionEffectGroup; price: number }[]>();
+    // Most variants have no competing offer with the same base item, level
+    // and bonus list. Build detailed finalist identities only for collisions.
+    const possible = new Map<string, AuctionEffectGroup[]>();
+    for (const group of groups) {
+      const first = group.options[0], variant = first.candidate.variants.find(v => v.key === first.variantKey);
+      if (!variant?.resolution?.nativeContentTuningV1) continue;
+      const bucket = JSON.stringify([first.candidate.itemId, variant.itemLevel, variant.bonusIds]);
+      const rows = possible.get(bucket) ?? [];
+      rows.push(group);
+      possible.set(bucket, rows);
+    }
+    for (const rows of possible.values()) {
+      if (rows.length < 2) continue;
+      for (const group of rows) {
+        const first = group.options[0], key = cappedEquipmentKey(first, engine);
+        if (!key || !group.options.every(o => o === first ||
+            !o.customization && o.candidate === first.candidate && o.variantKey === first.variantKey ||
+            cappedEquipmentKey(o, engine) === key)) continue;
+        const family = families.get(key) ?? [];
+        family.push({ group, price: group.options.reduce((p, o) => Math.min(p, o.costCopper), Infinity) });
+        families.set(key, family);
+      }
+    }
+    const substitutes = new Map<AuctionEffectGroup, AuctionEffectGroup>();
+    for (const family of families.values()) {
+      if (family.length < 2) continue;
+      family.sort((a, b) => a.price - b.price);
+      for (const { group, price } of family) {
+        const slotCount = slotsByItem.get(group.options[0].candidate.itemId)!.size;
+        // A multi-slot source stack could already supply the other hand for
+        // free. For single units, reserve enough cheaper stock for every slot
+        // that might consume it. Every equal-price group keeps its own hash.
+        if (slotCount > 1 && group.options.some(o => o.quantity !== 1)) continue;
+        const witness = family.find(w => w.price < price && !substitutes.has(w.group) &&
+          w.group.options.reduce((n, o) => n + (o.costCopper < price ? o.quantity : 0), 0) >= slotCount);
+        if (witness) substitutes.set(group, witness.group);
+      }
+    }
+    // Keep all physical lot IDs in their surviving group for standalone item
+    // results and joint procurement. A substituted lot can never be cheaper.
+    for (const [group, witness] of substitutes) for (const option of group.options) witness.options.push(option);
+    if (handFamilies) {
+      for (const family of families.values()) {
+        const surviving = family.filter(({ group }) => !substitutes.has(group));
+        if (surviving.length < 2) continue;
+        const itemSlots = slotsByItem.get(surviving[0].group.options[0].candidate.itemId)!;
+        if (itemSlots.size !== 2 || !itemSlots.has("MAIN_HAND") || !itemSlots.has("OFF_HAND")) continue;
+        const pooled = { options: surviving.flatMap(({ group }) => group.options) };
+        for (const { group } of surviving) handFamilies.set(group, pooled);
+      }
+    }
+    return groups.filter(group => !substitutes.has(group));
+  });
+}
+
 /** Traverse mechanical equipment choices. Allocate purchasable lots jointly for
  * the selected slots so a multi-piece lot can beat the cheapest individual offers. */
 export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhancedLoadoutInput) {
@@ -113,9 +209,13 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     option.candidate.compatibility.specId === input.specId && option.candidate.variants.some(variant => variant.key === option.variantKey));
   const engine = input.engine && ignoresItemContext(input.engine) ? input.engine : undefined;
   const version = input.nativeLotGroups ?? 3;
-  if (version !== 1 && version !== 2 && version !== 3) throw new Error("invalid_search_checkpoint");
+  if (![1, 2, 3, 4, 5].includes(version)) throw new Error("invalid_search_checkpoint");
   const groupsVersion = engine ? { nativeLotGroups: version } : {};
-  const choices = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine, groupsVersion.nativeLotGroups));
+  const groupVersion = version === 1 || version === 2 ? version : 3;
+  const rawGroups = auctionEffectGroups(eligible, slots, option => enhancedGroupKey(option, engine, engine ? groupVersion : undefined));
+  const handFamilies = new Map<AuctionEffectGroup, AuctionEffectGroup>();
+  const choices = engine && version >= 4
+    ? cheaperCappedLots(rawGroups, engine, version === 5 ? handFamilies : undefined) : rawGroups;
   // Zero keeps the equipped item (or the empty slot). It also emits the empty
   // purchase set, allowing the caller to process the retained-equipment case.
   const radices = choices.map(rows => rows.length + 1);
@@ -196,6 +296,29 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
     purchase?.options.sort((a, b) => slotOrder.get(a.candidate.slotType)! - slotOrder.get(b.candidate.slotType)!);
     return purchase;
   }
+  const mainAxis = slotOrder.get("MAIN_HAND") ?? -1, offAxis = slotOrder.get("OFF_HAND") ?? -1;
+  const dearerSingles = new Set<AuctionEffectGroup>();
+  for (const pooled of new Set(handFamilies.values())) {
+    cheapest.set(pooled, pooled.options.reduce((a, b) => a.costCopper <= b.costCopper ? a : b));
+  }
+  for (const [group, pooled] of handFamilies) {
+    if (cheapest.get(pooled)!.costCopper < cheapest.get(group)!.costCopper) dearerSingles.add(group);
+  }
+  // No other slot can buy these lots. Compare the ordered pair jointly when
+  // both hands need the same item, including any discount from buying a stack.
+  // Every equally priced physical receipt keeps its original tie-break key.
+  async function costlierSharedItem(main: AuctionEffectGroup, off: AuctionEffectGroup, paid: AuctionGearOption[], signal: AbortSignal) {
+    const alternative = await procure([handFamilies.get(main) ?? main, handFamilies.get(off) ?? off], signal);
+    const hands = paid.filter(o => o.candidate.slotType === "MAIN_HAND" || o.candidate.slotType === "OFF_HAND");
+    return alternative !== null && alternative.costCopper < auctionPlanCost(hands);
+  }
+  function dominatedHandPrice(cursor: number[], paid: AuctionGearOption[], signal: AbortSignal) {
+    const main = choices[mainAxis][cursor[mainAxis] - 1], off = choices[offAxis][cursor[offAxis] - 1];
+    if (main && off && main.options[0].candidate.itemId === off.options[0].candidate.itemId) {
+      return (handFamilies.has(main) || handFamilies.has(off)) && costlierSharedItem(main, off, paid, signal);
+    }
+    return dearerSingles.has(main) || dearerSingles.has(off);
+  }
   async function nextBatch(saved: AuctionGearEnhancedLoadoutState, limits: AuctionGearEnhancedLoadoutBatchOptions): Promise<AuctionGearEnhancedLoadoutBatch> {
     limits.signal.throwIfAborted();
     if (!Number.isSafeInteger(limits.maxAssignments) || limits.maxAssignments < 1 ||
@@ -210,6 +333,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
       try {
         const groups = chosen.map(choice => choice.group);
         const purchase = await procure(groups, limits.signal);
+        const higherHandPrice = purchase && handFamilies.size && dominatedHandPrice(state.cursor, purchase.options, limits.signal);
         if (!purchase) {
           // Affordability and supply are monotone: any receipt that satisfies a
           // longer assignment would also satisfy its prefix within budget.
@@ -220,6 +344,8 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
               break;
             }
           }
+        } else if (higherHandPrice && await higherHandPrice) {
+          advanceAxis = Math.max(mainAxis, offAxis);
         } else {
           const { options: selected, costCopper: spentCopper } = purchase;
           const loadout = auctionPlanLoadout(input.loadout, selected, input.specId, slots);
@@ -260,7 +386,7 @@ export function createAuctionGearEnhancedLoadoutIterator(input: AuctionGearEnhan
   let singleAliases: Map<string, AuctionGearOption[]> | undefined;
   function equivalentSingles(id: string) {
     singleAliases ??= new Map(choices.flatMap(axis => axis.flatMap(group =>
-      group.options.map(option => [option.id, group.options] as const))));
+      group.options.map(option => [option.id, handFamilies.get(group)?.options ?? group.options] as const))));
     return singleAliases.get(id) ?? [];
   }
   return { inputKey, totalAssignments: total.toString(), initialState, nextBatch, optionIdsAt, equivalentSingles };

@@ -8,7 +8,8 @@ import { createAuctionGearDiagnostics } from '../../../lib/wow/auctionGearDiagno
 import { auctionAppliedStatsKey } from '../../../lib/wow/auctionGearEffects.ts';
 import { applyOwnedAuctionGearChanges } from '../../../lib/wow/auctionGearEnhancedConfiguration.ts';
 import { auctionGearProfileFingerprint } from '../../../lib/wow/auctionGearFingerprint.ts';
-import { auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { projectUnreadArmor, equivalentBootEnchants, auctionGearMechanicalKey, purchasedJewelryScoreChanges, createAuctionGearMechanicalCache } from '../../../lib/wow/auctionGearMechanicalCache.ts';
+import { ignoresItemContext } from '../../../lib/wow/gearItemModifiers.ts';
 import { assertFreshMarket } from '../../../lib/wow/auctionMarket.ts';
 import { nativeGearSimulationMeasurement, prepareGearLoadout } from '../../../lib/wow/gearSimulation.ts';
 
@@ -24,12 +25,12 @@ function option(itemId, slotType = 'WRIST') {
     variants: [{ key: 'base', bonusIds: [] }] }, variantKey: 'base' };
 }
 
-function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
+function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGearMechanicalCache(), freshMetadata = true, ownedBatch = false, armorProbe = false, workerEngine = engine, metadataEngine = workerEngine, profile = {},
   equipment = {equipped_items:[{item:{id:10},slot:{type:'HEAD'}}]} } = {}) {
   const state = { capacity: '2', batch: '25', ownedBatch, mixedSlots:false, requests: [], active: 0, peak: 0 };
   const fetch = async (url, request) => {
     const path = new URL(url).pathname;
-    if (path === '/healthz') return Response.json({}, { headers: { 'x-gildra-simulation-concurrency': state.capacity, 'x-gildra-simulation-batch': state.batch, ...(state.ownedBatch ? {'x-gildra-simulation-owned-batch': '1'} : {}), ...(state.mixedSlots ? {'x-gildra-simulation-mixed-slots':'1'} : {}) } });
+    if (path === '/healthz') return Response.json({}, { headers: { 'x-gildra-simulation-concurrency': state.capacity, 'x-gildra-simulation-batch': state.batch, ...(state.ownedBatch ? {'x-gildra-simulation-owned-batch': '1'} : {}), ...(state.mixedSlots ? {'x-gildra-simulation-mixed-slots':'1'} : {}), ...(armorProbe ? {'x-gildra-simulation-armor-probe':'1'} : {}) } });
     const body = JSON.parse(request.body), batch = path.endsWith('/batch');
     const base = batch ? body.base : body, rows = batch ? body.candidates : [body];
     const ids = rows.map(row => row.gearChanges?.[0]?.itemId ?? row.ownedChanges?.[0].gems[0]?.itemId
@@ -50,7 +51,7 @@ function fixture({ clock = Date, signals = AbortSignal, cache = createAuctionGea
   };
   const diagnostics = createAuctionGearDiagnostics();
   const create = vm.runInNewContext(code, { fetch, process, Date:clock, AbortSignal:signals, AbortController, prepareGearLoadout, nativeGearSimulationMeasurement,
-    assertFreshMarket, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
+    assertFreshMarket, equivalentBootEnchants, projectUnreadArmor, ignoresItemContext, auctionAppliedStatsKey, auctionGearMechanicalKey, purchasedJewelryScoreChanges, auctionGearMechanicalCache: cache, applyOwnedAuctionGearChanges,
     auctionGearProfileFingerprint, metricsFor: () => diagnostics });
   const armory = { profile, specializations: {}, activeTalentLoadout: 'fixture', equipment };
   const run = create({ armory, freshMetadata, specSlug: 'fury-warrior', specId: 72, scenario: 'single-target', loadout: [], market: { sourceUpdatedAt: new Date().toISOString() },
@@ -244,6 +245,29 @@ test('an enchanted piece shares item context only when the engine ignores it and
       assert.equal((await result).engine, workerEngine);
     }
   }
+});
+
+test('queued armor alternatives share packets while each caller receives its own worker result', async () => {
+  const sockets = [{ socket_type: { type: 'PRISMATIC' } }];
+  const equipment = { equipped_items: [{ slot: { type: 'FEET' }, item: { id: 10 }, sockets }] };
+  const { run, state, finishFrom } = fixture({ ownedBatch: true, equipment });
+  const shared = signal();
+  state.batch = '5';
+  await run.concurrency(shared);
+  const blockers = Promise.all([run([option(198)], shared), run([option(199)], shared)]);
+  await tick();
+  const enchants = [7962, 7963, 7992, 7993, 8018, 8019, 7962, 7992];
+  const measured = Promise.all(enchants.map((enchantId, i) => {
+    const gems = i >= 6 ? [{ index: 0, itemId: 500 }] : [];
+    return run([], shared, [{ slotType: 'FEET', itemId: 10, enchantId, gems }], 'finalist');
+  }));
+  await tick();
+  assert.equal(state.requests.length, 2);
+  await finishFrom(0);
+  await blockers;
+  assert.deepEqual(state.requests.slice(2).map(r => r.ids), [[7962, 7992, 8018, 500, 500], [7963, 7993, 8019]]);
+  assert.deepEqual((await measured).map(row => row.dps), enchants.map((id, i) => (i >= 6 ? 500 : id) + 0.25));
+  assert.equal(state.peak, 2);
 });
 
 test('first native candidate starts immediately, then two lanes share profilesets and return exact cached rows', async () => {
@@ -580,6 +604,172 @@ test('an older worker receives distinct owned-only edits as complete armory sing
 });
 
 
+test('a measured boot rating mask reuses only the same-rank finalist with the same physical loadout', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd';
+  const equipment = {equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};
+  const { run, state } = fixture({ ownedBatch:true, equipment, workerEngine });
+  await run.concurrency(signal());
+  const physical = (id, mode = 'finalist', selection = []) =>
+    run(selection, signal(), [{slotType:'FEET',itemId:10,enchantId:id,gems:[]}], mode);
+  const payload = (id, mask) => ({dps:id,dpsMean:id+0.25,dpsError:0.12,confidence:95,iterations:750,
+    engine:workerEngine,equivalentBootRatingsV1:mask});
+  const warm = [7956,7962,7963,7957].map(id => physical(id));
+  await tick();
+  for (let i = 0; i < state.requests.length; i++) {
+    const req = state.requests[i];
+    if (req.batch) req.finish({results:req.ids.map(id => payload(id, id === 7962 ? 6 : 5))});
+    else req.finish();
+    await tick();
+  }
+  await Promise.all(warm);
+  const count = state.requests.length;
+  assert.equal((await physical(7992)).dps,7962.25);
+  assert.equal(state.requests.length,count);
+  for (const request of [() => physical(8018), () => physical(7993), () => physical(7992,'certified-candidate'),
+      () => physical(7992,'finalist',[option(123)])]) {
+    const before = state.requests.length, result = request();
+    await tick();
+    assert.equal(state.requests.length,before+1);
+    state.requests.at(-1).finish();
+    await result;
+  }
+});
+
+test('a joint armor certificate covers simultaneous edits only inside the observed rating class', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd';
+  const equipment = {equipped_items:['HEAD','SHOULDER','FEET'].map((type,i)=>({slot:{type},item:{id:20+i}}))};
+  const {run,state} = fixture({ownedBatch:true, workerEngine, equipment});
+  await run.concurrency(signal());
+  const edits = ids => ids.map((enchantId,i)=>({slotType:equipment.equipped_items[i].slot.type,itemId:20+i,enchantId,gems:[]}));
+  const physical = (ids,mode='finalist') => run([],signal(),edits(ids),mode);
+  const warm = [[100,101,7962],[8014,7998,7962],[8015,7999,7963],[103,102,7963]].map(ids=>physical(ids));
+  await tick();
+  for (let i=0; i<state.requests.length; i++) {
+    const req = state.requests[i];
+    if (req.batch) req.finish({results:req.ids.map((id,index)=>({dps:id,dpsMean:id+0.25,dpsError:0.12,confidence:95,
+      iterations:750,engine:workerEngine,unreadArmorRatingsV1:index===0?6:4}))});
+    else req.finish();
+    await tick();
+  }
+  await Promise.all(warm);
+  const before=state.requests.length;
+  // Leech and avoidance unread on the first representative; speed stays protected.
+  assert.equal((await physical([7958,8031,7992])).dps,8014.25);
+  assert.equal(state.requests.length,before);
+  for (const job of [()=>physical([7988,8031,7992]),()=>physical([7958,8031,7993]),
+      ()=>physical([7958,8031]),()=>physical([7958,8031,7992],'certified-candidate')]) {
+    const count=state.requests.length, promise=job();
+    await tick(); assert.equal(state.requests.length,count+1);
+    state.requests.at(-1).finish(); await promise;
+  }
+});
+
+test('concurrent armor alternatives wait for actual evidence while another class uses the second worker lane', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd', common = signal();
+  const equipment={equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};
+  const {run,state} = fixture({ownedBatch:true,armorProbe:true,workerEngine,equipment});
+  await run.concurrency(common);
+  const score=id=>run([],common,[{slotType:'FEET',itemId:10,enchantId:id,gems:[]}],'finalist');
+  const rows=[7962,7992,8018,7963].map(score);
+  await tick();
+  assert.deepEqual(state.requests.map(r=>r.ids),[[7962],[7963]]);
+  assert.equal(state.peak,2);
+  assert.ok(state.requests.every(r=>r.batch));
+  const finish=(req,mask)=>req.finish({results:req.ids.map(id=>({dps:id,dpsMean:id+0.25,dpsError:0.12,confidence:95,iterations:750,engine:workerEngine,unreadArmorRatingsV1:mask}))});
+  finish(state.requests[0],6); finish(state.requests[1],7);
+  await tick();
+  assert.deepEqual(state.requests.map(r=>r.ids),[[7962],[7963],[8018]]);
+  finish(state.requests[2],6);
+  assert.deepEqual((await Promise.all(rows)).map(r=>r.dps),[7962.25,7962.25,8018.25,7963.25]);
+});
+
+test('only bare worn armor may keep its original enchant after a certified unread replacement', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd', common = signal();
+  for (const original of [undefined, [{enchantment_id: 5250, enchantment_slot: {id: 0}}]]) {
+    const equipment = {equipped_items: ['HEAD', 'SHOULDER', 'FEET'].map((type, i) => ({
+      slot: {type}, item: {id: 20 + i}, inventory_type: {type}, item_class: {id: 4}, enchantments: original,
+    }))};
+    const {run, state} = fixture({ownedBatch: true, armorProbe: true, workerEngine, equipment});
+    await run.concurrency(common);
+    const edits = (head, shoulder, feet) => [head, shoulder, feet].flatMap((enchantId, i) => enchantId
+      ? [{slotType: equipment.equipped_items[i].slot.type, itemId: 20 + i, enchantId, gems: []}] : []);
+    const first = run([], common, edits(8014, 7998, 7962), 'finalist');
+    await tick();
+    state.requests[0].finish({results: [{dps: 100, dpsMean: 100.25, dpsError: 0.2, confidence: 95,
+      iterations: 750, engine: workerEngine, unreadArmorRatingsV1: 6}]});
+    await first;
+    const unchanged = run([], common, edits(0, 0, 7992), 'finalist');
+    await tick();
+    if (original) {
+      assert.equal(state.requests.length, 2);
+      state.requests[1].finish();
+      assert.equal((await unchanged).dps, 7992.25);
+    } else {
+      assert.equal(state.requests.length, 1);
+      assert.equal((await unchanged).dps, 100.25);
+    }
+    for (const other of [edits(7988, 0, 7992), edits(0, 7970, 7992), edits(8014, 7998, 0)]) {
+      const count = state.requests.length, task = run([], common, other, 'finalist');
+      await tick();
+      assert.equal(state.requests.length, count + 1);
+      state.requests[count].finish();
+      await task;
+    }
+  }
+});
+
+test('omitting unread armor enchants preserves replaced gems, unrelated edits and purchased hosts', () => {
+  const bare = new Map([['HEAD', 20], ['SHOULDER', 21]]);
+  const gems = [{index: 0, itemId: 115804}];
+  const edits = [
+    {slotType: 'HEAD', itemId: 20, enchantId: 8014, gems},
+    {slotType: 'CHEST', itemId: 23, enchantId: 7984, gems: []},
+    {slotType: 'SHOULDER', itemId: 21, enchantId: 7998, gems: []},
+    {slotType: 'FEET', itemId: 22, enchantId: 7963, gems: []},
+  ];
+  const kept = projectUnreadArmor(edits, 4, bare, [option(21, 'SHOULDER')]);
+  assert.deepEqual(kept, [{...edits[0], enchantId: undefined}, edits[1],
+    {...edits[2], enchantId: -1}, {...edits[3], enchantId: -2}]);
+  assert.equal(edits[0].enchantId, 8014);
+});
+
+test('a failed armor probe releases the other physical builds for simulation', async () => {
+  const workerEngine='SimulationCraft 1210-01 · 18428cd', common=signal();
+  const equipment={equipped_items:[{slot:{type:'FEET'},item:{id:10}}]};
+  const {run,state}=fixture({ownedBatch:true,armorProbe:true,workerEngine,equipment});
+  await run.concurrency(common);
+  const score=id=>run([],common,[{slotType:'FEET',itemId:10,enchantId:id,gems:[]}],'finalist');
+  const failed=assert.rejects(score(7962),/simulation_unavailable/), independent=score(7992);
+  await tick(); assert.equal(state.requests.length,1); state.requests[0].finish({},500);
+  await failed; await tick();
+  assert.deepEqual(state.requests[1].ids,[7992]); state.requests[1].finish();
+  assert.equal((await independent).dps,7992.25);
+});
+
+test('a worker rejecting a singleton armor probe receives each exact enchant as a patched single', async () => {
+  const workerEngine = 'SimulationCraft 1210-01 · 18428cd', common = signal();
+  const equipment = {equipped_items: [{slot: {type: 'FEET'}, item: {id: 10}}]};
+  const {run, state} = fixture({ownedBatch: true, armorProbe: true, workerEngine, equipment});
+  await run.concurrency(common);
+  const ids = [7962, 7992];
+  const scores = ids.map(enchantId => run([], common, [{slotType: 'FEET', itemId: 10, enchantId, gems: []}], 'finalist'));
+  await tick();
+  for (const [index, id] of ids.entries()) {
+    assert.equal(state.requests.length, 2 * index + 1);
+    const probe = state.requests[2 * index];
+    assert.equal(probe.batch, true);
+    assert.deepEqual(probe.ids, [id]);
+    probe.finish({code: 'unsupported_owned_batch'}, 422);
+    await tick();
+    const single = state.requests[2 * index + 1];
+    assert.equal(single.batch, false);
+    assert.deepEqual(single.ids, [id]);
+    single.finish();
+    await tick();
+  }
+  assert.deepEqual((await Promise.all(scores)).map(row => row.dps), [7962.25, 7992.25]);
+});
+
 test('enchant-only edits on the same owned item share a batch and keep separate measurements', async () => {
   const equipment = {equipped_items:[{slot:{type:'HEAD'},item:{id:10},
     enchantments:[{enchantment_slot:{id:0},enchantment_id:80},{enchantment_slot:{id:1},enchantment_id:81}]}]};
@@ -837,6 +1027,27 @@ test('level-90 ring ratings share fights within a precision and preserve the pur
   assert.equal(run.finalistKey(a), run.finalistKey(b));
   assert.equal(run.finalistKey(a), run.finalistKey([...b].reverse()));
   assert.notEqual(run.finalistKey(a), run.finalistKey(two(8021, 0, 7965, 0)));
+  // A two-point purchased neck gem and a two-point difference in ring enchants
+  // are interchangeable even when the second ring is absent.
+  const neck = (gem, itemId = 258911) => {
+    const row = ring(gem, undefined, 'NECK');
+    row.candidate.itemId = itemId;
+    row.candidate.inventoryType = 2;
+    return row;
+  };
+  for (const slot of ['FINGER_1', 'FINGER_2']) {
+    const looseGem = [neck(115804), ring(0, 8020, slot)];
+    const higherEnchant = [ring(0, 8021, slot), neck(0)];
+    assert.equal(run.finalistKey(looseGem), run.finalistKey(higherEnchant));
+    assert.notEqual(run.finalistKey(looseGem), run.finalistKey([neck(115804, 240948), ring(0, 8020, slot)]));
+    const extraRing = ring(115805, 7964, slot === 'FINGER_1' ? 'FINGER_2' : 'FINGER_1');
+    assert.equal(run.finalistKey([...looseGem, extraRing]), run.finalistKey([extraRing, ...higherEnchant]));
+    const otherLevel = fixture({workerEngine: engine, profile: {level: 89}}).run;
+    assert.notEqual(otherLevel.finalistKey(looseGem), otherLevel.finalistKey(higherEnchant));
+    for (const rows of [looseGem, higherEnchant])
+      rows.find(row => row.candidate.slotType === 'NECK').candidate.variants[0].resolution.enhancements.socketBonusId = 1;
+    assert.notEqual(run.finalistKey(looseGem), run.finalistKey(higherEnchant));
+  }
   for (const rows of [a, b]) rows[1].candidate.variants[0].resolution.nativeNoItemEffects = false;
   assert.notEqual(run.finalistKey(a), run.finalistKey(b));
   for (const level of [89, undefined]) {
@@ -963,7 +1174,7 @@ test('equal verified tuning caps share only like-precision fights with the same 
     const bonusIds = [6652, 13668, 13901];
     const resolution = {engine, metadataVersion: 3, nativeContentTuningV1: [tuning, 90],
       enhancements: {status: 'verified', socketColors: [14, 0, 0]}, ...proof};
-    const option = {variantKey: 'offer', candidate: {itemId: 258910, variants: [{key: 'offer', bonusIds, modifiers, resolution}]}};
+    const option = {variantKey: 'offer', candidate: {itemId: 258910, slotType: 'FINGER_1', variants: [{key: 'offer', bonusIds, modifiers, resolution}]}};
     const change = {slot: 'finger1', itemId: 258910, modifiers, bonusIds, gemIds: [130215], enchantId: 7964, ...changes};
     const request = {precision, spec: 'fury-warrior', scenario: 'single-target', targets: 1, fightLengthSeconds: 120};
     return auctionGearMechanicalKey('fixed-profile', request, {engine, changes: [change], options: [option]});

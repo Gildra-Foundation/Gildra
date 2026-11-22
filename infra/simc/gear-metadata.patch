@@ -11,7 +11,7 @@
 +
  #include "interfaces/sc_js.hpp"
  #include "rapidjson/document.h"
-@@ -379,12 +382,175 @@
+@@ -379,12 +382,183 @@
    } );
  }
 -
@@ -53,14 +53,17 @@
 +
 +// The only drop/tuning reader in these bonus lists is one type-51 curve.
 +// Equal rounded outputs write the same item level and scaling flag. The other
-+// accepted entries add sockets or are ignored by the pinned item parser.
++// entries include sockets, no-ops and fixed quality writes. New armor proofs
++// have a separate field so saved traversals keep their historical group order.
 +void gildra_drop_curve( JsonOutput node, const item_t& item )
 +{
 +  const auto& parsed = item.parsed;
-+  if ( !parsed.drop_level || parsed.data.item_class != ITEM_CLASS_ARMOR || item.parent_slot != SLOT_INVALID )
++  const bool weapon = parsed.data.item_class == ITEM_CLASS_WEAPON;
++  if ( !parsed.drop_level || ( !weapon && parsed.data.item_class != ITEM_CLASS_ARMOR ) || item.parent_slot != SLOT_INVALID )
 +    return;
 +  const auto& dbc = *item.player->dbc;
 +  int config_id = 0;
++  bool constant_armor_operation = false;
 +  for ( auto id : parsed.bonus_id )
 +  {
 +    auto entries = dbc.item_bonus( id );
@@ -72,6 +75,10 @@
 +        case ITEM_BONUS_SCALE_CONFIG_2:
 +          if ( config_id || entry.value_1 <= 0 ) return;
 +          config_id = entry.value_1;
++          break;
++        case 0:
++        case ITEM_BONUS_QUALITY:
++          if ( !weapon ) constant_armor_operation = true;
 +          break;
 +        case ITEM_BONUS_SOCKET:
 +        case 26:
@@ -95,7 +102,8 @@
 +  const auto& offset = offsets[ 0 ];
 +  const int level = as<int>( util::round( item_database::curve_point_value( dbc, offset.curve_id, drop ) ) ) + offset.offset;
 +  if ( level <= 0 || level != as<int>( parsed.data.level ) || !parsed.has_midnight_scaling ) return;
-+  auto proof = node[ "gildra_drop_curve_v1" ];
++  auto proof = node[ weapon ? "gildra_weapon_drop_curve_v1" :
++      constant_armor_operation ? "gildra_armor_constant_drop_curve_v1" : "gildra_drop_curve_v1" ];
 +  proof.make_array();
 +  proof.add() = parsed.drop_level;
 +  proof.add() = parsed.content_tuning_id;
@@ -190,7 +198,7 @@
      {
        continue;
      }
-@@ -393,6 +559,67 @@
+@@ -393,6 +567,76 @@
      slotnode[ "name" ] = item.name_str;
      slotnode[ "encoded_item" ] = item.encoded_item();
      slotnode[ "ilevel" ] = item.item_level();
@@ -205,6 +213,15 @@
 +    slotnode[ "required_profession_rank" ] = item.parsed.data.req_skill_level;
 +    slotnode[ "gildra_no_item_effects" ] = item.parsed.special_effects.empty() &&
 +      !range::any_of( item.parsed.data.effects, []( const auto& effect ) { return effect.spell_id != 0; } );
++    // The Legion jewelcrafting rings carry an on-no-delay-use record that
++    // neither of item_t's native equip/use initialization loops registers.
++    // Bound this exception to the resolved item; a bonus can add a real proc.
++    if ( item.parsed.data.inventory_type == INVTYPE_FINGER && item.parsed.special_effects.empty() &&
++         range::any_of( item.parsed.data.effects, []( const auto& effect ) { return effect.spell_id == 226221; } ) &&
++         range::all_of( item.parsed.data.effects, []( const auto& effect ) {
++           return !effect.spell_id || ( effect.spell_id == 226221 && effect.type == ITEM_SPELLTRIGGER_ON_NO_DELAY_USE );
++         } ) )
++      slotnode[ "gildra_ignored_ring_use_v1" ] = true;
 +    if ( p.sim->report_details != 0 )
 +    {
 +      static_assert( STAT_MAX - STAT_STRENGTH == 46, "Version the applied stat vector when its layout changes" );
@@ -258,7 +275,7 @@
  
      for ( size_t i = 0; i < std::size( item.parsed.data.stat_type_e ); i++ )
      {
-@@ -753,6 +980,8 @@
+@@ -753,6 +997,8 @@
    root[ "race" ] = util::race_type_string( p.race );
    root[ "level" ] = p.true_level;
    root[ "role" ] = util::role_type_string( p.role );
@@ -267,7 +284,7 @@
    root[ "specialization" ] = util::specialization_string( p.specialization() );
    root[ "profile_source" ] = util::profile_source_string( p.profile_source_ );
    root[ "talents" ] = p.talents_str;
-@@ -1372,6 +1601,37 @@
+@@ -1372,6 +1618,37 @@
    }
  }
 -
@@ -306,7 +323,7 @@
  void print_json_pretty( FILE* o, const sim_t& sim, const ::report::json::report_configuration_t& report_configuration )
  {
    Document doc;
-@@ -1403,7 +1663,8 @@
+@@ -1403,7 +1680,8 @@
      root[ "git_branch" ] = git_info::branch();
    }
 -

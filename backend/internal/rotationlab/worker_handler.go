@@ -56,6 +56,8 @@ func (h *WorkerHandler) health(w http.ResponseWriter, postgres bool) {
 	}
 	if _, ok := h.engine.(*SimCEngine); ok {
 		w.Header().Set("X-Gildra-Simulation-Mixed-Slots", "1")
+		w.Header().Set("X-Gildra-Simulation-Armor-Probe", "1")
+		w.Header().Set("X-Gildra-Simulation-Quick-Probe", "32")
 	}
 	if _, ok := h.engine.(batchEngine); ok {
 		w.Header().Set("X-Gildra-Simulation-Batch", strconv.Itoa(maxSimulationBatch))

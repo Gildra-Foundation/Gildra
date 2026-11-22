@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { auctionMeasurementContract, candidateLoadoutItem } from "./gearSimulation";
 import type { GearLoadoutItem } from "./gearCompatibility";
-import { auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext } from "./gearItemModifiers";
+import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext, supportedAuctionModifiers, validAuctionItemContext, verifiedAuctionDropCurve } from "./gearItemModifiers";
 import type { AuctionGearOption } from "./auctionGearTypes";
 
 /** Native input identity: auction price/lot identity does not change item effects. */
-export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
+export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
   return createHash("sha256").update(JSON.stringify(options.map(option => {
     const variant = option.candidate.variants.find(v => v.key === option.variantKey);
     if (!variant) throw new Error("simulation_variant_not_found");
@@ -14,7 +14,10 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?:
     const curve = groupUnusedScaling === "drop-curve" ? resolution?.nativeDropCurveV1 : undefined;
     const tuning = typeof groupUnusedScaling === "string" && resolution
       ? resolution.nativeContentTuningV1 : undefined;
-    const item = engine ? auctionNativeItemOptions(variant, engine, bare, tuning, curve) : variant;
+    const missive = engine && craftedSymmetry === "missive" && !option.customization
+      ? auctionMissiveComparison(variant, option.candidate.slotType, engine) : undefined;
+    const source = missive ? { ...variant, ...missive } : variant;
+    const item = engine ? auctionNativeItemOptions(source, engine, bare, tuning, curve) : source;
     const cap = "dropCurveLevel" in item && item.dropCurveLevel !== undefined ? ["drop-curve-v1", item.dropCurveLevel] :
       "contentTuningCap" in item ? [item.contentTuningCap] : [];
     let modifiers = [...(item.modifiers ?? [])].sort((a, b) => a.type - b.type || a.value - b.value);
@@ -31,13 +34,28 @@ export function auctionSelectionEffectKey(options: AuctionGearOption[], engine?:
         return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds, item.contextId ?? 0, modifiers, "crafted-symmetry-v1", ...cap];
       }
     }
-    return [option.candidate.slotType, option.candidate.itemId, variant.bonusIds,
+    return [option.candidate.slotType, option.candidate.itemId, source.bonusIds,
       item.contextId ?? 0, modifiers, ...cap,
       ...(option.customization ? [{ enchantId: option.customization.enchantId ?? 0, gemIds: option.customization.gemIds ?? [] }] : [])];
   }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))))).digest("hex");
 }
 
-const plainArmorSlots = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
+const plainArmorSlots: ReadonlySet<string> = new Set(["HEAD", "SHOULDER", "BACK", "CHEST", "WRIST", "HANDS", "WAIST", "LEGS", "FEET"]);
+
+/** A missive consumes both crafting placeholders before SimC reads the selected
+ * secondary stats. Preserve the inventory slot, item, ordered bonuses and every
+ * other native input. The original variant is still used to buy and equip it. */
+export function armorMissiveInputs(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  if (c.itemClassId !== 4 || !plainArmorSlots.has(c.slotType)) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
+  if (!v?.bonusIds?.some(id => id >= 8790 && id <= 8795) || r?.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true ||
+      r.weapon || r.effects?.length || r.enhancements?.status !== "verified" ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  const missive = auctionMissiveComparison(v, c.slotType, engine, true);
+  if (missive) return { missive, stats: r.appliedStatsV1, level: v.itemLevel };
+}
 
 // Pinned chest enchants with only STAT and RESISTANCE operations. SimC
 // adds their contribution to the player's stats without rereading the item's
@@ -121,6 +139,13 @@ export function auctionAppliedStatsKey(options: AuctionGearOption[], engine: str
   return "applied-v2:" + createHash("sha256").update(JSON.stringify([auctionMeasurementContract, engine, pieces])).digest("hex");
 }
 
+/** For prefix-free IDs, inserting the same purchases preserves the order of
+ * the sorted, pipe-separated receipt used by the public tie-breaker. */
+export function stableAuctionReceiptOrder(options: AuctionGearOption[]) {
+  const ids = options.map(option => option.id).sort();
+  return ids.every((id, index) => !id.includes("|") && (!index || !id.startsWith(ids[index - 1])));
+}
+
 /** For every marked offer any legal completion can buy the cheaper equivalent
  * in the same slot. A shared lot or item identity could invalidate that receipt. */
 export function auctionDominatedArmorOptions(options: AuctionGearOption[], loadout: GearLoadoutItem[],
@@ -135,10 +160,7 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
     recordSlot(itemSlots, candidate.itemId, candidate.slotType);
     recordSlot(lotSlots, auctionId, candidate.slotType);
   }
-  // The final tie-break compares sorted option IDs joined by "|". For
-  // prefix-free IDs, inserting the same suffix purchases preserves that order.
-  const ids = options.map(option => option.id).sort();
-  const stableTies = ids.every((id, index) => !id.includes("|") && (!index || !id.startsWith(ids[index - 1])));
+  const stableTies = stableAuctionReceiptOrder(options);
   const keyed: Array<[AuctionGearOption, string]> = [], cheapest = new Map<string, AuctionGearOption>();
   for (const option of options) {
     const { candidate, auctionId } = option;
@@ -169,11 +191,160 @@ export function auctionDominatedArmorOptions(options: AuctionGearOption[], loado
 
 export type AuctionEffectGroup = { options: AuctionGearOption[] };
 
-/** Stable across lot refreshes, but changes when native identity or equip constraints change. */
-export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false) {
+// Inclusive bonus-list ranges with the same native suffix name. Each member
+// adds only two secondary ratings. verify-rating-suffixes.py checks all rows.
+const jewelrySuffixRanges = [
+  [19, 39, 13150], [45, 86, 13151], [87, 107, 13152], [108, 128, 13156],
+  [129, 149, 13150], [150, 170, 13157], [175, 195, 13156], [196, 216, 13161],
+  [217, 237, 13157], [238, 250, 13152], [1676, 1682, 13152], [1683, 1689, 13151],
+  [1690, 1696, 13150], [1697, 1703, 13156], [1704, 1710, 13157], [1711, 1717, 13161],
+] as const;
+
+/** Bare local jewelry contributes the final integer ratings. Retain the
+ * item ID, level and suffix name that other equipment and APLs can observe.
+ * Legacy assembly cursors must reproduce their original ring group keys. */
+export function bareJewelrySuffixIdentity(option: AuctionGearOption, engine: string, legacyRings = false) {
+  const c = option.candidate;
+  const ring = c.slotType === "FINGER_1" || c.slotType === "FINGER_2";
+  const neck = !legacyRings && c.slotType === "NECK" && c.itemId !== 158075;
+  if (option.customization || !(ring && c.inventoryType === 11 || neck && c.inventoryType === 2) ||
+      c.itemClassId !== 4 || c.itemSubclassId !== 0 || !c.constraints || c.constraints.crafted ||
+      c.constraints.setId || c.constraints.setName || !ignoresItemContext(engine)) return;
+  const v = c.variants.find(row => row.key === option.variantKey);
+  if (!v || !Array.isArray(v.bonusIds) || v.bonusIds.length !== 1 || !Number.isSafeInteger(v.bonusIds[0]) ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
+      !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 28)) return;
+  const id = v.bonusIds[0];
+  if (legacyRings && id !== 1679 && id !== 1680) return;
+  const family = jewelrySuffixRanges.find(([first, last]) => first <= id && id <= last);
+  if (!family) return;
+  const r = v.resolution, e = r?.enhancements;
+  if (!r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
+      r.nativeScalingInputsV1?.length !== 4 || !r.nativeScalingInputsV1.every(value => value === 0) ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      e.socketColors?.length !== 3 || !e.socketColors.every(value => value === 0) ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  if (legacyRings) return ["bare-ring-suffix-13152", c.itemId, v.itemLevel, v.contextId ?? 0, v.modifiers ?? [], r.appliedStatsV1];
+  if (id <= 250 && (typeof r.nativeSuffixProgramV1 !== "string" || !/^[a-f0-9]{64}$/.test(r.nativeSuffixProgramV1))) return;
+  return ["bare-jewelry-suffix-v1", family[2], c.itemId, v.itemLevel, v.modifiers ?? [], r.appliedStatsV1];
+}
+
+/** 13668 adds the same prismatic socket to either ring. The other list
+ * has exactly one level-setting operation and two ignored operations in
+ * pinned SimC. The native certificate binds its output to this lot's drop
+ * level and tuning. The caller must compare any installed gem and enchant. */
+export function auctionSocketedRingCurve(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  if ((c.slotType !== "FINGER_1" && c.slotType !== "FINGER_2") || c.inventoryType !== 11 ||
+      c.itemClassId !== 4 || c.itemSubclassId !== 0 || c.constraints.crafted || c.constraints.setId ||
+      c.constraints.setName || !ignoresItemContext(engine)) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution, e = r?.enhancements;
+  if (!v || !Array.isArray(v.bonusIds) || v.bonusIds.length !== 2 || v.bonusIds[0] !== 13668 || (v.bonusIds[1] !== 13729 && v.bonusIds[1] !== 13900) ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
+      !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 9 && m.type !== 28) ||
+      verifiedAuctionDropCurve(v.modifiers ?? [], r?.nativeDropCurveV1) !== v.itemLevel) return;
+  if (!r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
+      e?.status !== "verified" || e.socketCount !== 1 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      e.socketColors?.length !== 3 || e.socketColors[0] !== 14 || e.socketColors[1] !== 0 || e.socketColors[2] !== 0 ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  return ["socketed-ring-curve-v1", c.itemId, v.itemLevel, r.appliedStatsV1];
+}
+
+/** The native curve certificate verifies the raw item level written by the
+ * one scaling operation. In 18428cd lists 13729 and 13900 only perform that
+ * write. 13730 also writes quality, so retain that ordered program separately.
+ * Weapon type, original item ID, level and quality fix the native damage table.
+ * The display damage fields alone would lose unrounded weapon DPS. */
+export function bareWeaponCurveIdentity(option: AuctionGearOption, engine: string) {
+  const c = option.candidate, t = c.constraints;
+  if (!ignoresItemContext(engine) || option.customization || c.itemClassId !== 2 ||
+      (c.slotType !== "MAIN_HAND" && c.slotType !== "OFF_HAND") ||
+      t.crafted || t.setId || t.setName) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution;
+  const e = r?.enhancements, w = r?.weapon;
+  if (!v || !validAuctionItemContext(v.contextId) || !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 ||
+      !supportedAuctionModifiers(v.modifiers ?? []) || v.modifiers?.some(m => m.type !== 9 && m.type !== 28) ||
+      !r || r.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.effects?.length ||
+      verifiedAuctionDropCurve(v.modifiers ?? [], r.nativeWeaponCurveV1) !== v.itemLevel ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketColors?.length !== 3 || e.socketColors.some(Boolean) ||
+      e.socketBonusId !== 0 || e.requiredProfessionId !== 0 || !w ||
+      ![w.minDamage, w.maxDamage, w.dps, w.speedSeconds].every(Number.isFinite) ||
+      w.minDamage < 0 || w.maxDamage <= 0 || w.maxDamage < w.minDamage || w.dps <= 0 || w.speedSeconds <= 0 ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  const b = v.bonusIds;
+  const curveOnly = b?.length === 1 && (b[0] === 13729 || b[0] === 13900);
+  if (!curveOnly && !(b?.length === 2 && b[0] === 6652 && b[1] === 13730)) return;
+  return ["bare-weapon-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId, v.itemLevel, curveOnly ? 0 : 13730,
+    w.minDamage, w.maxDamage, w.dps, w.speedSeconds, r.appliedStatsV1];
+}
+
+/** On these socketless programs the first list is either a no-op (6652)
+ * or indestructibility (43). The latter's stat 64 translates to STAT_NONE
+ * and its type-9 repair operation is ignored. Neither adds an observable
+ * suffix or description. Keep every subsequent list and native input. */
+export function indestructibleItemIdentity(option: AuctionGearOption, engine: string) {
+  const c = option.candidate;
+  const hand = c.itemClassId === 2 && (c.slotType === "MAIN_HAND" || c.slotType === "OFF_HAND");
+  if (!hand && !(c.itemClassId === 4 && plainArmorSlots.has(c.slotType))) return;
+  const v = c.variants.find(row => row.key === option.variantKey), b = v?.bonusIds;
+  if (!v || !b || (b[0] !== 43 && b[0] !== 6652)) return;
+  const program = hand ? b.length === 2 && (b[1] === 12769 || b[1] === 13901)
+    : b.length === 3 && b[1] === 12817 && b[2] === 13663;
+  const r = v.resolution, e = r?.enhancements, weapon = r?.weapon;
+  if (!program || !ignoresItemContext(engine) || !validAuctionItemContext(v.contextId) ||
+      !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !supportedAuctionModifiers(v.modifiers ?? []) ||
+      v.modifiers?.some(m => m.type !== 9 && m.type !== 28) || r?.engine !== engine || r.metadataVersion !== 3 ||
+      r.nativeNoItemEffects !== true || r.effects?.length || c.constraints.crafted || c.constraints.setId || c.constraints.setName ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      e.socketColors?.length !== 3 || e.socketColors.some(color => color !== 0) ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  if (hand ? !weapon || ![weapon.minDamage, weapon.maxDamage, weapon.dps, weapon.speedSeconds].every(Number.isFinite) ||
+      weapon.minDamage < 0 || weapon.maxDamage < weapon.minDamage || weapon.dps <= 0 || weapon.speedSeconds <= 0 : !!weapon) return;
+  return ["indestructible-v1", c.itemId, c.inventoryType, c.itemSubclassId, b.slice(1), v.itemLevel,
+    auctionNativeItemOptions(v, engine, false, r.nativeContentTuningV1), r.appliedStatsV1, weapon] as const;
+}
+
+/** At the pinned revision a positive certificate identifies a single type-51 level
+ * write plus constant operations. The two verified programs below reach the same
+ * native state when their resolved level matches. Other programs keep their list. */
+export function bareArmorConstantCurveIdentity(option: AuctionGearOption, engine: string, equivalentPrograms = false) {
+  const c = option.candidate, t = c.constraints;
+  if (!ignoresItemContext(engine) || option.customization || c.itemClassId !== 4 || !plainArmorSlots.has(c.slotType) ||
+      t.crafted || t.setId || t.setName || t.uniqueEquipped || t.limitCategoryId) return;
+  const v = c.variants.find(row => row.key === option.variantKey), r = v?.resolution, e = r?.enhancements;
+  if (!v || !Number.isSafeInteger(v.itemLevel) || v.itemLevel <= 0 || !validAuctionItemContext(v.contextId) ||
+      !v.bonusIds?.length || !supportedAuctionModifiers(v.modifiers ?? []) ||
+      v.modifiers?.some(m => m.type !== 9 && m.type !== 28) ||
+      r?.engine !== engine || r.metadataVersion !== 3 || r.nativeNoItemEffects !== true || r.weapon || r.effects?.length ||
+      e?.status !== "verified" || e.socketCount !== 0 || e.socketColors?.length !== 3 || e.socketColors.some(Boolean) ||
+      e.socketBonusId !== 0 || e.requiredProfessionId !== 0 ||
+      verifiedAuctionDropCurve(v.modifiers ?? [], r.nativeArmorCurveV1) !== v.itemLevel ||
+      r.appliedStatsV1?.length !== 46 || !r.appliedStatsV1.every(Number.isSafeInteger)) return;
+  // 13578/13663 perform no operation. 13729/13900 each write only the
+  // certified level and Midnight scaling flag. Neither list adds an equip
+  // effect, changes quality, supplies a suffix or carries a description tag.
+  const [first, second] = v.bonusIds;
+  const equivalent = equivalentPrograms && v.bonusIds.length === 2 && r.effects?.length === 0 &&
+    ((first === 13578 && second === 13729) || (first === 13663 && second === 13900));
+  if (equivalent) return ["bare-armor-resolved-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId,
+    v.itemLevel, r.appliedStatsV1] as const;
+  return ["bare-armor-constant-curve-v1", c.itemId, c.inventoryType, c.itemSubclassId,
+    v.bonusIds, v.itemLevel, r.appliedStatsV1] as const;
+}
+
+export function auctionEffectGroupKey(option: AuctionGearOption, engine?: string, craftedSymmetry: boolean | "missive" = false, groupUnusedScaling: boolean | "tuning-cap" | "drop-curve" = false, bareJewelry: boolean | "socket-curve" | "jewelry-suffix" = false, bareWeapon = false, bareArmorConstant: boolean | "equivalent-curves" | "curves-and-missives" = false, groupIndestructible = false) {
   const constraints = Object.entries(candidateLoadoutItem(option.candidate))
     .filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
-  return createHash("sha256").update(JSON.stringify([auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling), constraints])).digest("hex");
+  const suffix = bareJewelry && engine ? bareJewelrySuffixIdentity(option, engine, bareJewelry !== "jewelry-suffix") : undefined;
+  const curve = typeof bareJewelry === "string" && !option.customization && engine ? auctionSocketedRingCurve(option, engine) : undefined;
+  const weapon = bareWeapon && engine ? bareWeaponCurveIdentity(option, engine) : undefined;
+  const armor = bareArmorConstant && engine ? bareArmorConstantCurveIdentity(option, engine, typeof bareArmorConstant === "string") : undefined;
+  const crafted = bareArmorConstant === "curves-and-missives" && engine && !option.customization ? armorMissiveInputs(option, engine) : undefined;
+  const missive = crafted && engine ? ["armor-missive-v1", option.candidate.itemId, crafted.level, crafted.stats,
+    crafted.missive.bonusIds, auctionNativeItemOptions(crafted.missive, engine)] : undefined;
+  const durability = groupIndestructible && engine && !option.customization ? indestructibleItemIdentity(option, engine) : undefined;
+  const effect = durability ?? missive ?? armor ?? weapon ?? suffix ?? curve ?? auctionSelectionEffectKey([option], option.customization ? undefined : engine, craftedSymmetry, groupUnusedScaling);
+  return createHash("sha256").update(JSON.stringify([effect, constraints])).digest("hex");
 }
 
 /** Equal simulation effects are grouped only when their equip constraints also agree. */

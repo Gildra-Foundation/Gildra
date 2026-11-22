@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { restoreAuctionGearContext } from '../../../lib/wow/auctionGearRunner.ts';
+import { fixedEagleGemEdits } from '../../../lib/wow/auctionRingRatings.ts';
 import { createAuctionGearDiscovery } from '../../../lib/wow/auctionGearDiscovery.ts';
 import { evaluateAuctionEnhancementStage } from '../../../lib/wow/auctionGearEnhancementStage.ts';
 import { advanceAuctionGearExhaustiveEnhancements } from '../../../lib/wow/auctionGearExhaustiveEnhancements.ts';
@@ -166,6 +167,21 @@ test('shoulder illusions cannot improve an unenchanted purchase or an unenchante
   assert((await run(true,true)).has(6685),'An illusion can replace an existing combat enchant');
 });
 
+test('fixed Eyes of the Eagle distinguishes ranks and physical ring positions in the scoring input', () => {
+  const hosts=new Map([['FINGER_1',413],['FINGER_2',414]]);
+  const installed=new Map([['FINGER_1',7967]]);
+  const edit={slotType:'FINGER_1',itemId:413,gems:[{index:0,itemId:115811}]};
+  const normalized={...edit,gems:[{index:0,itemId:115804}]};
+  const key=(edits,changes=[],removed=[])=>fixedEagleGemEdits(edits,hosts,installed,changes,removed);
+  for (const rank of [7966,7967]) assert.deepEqual(key([{...edit,enchantId:rank}]),[{...normalized,enchantId:rank}]);
+  assert.deepEqual(key([edit]),[normalized]);
+  for (const other of [{...edit,enchantId:999999},{...edit,itemId:415},{...edit,gems:[{index:1,itemId:115811}]},
+    {...edit,gems:[{index:0,itemId:999999}]},{...edit,slotType:'FINGER_2',itemId:414}]) assert.deepEqual(key([other]),[other]);
+  assert.deepEqual(key([edit],[{slot:'finger1'}]),[edit]);
+  assert.deepEqual(key([edit],[],['FINGER_1']),[edit]);
+  assert.deepEqual(key([edit,edit]),[edit,edit]);
+});
+
 test('owned jewelry gem substitutions preserve scarce stock, installed gems, and receipt prices', async () => {
   const engine='SimulationCraft 1210-01 · 18428cd', cheap=115804, dear=115811;
   const slots=['NECK','FINGER_1'];
@@ -324,4 +340,218 @@ test('Cradle can stay free on a bare weapon, but removing an installed combat en
   const both=[equipped('MAIN_HAND',1001,7983),off];
   for (const cheap of [[[1,1]],[[1,1],[5,1]],[[1,1],[6,1]]])
     assert((await market({items:both,cheap})).has('8007,8006'),'another hand may consume the last cheap scroll');
+});
+
+test('paid neck scrolls require an available strictly cheaper equivalent and keep the installed scroll free', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  async function choices({price=5,mark=9,level=90,installed,enabled=true}={}) {
+    const item={item:{id:115991},slot:{type:'NECK'},inventory_type:{type:'NECK'},level:{value:16},
+      item_class:{id:4},item_subclass:{id:0},sockets:[],spells:[],
+      enchantments:installed ? [{enchantment_slot:{id:0},enchantment_id:installed}] : []};
+    const state={checkpoints:{}},seen=new Set(),baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine};
+    const prices={128551:{ladder:[[14,1]]},144307:{ladder:[[mark,1]]}};
+    if(price!==null) prices[110645]={ladder:[[price,1]]};
+    for(let i=0;i<30;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneNeckEnchantRanks:enabled,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:[item]},
+        loadout:[{slotType:'NECK',itemId:115991,inventoryType:2,itemSubclassId:0}],selectedSlots:['NECK'],
+        nativePlayerLevel:level,specId:72,level:90,region:'eu',engine,profileFingerprint:'neck-scrolls',
+        encounter:{},budgetCopper:100,baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.add(c.slots[0].enchantId)});
+      if(result.complete) return [...seen].sort((a,b)=>a-b);
+    }
+    assert.fail('neck scroll fixtures did not exhaust');
+  }
+  assert.deepEqual(await choices(),[0,5317,5437]);
+  assert.deepEqual(await choices({price:10}),[0,5437,5898]);
+  assert.deepEqual(await choices({price:null}),[0,5437,5898]);
+  for(const args of [{price:9},{enabled:false},{level:89}])assert.deepEqual(await choices(args),[0,5317,5437,5898]);
+  assert((await choices({installed:5898})).includes(5898));
+});
+
+test('both ring positions retain equal-price scrolls and can use the last cheap copy plus a substitute', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const selectedSlots=['FINGER_1','FINGER_2'];
+  const items=selectedSlots.map((slot,id)=>({item:{id:173131+id},slot:{type:slot},inventory_type:{type:'FINGER'},
+    level:{value:35},item_class:{id:4},item_subclass:{id:0},spells:[],sockets:[]}));
+  const loadout=items.map(x=>({slotType:x.slot.type,itemId:x.item.id,inventoryType:11,itemSubclassId:0}));
+  async function choices(ladder,{level=90,enabled=true,revision=engine}={}) {
+    const state={checkpoints:{}},seen=new Map(),baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for(let i=0;i<40;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneRingEnchantRanks:enabled,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,selectedSlots,
+        nativePlayerLevel:level,specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'dual-ring-scrolls',
+        encounter:{},budgetCopper:100,baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices:{128538:{ladder},110639:{ladder:[[5,2]]}},sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.set(c.slots.map(slot=>slot.enchantId).join(','),c.totalCopper)});
+      if(result.complete)return seen;
+    }
+    assert.fail('ring scroll fixtures did not exhaust');
+  }
+  const compact=await choices([[1,2]]);
+  assert.deepEqual([...compact.keys()].sort(),['0,0','0,5424','5424,0','5424,5424']);
+  assert.equal(compact.get('5424,5424'),2);
+  for(const ladder of [[[1,1]],[[1,1],[5,1]],[[1,1],[8,1]]]){
+    const all=await choices(ladder);
+    assert.equal(all.get('5424,5325'),6);
+    assert.equal(all.get('5325,5424'),6);
+    assert.equal(all.has('5424,5424'),ladder.length===2);
+  }
+  for(const options of [{level:89},{enabled:false},{revision:'SimulationCraft 18428cd different build'}]){
+    assert.equal((await choices([[1,2]],options)).get('5325,5325'),10);
+  }
+});
+
+test('owned armor exchanges require bare verified hosts and the exact native engine and level', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd';
+  const hosts=[['HEAD',271456,1],['SHOULDER',271454,3],['FEET',268260,8]];
+  const loadout=hosts.map(([slotType,itemId,inventoryType])=>({slotType,itemId,inventoryType,itemSubclassId:4}));
+  async function enumerate({revision=engine,level=90,headEnchant,enabled=true}={}) {
+    const items=hosts.map(([slot,id])=>({item:{id},slot:{type:slot},inventory_type:{type:slot},level:{value:295},
+      item_class:{id:4},item_subclass:{id:4},sockets:[],spells:[],
+      ...(slot==='HEAD' && headEnchant ? {enchantments:[{enchantment_slot:{id:0},enchantment_id:headEnchant}]} : {})}));
+    const state={checkpoints:{}}, keys=new Set(), baseline={dps:1000,dpsError:1,iterations:100,confidence:95,engine:revision};
+    const prices=Object.fromEntries([[243979,4],[243960,5],[243961,8]].map(([id,price])=>[id,{ladder:[[price,1]]}]));
+    for (let i=0;i<32;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneArmorEnchantPairs:enabled,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,
+        selectedSlots:hosts.map(([slot])=>slot),nativePlayerLevel:level,specId:72,level:90,region:'eu',engine:revision,
+        profileFingerprint:'armor-prices',encounter:{},budgetCopper:100,baseline,state,signal:new AbortController().signal,
+        shouldYield:()=>false,quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>keys.add(c.slots.map(s=>s.enchantId).join(','))});
+      if (result.complete) return keys;
+    }
+    assert.fail('armor exchange fixture did not finish');
+  }
+  const kept=await enumerate();
+  assert(kept.has('0,0,7971'));
+  assert(!kept.has('0,7989,7970'));
+  for (const inputs of [{revision:'SimulationCraft 18428cd different build'},{level:89},{headEnchant:7958},{enabled:false}])
+    assert((await enumerate(inputs)).has('0,7989,7970'),JSON.stringify(inputs));
+});
+
+test('a ring scroll can be exchanged across bare socketless worn rings only at certified player level', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd', selectedSlots=['FINGER_1','FINGER_2'];
+  const loadout=selectedSlots.map((slotType,index)=>({slotType,itemId:173131+index,inventoryType:11,itemSubclassId:0}));
+  async function search({level=90,enabled=true,installed=false,revision=engine}={}) {
+    const items=loadout.map((x,i)=>({item:{id:x.itemId},slot:{type:x.slotType},inventory_type:{type:'FINGER'},level:{value:35},
+      item_class:{id:4},item_subclass:{id:0},sockets:[],spells:[],...(i===0 && installed ?
+        {enchantments:[{enchantment_slot:{id:0},enchantment_id:5425}]} : {})}));
+    const baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision},state={checkpoints:{}},seen=new Set();
+    const prices={110618:{ladder:[[3,2]]},128542:{ladder:[[4,2]]},199954:{ladder:[[6,2]]}};
+    for(let i=0;i<32;i++) {
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneRingScrollPairs:enabled,selectedSlots,
+        finalists:[{label:'exhaustive',options:[]}],equipment:{equipped_items:items},loadout,nativePlayerLevel:level,
+        specId:72,level:90,region:'eu',engine:revision,profileFingerprint:'two-bare-rings',encounter:{},budgetCopper:50,
+        baseline,state,signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.add(c.slots.map(s=>s.enchantId).join('/'))});
+      if(result.complete)return seen;
+    }
+    assert.fail('socketless rings did not finish');
+  }
+  const small=await search();
+  assert(small.has('5428/5428'));
+  for(const args of [{enabled:false},{level:89},{installed:true},{revision:'SimulationCraft 18428cd different build'}]) {
+    const full=await search(args);
+    assert(full.size>small.size,JSON.stringify(args));
+  }
+});
+
+test('a bare owned ring can supply a gem to a cheaper equal-rating two-ring purchase', async () => {
+  const engine='SimulationCraft 1210-01 · 18428cd', selectedSlots=['FINGER_1','FINGER_2'];
+  const loadout=selectedSlots.map((slotType,i)=>({slotType,itemId:[272150,251194][i],inventoryType:11,itemSubclassId:0}));
+  const source='8027:154128/0:115807', replacement='8026:154128/0:154128';
+  async function receipts({enabled=true,level=90,revision=engine,opaque=false,secondUnit=3,stock=2,single=false}={}) {
+    const items=loadout.map((s,i)=>({item:{id:s.itemId},slot:{type:s.slotType},inventory_type:{type:'FINGER'},
+      item_class:{id:4},item_subclass:{id:0},level:{value:i?292:321},sockets:[{socket_type:{type:'PRISMATIC'}}],
+      ...(opaque && i===1 ? {enchantments:[{enchantment_slot:{id:2},enchantment_id:777}]} : {})}));
+    const ladder=[[3,secondUnit===3 ? stock : 1]];
+    if(stock>1 && secondUnit!==3)ladder.push([secondUnit,1]);
+    const prices={244017:{ladder:[[6,2]]},244016:{ladder:[[2,2]]},115807:{ladder:[[1,2]]},154128:{ladder}};
+    if(single){delete prices[244016];delete prices[244017];}
+    const state={checkpoints:{}},seen=new Map(),baseline={dps:1000,dpsError:1,confidence:95,iterations:100,engine:revision};
+    for(let i=0;i<100;i++){
+      const result=await evaluateAuctionEnhancementStage({exhaustive:true,pruneOwnedJewelryGems:true,
+        pruneBareOwnedRingRatings:enabled,selectedSlots:single?['FINGER_1']:selectedSlots,finalists:[{label:'exhaustive',options:[]}],
+        equipment:{equipped_items:items},loadout,nativePlayerLevel:level,specId:72,level:90,region:'eu',engine:revision,
+        profileFingerprint:'owned-rating-substitution',encounter:{},budgetCopper:50,baseline,state,
+        signal:new AbortController().signal,shouldYield:()=>false,
+        quote:async()=>({prices,sourceUpdatedAt:new Date().toISOString(),fetchedAt:new Date().toISOString()}),
+        simulate:async()=>baseline,onMeasured:c=>seen.set(c.slots.map(s=>s.enchantId+':'+s.gemIds.join()).join('/'),c.totalCopper)});
+      if(result.complete)return seen;
+    }
+    assert.fail('owned ring-gem market did not finish');
+  }
+  // A resumable layout can have a bare host but no strictly cheaper witness.
+  assert((await receipts({single:true})).size>1);
+  const compact=await receipts();
+  assert(!compact.has(source));
+  assert.equal(compact.get(replacement),8);
+  for(const args of [{enabled:false},{level:89},{revision:'SimulationCraft 18428cd different build'},{opaque:true},{stock:1},{secondUnit:5}])
+    assert.equal((await receipts(args)).get(source),10,JSON.stringify(args));
+});
+
+test('legacy weapon scrolls need a strictly cheaper substitute available for every hand', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const slots = ['MAIN_HAND', 'OFF_HAND'];
+  function option(slotType, index, proofEngine) {
+    const variant = { key: 'staff', itemLevel: 10, contextId: 0, bonusIds: [], resolution: {
+      engine: proofEngine, metadataVersion: 3, effectsVerified: true, effects: [], enhancements: {
+        status: 'verified', socketCount: 0, socketColors: [0, 0, 0], socketBonusId: 0,
+        requiredProfessionId: 0, requiredProfessionRank: 0,
+      },
+    } };
+    return { id: slotType, auctionId: 100 + index, costCopper: 5, quantity: 1, variantKey: 'staff',
+      candidate: { itemId: 2030 + index, name: 'Staff', slotType, inventoryType: 17, itemClassId: 2,
+        itemSubclassId: 10, eligible: true, compatibility: { specId: 72 }, constraints: { requiredLevel: 1 }, variants: [variant] } };
+  }
+  async function run({ cheap = [[5, 2]], other = [[10, 2]], enabled = true, level = 90, proofEngine = engine } = {}) {
+    const seen = new Set(), state = { checkpoints: {} };
+    const baseline = { dps: 1000, dpsError: 1, confidence: 95, iterations: 750, engine };
+    const options = slots.map((slot, i) => option(slot, i, proofEngine));
+    const now = new Date().toISOString();
+    const prices = {38920: {ladder: other}};
+    if (cheap) prices[38879] = {ladder: cheap};
+    for (let i = 0; i < 20; i++) {
+      const stage = await evaluateAuctionEnhancementStage({ exhaustive: true, pruneWeaponEnchantRanks: enabled,
+        finalists: [{ label: 'both weapons', options }], equipment: { equipped_items: [] }, loadout: [],
+        selectedSlots: slots, level: 90, nativePlayerLevel: level, specId: 72, region: 'eu', engine,
+        profileFingerprint: 'weapon-scrolls', budgetCopper: 100, encounter: {}, baseline, state,
+        signal: new AbortController().signal, shouldYield: () => false,
+        quote: async () => ({prices, sourceUpdatedAt: now, fetchedAt: now}), simulate: async () => baseline,
+        onMeasured: configuration => seen.add(configuration.slots.map(slot => slot.enchantId).join(',')),
+      });
+      if (stage.complete) return seen;
+    }
+    assert.fail('weapon scrolls did not exhaust');
+  }
+  const physical = await run({ enabled: false });
+  assert.equal(physical.size, 9);
+  assert.deepEqual(await run(), new Set(['0,0', '0,2563', '2563,0', '2563,2563']));
+  assert.deepEqual(await run({ cheap: null }), new Set(['0,0', '0,2668', '2668,0', '2668,2668']));
+  for (const args of [{ cheap: [[10, 2]] }, { cheap: [[5, 1], [11, 1]] }, { level: 89 }, { proofEngine: 'unverified' }]) {
+    assert.deepEqual(await run(args), physical);
+  }
+  const lastCopy = await run({ cheap: [[5, 1]] });
+  assert(lastCopy.has('2563,2668') && lastCopy.has('2668,2563') && !lastCopy.has('2563,2563'));
+});
+
+test('weapon scroll pruning preserves older exhaustive search cursors', async () => {
+  const engine = 'SimulationCraft 1210-01 · 18428cd';
+  const baseline = {dps: 1000, dpsError: 1, confidence: 95, iterations: 100, engine};
+  const input = {options: [], selectedSlots: ['MAIN_HAND'], equipment: {equipped_items: []}, loadout: [],
+    specId: 72, level: 90, region: 'eu', engine, profileFingerprint: 'older-weapon-scroll-cursor',
+    encounter: {}, budgetCopper: 1000, objective: 'dps', baseline, simulate: async () => baseline,
+    signal: new AbortController().signal, shouldYield: () => true, onState: () => {}};
+  const old = (await advanceAuctionGearExhaustiveEnhancements(input)).state;
+  assert.equal(old.pruneWeaponEnchantRanks, undefined);
+  const current = { ...input, nativePlayerLevel: 90 };
+  const resumed = (await advanceAuctionGearExhaustiveEnhancements({ ...current, state: old })).state;
+  const fresh = (await advanceAuctionGearExhaustiveEnhancements(current)).state;
+  assert.equal(resumed.inputKey, old.inputKey);
+  assert.equal(resumed.pruneWeaponEnchantRanks, undefined);
+  assert.equal(fresh.pruneWeaponEnchantRanks, true);
+  assert.notEqual(fresh.inputKey, old.inputKey);
 });

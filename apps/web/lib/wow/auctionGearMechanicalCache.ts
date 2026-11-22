@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
 import type { OwnedAuctionGearChange } from "./auctionGearEnhancementOptimizer";
 import type { AuctionGearOption, GearPlanSimulation } from "./auctionGearTypes";
-import { combinedRingRatings90, isDirectRingEnchant, ringGemRepresentative90 } from "./auctionRingRatings";
-import { auctionAppliedStatsKey } from "./auctionGearEffects";
-import { auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
+import { combinedRingRatings90, isDirectRingEnchant, purchasedRingScrollRating90, ringGemRepresentative90 } from "./auctionRingRatings";
+import { midnightGemRating90, ownedMidnightGemScore } from "./auctionMidnightGemRatings";
+import { auctionAppliedStatsKey, auctionSocketedRingCurve, bareJewelrySuffixIdentity, bareWeaponCurveIdentity, bareArmorConstantCurveIdentity, armorMissiveInputs, indestructibleItemIdentity } from "./auctionGearEffects";
+import { auctionMissiveComparison, auctionNativeItemOptions, ignoresItemContext } from "./gearItemModifiers";
 import { auctionMeasurementContract, type SimcGearChange } from "./gearSimulation";
 
 const ttlMs = 15 * 60_000;
@@ -13,6 +14,47 @@ function canonical(value: unknown): unknown {
   if (!value || typeof value !== "object") return value;
   return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)
     .sort(([left], [right]) => left.localeCompare(right)).map(([key, entry]) => [key, canonical(entry)]));
+}
+
+// Within each rank all three enchants give the same stamina. The native
+// observation bits, in order, denote speed, leech and avoidance.
+const bootEnchantRanks = [[8018, 7992, 7962], [8019, 7993, 7963]];
+export function equivalentBootEnchants(original: number | undefined, unread: unknown, engine: string) {
+  if (!original || !ignoresItemContext(engine) || typeof unread !== "number" ||
+      !Number.isInteger(unread) || unread < 1 || unread > 7) return [];
+  const rank = bootEnchantRanks.find(ids => ids.includes(original));
+  if (!rank || !(unread & (1 << rank.indexOf(original)))) return [];
+  return rank.filter((id, index) => id !== original && (unread & (1 << index)));
+}
+
+// Unknown enchants and observed ratings retain their physical identity.
+const armorEnchants = new Map<number, { slot: string; axis: number; group: number }>();
+for (const [rank, ids] of bootEnchantRanks.entries())
+  ids.forEach((id, index) => armorEnchants.set(id, {slot: "FEET", axis: 1 << index, group: -1 - rank}));
+for (const [slot, families] of [
+  ["HEAD", [[7988, 7989], [7958, 7959], [8014, 8015]]],
+  ["SHOULDER", [[7970, 7971, 7972, 7973], [8028, 8029, 8030, 8031], [7998, 7999, 8000, 8001]]],
+] as const) {
+  families.forEach((ids, index) => ids.forEach(id => armorEnchants.set(id, {slot, axis: 1 << index, group: -1})));
+}
+
+export function projectUnreadArmor(edits: readonly OwnedAuctionGearChange[], unread: number,
+  bareHosts?: ReadonlyMap<string, number>, purchases?: readonly AuctionGearOption[]) {
+  let projected: OwnedAuctionGearChange[] | undefined;
+  for (const [index, edit] of edits.entries()) {
+    const effect = edit.enchantId && armorEnchants.get(edit.enchantId);
+    if (!effect || effect.slot !== edit.slotType || !(effect.axis & unread)) {
+      projected?.push(edit);
+      continue;
+    }
+    projected ??= edits.slice(0, index);
+    // These head and shoulder enchants have only the unread rating. The
+    // original bare item contributes zero to it. Boots also change stamina.
+    const bare = effect.slot !== "FEET" && bareHosts?.get(edit.slotType) === edit.itemId &&
+      !purchases?.some(option => option.candidate.slotType === edit.slotType);
+    if (!bare || edit.gems.length) projected.push({ ...edit, enchantId: bare ? undefined : effect.group });
+  }
+  return projected;
 }
 
 // Pinned SimC gems with identical ordered direct stats at every level
@@ -60,8 +102,17 @@ export function isWorldsoulCradle(id: number) {
   return id === 8006 || id === 8007;
 }
 
-// Pure leech rating on a bare helm or shoulder. The caller must have an
+// Direct leech rating on bare armor. The caller must have an
 // attestation from the unchanged native Fury actor that healing is disabled.
+export function pureWristBackLeechEnchant(slot: string, inventory: number, id: number) {
+  if (!Number.isSafeInteger(id)) return false;
+  if (slot === "WRIST" && inventory === 9)
+    return (id >= 6575 && id <= 6580) || (id >= 7386 && id <= 7391);
+  if (slot === "BACK" && inventory === 16)
+    return (id >= 6593 && id <= 6595) || (id >= 7404 && id <= 7406);
+  return false;
+}
+
 export function pureArmorLeechEnchant(slot: string, inventory: number, id: number) {
   if (slot === "HEAD" && inventory === 1) return id === 7958 || id === 7959;
   return slot === "SHOULDER" && inventory === 3 && (id === 8028 || id === 8029 || id === 8030 || id === 8031);
@@ -137,16 +188,24 @@ function plainPrismaticHost(change: Pick<SimcGearChange, "slot" | "itemId">, opt
   return true;
 }
 
+export function hasLevel90NeckGemRatings(option: AuctionGearOption, engine: string) {
+  return option.candidate.slotType === "NECK" && ignoresItemContext(engine) &&
+    plainPrismaticHost({slot: "neck", itemId: option.candidate.itemId}, option, engine, 120);
+}
+
 export function hasLevel90RingRatings(option: AuctionGearOption, engine: string, playerLevel?: number) {
   const { slotType, itemId } = option.candidate;
   return playerLevel === 90 && ignoresItemContext(engine) && (slotType === "FINGER_1" || slotType === "FINGER_2") &&
     plainPrismaticHost({ slot: slotType === "FINGER_1" ? "finger1" : "finger2", itemId }, option, engine, 120);
 }
 
-/** Certify one ring, gem and enchant using the same host checks as the
- * independent finalist key. Other enchants keep their original native inputs. */
-export function purchasedRingGemEffect(option: AuctionGearOption, engine: string, gemId: number, enchantId: number, nativePlayerLevel?: number) {
+/** Gem substitution must pass the same host and enchant gates as the score key. */
+export function purchasedJewelryGemEffect(option: AuctionGearOption, engine: string, gemId: number, enchantId: number, nativePlayerLevel?: number) {
   const slotType = option.candidate.slotType;
+  if (slotType === "NECK") {
+    return nativePlayerLevel === 90 && enchantId === 0 && hasLevel90NeckGemRatings(option, engine)
+      ? ringGemRepresentative90(gemId) : undefined;
+  }
   if (!ignoresItemContext(engine) || (slotType !== "FINGER_1" && slotType !== "FINGER_2") ||
       enchantId !== 0 && !isDirectRingEnchant(enchantId)) return;
   const host = { slot: slotType === "FINGER_1" ? "finger1" : "finger2", itemId: option.candidate.itemId };
@@ -211,14 +270,85 @@ function effectiveRingEnchants(edits: readonly OwnedAuctionGearChange[], rings: 
   return a === Math.min(first, second) && b === Math.max(first, second) ? [] : [a, b];
 }
 
+/** Explicit replacements remove the same installed data. A positively
+ * identified bare ring enchant also contributes zero for score reuse. */
+function explicitOwnedJewelry(owned: readonly OwnedAuctionGearChange[], hosts: ReadonlyMap<string, number>,
+  purchased: readonly SimcGearChange[], removed: readonly string[] | undefined, bareRings?: ReadonlySet<string>, physicalFinalist = false) {
+  if (new Set(owned.map(edit => edit.slotType)).size !== owned.length) return;
+  const ratings = [0, 0, 0, 0];
+  const slots: string[] = [], descriptions: number[] = [];
+  const edits = owned.map(edit => {
+    const ring = edit.slotType === "FINGER_1" || edit.slotType === "FINGER_2";
+    const knownEnchant = ring ? Boolean(edit.enchantId) || edit.enchantId === undefined && bareRings?.has(edit.slotType)
+      : edit.enchantId === undefined;
+    if (!knownEnchant || (!ring && edit.slotType !== "NECK") || !hosts.has(edit.slotType) || hosts.get(edit.slotType) !== edit.itemId ||
+        removed?.some(slot => slot === edit.slotType || jewelrySlots[slot] === edit.slotType) || purchased.some(c => jewelrySlots[c.slot] === edit.slotType) ||
+        edit.gems.length !== 1 || edit.gems[0].index !== 0 || !edit.gems[0].itemId) return edit;
+    const id = edit.gems[0].itemId;
+    const midnight = physicalFinalist ? midnightGemRating90(id) : undefined;
+    const contribution = combinedRingRatings90(edit.enchantId ?? 0, midnight ? 0 : id);
+    if (!contribution) return edit;
+    for (const [index, amount] of contribution.entries()) ratings[index] += amount + (midnight?.ratings[index] ?? 0);
+    slots.push(edit.slotType);
+    if (midnight) descriptions.push(midnight.descriptionId);
+    // Zeroes are placeholders only in the hash. Keep the physical hosts,
+    // socket position and every unrelated edit in the comparison.
+    return { ...edit, enchantId: ring ? 0 : undefined, gems: [{ ...edit.gems[0], itemId: 0 }] };
+  });
+  // Legacy gems have no description. Midnight observers count colors across
+  // sockets. Include the normalized hosts so a retained or empty socket can
+  // never substitute for an explicitly replaced gem on another item.
+  return slots.length ? { edits, ratings, gemColors: descriptions.length
+    ? { slots: slots.sort(), descriptions: descriptions.sort((a, b) => a - b) } : undefined } : undefined;
+}
+
+// These permanent neck enchants only add a rating computed from the player.
+// The final score key still contains the exact enchant ID and actual slot.
+const directNeckEnchants = new Set([5285, 5292, 5293, 5295, 5317, 5318, 5319, 5321, 5890, 5895, 5896, 5897, 5898]);
+
+// Gift and Mark install exactly the same rating in each pair. Their enchant
+// spells contribute zero, so SimC uses the same capped player scaling table.
+const equalNeckEnchantRanks = new Map([[5898, 5317], [5897, 5318], [5895, 5319], [5896, 5321]]);
+export function directNeckEnchantGroup(id: number) {
+  return directNeckEnchants.has(id) ? equalNeckEnchantRanks.get(id) ?? id : undefined;
+}
+
+// Each pinned enchant has one integer STAT operation. It contributes spell
+// power to the player after the two purchased weapons are equipped.
+const directWeaponSpellPower90 = new Map<number, number>([
+  [2504, 14], [2505, 14], [2669, 14], [3830, 7], [3834, 9], [3846, 7], [3854, 12], [3855, 10],
+]);
+
+export function weaponScrollPower90(id: number) {
+  return id === 0 ? 0 : directWeaponSpellPower90.get(id);
+}
+
+export function isPlainScrollWeapon90(option: AuctionGearOption, variant: AuctionGearOption["candidate"]["variants"][number],
+  engine: string, playerLevel?: number) {
+  const item = option.candidate, proof = variant.resolution, sockets = proof?.enhancements;
+  return playerLevel === 90 && ignoresItemContext(engine) && proof?.engine === engine &&
+    proof.metadataVersion === 3 && proof.nativeNoItemEffects === true && !!proof.weapon && !proof.effects?.length &&
+    item.itemClassId === 2 && (item.slotType === "MAIN_HAND" || item.slotType === "OFF_HAND") &&
+    !!item.constraints && !item.constraints.setId && !item.constraints.setName &&
+    Number.isSafeInteger(variant.itemLevel) && variant.itemLevel >= 10 && variant.itemLevel <= 120 &&
+    sockets?.status === "verified" && sockets.socketCount === 0 && sockets.socketBonusId === 0 &&
+    sockets.requiredProfessionId === 0 && sockets.socketColors?.length === 3 && sockets.socketColors.every(color => color === 0);
+}
+
 /** No credentials, localized presentation, prices or character names are retained. */
 export function auctionGearMechanicalKey(profileFingerprint: string, request: {
   spec: string; scenario: string; fightLengthSeconds: number; targets: number; gearChanges?: unknown[]; removedSlots?: readonly string[]; ownedChanges?: readonly OwnedAuctionGearChange[]; precision?: "finalist";
-}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing] }) {
+}, native?: { changes: SimcGearChange[]; options?: AuctionGearOption[]; engine: string; playerLevel?: number; unenchantedHandsId?: number; wornRings?: readonly [WornRing, WornRing]; wornPrismatic?: ReadonlyMap<string, number>; barePrismaticRings?: ReadonlySet<string>; physicalFinalist?: boolean; furyLeechHosts?: ReadonlyMap<string, number> }) {
   const reuseCandidateInputs = !!native && !request.precision && ignoresItemContext(native.engine);
+  // Presence certifies this actor's healing mode. The map records which owned
+  // slots can take a scroll without overwriting their original enchant.
+  const furyLeechHosts = native?.physicalFinalist && request.precision === "finalist" &&
+    request.spec === "fury-warrior" && ignoresItemContext(native.engine) ? native.furyLeechHosts : undefined;
   // Local replacements carry no Azerite powers. An empty bonus list cannot run
   // a scaling handler, including through automatic enchants in this pinned DBC.
-  const certifiedRings: { index: number; slot: string; ratings: number[] }[] = [];
+  const certifiedJewelry: { index: number; slot: string; ratings: number[] }[] = [];
+  const weaponScrolls: { index: number; power: number }[] = [];
+  let purchasedScrollTotal = 0;
   const gear = native?.changes.map((change, i) => {
     const option = native.options?.[i];
     const variant = option?.candidate.variants.find(row => row.key === option.variantKey);
@@ -229,6 +359,26 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     const bonuses = variant?.bonusIds;
     const sameProgram = option?.candidate.itemId === change.itemId && Array.isArray(bonuses) &&
       bonuses.length === change.bonusIds?.length && bonuses.every((id, index) => id === change.bonusIds?.[index]);
+    const sameVariant = sameProgram && (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
+      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []);
+    if (furyLeechHosts && sameVariant && option && proof?.metadataVersion === 3 && proof.enhancements?.status === "verified" &&
+        option.candidate.itemClassId === 4 && change.slot === option.candidate.slotType.toLowerCase() &&
+        !native.changes.some((other, index) => index !== i && other.slot === change.slot) &&
+        !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+        !request.removedSlots?.includes(option.candidate.slotType) &&
+        change.enchantId && option.customization?.enchantId === change.enchantId && pureWristBackLeechEnchant(option.candidate.slotType, option.candidate.inventoryType, change.enchantId)) {
+      // The native call and the logical finalist keep the real scroll.
+      change = { ...change, enchantId: undefined };
+    }
+    const armorConstantCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
+      change.slot === option.candidate.slotType.toLowerCase() &&
+      !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
+      ? bareArmorConstantCurveIdentity(option, native.engine, reuseCandidateInputs || native.physicalFinalist === true) : undefined;
+    const weaponCurve = sameVariant && option && !change.enchantId && !change.gemIds?.length &&
+      ((change.slot === "main_hand" && option.candidate.slotType === "MAIN_HAND") ||
+       (change.slot === "off_hand" && option.candidate.slotType === "OFF_HAND")) &&
+      !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
+      ? bareWeaponCurveIdentity(option, native.engine) : undefined;
     const curve = reuseCandidateInputs && sameProgram ? proof?.nativeDropCurveV1 : undefined;
     // A finalist can reuse a previous 750-iteration fight only within its
     // own precision key. Both native tuning handlers consume the same cap.
@@ -243,49 +393,122 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     // Replace only the bonus list in the comparison key. Every other slot,
     // enchant, modifier, owned edit and the physical purchase stays intact.
     const chestSuffix = request.precision === "finalist" && change.slot === "chest" && change.enchantId &&
-      option?.candidate.slotType === "CHEST" && sameProgram && proof?.nativeSuffixProgramV1 &&
+      option?.candidate.slotType === "CHEST" && sameVariant && proof?.nativeSuffixProgramV1 &&
       option.customization?.enchantId === change.enchantId && !change.gemIds?.length &&
-      !request.ownedChanges?.some(edit => edit.slotType === "CHEST") &&
-      (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
-      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? [])
+      !request.ownedChanges?.some(edit => edit.slotType === "CHEST")
       ? auctionAppliedStatsKey([option], native.engine, "enchanted-suffix") : undefined;
-    // A local purchase replaces the entire ring. These prismatic gems have
+    // A local purchase replaces the entire jewelry piece. These prismatic gems have
     // no observable name family, description tag, proc or socket bonus. Only
     // the final integer contribution changes combat. Keep the real receipt.
-    const ratings = native.playerLevel === 90 && ignoresItemContext(native.engine) && sameProgram && option &&
-      (change.slot === "finger1" || change.slot === "finger2") && (change.gemIds?.length ?? 0) <= 1 &&
+    const ratings = native.playerLevel === 90 && ignoresItemContext(native.engine) && sameVariant && option &&
+      (change.slot !== "neck" || !change.enchantId) && (change.gemIds?.length ?? 0) <= 1 &&
       !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
-      (change.contextId ?? 0) === (variant?.contextId ?? 0) &&
-      JSON.stringify(change.modifiers ?? []) === JSON.stringify(variant?.modifiers ?? []) &&
       plainPrismaticHost(change, option, native.engine, 120)
       ? combinedRingRatings90(change.enchantId ?? 0, change.gemIds?.[0] ?? 0) : undefined;
-    if (ratings) certifiedRings.push({ index: i, slot: change.slot, ratings });
+    // A direct scroll adds a player-level rating once on its final host.
+    // A second replacement in the same slot can overwrite the first enchant.
+    // Keep the real order and receipt for checkpoint ranking and purchases.
+    const scroll = native.physicalFinalist && request.precision === "finalist" && native.playerLevel === 90 &&
+      ignoresItemContext(native.engine) && sameVariant && variant && option &&
+      (change.slot === "finger1" || change.slot === "finger2") && jewelrySlots[change.slot] === option.candidate.slotType &&
+      option.candidate.inventoryType === 11 && option.candidate.itemClassId === 4 && option.candidate.itemSubclassId === 0 &&
+      proof?.nativeNoItemEffects === true && proof.metadataVersion === 3 && sockets?.status === "verified" &&
+      !proof.effects?.length && !proof.weapon && Number.isSafeInteger(variant.itemLevel) &&
+      !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+      !request.removedSlots?.includes(option.candidate.slotType) &&
+      change.enchantId && option.customization?.enchantId === change.enchantId &&
+      !native.changes.some((other, index) => index !== i && other.slot === change.slot)
+      ? purchasedRingScrollRating90(change.enchantId, variant.itemLevel, !change.gemIds?.length && !option.customization.gemIds?.length &&
+        sockets.socketBonusId === 0 && sockets.requiredProfessionId === 0 && sockets.socketColors?.length === 3 &&
+        sockets.socketColors[1] === 0 && sockets.socketColors[2] === 0 &&
+        ((sockets.socketCount === 0 && sockets.socketColors[0] === 0) || (sockets.socketCount === 1 && sockets.socketColors[0] === 14))) : undefined;
+    if (native.physicalFinalist && request.precision === "finalist" && sameVariant && option && variant &&
+        (change.slot === "main_hand" || change.slot === "off_hand") && option.candidate.slotType.toLowerCase() === change.slot &&
+        isPlainScrollWeapon90(option, variant, native.engine, native.playerLevel) &&
+        !change.gemIds?.length && !option.customization?.gemIds?.length &&
+        (change.enchantId ?? 0) === (option.customization?.enchantId ?? 0) &&
+        !request.removedSlots?.includes(option.candidate.slotType) && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType) &&
+        !native.changes.some((other, j) => i !== j && other.slot === change.slot)) {
+      const power = weaponScrollPower90(change.enchantId ?? 0);
+      if (power !== undefined) weaponScrolls.push({ index: i, power });
+    }
+    if (scroll !== undefined) purchasedScrollTotal += scroll;
+    const directNeck = change.slot === "neck" && change.enchantId && directNeckEnchants.has(change.enchantId) &&
+      option?.customization?.enchantId === change.enchantId && !option.customization.gemIds?.length;
+    // A verified direct scroll adds a player rating independently of the
+    // two ratings written by the suffix. Keep its contribution in the key.
+    const directScroll = directNeck || (scroll !== undefined && !option?.customization?.gemIds?.length);
+    const suffix = sameVariant && variant && option && jewelrySlots[change.slot] === option.candidate.slotType &&
+      (!change.enchantId || directScroll) && !change.gemIds?.length && !request.ownedChanges?.some(edit => edit.slotType === option.candidate.slotType)
+      ? bareJewelrySuffixIdentity(directScroll ? { ...option, customization: undefined } : option, native.engine) : undefined;
+    // These prismatic gems and direct enchants cannot read the original
+    // scaling bonus ID. Retain their existing rating key and the real receipt.
+    const ringCurve = ratings && option ? auctionSocketedRingCurve(option, native.engine) : undefined;
+    if (ratings) certifiedJewelry.push({ index: i, slot: change.slot, ratings });
+    const durability = (reuseCandidateInputs || native.physicalFinalist) && sameVariant && option && !change.gemIds?.length &&
+      change.slot === option.candidate.slotType.toLowerCase() ? indestructibleItemIdentity(option, native.engine) : undefined;
+    const armorMissive = (reuseCandidateInputs || native.physicalFinalist) && sameVariant && option &&
+      change.slot === option.candidate.slotType.toLowerCase() ? armorMissiveInputs(option, native.engine) : undefined;
+    const missive = armorMissive?.missive ?? auctionMissiveComparison(change, change.slot, native.engine);
+    const source = missive ? { ...change, ...missive } : change;
     return {
-      ...change, ...auctionNativeItemOptions(change, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
-        !change.enchantId && !change.gemIds?.length, tuning, curve),
+      ...source, ...auctionNativeItemOptions(source, native.engine, reuseCandidateInputs && change.bonusIds?.length === 0 &&
+        !change.enchantId && !change.gemIds?.length, tuning, ringCurve ? proof?.nativeDropCurveV1 : curve),
+      ...(durability ? { bonusIds: [], durability } : {}),
+      ...(armorMissive ? { armorMissiveStats: armorMissive.stats, armorMissiveLevel: armorMissive.level } : {}),
+      ...(weaponCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, bonusIds: [], weaponCurve } : {}),
+      ...(armorConstantCurve ? { contextId: undefined, modifiers: undefined, contentTuningCap: undefined, armorConstantCurve,
+        ...(armorConstantCurve[0] === "bare-armor-resolved-curve-v1" ? { bonusIds: [] } : {}) } : {}),
+      ...(ringCurve ? { bonusIds: [13668], ringCurve } : {}),
+      ...(suffix ? { bonusIds: [], bareSuffix: suffix } : {}),
+      ...(scroll !== undefined ? { enchantId: undefined } : {}),
       ...(chestSuffix ? { bonusIds: [chestSuffix] } : {}),
       ...(reuseCandidateInputs && change.gemIds?.length && verifiedGemSlots.has(change.slot)
         ? { gemIds: change.gemIds.map(id => equivalentGems.get(id) ?? id) } : {}),
       ...(ratings && (change.enchantId || change.gemIds?.some(Boolean)) ? { gemIds: undefined, enchantId: undefined, ringRatings90: ratings } : {}),
     };
   });
-  // item_t::total_stats adds these integer ratings before player_t sums gear.
-  // Both physical ring slots and every other field remain in the cache key.
-  if (gear && certifiedRings.length === 2) {
-    const [first, second] = certifiedRings;
-    if (first.slot !== second.slot) {
-      const sum = first.ratings.map((amount, axis) => amount + second.ratings[axis]);
+  const worn = request.precision === "finalist" && native?.playerLevel === 90 && native.wornPrismatic?.size &&
+    ignoresItemContext(native.engine) && request.ownedChanges?.length
+    ? { edits: request.ownedChanges, hosts: native.wornPrismatic } : undefined;
+  const directJewelry = worn && native
+    ? explicitOwnedJewelry(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings, native.physicalFinalist) : undefined;
+  // When all three socket edits and both effective ring enchants are direct,
+  // their integer ratings add across hosts. A separate three-gem proof also
+  // covers fixed proc enchants; it must keep both physical enchant IDs.
+  const midnight = worn && native?.physicalFinalist && directJewelry?.gemColors?.slots.length !== 3
+    ? ownedMidnightGemScore(worn.edits, worn.hosts, native.changes, request.removedSlots, native.barePrismaticRings) : undefined;
+  const jewelry = midnight ? undefined : directJewelry;
+  // Assign the total to one stable field. Keep the original purchased-only
+  // key when there are no qualifying worn edits so saved scores still match.
+  if (gear && (jewelry || certifiedJewelry.length >= 2)) {
+    const slots = certifiedJewelry.map(piece => piece.slot);
+    if (new Set(slots).size === slots.length) {
+      const firstSlot = jewelry ? undefined : slots.sort()[0];
+      const sum = jewelry?.ratings ?? [0, 0, 0, 0];
+      for (const { ratings } of certifiedJewelry) {
+        for (const [axis, amount] of ratings.entries()) sum[axis] += amount;
+      }
       if (sum.some(Boolean)) {
-        for (const { index, slot } of certifiedRings) {
+        for (const { index, slot } of certifiedJewelry) {
           gear[index] = { ...gear[index], gemIds: undefined, enchantId: undefined,
-            ringRatings90: slot === "finger1" ? sum : [0, 0, 0, 0] };
+            ringRatings90: slot === firstSlot ? sum : [0, 0, 0, 0] };
         }
       }
     }
   }
   // An owned neck edit replaces only the specified prismatic sockets. The
   // fingerprint identifies the worn item and all untouched sockets.
-  let ownedChanges = request.ownedChanges;
+  let ownedChanges = midnight?.edits ?? jewelry?.edits ?? request.ownedChanges;
+  if (ownedChanges?.length && native && furyLeechHosts) {
+    const edits = ownedChanges.flatMap(edit => {
+      if (!edit.enchantId || furyLeechHosts.get(edit.slotType) !== edit.itemId ||
+          request.removedSlots?.includes(edit.slotType) || native.changes.some(c => c.slot === edit.slotType.toLowerCase()) ||
+          !pureWristBackLeechEnchant(edit.slotType, edit.slotType === "BACK" ? 16 : 9, edit.enchantId)) return [edit];
+      return edit.gems.length ? [{ ...edit, enchantId: undefined }] : [];
+    });
+    ownedChanges = edits.length ? edits : undefined;
+  }
   let ringEnchants: number[] | undefined;
   if (reuseCandidateInputs && ownedChanges?.length) {
     if (native.wornRings && !native.changes.some(item => item.slot === "finger1" || item.slot === "finger2"))
@@ -304,9 +527,16 @@ export function auctionGearMechanicalKey(profileFingerprint: string, request: {
     });
     ownedChanges = edits.length ? edits : undefined;
   }
-  const changes = (gear ?? request.gearChanges ?? []).map(canonical).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
-  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
-    actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
+  // Replace only the two scroll IDs in a physical measurement. Preserve both
+  // full weapon inputs and keep the individual scrolls in the ranking key.
+  const purchasedWeaponSpellPower90 = weaponScrolls.length === 2
+    ? (weaponScrolls[0].power + weaponScrolls[1].power) || undefined : undefined;
+  const normalizedGear = purchasedWeaponSpellPower90 && native ? gear?.map((row, index) =>
+    weaponScrolls.some(scroll => scroll.index === index) ? { ...native.changes[index], enchantId: undefined, gemIds: undefined } : row) : gear;
+  const changes = (normalizedGear ?? request.gearChanges ?? []).map(canonical)
+    .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  return createHash("sha256").update(JSON.stringify(canonical({ profileFingerprint, ...request, ownedChanges, purchasedWeaponSpellPower90, purchasedScrollTotal90: purchasedScrollTotal || undefined, explicitJewelryRatings90: jewelry?.ratings, ringEnchants: ringEnchants?.length ? ringEnchants : undefined, gearChanges: changes,
+    ownedMidnightGems90: midnight?.signature, mixedJewelryGemColors90: jewelry?.gemColors, actionListMode: "native", version: 2, measurementContract: auctionMeasurementContract }))).digest("hex");
 }
 
 export function createAuctionGearMechanicalCache(now = Date.now, capacity = maximum, lifetime = ttlMs) {

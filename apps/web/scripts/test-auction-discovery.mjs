@@ -12,6 +12,7 @@ import { auctionGearVariantSelectionKey } from "../lib/wow/auctionGearExclusions
 import * as planner from "../lib/wow/auctionGearPlanner.ts";
 import * as searchStore from "../lib/wow/auctionGearSearchStore.ts";
 import { auctionGearMechanicalCache, auctionGearMechanicalKey, createAuctionGearMechanicalCache } from "../lib/wow/auctionGearMechanicalCache.ts";
+import { auctionSummarySlotMatch } from "../lib/wow/gearCompatibility.ts";
 import { normalizeGearCandidate, catalogLoadoutItem, gearSlotCategoryPaths } from "../lib/wow/gearCandidates.ts";
 import { auctionVariantKey, resolvedAuctionVariant, validAuctionWeapon } from "../lib/wow/auctionItemVariant.ts";
 import { supportedAuctionModifiers } from "../lib/wow/gearItemModifiers.ts";
@@ -69,7 +70,7 @@ const resolveAuctionVariants = async ({ offers }) => {
 };
 const discoverySource = await readFile(new URL("../lib/wow/auctionGearDiscovery.ts", import.meta.url), "utf8");
 const discovery = new vm.Script(strip(discoverySource) + "\n;({createAuctionGearDiscovery,advanceAuctionGearDiscovery,refreshAuctionGearDiscovery,auctionGearDiscoveryComplete,auctionGearDiscoveryOptions,auctionGearDiscoveryCoverage})")
-  .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Set, Object, Number, JSON, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
+  .runInNewContext({ parseAuctionGearEnhancementMode, auctionEnhancementCatalogInfo, createAuctionGearDiagnostics, logAuctionGearDiagnostics, parseAuctionGearEncounter, parseAuctionGearCompareScenarios, evaluateAuctionGearScenarios, Map, Set, Object, Number, JSON, auctionSummarySlotMatch, normalizeGearCandidate, auctionVariantKey, resolvedAuctionVariant,
     supportedAuctionModifiers, equippedAuctionReferences, nativeMatchesItemReference, AUCTION_ITEM_REFERENCE_TTL_MS, Date, lookupGearRecords, gearEntityDetails, getAuctionItemReferences, resolveAuctionVariants });
 const runnerSource = await readFile(new URL("../lib/wow/auctionGearRunner.ts", import.meta.url), "utf8");
 const runner = new vm.Script(strip(runnerSource) + "\n;({startAuctionGearSearchFromSnapshot,continueAuctionGearSearch,verifyAuctionGearSearch,assembleAuctionGearSearch,selectedAuctionGearAssemblyOptions,snapshotAuctionGearContext,restoreAuctionGearContext})")
@@ -323,6 +324,11 @@ assert.equal(assembly.spentCopper, 0);
 assert.equal(assembly.updatedSearch.items.length, 0);
 assert.equal(nativeCalls.get("[]"), 1);
 
+// When the first selected slot rejects an item, check every compatible later slot.
+run = await finish(await start([record(1)], [offer(1)], undefined, { selectedSlots: ["HEAD", "CHEST", "WRIST"] }));
+assert.deepEqual(Array.from(run.entry.context.options, option => option.candidate.slotType), ["WRIST"]);
+assert.equal(run.result.coverage.variantsRejected, 0);
+
 // Finished discovery does not imply verified data coverage. Missing metadata,
 // unsupported modifiers and unmatched catalog IDs stay explicit unknowns.
 run = await finish(await start([record(1)], [offer(1)], new Set([auctionVariantKey(offer(1))])));
@@ -354,7 +360,7 @@ for (const field of ["class_id", "subclass_id", "inventory_type", "all-registry"
   const missingRegistry = record(1);
   if (field === "all-registry") missingRegistry.tooltip.blocks = [];
   else delete missingRegistry.tooltip.blocks[0][field];
-  run = await finish(await start([missingRegistry], [offer(1)]));
+  run = await finish(await start([missingRegistry], [offer(1)], undefined, { selectedSlots: ["HEAD", "WRIST"] }));
   assert.equal(run.result.items.length, 0);
   assert.equal(run.result.discoveryComplete, true);
   assert.equal(run.result.dataComplete, false);

@@ -96,3 +96,21 @@ test('five-second server hold plus seven-second transfer succeeds within the eff
  t.mock.timers.tick(5000);await turn();t.mock.timers.tick(7000);
  assert.equal((await pending).status,'completed');assert.deepEqual(timeouts,[15000]);
 });
+
+test('progress reuses only the result already received for the same revision', async () => {
+ const result={items:['equipped','candidate']}, signal=new AbortController().signal;
+ const base={...previous,result}, progress={completed:9,total:17};
+ globalThis.fetch=async url=>{assert.equal(new URL(url,'https://test.invalid').searchParams.get('haveResult'),'1');return response({...previous,progress,resultUnchanged:true});};
+ const update=await fetchAuctionClientUpdate(base,scope,signal,()=>{});
+ assert.equal(update.result,result);assert.deepEqual(update.progress,progress);assert(!Object.hasOwn(update,'resultUnchanged'));
+ const terminal={...previous,revision:'new_revision_12345',result:{items:['winner']},status:'completed'};
+ globalThis.fetch=async()=>response(terminal);assert.deepEqual(await fetchAuctionClientUpdate(update,scope,signal,()=>{}),terminal);
+});
+test('no prior result, a wrong revision or a terminal delta requires a full scoped recovery',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ for(const [base,delta] of [[previous,previous],[{...previous,result:{}},{...previous,revision:'wrong_revision_123'}],[{...previous,result:{}},{...previous,status:'completed'}]]){
+  let calls=0;const terminal={...previous,status:'completed',result:{items:['fresh']}};
+  globalThis.fetch=async url=>{const params=new URL(url,'https://test.invalid').searchParams;assert.equal(params.get('id'),previous.id);if(++calls===1){assert.equal(params.has('haveResult'),!!base.result);return response({...delta,resultUnchanged:true});}assert(!params.has('after'));assert(!params.has('haveResult'));return response(terminal);};
+  const pending=fetchAuctionClientUpdate(base,scope,new AbortController().signal,()=>{});await turn();t.mock.timers.tick(250);assert.deepEqual(await pending,terminal);assert.equal(calls,2);
+ }
+});

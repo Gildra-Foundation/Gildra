@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	auctionQuickProbePrecision  = "auction-quick-32"
 	auctionCandidatePrecision   = "auction-candidate"
 	auctionFinalistPrecision    = "auction-finalist"
 	defaultSimCIterations       = 750
@@ -181,6 +182,10 @@ func (e *SimCEngine) run(ctx context.Context, input SimulationInput) (simcReport
 }
 
 func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candidates []batchCandidate) ([]byte, error) {
+	return e.runReportWithArmorReads(ctx, input, candidates, nil)
+}
+
+func (e *SimCEngine) runReportWithArmorReads(ctx context.Context, input SimulationInput, candidates []batchCandidate, reads *byte) ([]byte, error) {
 	timeout := e.timeout
 	if input.Precision == "finalist" {
 		timeout *= finalistIterationMultiplier
@@ -241,6 +246,10 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 		// The pinned native build validates each profileset on its simulation instance.
 		command.Env = append(command.Environ(), "GILDRA_SIMC_BATCH_SINGLE_INIT=1")
 	}
+	if reads != nil {
+		*reads = allArmorRatings
+		command.Env = append(command.Environ(), "GILDRA_ARMOR_READS_FILE="+filepath.Join(tempDir, "armor-reads-v1"))
+	}
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &limitedBuffer{buffer: &stdout, remaining: maxSimCOutputBytes}
 	command.Stderr = &limitedBuffer{buffer: &stderr, remaining: maxSimCOutputBytes}
@@ -249,6 +258,12 @@ func (e *SimCEngine) runReport(ctx context.Context, input SimulationInput, candi
 			return nil, errors.New("SimulationCraft timed out")
 		}
 		return nil, fmt.Errorf("SimulationCraft failed: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	if reads != nil {
+		data, err := os.ReadFile(filepath.Join(tempDir, "armor-reads-v1"))
+		if err == nil && len(data) == 1 && data[0] >= '0' && data[0] <= '7' {
+			*reads = data[0] - '0'
+		}
 	}
 	payload, err := os.ReadFile(reportPath)
 	if err != nil {
@@ -681,6 +696,8 @@ func containsString(values []string, target string) bool {
 func (e *SimCEngine) iterationBudget(input SimulationInput) int {
 	iterations := e.iterations
 	switch input.Precision {
+	case auctionQuickProbePrecision:
+		iterations = 32
 	case auctionCandidatePrecision:
 		iterations = 100
 	case auctionFinalistPrecision:

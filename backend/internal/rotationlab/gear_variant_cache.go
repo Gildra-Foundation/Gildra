@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"os"
+	"slices"
 	"sync"
 )
 
@@ -24,11 +25,19 @@ type gearVariantCache struct {
 	oldest int
 }
 
+func isRawReagent(m ItemModifier) bool { return m.Type >= 38 && m.Type <= 51 }
+
 func gearVariantKeys(in GearVariantRequest) []gearVariantKey {
 	keys := make([]gearVariantKey, len(in.Variants))
 	for i, v := range in.Variants {
 		// The caller's label is echoed back, independently of the resolved data.
-		data, _ := json.Marshal([]any{in.Spec, in.CharacterLevel, v.Change})
+		// Raw reagent records are accepted on the source lot but are not
+		// serialized into the native profile or used by report proof checks.
+		change := v.Change
+		if slices.ContainsFunc(change.Modifiers, isRawReagent) {
+			change.Modifiers = slices.DeleteFunc(slices.Clone(change.Modifiers), isRawReagent)
+		}
+		data, _ := json.Marshal([]any{in.Spec, in.CharacterLevel, change})
 		keys[i] = sha256.Sum256(data)
 	}
 	return keys
