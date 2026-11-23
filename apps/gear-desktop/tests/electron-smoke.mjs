@@ -184,6 +184,34 @@ try{
  }),true);
  await app.evaluate(()=>globalThis.gearTestPeer.destroy());
  await hud.getByRole('button',{name:'Открыть подбор'}).click();
+ // Use separate remote partitions even when the local shell is already authenticated.
+ await app.evaluate(({session})=>{
+   for(const key of ['browser','telegram','whatsapp']){
+     session.fromPartition('persist:gildra-companion-'+key).protocol.handle('https',req=>new Response('<title>fixture</title><a href="/guide">Guide</a>',{headers:{'Content-Type':'text/html'}}));
+   }
+ });
+ const panelOpen=app.waitForEvent('window');
+ await page.getByRole('button',{name:'Браузер',exact:true}).click();
+ const panel=await panelOpen;
+ await panel.waitForURL('gear://panel/**');
+ const address=panel.getByRole('textbox',{name:'Адрес'});
+ await panel.waitForFunction(()=>document.querySelector('form input')?.value==='https://wowarcana.com/ru');
+ await panel.getByRole('button',{name:'База предметов'}).click();
+ await panel.waitForFunction(()=>document.querySelector('form input').value.endsWith('/ru/library/items'));
+ await address.fill('https://example.org/guide');await address.press('Enter');
+ await panel.waitForFunction(()=>document.querySelector('form input').value==='https://example.org/guide');
+ await panel.getByRole('button',{name:'Telegram',exact:true}).click();
+ await panel.waitForFunction(()=>document.querySelector('form input').value.includes('web.telegram.org'));
+ await panel.getByRole('button',{name:'WhatsApp',exact:true}).click();
+ await panel.waitForFunction(()=>document.querySelector('form input').value.includes('web.whatsapp.com'));
+ await panel.getByRole('button',{name:'Браузер',exact:true}).click();
+ assert.equal(await address.inputValue(),'https://example.org/guide');
+ assert.equal(await panel.evaluate(()=>window.gear.action('panel-url','file:///invalid')),false);
+ assert.equal(await app.evaluate(async ({BrowserWindow})=>{
+   const remote=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()==='gear://panel/').contentView.children[0].webContents;
+   return remote.executeJavaScript("typeof window.gear==='undefined' && typeof require==='undefined'");
+ }),true);
+ await panel.getByRole('button',{name:/Скрыть панель/}).click();
  await page.getByRole('button',{name:'EN',exact:true}).click();
  await page.getByRole('combobox',{name:'Calculation mode'}).waitFor();
  assert.deepEqual(await app.evaluate(()=>globalThis.testGear.pages),[]);

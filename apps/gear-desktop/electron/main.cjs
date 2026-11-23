@@ -4,6 +4,7 @@ const {join, resolve, sep} = require('node:path');
 const {pathToFileURL} = require('node:url');
 const {Planner} = require('./planner.cjs');
 
+const {Companion}=require('./companion.cjs');
 const site = 'https://wowarcana.com';
 const handshake = site + '/api/wow/gear-desktop-data?read=session';
 const callbackPath = '/api/auth/callback/battlenet';
@@ -51,14 +52,15 @@ function save(){
   fs.mkdirSync(dataDir,{recursive:true});
   fs.writeFileSync(tmp,JSON.stringify(settings),{mode:0o600});fs.renameSync(tmp,settingsFile);
 }
+const companion=new Companion(buildWindow,secureWeb,settings,save,announce);
 function windowState(w){
-  return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
+  return {panel:w===companion.window?companion.state():null,mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
     hudGame,editKey,shortcuts, pin:settings.pin?.slug===settings.slug?settings.pin.row:null, profiles:(settings.profiles||[]).filter(p=>p.slug===settings.slug),pendingProfile, hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
 }
-function announce(){for(const w of [main,hud,login]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
+function announce(){for(const w of [main,hud,login,companion.window]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
 function localWindow(e){
   if(e.senderFrame!==e.sender.mainFrame || !e.senderFrame.url.startsWith('gear://'))return null;
-  return [main,hud,login].find(w=>w&&!w.isDestroyed()&&w.webContents===e.sender);
+  return [main,hud,login,companion.window].find(w=>w&&!w.isDestroyed()&&w.webContents===e.sender);
 }
 function safeProvider(u) {
   return u.protocol==='https:' && !u.username && !u.password && !u.port &&
@@ -81,7 +83,7 @@ function localPlanner(){
 }
 async function gearProtocol(request){
   const url=new URL(request.url), {hostname,pathname}=url;
-  if(!['server','local','overlay','auth'].includes(hostname)) return error('not_found',404);
+  if(!['server','local','overlay','auth','panel'].includes(hostname)) return error('not_found',404);
   if(pathname.startsWith('/api/')){
     if(hostname==='overlay' || hostname!==settings.mode || loggingOut) return error('inactive_mode',409);
     const method=request.method;
@@ -247,6 +249,13 @@ function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
   const w=localWindow(e);
   if(!w)throw Error('invalid_source');
+  if(w===companion.window){
+    if(name==='window-close')return companion.hide();
+    if(name.startsWith('panel-'))return companion.command(name,value);
+    return;
+  }
+  if(w!==login && name==='panel-open')return companion.show();
+  if(w!==login && name==='panel-item')return companion.item(value?.provider,value?.id,value?.name);
   if(w===hud && name==='opacity' && Number.isInteger(value) && value>=20 && value<=100){
     settings.opacity=value;hud.setOpacity(value/100);save();announce();return;
   }
@@ -321,11 +330,12 @@ else {
     main.on('closed',()=>{if(!exiting)app.quit();});
     void main.loadURL('gear://'+settings.mode+'/');
     globalShortcut.register('CommandOrControl+Alt+G',toggleHud);
+    globalShortcut.register('Ctrl+Alt+B',()=>companion.toggle());
     if(!bindKey(settings.editKey))for(const key of shortcuts)if(bindKey(key))break;
     setInterval(updateHud,1200).unref();
   });
   app.on('before-quit',()=>{
-    exiting=true;
+    exiting=true;companion.destroy();
     if(login&&!login.isDestroyed())login.destroy();
     if(hud&&!hud.isDestroyed())hud.destroy();
     resetPlanner();

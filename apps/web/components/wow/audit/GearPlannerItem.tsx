@@ -77,6 +77,10 @@ export function GearPlannerItem({ item, locale, verified = true, compact = false
     {verified && item.effectsVerified !== false && item.effects?.length ? <div className={styles.effects}>{item.effects.map((effect, index) => <p key={`${index}:${effect}`}>{effect}</p>)}</div> : null}
     {verified && item.effectsVerified === false ? <p className={styles.unverified}>{t("Описание особых эффектов этого варианта недоступно.", "Special effects unavailable.")}</p> : null}
     {!verified ? <p className={styles.unverified}>{t("Свойства награды для вашего уровня неизвестны.", "Reward properties at your level are unknown.")}</p> : null}
+    {typeof location!=="undefined" && location.protocol==="gear:" && item.itemId>0 && <div className="item-sites">{(["gildra","wowhead"] as const).map(provider=><button key={provider} type="button" onClick={()=>{
+      const desktop=window as Window & {gear?:{action:(name:string,value:unknown)=>Promise<unknown>}};
+      void desktop.gear?.action("panel-item",{provider,id:item.itemId,name:item.name});
+    }}>{provider==="gildra"?"Gildra":"Wowhead"}</button>)}</div>}
     {item.source ? <div className={styles.source}><span>{t("Источник", "Source")}</span><p>{item.source}</p></div> : null}
   </div>;
   return <WarcraftTooltip content={content} pinned={pinned} onPinnedClose={() => setPinned(false)} locale={locale} atlasScope className={styles.tooltip}>

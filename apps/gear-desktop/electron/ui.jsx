@@ -5,6 +5,7 @@ import {CharacterUpgrades} from '@/components/wow/audit/CharacterUpgrades';
 import {characterSlug} from '@/lib/wow/characterSlug';
 import {GearPlannerItem} from '@/components/wow/audit/GearPlannerItem';
 import './shell.css';
+import {Panel} from './panel.jsx';
 import {Profiles} from './profiles.jsx';
 
 const api=window.gear;
@@ -27,7 +28,7 @@ function AuthBar({s,t}){
     <WindowButtons s={s} t={t}/></header>;
 }
 const rowIcons={alert:TriangleAlert,status:Activity,result:Check,item:ShoppingBag,farm:Compass};
-function HudItem({row,lang}){
+function HudItem({row,lang,links=false}){
   const [extra,setExtra]=useState({});
   const {item}=row;
   useEffect(()=>{
@@ -37,7 +38,7 @@ function HudItem({row,lang}){
     }).catch(()=>{});
     return ()=>{active=false;};
   },[item.itemId,item.iconUrl,lang]);
-  return <div className="hud-item"><GearPlannerItem item={{...item,...extra}} locale={lang} verified={row.verified!==false}/>{row.detail&&<small>{row.detail}</small>}</div>;
+  return <div className="hud-item"><GearPlannerItem item={{...item,...extra}} locale={lang} verified={row.verified!==false}/>{links && item.itemId>0 && <div className="item-sites">{['gildra','wowhead'].map(provider=><button key={provider} onClick={()=>api.action('panel-item',{provider,id:item.itemId,name:item.name})}>{provider==='gildra'?'Gildra':'Wowhead'}</button>)}</div>}{row.detail&&<small>{row.detail}</small>}</div>;
 }
 function Overlay({s,t}){
   const [opacity,setOpacity]=useState(s.opacity);
@@ -49,9 +50,9 @@ function Overlay({s,t}){
     <main className="hud-scroll"><div className="hud-identity"><img src={art+'/icons/equipment.webp'} alt=""/><h1>{data?.title||t('Подбор предметов','Gear planner')}</h1></div>
     {data?.progress&&<div className="hud-progress"><progress aria-label={t('Ход подбора','Search progress')} value={data.progress.value} max={data.progress.max}/><span>{data.progress.value} / {data.progress.max}</span></div>}
     {!!data?.metrics?.length&&<dl className="hud-metrics">{data.metrics.map(m=><div key={m.label}><dt>{m.label}</dt><dd>{m.value}</dd></div>)}</dl>}
-    {data?.rows?.length ? <ul className="hud-list">{data.rows.map((row,index)=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<><HudItem row={row} lang={s.lang}/>{!s.hudGame&&<button className="hud-pin" aria-label={t('Закрепить предмет','Pin item')} aria-pressed={s.pin?.item?.itemId===row.item.itemId} onClick={()=>api.action('pin',s.pin?.item?.itemId===row.item.itemId?null:index)}>⌖</button>}</>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
+    {data?.rows?.length ? <ul className="hud-list">{data.rows.map((row,index)=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<><HudItem row={row} lang={s.lang} links={!s.hudGame}/>{!s.hudGame&&<button className="hud-pin" aria-label={t('Закрепить предмет','Pin item')} aria-pressed={s.pin?.item?.itemId===row.item.itemId} onClick={()=>api.action('pin',s.pin?.item?.itemId===row.item.itemId?null:index)}>⌖</button>}</>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{links && item.itemId>0 && <div className="item-sites">{['gildra','wowhead'].map(provider=><button key={provider} onClick={()=>api.action('panel-item',{provider,id:item.itemId,name:item.name})}>{provider==='gildra'?'Gildra':'Wowhead'}</button>)}</div>}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
       !data?.metrics?.length&&<p className="hud-empty">{data?.title?t('Запустите подбор в приложении.','Start a gear search in the app.'):t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
-    <footer>{s.pin&&!s.hudGame&&<button onClick={()=>api.action('pin',null)}>{t('Открепить','Unpin')} · {s.pin.item.name}</button>}{!s.hudGame&&<label className="hud-key">{t('Режим оверлея','Overlay mode')}<select value={s.editKey} onChange={async e=>setKeyBusy(!await api.action('edit-key',e.target.value))}>{s.shortcuts.map(k=><option key={k}>{k}</option>)}</select>{keyBusy&&t('Клавиши заняты','Shortcut unavailable')}</label>}<label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
+    <footer><button onClick={()=>api.action('panel-open')}>{t('Браузер и чаты','Browser and chats')} · Ctrl+Alt+B</button>{s.pin&&!s.hudGame&&<button onClick={()=>api.action('pin',null)}>{t('Открепить','Unpin')} · {s.pin.item.name}</button>}{!s.hudGame&&<label className="hud-key">{t('Режим оверлея','Overlay mode')}<select value={s.editKey} onChange={async e=>setKeyBusy(!await api.action('edit-key',e.target.value))}>{s.shortcuts.map(k=><option key={k}>{k}</option>)}</select>{keyBusy&&t('Клавиши заняты','Shortcut unavailable')}</label>}<label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
   </div>;
 }
 function Desk({s,t}){
@@ -87,7 +88,7 @@ function Desk({s,t}){
   const refresh=()=>bump(v=>v+1);
   return <div className="desktop gildra-atlas" data-atlas-scope="" data-theme="dark"><header className="chrome toolbar">
     <div className="wordmark"><img className="crest-small" src={art+'/crest.webp'} alt=""/><b>Gildra <em>Gear</em></b></div>
-    <div className="tools">
+    <div className="tools"><button title="Ctrl+Alt+B" onClick={()=>api.action('panel-open')}>{t('Браузер','Browser')}</button>
     <label className="mode">{s.mode==='local'?<Monitor size={16}/>:<Server size={16}/>}<select aria-label={t('Где выполнять расчёт','Calculation mode')} value={s.mode} onChange={e=>api.action('mode',e.target.value)}>
       <option value="server">{t('Сервер Gildra','Gildra server')}</option><option value="local">{t('На моём ПК','On my PC')}</option></select></label>
     <button aria-pressed={s.overlay} onClick={()=>api.action('overlay')} title="Ctrl+Alt+G"><Layers size={16}/>{t('Оверлей','Overlay')}</button>
@@ -115,6 +116,7 @@ function App(){
   const s=useShell();const t=(ru,en)=>s?.lang==='en'?en:ru;
   useEffect(()=>{document.documentElement.lang=s?.lang||'ru';},[s?.lang]);
   if(!s)return null;
+  if(location.hostname==='panel')return <Panel s={s} t={t}/>;
   if(location.hostname==='auth')return <AuthBar s={s} t={t}/>;
   return location.hostname==='overlay'?<Overlay s={s} t={t}/>:<Desk s={s} t={t}/>;
 }
