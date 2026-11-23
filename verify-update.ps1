@@ -4,7 +4,7 @@ Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 $base='https://github.com/Gildra-Foundation/Gildra/releases/download/gear-desktop-build-'
 $dir="$env:RUNNER_TEMP/portable"
-foreach($bundle in @(@(20,'Gildra-Gear-Windows-x64'),@($Version,'Gildra-Gear-Launcher'))) {
+foreach($bundle in @(@(20,'Gildra-Gear-Windows-x64'),@(21,'Gildra-Gear-Launcher'))) {
     $archive="$env:RUNNER_TEMP/$($bundle[1]).zip"
     Invoke-WebRequest "$base$($bundle[0])/$($bundle[1]).zip" -OutFile $archive
     Expand-Archive $archive -DestinationPath $dir -Force

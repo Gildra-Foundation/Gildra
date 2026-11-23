@@ -13,4 +13,4 @@ jobs:
           sparse-checkout: verify-update.ps1
           sparse-checkout-cone-mode: false
       - shell: pwsh
-        run: ./verify-update.ps1 -Version 21
+        run: ./verify-update.ps1 -Version 22
