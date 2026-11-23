@@ -25,7 +25,17 @@ for($i=0;$i -lt 120;$i++) {
 }
 Write-Host (($controls|ForEach-Object {$_.Current.Name}) -join ' | ')
 if(!$button){throw 'No update button'}
-$button.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class ClickWindow {
+ [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd,uint msg,IntPtr w,IntPtr l);
+}
+'@
+$child=[IntPtr]$button.Current.NativeWindowHandle
+if($child -eq [IntPtr]::Zero){throw 'No button handle'}
+[ClickWindow]::PostMessage($child,0x0201,[IntPtr]1,[IntPtr]0x000A000A) | Out-Null
+[ClickWindow]::PostMessage($child,0x0202,[IntPtr]0,[IntPtr]0x000A000A) | Out-Null
 $active=Join-Path $env:LOCALAPPDATA 'Gildra Gear Launcher/active'
 for($i=0;$i -lt 180;$i++){
     Start-Sleep 1
