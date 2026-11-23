@@ -35,6 +35,11 @@ class Companion {
     store.setPermissionRequestHandler((_wc,_p,cb)=>cb(false));
     store.setPermissionCheckHandler(()=>false);
     store.on('will-download',e=>e.preventDefault());
+    if(key==='whatsapp'){
+      // Present only the engine's actual Chromium version and native platform.
+      const ua=store.getUserAgent().replace(/(like Gecko\)).*? (Chrome\/[\d.]+).*?(Safari\/[\d.]+)/,'$1 $2 $3');
+      store.setUserAgent(ua);
+    }
     const view=new WebContentsView({webPreferences:{...this.secureWeb,session:store}});
     tab={view,url:'',failed:false};this.tabs.set(key,tab);
     const wc=view.webContents;

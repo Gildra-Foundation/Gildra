@@ -190,7 +190,7 @@ try{
      session.fromPartition('persist:gildra-companion-'+key).protocol.handle('https',req=>new Response('<title>fixture</title><a href="/guide">Guide</a>',{headers:{'Content-Type':'text/html'}}));
    }
  });
- const panelOpen=app.waitForEvent('window');
+ const panelOpen=app.waitForEvent('window',{predicate:async w=>{try{await w.waitForURL('gear://panel/**',{timeout:3500});return true;}catch{return false;}}});
  await page.getByRole('button',{name:'Браузер',exact:true}).click();
  const panel=await panelOpen;
  await panel.waitForURL('gear://panel/**');
