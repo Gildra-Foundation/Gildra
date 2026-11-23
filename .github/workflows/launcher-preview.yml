@@ -1,0 +1,60 @@
+name: Capture released Windows launcher
+on:
+  push:
+    branches: [desktop/launcher-preview-18]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: windows-latest
+    steps:
+      - name: Open release 18 and capture its window
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          Add-Type -AssemblyName UIAutomationClient
+          Add-Type -AssemblyName UIAutomationTypes
+          Add-Type @'
+          using System;
+          using System.Runtime.InteropServices;
+          public static class NativeWindow {
+            [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out Rect rect);
+            [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
+            public struct Rect { public int Left, Top, Right, Bottom; }
+          }
+          '@
+          [NativeWindow]::SetProcessDPIAware() | Out-Null
+          $dir = "$env:RUNNER_TEMP/preview"
+          $base = 'https://github.com/Gildra-Foundation/Gildra/releases/download/gear-desktop-build-18'
+          foreach ($name in @('Gildra-Gear-Launcher','Gildra-Gear-Windows-x64')) {
+            Invoke-WebRequest "$base/$name.zip" -OutFile "$env:RUNNER_TEMP/$name.zip"
+            Expand-Archive "$env:RUNNER_TEMP/$name.zip" -DestinationPath $dir -Force
+          }
+          $process = Start-Process "$dir/Gildra Gear Launcher.exe" -PassThru
+          try {
+            for ($i=0; $i -lt 60; $i++) {
+              Start-Sleep -Seconds 1
+              $process.Refresh()
+              $h = $process.MainWindowHandle
+              if ($h -eq 0) { continue }
+              $element = [Windows.Automation.AutomationElement]::FromHandle($h)
+              $nodes = $element.FindAll([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.Condition]::TrueCondition)
+              $names = $nodes | ForEach-Object { $_.Current.Name }
+              if ($names -contains 'У вас актуальная версия.' -or ($names -join ' ') -match 'Доступна сборка') { break }
+            }
+            Write-Host ($names -join ' | ')
+            $rect = New-Object NativeWindow+Rect
+            if (![NativeWindow]::GetWindowRect($h,[ref]$rect)) { throw 'Window has no bounds' }
+            $bitmap = [Drawing.Bitmap]::new($rect.Right-$rect.Left,$rect.Bottom-$rect.Top)
+            $g = [Drawing.Graphics]::FromImage($bitmap)
+            $dc = $g.GetHdc()
+            try { if (![NativeWindow]::PrintWindow($h,$dc,2)) { throw 'Capture failed' } } finally { $g.ReleaseHdc($dc) }
+            $bitmap.Save("$env:RUNNER_TEMP/Gildra-Gear-Launcher.png",[Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose()
+            $bitmap.Dispose()
+          } finally { $process.Kill() }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: launcher-preview
+          path: ${{ runner.temp }}/Gildra-Gear-Launcher.png
