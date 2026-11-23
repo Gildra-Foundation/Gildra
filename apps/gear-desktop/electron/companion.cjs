@@ -12,8 +12,7 @@ class Companion {
     this.tabs=new Map();this.active='browser';this.revision=0;
   }
   home(){return 'https://wowarcana.com/'+(this.settings.lang==='ru'?'ru':'');}
-  player(){
-    const key=this.lastMusic;
+  player(key=this.lastMusic){
     if(key==='spotify'&&this.nativeSpotify){
       const {title,artist,playing}=this.nativeSpotify;
       return {key,native:true,service:'Spotify',title:[artist,title].filter(Boolean).join(' · ')||'Spotify',playing};
@@ -23,13 +22,14 @@ class Companion {
     const wc=tab.view.webContents;
     return {key,service:services[key].name,title:wc.getTitle()||services[key].name,playing:!!tab.playing,muted:wc.isAudioMuted()};
   }
-  mediaAction(name){
-    const tab=this.tabs.get(this.lastMusic);
+  panelPlayerKey(){return services[this.active]?this.active:this.lastMusic;}
+  mediaAction(name,key=this.lastMusic){
+    const tab=this.tabs.get(key);
     if(!tab)return false;
     const wc=tab.view.webContents;
-    if(name==='media-open')this.show(this.lastMusic);
-    if(name==='media-toggle' && this.lastMusic==='spotify' && this.nativeSpotify)return this.refreshSpotify(true);
-    if(name==='media-toggle')return togglePlayback(wc,this.lastMusic);
+    if(name==='media-open')this.show(key);
+    if(name==='media-toggle' && key==='spotify' && this.nativeSpotify)return this.refreshSpotify(true);
+    if(name==='media-toggle')return togglePlayback(wc,key);
     if(name==='media-mute')wc.setAudioMuted(!wc.isAudioMuted());
     this.announce();return true;
   }
@@ -107,7 +107,10 @@ class Companion {
     tab={view,url:'',failed:false};this.tabs.set(key,tab);
     const wc=view.webContents;
     if(services[key]){
-      wc.on('media-started-playing',()=>{if(key==='spotify'){this.nativeSpotify=null;this.watcher?.kill();this.watcher=null;}tab.playing=true;this.lastMusic=key;this.announce();});
+      wc.on('media-started-playing',()=>{
+        const previous=this.tabs.get(this.lastMusic);
+        if(previous?.playing && previous!==tab)void togglePlayback(previous.view.webContents,this.lastMusic);
+        if(key==='spotify'){this.nativeSpotify=null;this.watcher?.kill();this.watcher=null;}tab.playing=true;this.lastMusic=key;this.announce();});
       wc.on('media-paused',()=>{tab.playing=false;this.announce();});
       wc.on('page-title-updated',()=>this.announce());
     }
