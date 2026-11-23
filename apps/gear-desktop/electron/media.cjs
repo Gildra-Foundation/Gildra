@@ -37,4 +37,35 @@ async function togglePlayback(wc,key){
     return true;
   })()`}],true).catch(()=>false);
 }
-module.exports={services,serviceFor,playerUrl,togglePlayback};
+// Spotify and SoundCloud may play through an Audio element outside the document.
+function observePlayback(){
+  const slot=Symbol.for('gildra.playback');
+  if(window[slot])return;
+  const state=window[slot]={element:null};
+  const play=HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play=function(...args){
+    state.element=this;
+    return play.apply(this,args);
+  };
+}
+function inspectPlayback(action,value){
+  const observed=window[Symbol.for('gildra.playback')]?.element;
+  const candidates=[...document.querySelectorAll('audio,video'),observed].filter(el=>el?.currentSrc);
+  const el=candidates.find(el=>!el.paused)||observed||candidates[0];
+  if(action==='pause') {el?.pause();return null;}
+  if(action==='volume'&&el)el.volume=value;
+  if(action==='seek'&&el&&Number.isFinite(el.duration)&&el.seekable.length){
+    el.currentTime=Math.max(el.seekable.start(0),Math.min(value,el.seekable.end(el.seekable.length-1)));
+  }
+  const meta=navigator.mediaSession?.metadata;
+  const art=meta?.artwork?.at(-1)?.src || document.querySelector('meta[property="og:image"]')?.content
+    || document.querySelector('img[class*="CoverArt"], img[data-testid="cover-art-image"]')?.src;
+  return {title:meta?.title||document.title,artist:meta?.artist||'',art:art?.startsWith('https://')?art:'',
+    position:el?.currentTime||0,duration:Number.isFinite(el?.duration)?el.duration:0,
+    seekable:!!el?.seekable?.length,volume:el?el.volume:null};
+}
+async function mediaDetails(wc,key,action='read',value=null){
+  if(serviceFor(wc.getURL())!==key)return null;
+  return wc.executeJavaScript('('+inspectPlayback.toString()+')('+JSON.stringify(action)+','+JSON.stringify(value)+')').catch(()=>null);
+}
+module.exports={services,serviceFor,playerUrl,togglePlayback,observePlayback,mediaDetails};

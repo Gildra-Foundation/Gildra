@@ -5,6 +5,7 @@ import {CharacterUpgrades} from '@/components/wow/audit/CharacterUpgrades';
 import {characterSlug} from '@/lib/wow/characterSlug';
 import {GearPlannerItem} from '@/components/wow/audit/GearPlannerItem';
 import './shell.css';
+import {Mini} from './mini.jsx';
 import {Panel,Player} from './panel.jsx';
 import {Profiles} from './profiles.jsx';
 
@@ -116,6 +117,7 @@ function App(){
   const s=useShell();const t=(ru,en)=>s?.lang==='en'?en:ru;
   useEffect(()=>{document.documentElement.lang=s?.lang||'ru';},[s?.lang]);
   if(!s)return null;
+  if(location.hostname==='mini')return <Mini player={s.player} t={t}/>;
   if(location.hostname==='panel')return <Panel s={s} t={t}/>;
   if(location.hostname==='auth')return <AuthBar s={s} t={t}/>;
   return location.hostname==='overlay'?<Overlay s={s} t={t}/>:<Desk s={s} t={t}/>;

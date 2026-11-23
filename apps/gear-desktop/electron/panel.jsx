@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {ArrowLeft,ArrowRight,RefreshCw,Star,X,House,BookOpen,Play,Pause,Volume2,VolumeX} from 'lucide-react';
+import {ArrowLeft,ArrowRight,RefreshCw,Star,X,House,BookOpen,Play,Pause,Volume2,VolumeX,PictureInPicture2} from 'lucide-react';
 const act=(name,v)=>window.gear.action(name,v);
 const music={soundcloud:'SoundCloud',spotify:'Spotify',youtube:'YouTube'};
 export function Player({player,t}){
@@ -8,6 +8,7 @@ export function Player({player,t}){
   if(!player)return null;
   const Toggle=player.playing?Pause:Play,Sound=player.muted?VolumeX:Volume2;
   return <div className="media-strip">
+    <button title={t('Мини-плеер поверх игры','Floating mini player')} aria-label={t('Мини-плеер','Mini player')} onClick={()=>act('mini-open')}><PictureInPicture2 size={16}/></button>
     <button className="media-title" title={player.service+' · '+player.title} onClick={()=>act('media-open')}>{player.title}</button>
     <button aria-label={player.playing?t('Пауза','Pause'):t('Воспроизвести','Play')} onClick={async()=>setNotice(!await act('media-toggle'))}><Toggle size={15}/></button>
     {!player.native&&<button aria-label={t('Отключить звук','Mute')} aria-pressed={player.muted} onClick={()=>act('media-mute')}><Sound size={15}/></button>}

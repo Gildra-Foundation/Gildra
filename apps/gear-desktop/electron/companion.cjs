@@ -1,6 +1,6 @@
 const {WebContentsView,screen,session,net,app,shell}=require('electron');
 
-const {services,serviceFor,playerUrl,togglePlayback}=require('./media.cjs');
+const {services,serviceFor,playerUrl,togglePlayback,observePlayback,mediaDetails}=require('./media.cjs');
 const {spotifySession,spotifyUri,watchSpotify}=require('./spotify-desktop.cjs');
 const webTabs={browser:null,telegram:'https://web.telegram.org/',whatsapp:'https://web.whatsapp.com/',...Object.fromEntries(Object.entries(services).map(([k,v])=>[k,v.home]))};
 function httpsUrl(value){
@@ -104,12 +104,16 @@ class Companion {
       store.setUserAgent(ua);
     }
     const view=new WebContentsView({webPreferences:{...this.secureWeb,session:store,backgroundThrottling:!services[key]}});
+    if(key==='spotify')view.setBackgroundColor('#101721');
     tab={view,url:'',failed:false};this.tabs.set(key,tab);
     const wc=view.webContents;
     if(services[key]){
+      wc.on('dom-ready',()=>{
+        if(serviceFor(wc.getURL())===key)void wc.executeJavaScript('('+observePlayback.toString()+')()').catch(()=>{});
+      });
       wc.on('media-started-playing',()=>{
         const previous=this.tabs.get(this.lastMusic);
-        if(previous?.playing && previous!==tab)void togglePlayback(previous.view.webContents,this.lastMusic);
+        if(previous?.playing && previous!==tab)void mediaDetails(previous.view.webContents,this.lastMusic,'pause');
         if(key==='spotify'){this.nativeSpotify=null;this.watcher?.kill();this.watcher=null;}tab.playing=true;this.lastMusic=key;this.announce();});
       wc.on('media-paused',()=>{tab.playing=false;this.announce();});
       wc.on('page-title-updated',()=>this.announce());

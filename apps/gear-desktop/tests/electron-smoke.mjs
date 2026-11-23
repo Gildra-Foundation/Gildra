@@ -229,6 +229,23 @@ try{
  await panel.getByRole('button',{name:'Пауза',exact:true}).waitFor();
  await panel.getByRole('button',{name:'Telegram',exact:true}).click();
  await panel.getByRole('button',{name:/Скрыть панель/}).click();
+ const miniOpened=app.waitForEvent('window');
+ await hud.getByRole('button',{name:'Мини-плеер',exact:true}).click();
+ const mini=await miniOpened;
+ await mini.waitForURL('gear://mini/**');
+ await mini.waitForFunction(()=>document.querySelector('input[type=range]')?.disabled===false);
+ const media=await mini.evaluate(async()=>{
+   const seek=await window.gear.action('mini-seek',{key:'youtube',amount:0.4});
+   const volume=await window.gear.action('mini-volume',{key:'youtube',amount:0.35});
+   return {position:seek.position,volume:volume.volume};
+ });
+ assert.ok(Math.abs(media.position-0.4)<0.15);
+ assert.ok(Math.abs(media.volume-0.35)<0.01);
+ assert.equal(await app.evaluate(({BrowserWindow})=>{
+   const win=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()==='gear://mini/');
+   return win.isAlwaysOnTop()&&win.isVisible();
+ }),true);
+ await mini.getByRole('button',{name:'Закрыть',exact:true}).click();
  await hud.getByRole('button',{name:'Пауза',exact:true}).click();
  await hud.getByRole('button',{name:'Воспроизвести',exact:true}).waitFor();
  await hud.getByRole('button',{name:'Отключить звук'}).click();

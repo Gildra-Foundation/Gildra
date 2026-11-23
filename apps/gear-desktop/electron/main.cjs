@@ -5,6 +5,7 @@ const {pathToFileURL} = require('node:url');
 const {Planner} = require('./planner.cjs');
 
 const {Companion}=require('./companion.cjs');
+const {mediaDetails}=require('./media.cjs');
 const site = 'https://wowarcana.com';
 const handshake = site + '/api/wow/gear-desktop-data?read=session';
 const callbackPath = '/api/auth/callback/battlenet';
@@ -21,7 +22,7 @@ if (!['ru','en'].includes(settings.lang)) settings.lang='ru';
 if(!Number.isInteger(settings.opacity)||settings.opacity<20||settings.opacity>100)settings.opacity=85;
 const json = (value,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const error=(name,status)=>json({error:name},status);
-let main, hud, login, signingIn, identity, planner, authHost='', overlayShown=false, hudData=null, reading=false, exiting=false, loggingOut=false;
+let mini, main, hud, login, signingIn, identity, planner, authHost='', overlayShown=false, hudData=null, reading=false, exiting=false, loggingOut=false;
 let hudGame=false, editKey='', pendingProfile=null;
 const shortcuts=['Ctrl+Alt+E','Ctrl+Shift+E','Alt+Shift+G','Ctrl+Alt+H'];
 function bindKey(key){
@@ -54,13 +55,13 @@ function save(){
 }
 const companion=new Companion(buildWindow,secureWeb,settings,save,announce);
 function windowState(w){
-  return {player:w===companion.window?companion.player(companion.panelPlayerKey()):w===hud?companion.player():null,panel:w===companion.window?companion.state():null,mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
+  return {player:w===companion.window?companion.player(companion.panelPlayerKey()):(w===hud||w===mini)?companion.player():null,panel:w===companion.window?companion.state():null,mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
     hudGame,editKey,shortcuts, pin:settings.pin?.slug===settings.slug?settings.pin.row:null, profiles:(settings.profiles||[]).filter(p=>p.slug===settings.slug),pendingProfile, hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
 }
-function announce(){for(const w of [main,hud,login,companion.window]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
+function announce(){for(const w of [main,hud,mini,login,companion.window]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
 function localWindow(e){
   if(e.senderFrame!==e.sender.mainFrame || !e.senderFrame.url.startsWith('gear://'))return null;
-  return [main,hud,login,companion.window].find(w=>w&&!w.isDestroyed()&&w.webContents===e.sender);
+  return [main,hud,mini,login,companion.window].find(w=>w&&!w.isDestroyed()&&w.webContents===e.sender);
 }
 function safeProvider(u) {
   return u.protocol==='https:' && !u.username && !u.password && !u.port &&
@@ -83,7 +84,7 @@ function localPlanner(){
 }
 async function gearProtocol(request){
   const url=new URL(request.url), {hostname,pathname}=url;
-  if(!['server','local','overlay','auth','panel'].includes(hostname)) return error('not_found',404);
+  if(!['server','local','overlay','auth','panel','mini'].includes(hostname)) return error('not_found',404);
   if(pathname.startsWith('/api/')){
     if(hostname==='overlay' || hostname!==settings.mode || loggingOut) return error('inactive_mode',409);
     const method=request.method;
@@ -124,6 +125,23 @@ function buildWindow(options){
   w.webContents.on('will-navigate',e=>e.preventDefault());
   w.on('maximize',announce);w.on('unmaximize',announce);
   return w;
+}
+function showMini(){
+  if(mini){mini.showInactive();mini.moveTop();return;}
+  const saved=settings.miniPosition;
+  const size={width:344,height:124};
+  const valid=saved&&Number.isInteger(saved.x)&&Number.isInteger(saved.y);
+  const area=(valid?screen.getDisplayMatching({...saved,...size}):screen.getDisplayNearestPoint(screen.getCursorScreenPoint())).workArea;
+  const x=valid?saved.x:area.x+area.width-size.width-18;
+  const y=valid?saved.y:area.y+area.height-size.height-18;
+  mini=buildWindow({title:'Gildra Gear · Mini',...size,x:Math.max(area.x,Math.min(x,area.x+area.width-size.width)),
+    y:Math.max(area.y,Math.min(y,area.y+area.height-size.height)),resizable:false,fullscreenable:false,
+    maximizable:false,minimizable:false,show:false,alwaysOnTop:true,skipTaskbar:true});
+  mini.setAlwaysOnTop(true,'screen-saver');
+  mini.once('ready-to-show',()=>mini?.showInactive());
+  mini.on('close',()=>{const [x,y]=mini.getPosition();settings.miniPosition={x,y};save();});
+  mini.on('closed',()=>{mini=null;});
+  void mini.loadURL('gear://mini/');
 }
 async function updateHud(){
   if(reading||!hud?.isVisible()||!main||main.isDestroyed())return;
@@ -249,6 +267,24 @@ function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
   const w=localWindow(e);
   if(!w)throw Error('invalid_source');
+  if(name==='mini-open'&&(w===companion.window||w===hud||w===main))return showMini();
+  if(w===mini){
+    if(name==='window-close')return mini.close();
+    const player=companion.player();
+    if(name==='media-open')return companion.show(player?.key||'soundcloud');
+    if(name==='media-toggle')return companion.mediaAction(name);
+    if(!player||player.native)return null;
+    const wc=companion.tabs.get(player.key).view.webContents;
+    if(name==='mini-read')return mediaDetails(wc,player.key);
+    if(value?.key!==player.key||!Number.isFinite(value.amount))return null;
+    if(name==='mini-seek'&&value.amount>=0)return mediaDetails(wc,player.key,'seek',value.amount);
+    if(name==='mini-volume'&&value.amount>=0&&value.amount<=1){
+      const result=await mediaDetails(wc,player.key,'volume',value.amount);
+      if(result?.volume>0&&wc.isAudioMuted()){wc.setAudioMuted(false);announce();}
+      return result;
+    }
+    return null;
+  }
   if((w===hud||w===companion.window) && ['media-open','media-toggle','media-mute'].includes(name))return companion.mediaAction(name,w===companion.window?companion.panelPlayerKey():undefined);
   if(w===companion.window){
     if(name==='window-close')return companion.hide();
