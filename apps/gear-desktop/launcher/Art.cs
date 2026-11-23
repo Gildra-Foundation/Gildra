@@ -12,13 +12,14 @@ namespace GildraLauncher {
         }
     }
     sealed class IceButton : Button {
-        readonly Image image;
+        readonly Image image, backdrop;
         bool hover, pressed;
-        public IceButton(Image image) {
+        public IceButton(Image image, Image backdrop) {
+            this.backdrop=backdrop;
             this.image=image;
-            SetStyle(ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer,true);
+            SetStyle(ControlStyles.UserPaint | ControlStyles.Opaque | ControlStyles.OptimizedDoubleBuffer,true);
             FlatStyle=FlatStyle.Flat;
-            BackColor=Color.Transparent;
+
             ForeColor=Color.FromArgb(228,242,251);
             Font=new Font("Segoe UI Semibold",11);
             Cursor=Cursors.Hand;
@@ -29,6 +30,7 @@ namespace GildraLauncher {
         protected override void OnMouseUp(MouseEventArgs e) { base.OnMouseUp(e); pressed=false; Invalidate(); }
         protected override void OnPaint(PaintEventArgs e) {
             var g=e.Graphics;
+            g.DrawImage(backdrop,ClientRectangle,Bounds,GraphicsUnit.Pixel);
             g.InterpolationMode=InterpolationMode.HighQualityBicubic;
             Rectangle dest=ClientRectangle;
             if(pressed) dest.Inflate(-2,-1);

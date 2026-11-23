@@ -14,6 +14,7 @@ namespace GildraLauncher {
         readonly Updates updates = new Updates(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Gildra Gear Launcher"),AppDomain.CurrentDomain.BaseDirectory);
         readonly Label installed = new Label(), status = new Label();
         readonly Bitmap castle=Art.Load("citadel"), action=Art.Load("action"), shield=Art.Load("shield");
+        readonly Bitmap backdrop=new Bitmap(W,H);
         readonly IceButton play, update;
         readonly System.Windows.Forms.Timer animation=new System.Windows.Forms.Timer {Interval=50};
         readonly Stopwatch clock=new Stopwatch();
@@ -46,9 +47,10 @@ namespace GildraLauncher {
             foreach(var label in new[]{installed,status}) {
                 label.BackColor=Color.Transparent; Controls.Add(label);
             }
-            play=new IceButton(action); update=new IceButton(action);
+            using(var canvas=Graphics.FromImage(backdrop)) DrawBackdrop(canvas);
+            play=new IceButton(action,backdrop); update=new IceButton(action,backdrop);
             play.Text="Запустить"; play.SetBounds(46,368,264,51);
-            update.SetBounds(326,371,240,46);
+            update.SetBounds(326,368,264,51);
             play.TabIndex=0;update.TabIndex=1;minimize.TabIndex=2;close.TabIndex=3;
             Controls.Add(play); Controls.Add(update);
             clock.Start();
@@ -70,7 +72,7 @@ namespace GildraLauncher {
         protected override void Dispose(bool disposing) {
             if(disposing) {
                 Microsoft.Win32.SystemEvents.UserPreferenceChanged-=PreferencesChanged;
-                animation.Dispose(); castle.Dispose(); action.Dispose(); shield.Dispose();
+                animation.Dispose(); backdrop.Dispose(); castle.Dispose(); action.Dispose(); shield.Dispose();
                 titleFont.Dispose(); chromeFont.Dispose(); barFont.Dispose(); nameFont.Dispose();
             }
             base.Dispose(disposing);
@@ -86,13 +88,7 @@ namespace GildraLauncher {
         protected override void OnPaintBackground(PaintEventArgs e) {
             var g=e.Graphics;
             if(castle==null) { base.OnPaintBackground(e); return; }
-            g.InterpolationMode=InterpolationMode.HighQualityBilinear;
-            g.DrawImage(castle,new Rectangle(0,Bar,W,H-Bar),0,0,castle.Width,castle.Height,GraphicsUnit.Pixel);
-            var scene=new Rectangle(0,Bar,W,H-Bar);
-            using(var shade=new LinearGradientBrush(scene,Color.FromArgb(218,5,15,24),Color.FromArgb(4,5,15,24),0f))
-                g.FillRectangle(shade,scene);
-            using(var shade=new LinearGradientBrush(scene,Color.Transparent,Color.FromArgb(136,5,14,23),90f))
-                g.FillRectangle(shade,scene);
+            g.DrawImageUnscaled(backdrop,0,0);
             if(e.ClipRectangle.Right>426) {
                 double t=clock.Elapsed.TotalSeconds;
                 g.SmoothingMode=SmoothingMode.AntiAlias;
@@ -106,6 +102,15 @@ namespace GildraLauncher {
                     }
                 }
             }
+        }
+        void DrawBackdrop(Graphics g) {
+            g.InterpolationMode=InterpolationMode.HighQualityBilinear;
+            g.DrawImage(castle,new Rectangle(0,Bar,W,H-Bar),0,0,castle.Width,castle.Height,GraphicsUnit.Pixel);
+            var scene=new Rectangle(0,Bar,W,H-Bar);
+            using(var shade=new LinearGradientBrush(scene,Color.FromArgb(218,5,15,24),Color.FromArgb(4,5,15,24),0f))
+                g.FillRectangle(shade,scene);
+            using(var shade=new LinearGradientBrush(scene,Color.Transparent,Color.FromArgb(136,5,14,23),90f))
+                g.FillRectangle(shade,scene);
             using(var header=new LinearGradientBrush(new Rectangle(0,0,W,Bar),Color.FromArgb(15,31,44),Color.FromArgb(15,28,40),0f))
                 g.FillRectangle(header,0,0,W,Bar);
             using(var edge=new Pen(Color.FromArgb(82,115,137))) {
