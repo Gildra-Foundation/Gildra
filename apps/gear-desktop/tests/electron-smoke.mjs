@@ -205,7 +205,7 @@ try{
  await panel.getByRole('button',{name:'WhatsApp',exact:true}).click();
  await panel.waitForFunction(()=>document.querySelector('form input').value.includes('web.whatsapp.com'));
  await panel.getByRole('button',{name:'Браузер',exact:true}).click();
- assert.equal(await address.inputValue(),'https://example.org/guide');
+ await panel.waitForFunction(()=>document.querySelector('form input').value==='https://example.org/guide');
  assert.equal(await panel.evaluate(()=>window.gear.action('panel-url','file:///invalid')),false);
  assert.equal(await app.evaluate(async ({BrowserWindow})=>{
    const remote=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()==='gear://panel/').contentView.children[0].webContents;
