@@ -190,6 +190,16 @@ try{
      session.fromPartition('persist:gildra-companion-'+key).protocol.handle('https',req=>new Response('<title>fixture</title><a href="/guide">Guide</a>',{headers:{'Content-Type':'text/html'}}));
    }
  });
+ await app.evaluate(({session})=>{
+   // A real, looping one-second PCM stream makes playback testable without service accounts.
+   const wav=Buffer.alloc(44+16000,0);
+   wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);
+   wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(8000,24);
+   wav.writeUInt32LE(16000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(16000,40);
+   for(let i=0;i<8000;i++)wav.writeInt16LE(Math.round(50*Math.sin(i/12)),44+i*2);
+   for(const key of ['youtube','soundcloud','spotify'])session.fromPartition('persist:gildra-companion-'+key).protocol.handle('https',()=>new Response(
+     '<title>QA '+key+'</title><audio loop controls src="data:audio/wav;base64,'+wav.toString('base64')+'"></audio>',{headers:{'Content-Type':'text/html'}}));
+ });
  const panelOpen=app.waitForEvent('window',{predicate:async w=>{try{await w.waitForURL('gear://panel/**',{timeout:3500});return true;}catch{return false;}}});
  await page.getByRole('button',{name:'Браузер',exact:true}).click();
  const panel=await panelOpen;
@@ -211,7 +221,19 @@ try{
    const remote=BrowserWindow.getAllWindows().find(w=>w.webContents.getURL()==='gear://panel/').contentView.children[0].webContents;
    return remote.executeJavaScript("typeof window.gear==='undefined' && typeof require==='undefined'");
  }),true);
+ for(const key of ['soundcloud','spotify','youtube']){
+   await panel.getByRole('combobox',{name:'Музыка и видео'}).selectOption(key);
+   await panel.waitForFunction(key=>document.querySelector('.media-title')?.textContent==='QA '+key,key);
+ }
+ await panel.getByRole('button',{name:'Воспроизвести',exact:true}).click();
+ await panel.getByRole('button',{name:'Пауза',exact:true}).waitFor();
+ await panel.getByRole('button',{name:'Telegram',exact:true}).click();
  await panel.getByRole('button',{name:/Скрыть панель/}).click();
+ await hud.getByRole('button',{name:'Пауза',exact:true}).click();
+ await hud.getByRole('button',{name:'Воспроизвести',exact:true}).waitFor();
+ await hud.getByRole('button',{name:'Отключить звук'}).click();
+ await hud.waitForFunction(()=>document.querySelector('.media-strip [aria-pressed="true"]'));
+
  await page.getByRole('button',{name:'EN',exact:true}).click();
  await page.getByRole('combobox',{name:'Calculation mode'}).waitFor();
  assert.deepEqual(await app.evaluate(()=>globalThis.testGear.pages),[]);

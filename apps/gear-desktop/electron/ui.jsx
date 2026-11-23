@@ -5,7 +5,7 @@ import {CharacterUpgrades} from '@/components/wow/audit/CharacterUpgrades';
 import {characterSlug} from '@/lib/wow/characterSlug';
 import {GearPlannerItem} from '@/components/wow/audit/GearPlannerItem';
 import './shell.css';
-import {Panel} from './panel.jsx';
+import {Panel,Player} from './panel.jsx';
 import {Profiles} from './profiles.jsx';
 
 const api=window.gear;
@@ -52,7 +52,7 @@ function Overlay({s,t}){
     {!!data?.metrics?.length&&<dl className="hud-metrics">{data.metrics.map(m=><div key={m.label}><dt>{m.label}</dt><dd>{m.value}</dd></div>)}</dl>}
     {data?.rows?.length ? <ul className="hud-list">{data.rows.map((row,index)=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<><HudItem row={row} lang={s.lang} links={!s.hudGame}/>{!s.hudGame&&<button className="hud-pin" aria-label={t('Закрепить предмет','Pin item')} aria-pressed={s.pin?.item?.itemId===row.item.itemId} onClick={()=>api.action('pin',s.pin?.item?.itemId===row.item.itemId?null:index)}>⌖</button>}</>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
       !data?.metrics?.length&&<p className="hud-empty">{data?.title?t('Запустите подбор в приложении.','Start a gear search in the app.'):t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
-    <footer><button onClick={()=>api.action('panel-open')}>{t('Браузер и чаты','Browser and chats')} · Ctrl+Alt+B</button>{s.pin&&!s.hudGame&&<button onClick={()=>api.action('pin',null)}>{t('Открепить','Unpin')} · {s.pin.item.name}</button>}{!s.hudGame&&<label className="hud-key">{t('Режим оверлея','Overlay mode')}<select value={s.editKey} onChange={async e=>setKeyBusy(!await api.action('edit-key',e.target.value))}>{s.shortcuts.map(k=><option key={k}>{k}</option>)}</select>{keyBusy&&t('Клавиши заняты','Shortcut unavailable')}</label>}<label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
+    <footer><Player player={s.player} t={t}/><button onClick={()=>api.action('panel-open')}>{t('Браузер, чаты и плеер','Browser, chats and player')} · Ctrl+Alt+B</button>{s.pin&&!s.hudGame&&<button onClick={()=>api.action('pin',null)}>{t('Открепить','Unpin')} · {s.pin.item.name}</button>}{!s.hudGame&&<label className="hud-key">{t('Режим оверлея','Overlay mode')}<select value={s.editKey} onChange={async e=>setKeyBusy(!await api.action('edit-key',e.target.value))}>{s.shortcuts.map(k=><option key={k}>{k}</option>)}</select>{keyBusy&&t('Клавиши заняты','Shortcut unavailable')}</label>}<label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
   </div>;
 }
 function Desk({s,t}){

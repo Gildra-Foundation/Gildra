@@ -1,6 +1,7 @@
 const {WebContentsView,screen,session,net}=require('electron');
 
-const webTabs={browser:null,telegram:'https://web.telegram.org/',whatsapp:'https://web.whatsapp.com/'};
+const {services,serviceFor,playerUrl,togglePlayback}=require('./media.cjs');
+const webTabs={browser:null,telegram:'https://web.telegram.org/',whatsapp:'https://web.whatsapp.com/',...Object.fromEntries(Object.entries(services).map(([k,v])=>[k,v.home]))};
 function httpsUrl(value){
   try {const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;}catch{return null;}
 }
@@ -10,13 +11,29 @@ class Companion {
     this.tabs=new Map();this.active='browser';this.revision=0;
   }
   home(){return 'https://wowarcana.com/'+(this.settings.lang==='ru'?'ru':'');}
+  player(){
+    const key=this.lastMusic;
+    const tab=this.tabs.get(key);
+    if(!tab)return null;
+    const wc=tab.view.webContents;
+    return {key,service:services[key].name,title:wc.getTitle()||services[key].name,playing:!!tab.playing,muted:wc.isAudioMuted()};
+  }
+  mediaAction(name){
+    const tab=this.tabs.get(this.lastMusic);
+    if(!tab)return false;
+    const wc=tab.view.webContents;
+    if(name==='media-open')this.show(this.lastMusic);
+    if(name==='media-toggle')return togglePlayback(wc,this.lastMusic);
+    if(name==='media-mute')wc.setAudioMuted(!wc.isAudioMuted());
+    this.announce();return true;
+  }
   state(){
     const tab=this.tabs.get(this.active),history=tab?.view.webContents.navigationHistory;
-    return {active:this.active,url:tab?.url||'',failed:!!tab?.failed,back:!!history?.canGoBack(),forward:!!history?.canGoForward(),opacity:this.settings.panelOpacity||100,bookmarks:this.settings.bookmarks||[]};
+    return {canEmbed:!!(tab?.url && ['spotify','soundcloud'].includes(this.active) && serviceFor(tab.url)===this.active && playerUrl(tab.url)!==tab.url),active:this.active,url:tab?.url||'',failed:!!tab?.failed,back:!!history?.canGoBack(),forward:!!history?.canGoForward(),opacity:this.settings.panelOpacity||100,bookmarks:this.settings.bookmarks||[]};
   }
   layout(){
     const [width,height]=this.window.getContentSize();
-    this.tabs.get(this.active)?.view.setBounds({x:0,y:110,width,height:Math.max(0,height-110)});
+    this.tabs.get(this.active)?.view.setBounds({x:0,y:this.lastMusic?146:110,width,height:Math.max(0,height-(this.lastMusic?146:110))});
   }
   ensure(){
     if(this.window)return;
@@ -35,14 +52,20 @@ class Companion {
     store.setPermissionRequestHandler((_wc,_p,cb)=>cb(false));
     store.setPermissionCheckHandler(()=>false);
     store.on('will-download',e=>e.preventDefault());
+    if(services[key])store.setUserAgent(store.getUserAgent(),this.settings.lang==='ru'?'ru-RU,ru,en-US,en':'en-US,en');
     if(key==='whatsapp'){
       // Present only the engine's actual Chromium version and native platform.
       const ua=store.getUserAgent().replace(/(like Gecko\)).*? (Chrome\/[\d.]+).*?(Safari\/[\d.]+)/,'$1 $2 $3');
       store.setUserAgent(ua);
     }
-    const view=new WebContentsView({webPreferences:{...this.secureWeb,session:store}});
+    const view=new WebContentsView({webPreferences:{...this.secureWeb,session:store,backgroundThrottling:!services[key]}});
     tab={view,url:'',failed:false};this.tabs.set(key,tab);
     const wc=view.webContents;
+    if(services[key]){
+      wc.on('media-started-playing',()=>{tab.playing=true;this.lastMusic=key;this.announce();});
+      wc.on('media-paused',()=>{tab.playing=false;this.announce();});
+      wc.on('page-title-updated',()=>this.announce());
+    }
     const update=()=>{tab.url=wc.getURL()||tab.url;this.announce();};
     wc.on('will-navigate',(e,address)=>{if(!httpsUrl(address))e.preventDefault();});
     wc.on('will-redirect',(e,address)=>{if(!httpsUrl(address))e.preventDefault();});
@@ -58,6 +81,7 @@ class Companion {
     const prior=this.tabs.get(this.active);
     if(prior&&key!==this.active)this.window.contentView.removeChildView(prior.view);
     this.active=key;
+    if(services[key]&&!this.tabs.get(this.lastMusic)?.playing)this.lastMusic=key;
     const tab=this.tab(key);
     if(!this.window.contentView.children.includes(tab.view))this.window.contentView.addChildView(tab.view);
     this.layout();this.window.show();this.window.focus();tab.view.webContents.focus();
@@ -95,8 +119,11 @@ class Companion {
     if(name==='panel-url'&&typeof value==='string'){
       const url=httpsUrl(value.includes(':')?value:'https://'+value);
       if(!url)return false;
-      this.show('browser',url);
+      const service=serviceFor(url);
+      this.show(service||'browser',service?playerUrl(url):url);
     }
+    if(name==='panel-service-home' && services[this.active])this.show(this.active,services[this.active].home);
+    if(name==='panel-embed' && services[this.active] && serviceFor(wc?.getURL())===this.active)this.show(this.active,playerUrl(wc.getURL()));
     if(name==='panel-back'&&wc?.navigationHistory.canGoBack())wc.navigationHistory.goBack();
     if(name==='panel-forward'&&wc?.navigationHistory.canGoForward())wc.navigationHistory.goForward();
     if(name==='panel-refresh'&&wc){const tab=this.tabs.get(this.active);if(tab.failed)this.show(this.active,tab.url);else wc.reload();}

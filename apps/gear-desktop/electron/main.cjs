@@ -54,7 +54,7 @@ function save(){
 }
 const companion=new Companion(buildWindow,secureWeb,settings,save,announce);
 function windowState(w){
-  return {panel:w===companion.window?companion.state():null,mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
+  return {player:(w===hud||w===companion.window)?companion.player():null,panel:w===companion.window?companion.state():null,mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
     hudGame,editKey,shortcuts, pin:settings.pin?.slug===settings.slug?settings.pin.row:null, profiles:(settings.profiles||[]).filter(p=>p.slug===settings.slug),pendingProfile, hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
 }
 function announce(){for(const w of [main,hud,login,companion.window]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
@@ -249,6 +249,7 @@ function resetPlanner(){planner?.close();planner=null;hudData=null;}
 async function action(e,name,value){
   const w=localWindow(e);
   if(!w)throw Error('invalid_source');
+  if((w===hud||w===companion.window) && ['media-open','media-toggle','media-mute'].includes(name))return companion.mediaAction(name);
   if(w===companion.window){
     if(name==='window-close')return companion.hide();
     if(name.startsWith('panel-'))return companion.command(name,value);
