@@ -21,6 +21,31 @@ if(!Number.isInteger(settings.opacity)||settings.opacity<20||settings.opacity>10
 const json = (value,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const error=(name,status)=>json({error:name},status);
 let main, hud, login, signingIn, identity, planner, authHost='', overlayShown=false, hudData=null, reading=false, exiting=false, loggingOut=false;
+let hudGame=false, editKey='', pendingProfile=null;
+const shortcuts=['Ctrl+Alt+E','Ctrl+Shift+E','Alt+Shift+G','Ctrl+Alt+H'];
+function bindKey(key){
+  if(key===editKey)return true;
+  if(!shortcuts.includes(key)||!globalShortcut.register(key,()=>{if(overlayShown)setHudGame(!hudGame);}))return false;
+  if(editKey)globalShortcut.unregister(editKey);
+  editKey=key;return true;
+}
+function setHudGame(game){
+  if(!hud)return;
+  const bounds=settings.bounds && {...settings.bounds};
+  hudGame=game;
+  hud.setIgnoreMouseEvents(game);
+  hud.setFocusable(!game);
+  const pin=settings.pin?.slug===settings.slug && settings.pin.row;
+  if(game && pin) {
+    settings.bounds=hud.getBounds();save();
+    hud.setMinimumSize(260,54);hud.setResizable(false);
+    hud.setBounds({...settings.bounds,height:58});
+  } else if(!game){
+    hud.setResizable(true);hud.setMinimumSize(260,170);
+    if(bounds)hud.setBounds(bounds);
+  }
+  announce();
+}
 function save(){
   const tmp=settingsFile+'.tmp';
   fs.mkdirSync(dataDir,{recursive:true});
@@ -28,7 +53,7 @@ function save(){
 }
 function windowState(w){
   return {mode:settings.mode,lang:settings.lang,slug:settings.slug,overlay:overlayShown,opacity:settings.opacity,
-    hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
+    hudGame,editKey,shortcuts, pin:settings.pin?.slug===settings.slug?settings.pin.row:null, profiles:(settings.profiles||[]).filter(p=>p.slug===settings.slug),pendingProfile, hud:w===hud?hudData:null,authOpen:!!login,authHost:w===login?authHost:'',maximized:w.isMaximized()};
 }
 function announce(){for(const w of [main,hud,login]) if(w&&!w.isDestroyed())w.webContents.send('gear:state',windowState(w));}
 function localWindow(e){
@@ -111,6 +136,7 @@ function raiseHud(){
 }
 function hideHud(){
   overlayShown=false;
+  if(hudGame)setHudGame(false);
   hud?.hide();
   announce();
 }
@@ -126,7 +152,7 @@ function toggleHud(){
     hud.setAlwaysOnTop(true,'screen-saver');
     hud.on('blur',()=>setImmediate(raiseHud));
     hud.on('close',e=>{if(!exiting){e.preventDefault();hideHud();}});
-    const storeBounds=()=>{if(!exiting){settings.bounds=hud.getBounds();save();}};
+    const storeBounds=()=>{if(!exiting&&!hudGame){settings.bounds=hud.getBounds();save();}};
     hud.on('moved',storeBounds);hud.on('resized',storeBounds);
     void hud.loadURL('gear://overlay/');
   }
@@ -237,20 +263,42 @@ async function action(e,name,value){
   if(w!==hud && name==='window-minimize'){w.minimize();return;}
   if(w!==hud && name==='window-maximize'){if(w.isMaximized())w.unmaximize();else w.maximize();return;}
   if(w===login)return;
+  if(name==='hud-game' && (w===main || w===hud) && overlayShown)return setHudGame(!hudGame);
+  if(name==='edit-key' && (w===hud || w===main)){
+    if(!bindKey(value))return false;
+    settings.editKey=value;save();announce();return true;
+  }
+  if(w===hud && name==='pin'){
+    const row=value===null?null:hudData?.rows[value];
+    if(row?.item || value===null){settings.pin=row?{slug:settings.slug,row}:null;save();announce();}
+    return;
+  }
   if(w===main && name==='overlay')return toggleHud();
   if(w===hud && name==='open'){if(main.isMinimized())main.restore();main.show();main.focus();return;}
   if(w!==main)return;
+  if(name==='profile-save' && settings.slug && typeof value?.name==='string' && value.name.trim() && value.name.length<=48 && typeof value.budget==='string' && value.budget.length<=32){
+    const entry={name:value.name.trim(),slug:settings.slug,mode:settings.mode,budget:value.budget,farm:value.farm};
+    settings.profiles=[...(settings.profiles||[]).filter(p=>p.slug!==entry.slug || p.name!==entry.name),entry];save();announce();return;
+  }
+  if(name==='profile-load'){
+    const profile=settings.profiles?.find(p=>p.slug===settings.slug && p.name===value);
+    if(!profile)return;
+    pendingProfile=profile;
+    if(profile.mode!==settings.mode){settings.mode=profile.mode;hudData=null;save();await main.loadURL('gear://'+settings.mode+'/');}
+    announce();return;
+  }
+  if(name==='profile-applied'){pendingProfile=null;announce();return;}
   if(name==='login'){signingIn??=authenticate().finally(()=>{signingIn=null;});return signingIn;}
   if(name==='logout'){
     loggingOut=true;
-    try{resetPlanner();await identity.clearStorageData();settings.slug='';save();await main.webContents.session.clearStorageData({storages:['localstorage']});loggingOut=false;await main.loadURL('gear://'+settings.mode+'/');}
+    try{resetPlanner();await identity.clearStorageData();settings.slug='';settings.pin=null;pendingProfile=null;hideHud();save();await main.webContents.session.clearStorageData({storages:['localstorage']});loggingOut=false;await main.loadURL('gear://'+settings.mode+'/');}
     finally{loggingOut=false;}
   }
   if(name==='mode'&&['local','server'].includes(value)&&value!==settings.mode){
     settings.mode=value;hudData=null;save();await main.loadURL('gear://'+value+'/');
   }
   if(name==='lang'&&['ru','en'].includes(value)){settings.lang=value;save();}
-  if(name==='character'&&typeof value==='string'&&value.length<256){settings.slug=value;save();}
+  if(name==='character'&&typeof value==='string'&&value.length<256){if(settings.slug!==value){pendingProfile=null;hudData=null;if(hudGame)setHudGame(false);}settings.slug=value;save();}
   announce();
 }
 protocol.registerSchemesAsPrivileged([{scheme:'gear',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true}}]);
@@ -273,6 +321,7 @@ else {
     main.on('closed',()=>{if(!exiting)app.quit();});
     void main.loadURL('gear://'+settings.mode+'/');
     globalShortcut.register('CommandOrControl+Alt+G',toggleHud);
+    if(!bindKey(settings.editKey))for(const key of shortcuts)if(bindKey(key))break;
     setInterval(updateHud,1200).unref();
   });
   app.on('before-quit',()=>{

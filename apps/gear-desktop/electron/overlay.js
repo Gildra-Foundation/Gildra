@@ -39,12 +39,13 @@
   }
   for (const badge of [...root.querySelectorAll('[data-upgrade-slot] [data-source]')].filter(visible)) {
     const payload=descriptor(badge);
-    add('item',payload?.item.name || text(badge),text(badge),payload);
+    const worn=badge.closest('[data-upgrade-slot]')?.querySelector('b[title]')?.textContent;
+    add('item',payload?.item.name || text(badge),[worn && (document.documentElement.lang==='ru'?'Надето: ':'Equipped: ')+worn,text(badge)].filter(Boolean).join(' · '),payload);
   }
   for (const target of [...root.querySelectorAll('[data-farm-verification="simulated"]')].filter(visible)) {
     const payload=descriptor(target);
     const activity=text(target.closest('[data-farm-access]')?.querySelector('h4'));
-    add('farm',payload?.item.name || text(target),activity,payload);
+    add('farm',payload?.item.name || text(target),[activity,text(target)].filter(Boolean).join(' · '),payload);
   }
   if (!rows.length && !metrics.length) for(const entry of [...root.querySelectorAll('[role="status"]')].filter(visible))add('status',text(entry));
   return {title:text(document.querySelector('[data-character-identity] h1')),rows,metrics,progress};

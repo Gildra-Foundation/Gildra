@@ -5,6 +5,7 @@ import {CharacterUpgrades} from '@/components/wow/audit/CharacterUpgrades';
 import {characterSlug} from '@/lib/wow/characterSlug';
 import {GearPlannerItem} from '@/components/wow/audit/GearPlannerItem';
 import './shell.css';
+import {Profiles} from './profiles.jsx';
 
 const api=window.gear;
 function useShell(){
@@ -41,14 +42,16 @@ function HudItem({row,lang}){
 function Overlay({s,t}){
   const [opacity,setOpacity]=useState(s.opacity);
   const data=s.hud;
+  const [keyBusy,setKeyBusy]=useState(false);
+  if(s.hudGame && s.pin)return <div className="hud hud-pinned"><HudItem row={{...s.pin,detail:""}} lang={s.lang}/></div>;
   return <div className="hud">
-    <header className="chrome hud-chrome"><Layers size={16} aria-hidden="true"/><strong>{t('Оверлей','Overlay')}</strong><GripHorizontal className="grip" size={19} aria-hidden="true"/><WindowButtons s={s} t={t} hud/></header>
+    <header className="chrome hud-chrome"><Layers size={16} aria-hidden="true"/><strong>{t('Оверлей','Overlay')}</strong><button className="game-toggle" onClick={()=>api.action('hud-game')} title={s.editKey}>{s.hudGame?t('Играю','Playing'):t('Редактирую','Editing')}</button><GripHorizontal className="grip" size={19} aria-hidden="true"/><WindowButtons s={s} t={t} hud/></header>
     <main className="hud-scroll"><div className="hud-identity"><img src={art+'/icons/equipment.webp'} alt=""/><h1>{data?.title||t('Подбор предметов','Gear planner')}</h1></div>
     {data?.progress&&<div className="hud-progress"><progress aria-label={t('Ход подбора','Search progress')} value={data.progress.value} max={data.progress.max}/><span>{data.progress.value} / {data.progress.max}</span></div>}
     {!!data?.metrics?.length&&<dl className="hud-metrics">{data.metrics.map(m=><div key={m.label}><dt>{m.label}</dt><dd>{m.value}</dd></div>)}</dl>}
-    {data?.rows?.length ? <ul className="hud-list">{data.rows.map(row=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<HudItem row={row} lang={s.lang}/>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
+    {data?.rows?.length ? <ul className="hud-list">{data.rows.map((row,index)=>{const Icon=rowIcons[row.kind];return <li key={JSON.stringify([row.label,row.detail,row.item])} data-kind={row.kind}>{row.item?<><HudItem row={row} lang={s.lang}/>{!s.hudGame&&<button className="hud-pin" aria-label={t('Закрепить предмет','Pin item')} aria-pressed={s.pin?.item?.itemId===row.item.itemId} onClick={()=>api.action('pin',s.pin?.item?.itemId===row.item.itemId?null:index)}>⌖</button>}</>:<><Icon size={16} aria-hidden="true"/><div>{row.label}{row.detail&&<small>{row.detail}</small>}</div></>}</li>;})}</ul> :
       !data?.metrics?.length&&<p className="hud-empty">{data?.title?t('Запустите подбор в приложении.','Start a gear search in the app.'):t('Выберите персонажа и запустите подбор.','Choose a character and start a search.')}</p>}</main>
-    <footer><label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
+    <footer>{!s.hudGame&&<label className="hud-key">{t('Режим оверлея','Overlay mode')}<select value={s.editKey} onChange={async e=>setKeyBusy(!await api.action('edit-key',e.target.value))}>{s.shortcuts.map(k=><option key={k}>{k}</option>)}</select>{keyBusy&&t('Клавиши заняты','Shortcut unavailable')}</label>}<label className="hud-opacity"><span>{t('Непрозрачность','Opacity')}</span><input type="range" min="20" max="100" step="1" value={opacity} onChange={e=>{const value=Number(e.target.value);setOpacity(value);void api.action('opacity',value);}}/><output>{opacity}%</output></label><button className="hud-open" onClick={()=>api.action('open')}>{t('Открыть подбор','Open planner')}<ArrowUpRight size={16} aria-hidden="true"/></button></footer>
   </div>;
 }
 function Desk({s,t}){
@@ -88,6 +91,7 @@ function Desk({s,t}){
     <label className="mode">{s.mode==='local'?<Monitor size={16}/>:<Server size={16}/>}<select aria-label={t('Где выполнять расчёт','Calculation mode')} value={s.mode} onChange={e=>api.action('mode',e.target.value)}>
       <option value="server">{t('Сервер Gildra','Gildra server')}</option><option value="local">{t('На моём ПК','On my PC')}</option></select></label>
     <button aria-pressed={s.overlay} onClick={()=>api.action('overlay')} title="Ctrl+Alt+G"><Layers size={16}/>{t('Оверлей','Overlay')}</button>
+    {s.overlay&&<button onClick={()=>api.action('hud-game')} title={s.editKey}>{s.hudGame?t('Играю','Playing'):t('Редактирую','Editing')}</button>}
     <button className="lang" onClick={()=>api.action('lang',lang==='ru'?'en':'ru')}>{lang==='ru'?'EN':'RU'}</button>
     {account.status==='ready'&&<button aria-label={t('Выйти','Sign out')} title={t('Выйти','Sign out')} onClick={()=>api.action('logout')}><LogOut size={16}/></button>}</div><WindowButtons s={s} t={t}/>
   </header>
@@ -103,7 +107,7 @@ function Desk({s,t}){
     {account.status==='error'?<p role="alert">{t('Не удалось получить данные Gildra. Проверьте интернет и обновите данные.','Gildra data is unavailable. Check your connection and refresh.')}</p>:
       account.status==='loading'||selected&&!profile&&!problem?<p role="status">{t('Загружаем персонажей и экипировку…','Loading characters and equipment…')}</p>:
       problem?<p role="alert">{problem==='incomplete_profile'?t('У персонажа нет активного набора талантов.','The character has no active talent loadout.'):t('Не удалось обновить профиль персонажа.','Could not refresh the character profile.')}</p>:
-      profile?<section data-tool-panel="upgrades"><CharacterUpgrades key={s.slug+profile.fingerprint+lang} snapshot={profile.snapshot} snapshotKey={profile.fingerprint} localePrefix={lang==='ru'?'/ru':''}/></section>:
+      profile?<section data-tool-panel="upgrades"><CharacterUpgrades profileControls={form=><Profiles s={s} t={t} fingerprint={profile.fingerprint} form={form}/>} key={s.slug+profile.fingerprint+lang} snapshot={profile.snapshot} snapshotKey={profile.fingerprint} localePrefix={lang==='ru'?'/ru':''}/></section>:
       <p>{!account.list.length?t('В этом регионе нет персонажей.','No characters in this region.'):t('Выберите персонажа для подбора.','Choose a character to find upgrades.')}</p>}
     </main>}</div>;
 }

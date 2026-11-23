@@ -9,7 +9,7 @@ import type { AuditGearQuality, CharacterAuditSnapshot } from "@/lib/wow/charact
 import type { AuctionGearRecommendationGroup } from "@/lib/wow/auctionGearRecommendations";
 import type { GearFarmResult } from "@/lib/wow/gearFarm/types";
 import { buildUpgradePlan, filterUpgradePlan, upgradeFilterCounts, type UpgradeFilter, type UpgradeSlot, type UpgradeSource, type UpgradeSourceKind } from "@/lib/wow/upgradePlan";
-import { AuctionGearOptimizer } from "./AuctionGearOptimizer";
+import { AuctionGearOptimizer, type ProfileControls } from "./AuctionGearOptimizer";
 import { GearFarmPlanner } from "./GearFarmPlanner";
 import { GearPlannerItem } from "./GearPlannerItem";
 import { auctionFormats, formatGold } from "./auctionFormat";
@@ -32,33 +32,35 @@ const filters: UpgradeFilter[] = ["attention", "sources", "fixes", "all"];
  * by item level, with enchant/gem fixes and the best replacement found), then the dungeon/raid loot search and
  * the Auction House search. Their confirmed results feed the slot list, so nothing is fetched twice.
  */
-export function CharacterUpgrades({ snapshot, snapshotKey, localePrefix, plaqueClassName }: {
+export function CharacterUpgrades({ snapshot, snapshotKey, localePrefix, plaqueClassName, profileControls }: {
   snapshot: CharacterAuditSnapshot;
   snapshotKey: string;
   localePrefix: "" | "/ru";
   plaqueClassName?: string;
+  profileControls?: ProfileControls;
 }) {
   const [farm, setFarm] = useState<GearFarmResult | null>(null);
   const [auction, setAuction] = useState<AuctionGearRecommendationGroup[] | null>(null);
-  const onAuction = useCallback((groups: AuctionGearRecommendationGroup[] | null) => setAuction(groups?.length ? groups : null), []);
+  const [marketAt,setMarketAt]=useState<string>();
+  const onAuction = useCallback((groups: AuctionGearRecommendationGroup[] | null, at?:string) => {setAuction(groups?.length ? groups : null);setMarketAt(at);}, []);
   return <>
     <MaterialPlaque kit={CHARACTERS_KIT} className={plaqueClassName}>
-      <UpgradeOverview snapshot={snapshot} farm={farm} auction={auction} ru={localePrefix === "/ru"} />
+      <UpgradeOverview marketAt={marketAt} expanded={!!profileControls} snapshot={snapshot} farm={farm} auction={auction} ru={localePrefix === "/ru"} />
     </MaterialPlaque>
     <MaterialPlaque kit={CHARACTERS_KIT} className={plaqueClassName}>
       <GearFarmPlanner characterSlug={snapshot.slug} snapshotKey={snapshotKey} localePrefix={localePrefix} onResult={setFarm} />
     </MaterialPlaque>
     <MaterialPlaque kit={CHARACTERS_KIT} className={plaqueClassName}>
-      <AuctionGearOptimizer characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} onRecommendations={onAuction} />
+      <AuctionGearOptimizer profileControls={profileControls} characterSlug={snapshot.slug} snapshotKey={snapshotKey} specializationSlug={snapshot.specialization.slug} localePrefix={localePrefix} onRecommendations={onAuction} />
     </MaterialPlaque>
   </>;
 }
 
-export function UpgradeOverview({ snapshot, farm, auction, ru }: {
+export function UpgradeOverview({ snapshot, farm, auction, ru, expanded, marketAt }: {
   snapshot: CharacterAuditSnapshot;
   farm: GearFarmResult | null;
   auction: readonly AuctionGearRecommendationGroup[] | null;
-  ru: boolean;
+  ru: boolean; expanded?: boolean; marketAt?: string;
 }) {
   const c = characterUpgradesCopy(ru);
   const titleId = useId();
@@ -82,12 +84,12 @@ export function UpgradeOverview({ snapshot, farm, auction, ru }: {
       </div>
     </div>
     <ol className={styles.slots} data-sources={withSources || undefined}>
-      {rows.map((row) => <SlotRow key={row.slotType} row={row} c={c} ru={ru} withSources={withSources} />)}
+      {rows.map((row) => <SlotRow expanded={expanded} marketAt={marketAt} key={row.slotType} row={row} c={c} ru={ru} withSources={withSources} />)}
     </ol>
   </section>;
 }
 
-const SlotRow = memo(function SlotRow({ row, c, ru, withSources }: { row: UpgradeSlot; c: CharacterUpgradesCopy; ru: boolean; withSources: boolean }) {
+const SlotRow = memo(function SlotRow({ row, c, ru, withSources, expanded, marketAt }: { expanded?:boolean; marketAt?:string; row: UpgradeSlot; c: CharacterUpgradesCopy; ru: boolean; withSources: boolean }) {
   const { item } = row;
   const tone = row.gap >= 8 ? "critical" : row.gap >= 1 ? "behind" : undefined;
   return <li className={styles.row} data-upgrade-slot={row.slotType} data-tone={tone}>
@@ -100,25 +102,27 @@ const SlotRow = memo(function SlotRow({ row, c, ru, withSources }: { row: Upgrad
         {row.missingEnchant ? <span className={styles.fix}><Sparkles aria-hidden="true" />{c.noEnchant}</span> : null}
         {row.emptySockets ? <span className={styles.fix}><Gem aria-hidden="true" />{row.emptySockets > 1 ? c.emptySockets(row.emptySockets) : c.emptySocket}</span> : null}
       </span>
-      <b title={item.name}>{item.name}</b>
+      {expanded && row.best && <small>{ru?"Надето":"Equipped"}</small>}<b title={item.name}>{item.name}</b>
     </span>
     <span className={styles.level}>
       <strong>{item.itemLevel}</strong>
       {row.gap !== 0 ? <small aria-label={row.gap > 0 ? c.behind(row.gap) : c.ahead(-row.gap)}>{row.gap > 0 ? `−${row.gap}` : `+${-row.gap}`}</small> : null}
     </span>
-    {withSources ? <span className={styles.source}>{row.best ? <SourceBadge source={row.best} more={row.sources.length - 1} c={c} ru={ru} /> : null}</span> : null}
+    {withSources ? <span className={styles.source}>{row.best ? expanded ? row.sources.map((source,index)=><SourceBadge key={index} source={source} expanded marketAt={marketAt} more={0} c={c} ru={ru}/>) : <SourceBadge source={row.best} more={row.sources.length - 1} c={c} ru={ru} /> : null}</span> : null}
   </li>;
 });
 
-function SourceBadge({ source, more, c, ru }: { source: UpgradeSource; more: number; c: CharacterUpgradesCopy; ru: boolean }) {
+function SourceBadge({ source, more, c, ru, expanded, marketAt }: { expanded?:boolean; marketAt?:string; source: UpgradeSource; more: number; c: CharacterUpgradesCopy; ru: boolean }) {
   const Icon = sourceIcons[source.kind];
   const locale = ru ? "ru" : "en";
   const where = source.kind === "auction" ? c.source.auction : source.place;
   const detail = source.kind === "auction" ? source.priceCopper !== undefined ? formatGold(source.priceCopper, locale) : "" : [c.source[source.kind], source.encounter].filter(Boolean).join(" · ");
   return <span className={styles.badge} data-source={source.kind}>
-    <GearPlannerItem item={source.item} locale={locale} compact />
+    <GearPlannerItem item={source.item} locale={locale} compact={!expanded} />
     <span className={styles.badgeCopy}>
       <b><Icon aria-hidden="true" />{where}</b>
+      {expanded && <small>+{auctionFormats[locale].numeric.format(source.deltaDps)} DPS</small>}
+      {expanded && source.kind==="auction" && marketAt && <small>{ru?"Цена на":"Quoted"} {new Date(marketAt).toLocaleString(ru?"ru-RU":"en-GB")}</small>}
       <small>{[detail, more > 0 ? c.more(more) : ""].filter(Boolean).join(" · ")}</small>
     </span>
     <strong className={styles.gain} aria-label={`${c.gain} ${auctionFormats[locale].signed.format(source.deltaPercent)}%`}>{auctionFormats[locale].signed.format(source.deltaPercent)}%</strong>

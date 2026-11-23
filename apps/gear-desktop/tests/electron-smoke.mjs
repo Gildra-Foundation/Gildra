@@ -100,6 +100,13 @@ try{
  await page.waitForURL('gear://local/**');
  await page.locator('[data-tool-panel="upgrades"] h3').first().waitFor();
  await new Promise(r=>setTimeout(r,500));
+ const budget=page.locator('[name="budgetGold"]');
+ await budget.fill('7250');
+ await page.getByRole('textbox',{name:'Название профиля'}).fill('Рейд');
+ await page.getByRole('button',{name:'Сохранить профиль'}).click();
+ await budget.fill('4750');
+ await page.getByRole('button',{name:'Применить',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[name="budgetGold"]').value==='7250');
  const posted=()=>app.evaluate(()=>globalThis.testGear.cloud.filter(([method])=>method==='POST').length);
  const before=await posted();
  const accepted=page.waitForResponse(r=>r.url()==='gear://local/api/wow/gear-farm-plans' && r.request().method()==='POST');
@@ -132,6 +139,11 @@ try{
  await hud.getByText('GildraReleaseSmoke',{exact:true}).waitFor();
  const alwaysTop=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://overlay')).isAlwaysOnTop());
  assert.equal(alwaysTop,true);
+ await hud.getByRole('button',{name:'Редактирую'}).click();
+ await page.getByRole('button',{name:'Играю'}).click();
+ await hud.getByRole('button',{name:'Редактирую'}).waitFor();
+ await hud.locator('.hud-key select').selectOption('Ctrl+Alt+H');
+ assert.equal(await hud.evaluate(async()=>(await window.gear.state()).editKey),'Ctrl+Alt+H');
  const opacity=hud.getByRole('slider');
  await opacity.focus();
  await opacity.press('Home');

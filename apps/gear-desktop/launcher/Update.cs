@@ -10,6 +10,7 @@ using System.Web.Script.Serialization;
 
 namespace GildraLauncher {
     public class Asset {
+        public long size { get; set; }
         public string name { get; set; }
         public string digest { get; set; }
         public string browser_download_url { get; set; }
@@ -23,8 +24,12 @@ namespace GildraLauncher {
     public class Build {
         public long Number;
         public string Hash, Url;
+        public long Bytes;
+        public Asset Index;
+        public IndexedFile[] Files;
+        public string BaseDir;
     }
-    public class Updates {
+    public partial class Updates {
         const string Repo = "Gildra-Foundation/Gildra";
         const string Prefix = "gear-desktop-build-";
         const string Package = "Gildra-Gear-Windows-x64.zip";
@@ -71,7 +76,8 @@ namespace GildraLauncher {
                     string url = "https://github.com/" + Repo + "/releases/download/" + r.tag_name + "/" + Package;
                     foreach (var a in r.assets)
                         if (a.name == Package && a.browser_download_url == url && a.digest != null && System.Text.RegularExpressions.Regex.IsMatch(a.digest,"^sha256:[a-fA-F0-9]{64}$"))
-                            return new Build{Number=version, Url=url, Hash=a.digest.Substring(7)};
+                            return new Build{Number=version, Url=url, Hash=a.digest.Substring(7), Bytes=a.size,
+                                Index=Array.Find(r.assets,f=>f.name=="gear-files.json" && f.browser_download_url==url.Replace(Package,"gear-files.json") && f.digest!=null && f.digest.StartsWith("sha256:"))};
                 }
                 if (releases.Length < 100) throw new IOException("Опубликованная сборка пока недоступна.");
             }
@@ -108,6 +114,10 @@ namespace GildraLauncher {
                 }
                 status("Распаковка обновления…");
                 ZipFile.ExtractToDirectory(zip,unpack);
+                Activate(stage,unpack,build);
+            } finally { TryDelete(stage); }
+        }
+        void Activate(string stage,string unpack,Build build) {
                 if (!Complete(unpack) || File.ReadAllText(Path.Combine(unpack,"gear-build.txt")).Trim() != build.Number.ToString())
                     throw new InvalidDataException("Состав сборки не прошёл проверку.");
                 string target = Installed(build.Number);
@@ -127,7 +137,6 @@ namespace GildraLauncher {
                     long n;
                     if (long.TryParse(Path.GetFileName(dir).Substring(6),out n) && n < previous) TryDelete(dir);
                 }
-            } finally { TryDelete(stage); }
         }
         static void TryDelete(string dir) {
             try { Directory.Delete(dir,true); } catch(IOException) {} catch(UnauthorizedAccessException) {}

@@ -79,6 +79,9 @@ jobs:
       contents: write
     runs-on: ubuntu-24.04
     steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          sparse-checkout: apps/gear-desktop/launcher
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: launcher
@@ -92,5 +95,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "$GITHUB_RUN_NUMBER" > portable/gear-build.txt
-          (cd portable && zip -qr ../release/Gildra-Gear-Windows-x64.zip .)
-          gh release create "gear-desktop-build-$GITHUB_RUN_NUMBER" release/*.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest=false --title "Gildra Gear · Windows #$GITHUB_RUN_NUMBER" --notes "Скачайте Gildra-Gear-Launcher.zip, чтобы установить, обновить или запустить приложение."
+          unzip -o release/Gildra-Gear-Launcher.zip -d portable
+          python3 apps/gear-desktop/launcher/package.py portable release
+          gh release create "gear-desktop-build-$GITHUB_RUN_NUMBER" release/*.zip release/gear-files.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest=false --title "Gildra Gear · Windows #$GITHUB_RUN_NUMBER" --notes "Скачайте Gildra-Gear-Launcher.zip, чтобы установить, обновить или запустить приложение."

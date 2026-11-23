@@ -139,19 +139,21 @@ namespace GildraLauncher {
             loading=true; RefreshState(); status.Text="Проверяем обновления…";
             try {
                 latest=await Updates.Latest();
+                await updates.Plan(latest);
                 if(IsDisposed) return;
                 long n; updates.Current(out n);
-                status.Text=n>=latest.Number ? "У вас актуальная версия." : "Доступна сборка " + latest.Number + ".";
+                status.Text=n>=latest.Number ? "У вас актуальная версия." : "Доступна сборка " + latest.Number + " · " + Updates.Size(latest.Bytes);
             } catch(Exception ex) { if(!IsDisposed) status.Text="Не удалось проверить обновления. " + ex.Message; }
             finally { loading=false; if(!IsDisposed) RefreshState(); }
         }
         async Task Install() {
             installing=true; RefreshState(); status.Text="Подключение…";
             try {
-                await updates.Download(latest, msg => BeginInvoke(new Action(() => status.Text=msg)));
+                await Task.Run(()=>updates.Apply(latest, msg => BeginInvoke(new Action(() => status.Text=msg))));
+                restart=updates.ManagedLauncher();
                 status.Text="Готово к запуску."; latest=null;
-            } catch(Exception ex) { status.Text="Ошибка обновления. " + ex.Message; }
-            finally { installing=false; RefreshState(); }
+            } catch(Exception ex) { latest=null;status.Text="Ошибка обновления. " + ex.Message; }
+            finally { installing=false; RefreshState(); if(restart!=null) Close(); }
         }
         [STAThread]
         static void Main() {
@@ -159,9 +161,14 @@ namespace GildraLauncher {
                 if(!acquired) { MessageBox.Show("Лаунчер уже открыт.","Gildra Gear"); return; }
                 ServicePointManager.SecurityProtocol=SecurityProtocolType.Tls12;
                 Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new Window());
+                using(var window=new Window()) {
+                    restart=window.updates.ManagedLauncher();
+                    if(restart==null) Application.Run(window);
+                }
             }
+            if(restart!=null) Process.Start(restart);
         }
+        static string restart;
         static bool acquired;
     }
 }

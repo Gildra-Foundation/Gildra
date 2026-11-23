@@ -101,7 +101,7 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
         <div className={tools.actions}><label className={styles.include}><input type="checkbox" checked={purchased.has(row.key)} aria-label={`${t("Куплено", "Purchased")}: ${name}`} disabled={!loaded} onChange={event => toggle(row.key, event.target.checked)} /><span>{t("Куплено", "Purchased")}</span></label>
           {row.name ? <button type="button" className={tools.quiet} onClick={() => void copyName(row.name)} aria-label={`${t("Скопировать название", "Copy name")}: ${name}`}>{t("Скопировать название", "Copy name")}</button> : null}
           {item ? <button type="button" className={tools.quiet} disabled={selectionLocked} onClick={() => onExcludeLot(item.auctionId)} aria-label={`${t("Исключить лот из сборки", "Exclude lot from loadout")}: ${name}`}>{t("Исключить лот", "Exclude lot")}</button> : null}</div>
-        {checked ? <p className={styles.note} data-shopping-status={checked.status}>{statusText(checked.status)}</p> : null}
+        {checked ? <p className={styles.note} data-shopping-status={checked.status}>{statusText(checked.status)} · <time dateTime={check?.checkedAt}>{new Date(check!.checkedAt).toLocaleString(ru?"ru-RU":"en-GB")}</time></p> : null}
         {item ? <ul className={styles.replacements}>{result.purchases.filter(purchase => purchase.auctionId === item.auctionId).map(purchase => {
           const configuration = result.enhancement?.configuration.slots.find(slot => slot.slotType === purchase.slotType);
           const gems = configuration?.gemIds.filter(id => id > 0).map(id => result.enhancement?.enhancementNames?.gems[id] ?? t("Камень", "Gem")) ?? [];

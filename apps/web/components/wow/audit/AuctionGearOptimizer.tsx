@@ -32,9 +32,10 @@ import tools from "./characterTools.module.css";
 import { auctionFormats, formatGold } from "./auctionFormat";
 import { upgradeSlotName } from "./characterUpgradesCopy";
 
-type Props = { characterSlug: string; snapshotKey: string; specializationSlug: string; localePrefix?: "" | "/ru";
+export type ProfileControls = (form: {budget: string; locked: boolean; setBudget: (value:string)=>void}) => React.ReactNode;
+type Props = {profileControls?: ProfileControls; characterSlug: string; snapshotKey: string; specializationSlug: string; localePrefix?: "" | "/ru";
   /** Confirmed single-item upgrades (best value per slot) for the slot overview; null when there is no search. */
-  onRecommendations?: (groups: AuctionGearRecommendationGroup[] | null) => void };
+  onRecommendations?: (groups: AuctionGearRecommendationGroup[] | null, marketAt?:string) => void };
 type Metadata = { enhancementMode?: "equipment" | "enhanced"; fightLengthSeconds?: number; targets?: number; compareScenarios?: AuctionGearEncounter[] } & Pick<NonNullable<AuctionGearJob["result"]>, "market" | "profileFingerprint" | "scenario" | "coverage" | "objective">;
 type SearchResult = AuctionGearSearchResult & Metadata;
 type AssemblyResult = AuctionGearAssemblyResult & Metadata;
@@ -52,7 +53,7 @@ type Recovery = { kind: "recovery"; search: SearchResult; assembly: AssemblyResu
 export function AuctionGearOptimizer(props: Props) {
   return <AuctionGearOptimizerContent key={`${props.characterSlug}:${props.snapshotKey}:${props.specializationSlug}:${props.localePrefix ?? "/ru"}`} {...props} />;
 }
-function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializationSlug, localePrefix = "/ru", onRecommendations }: Props) {
+function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializationSlug, localePrefix = "/ru", profileControls, onRecommendations }: Props) {
   const locale = localePrefix === "/ru" ? "ru" : "en";
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
@@ -150,7 +151,7 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
   const slotName = (slot: string) => upgradeSlotName(slot, ru);
   const recommendationGroups = useMemo(() => getAuctionGearRecommendationGroups(search?.items ?? [], { excludedOptionIds: excluded, excludedVariantKeys }), [search, excluded, excludedVariantKeys]);
   // Stale prices stay visible here with their warning; the slot overview only shows current ones.
-  useEffect(() => { onRecommendations?.(search && !marketStale ? recommendationGroups : null); }, [onRecommendations, recommendationGroups, search, marketStale]);
+  useEffect(() => { onRecommendations?.(search && !marketStale ? recommendationGroups : null,search?.market?.updatedAt); }, [onRecommendations, recommendationGroups, search, marketStale]);
   useEffect(() => {
     const slot = suggestionFocusSlot.current;
     if (!slot) return;
@@ -968,6 +969,11 @@ function AuctionGearOptimizerContent({ characterSlug, snapshotKey, specializatio
 
   return <section ref={panel} className={`${tools.tool} ${styles.panel}`} aria-labelledby="auction-gear-title" data-auction-gear data-auction-run-kind={cache.current?.orchestration?.kind ?? "quick"}>
     <h3 className={tools.title} id="auction-gear-title">{t("Улучшения с аукциона", "Auction House upgrades")}</h3>
+    {profileControls?.({budget:validBudget ? normalizeAuctionBudgetGold(budget,locale) : "",locked:formLocked,setBudget:value=>{
+      if(formLocked)return;
+      setBudget(value);
+      void invalidate({budget:value});
+    }})}
     {discovered?.activeJob ? <div className={styles.recovery} data-auction-owned-recovery>
       <p role="status" className={tools.status}>{t("У вас есть незавершённый расчёт", "You have an unfinished calculation")}{discovered.formIntent ? ` · ${money(Number(discovered.formIntent.budgetGold) * 10000)}` : ""}</p>
       <div className={tools.actions}>{discovered.formIntent && sameScope ? <MaterialButton kit={CHARACTERS_KIT} variant="primary" type="button" disabled={running || Boolean(cancellation)} onClick={() => void openOwnedCalculation()}>{t("Открыть расчёт", "Open calculation")}</MaterialButton> : null}
