@@ -65,6 +65,12 @@ jobs:
           & "$env:RUNNER_TEMP/Gildra Gear/runtime/node.exe" apps/gear-desktop/tests/native-batch.mjs "$env:RUNNER_TEMP/Gildra Gear/runtime"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           node apps/gear-desktop/tests/electron-smoke.mjs "$env:RUNNER_TEMP/Gildra Gear/Gildra Gear.exe"
+      - name: Verify Windows desktop media session API
+        shell: powershell
+        run: |
+          $result = & ./apps/gear-desktop/electron/spotify-session.ps1
+          if (-not $result) { throw 'Windows media session query returned no result' }
+          $null = ConvertFrom-Json $result
       - name: Build and test launcher on Windows
         shell: pwsh
         run: ./apps/gear-desktop/launcher/build.ps1 "$env:RUNNER_TEMP/launcher"

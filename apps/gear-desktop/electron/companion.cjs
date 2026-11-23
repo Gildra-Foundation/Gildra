@@ -1,6 +1,7 @@
-const {WebContentsView,screen,session,net}=require('electron');
+const {WebContentsView,screen,session,net,app,shell}=require('electron');
 
 const {services,serviceFor,playerUrl,togglePlayback}=require('./media.cjs');
+const {spotifySession,spotifyUri,watchSpotify}=require('./spotify-desktop.cjs');
 const webTabs={browser:null,telegram:'https://web.telegram.org/',whatsapp:'https://web.whatsapp.com/',...Object.fromEntries(Object.entries(services).map(([k,v])=>[k,v.home]))};
 function httpsUrl(value){
   try {const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;}catch{return null;}
@@ -13,6 +14,10 @@ class Companion {
   home(){return 'https://wowarcana.com/'+(this.settings.lang==='ru'?'ru':'');}
   player(){
     const key=this.lastMusic;
+    if(key==='spotify'&&this.nativeSpotify){
+      const {title,artist,playing}=this.nativeSpotify;
+      return {key,native:true,service:'Spotify',title:[artist,title].filter(Boolean).join(' · ')||'Spotify',playing};
+    }
     const tab=this.tabs.get(key);
     if(!tab)return null;
     const wc=tab.view.webContents;
@@ -23,13 +28,53 @@ class Companion {
     if(!tab)return false;
     const wc=tab.view.webContents;
     if(name==='media-open')this.show(this.lastMusic);
+    if(name==='media-toggle' && this.lastMusic==='spotify' && this.nativeSpotify)return this.refreshSpotify(true);
     if(name==='media-toggle')return togglePlayback(wc,this.lastMusic);
     if(name==='media-mute')wc.setAudioMuted(!wc.isAudioMuted());
     this.announce();return true;
   }
+  async attachSpotify(){
+    if(process.platform!=='win32')return false;
+    const tab=this.tabs.get('spotify');
+    if(!tab)return false;
+    const uri=spotifyUri(tab.url);
+    try{
+      let state=await spotifySession();
+      if(uri!=='spotify:' || !state){
+        if(!app.getApplicationNameForProtocol('spotify:'))return false;
+        await shell.openExternal(uri);
+        for(let i=0;i<5;i++){
+          await new Promise(r=>setTimeout(r,800));
+          state=await spotifySession();
+          if(state)break;
+        }
+      }
+      if(!state||!this.window||this.active!=='spotify')return false;
+      if(tab.playing)await togglePlayback(tab.view.webContents,'spotify');
+      this.nativeSpotify=state;this.lastMusic='spotify';this.announce();
+      this.watcher?.kill();
+      const watcher=this.watcher=watchSpotify(state=>{
+        if(this.watcher!==watcher)return;
+        this.nativeSpotify=state;
+        if(!state){this.watcher=null;watcher.kill();}
+        this.announce();
+      });
+      return true;
+    }catch{return false;}
+  }
+  async refreshSpotify(toggle){
+    if(!this.nativeSpotify || this.nativeBusy)return false;
+    this.nativeBusy=true;
+    try{
+      const state=await spotifySession(toggle);
+      if(this.nativeSpotify)this.nativeSpotify=state;
+      if(!this.nativeSpotify){this.watcher?.kill();this.watcher=null;}
+      this.announce();return !!state;
+    }catch{return false;}finally{this.nativeBusy=false;}
+  }
   state(){
     const tab=this.tabs.get(this.active),history=tab?.view.webContents.navigationHistory;
-    return {canEmbed:!!(tab?.url && ['spotify','soundcloud'].includes(this.active) && serviceFor(tab.url)===this.active && playerUrl(tab.url)!==tab.url),active:this.active,url:tab?.url||'',failed:!!tab?.failed,back:!!history?.canGoBack(),forward:!!history?.canGoForward(),opacity:this.settings.panelOpacity||100,bookmarks:this.settings.bookmarks||[]};
+    return {windows:process.platform==='win32',canEmbed:!!(tab?.url && ['spotify','soundcloud'].includes(this.active) && serviceFor(tab.url)===this.active && playerUrl(tab.url)!==tab.url),active:this.active,url:tab?.url||'',failed:!!tab?.failed,back:!!history?.canGoBack(),forward:!!history?.canGoForward(),opacity:this.settings.panelOpacity||100,bookmarks:this.settings.bookmarks||[]};
   }
   layout(){
     const [width,height]=this.window.getContentSize();
@@ -62,7 +107,7 @@ class Companion {
     tab={view,url:'',failed:false};this.tabs.set(key,tab);
     const wc=view.webContents;
     if(services[key]){
-      wc.on('media-started-playing',()=>{tab.playing=true;this.lastMusic=key;this.announce();});
+      wc.on('media-started-playing',()=>{if(key==='spotify'){this.nativeSpotify=null;this.watcher?.kill();this.watcher=null;}tab.playing=true;this.lastMusic=key;this.announce();});
       wc.on('media-paused',()=>{tab.playing=false;this.announce();});
       wc.on('page-title-updated',()=>this.announce());
     }
@@ -81,7 +126,7 @@ class Companion {
     const prior=this.tabs.get(this.active);
     if(prior&&key!==this.active)this.window.contentView.removeChildView(prior.view);
     this.active=key;
-    if(services[key]&&!this.tabs.get(this.lastMusic)?.playing)this.lastMusic=key;
+    if(services[key]&&!this.player()?.playing)this.lastMusic=key;
     const tab=this.tab(key);
     if(!this.window.contentView.children.includes(tab.view))this.window.contentView.addChildView(tab.view);
     this.layout();this.window.show();this.window.focus();tab.view.webContents.focus();
@@ -113,6 +158,7 @@ class Companion {
   }
   command(name,value){
     const wc=this.tabs.get(this.active)?.view.webContents;
+    if(name==='panel-spotify-desktop' && this.active==='spotify')return this.attachSpotify();
     if(name==='panel-tab')this.show(value);
     if(name==='panel-home')this.show('browser',this.home());
     if(name==='panel-library')this.show('browser',this.home().replace(/\/$/,'')+'/library/items');
@@ -140,6 +186,7 @@ class Companion {
   destroy(){
     this.revision++;
     for(const tab of this.tabs.values())tab.view.webContents.close();
+    this.watcher?.kill();this.watcher=null;this.nativeSpotify=null;
     this.tabs.clear();this.window?.destroy();this.window=null;
   }
 }

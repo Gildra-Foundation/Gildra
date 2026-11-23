@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 const app=resolve(dirname(fileURLToPath(import.meta.url)),'../electron'),repo=resolve(app,'../../..'),web=join(repo,'apps/web');
 const dest=resolve(process.argv[2]),pub=join(dest,'public');
 await mkdir(pub,{recursive:true});
-for(const name of ['package.json','main.cjs','preload.cjs','planner.cjs','overlay.js','companion.cjs','media.cjs'])await cp(join(app,name),join(dest,name));
+for(const name of ['package.json','main.cjs','preload.cjs','planner.cjs','overlay.js','companion.cjs','media.cjs','spotify-desktop.cjs','spotify-session.ps1'])await cp(join(app,name),join(dest,name));
 await cp(join(app,'index.html'),join(pub,'index.html'));
 await cp(join(web,'app/favicon.ico'),join(pub,'brand.ico'));
 for(const folder of ['assets/wow/slim/characters','assets/wow/characters/frost-login/crest.webp','assets/wow/characters/frost-login/icons/equipment.webp','assets/og/fonts/alegreya-500.ttf','assets/og/fonts/inter-400.ttf','assets/og/fonts/inter-600.ttf','assets/wow/loading/characters-icecrown-20261106.webp','assets/wow/fonts/grimoire']){
