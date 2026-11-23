@@ -8,7 +8,7 @@ jobs:
   capture:
     runs-on: windows-latest
     steps:
-      - name: Open release 18 and capture its window
+      - name: Open release 19 and capture its window
         shell: pwsh
         run: |
           Add-Type -AssemblyName System.Drawing
@@ -26,7 +26,7 @@ jobs:
           '@
           [NativeWindow]::SetProcessDPIAware() | Out-Null
           $dir = "$env:RUNNER_TEMP/preview"
-          $base = 'https://github.com/Gildra-Foundation/Gildra/releases/download/gear-desktop-build-18'
+          $base = 'https://github.com/Gildra-Foundation/Gildra/releases/download/gear-desktop-build-19'
           foreach ($name in @('Gildra-Gear-Launcher','Gildra-Gear-Windows-x64')) {
             Invoke-WebRequest "$base/$name.zip" -OutFile "$env:RUNNER_TEMP/$name.zip"
             Expand-Archive "$env:RUNNER_TEMP/$name.zip" -DestinationPath $dir -Force
@@ -48,13 +48,17 @@ jobs:
             if (![NativeWindow]::GetWindowRect($h,[ref]$rect)) { throw 'Window has no bounds' }
             $bitmap = [Drawing.Bitmap]::new($rect.Right-$rect.Left,$rect.Bottom-$rect.Top)
             $g = [Drawing.Graphics]::FromImage($bitmap)
+            $frames = New-Item -ItemType Directory "$env:RUNNER_TEMP/frames"
+            for ($frame=0; $frame -lt 24; $frame++) {
             $dc = $g.GetHdc()
             try { if (![NativeWindow]::PrintWindow($h,$dc,2)) { throw 'Capture failed' } } finally { $g.ReleaseHdc($dc) }
-            $bitmap.Save("$env:RUNNER_TEMP/Gildra-Gear-Launcher.png",[Drawing.Imaging.ImageFormat]::Png)
+            $bitmap.Save(("$frames/{0:D2}.png" -f $frame),[Drawing.Imaging.ImageFormat]::Png)
+            Start-Sleep -Milliseconds 110
+            }
             $g.Dispose()
             $bitmap.Dispose()
           } finally { $process.Kill() }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: launcher-preview
-          path: ${{ runner.temp }}/Gildra-Gear-Launcher.png
+          path: ${{ runner.temp }}/frames/
