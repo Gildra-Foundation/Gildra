@@ -251,7 +251,7 @@ async function action(e,name,value){
     settings.opacity=value;hud.setOpacity(value/100);save();announce();return;
   }
   if(w===hud && name==='item-media'){
-    const row=hudData?.rows.find(row=>row.item?.itemId===value);
+    const row=hudData?.rows.find(row=>row.item?.itemId===value) || (settings.pin?.slug===settings.slug && settings.pin.row?.item?.itemId===value && settings.pin.row);
     if(!row || !Number.isSafeInteger(value)||value<=0)return {};
     const query={id:String(value),region:settings.slug.split('--')[0],locale:settings.lang==='ru'?'ru_RU':'en_GB'};
     const read=async kind=>{const reply=await readInput({...query,read:kind});return reply.status===200?JSON.parse(reply.body):{};};

@@ -9,10 +9,10 @@ import { auctionFormats, formatGold, formatGoldRate } from "./auctionFormat";
 import styles from "./auctionGearOptimizer.module.css";
 import tools from "./characterTools.module.css";
 
-type Props = { characterSlug: string; snapshotKey: string; assembly: AuctionGearAssemblyResult; locale: "en" | "ru"; stale: boolean;
+type Props = { marketAt?:string; characterSlug: string; snapshotKey: string; assembly: AuctionGearAssemblyResult; locale: "en" | "ru"; stale: boolean;
   selectionLocked: boolean; onExcludeLot: (auctionId: number) => void };
 
-export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale, stale, selectionLocked, onExcludeLot }: Props) {
+export function AuctionGearResult({ marketAt, characterSlug, snapshotKey, assembly, locale, stale, selectionLocked, onExcludeLot }: Props) {
   const ru = locale === "ru";
   const t = (r: string, e: string) => ru ? r : e;
   const { numeric, signed } = auctionFormats[locale];
@@ -119,7 +119,7 @@ export function AuctionGearResult({ characterSlug, snapshotKey, assembly, locale
     {!selected.significant ? <p role="status" className={tools.status}>{selected.comparison.deltaDps <= 0
       ? t("Этот вариант не улучшает текущую экипировку. Покупка не рекомендована.", "This option does not improve your current gear. Buying is not recommended.")
       : t("Прирост в пределах погрешности. Покупка не рекомендована.", "The gain is within the margin of error. Buying is not recommended.")}</p> : null}
-    {selected.purchases.length || selected.enhancement?.configuration.consumables.length ? <AuctionShoppingList key={`${assembly.searchId}:${selected.key}`} characterSlug={characterSlug} snapshotKey={snapshotKey} searchId={assembly.searchId} result={selected} locale={locale} stale={stale} selectionLocked={selectionLocked} onExcludeLot={onExcludeLot} /> : null}
+    {selected.purchases.length || selected.enhancement?.configuration.consumables.length ? <AuctionShoppingList marketAt={marketAt} key={`${assembly.searchId}:${selected.key}`} characterSlug={characterSlug} snapshotKey={snapshotKey} searchId={assembly.searchId} result={selected} locale={locale} stale={stale} selectionLocked={selectionLocked} onExcludeLot={onExcludeLot} /> : null}
     {selected.removedSlots.includes("OFF_HAND") ? <p className={tools.status}>{t("Левая рука снимается ради двуручного оружия.", "The off-hand is removed for the two-handed weapon.")}</p> : null}
     <details className={styles.disclosure} data-auction-calculation-details><summary>{t("Стоимость и расчёт DPS", "Cost and DPS breakdown")}</summary>
       <div className={styles.resultDetails}>

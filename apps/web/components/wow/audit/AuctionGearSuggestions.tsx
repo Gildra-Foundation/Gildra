@@ -16,7 +16,7 @@ type Props = {
   excluded: Set<string>;
   excludedVariantKeys: Set<string>;
   running: boolean;
-  marketStale: boolean;
+  marketStale: boolean; marketAt?: string;
   slotName: (slot: string) => string;
   onAllowed: (id: string, allowed: boolean) => void;
 };
@@ -26,7 +26,7 @@ export function AuctionGearSuggestions(props: Props) {
     <SlotSuggestion key={group.slotType} {...props} group={group} />)}</ul>;
 }
 
-function SlotSuggestion({ group, locale, excluded, excludedVariantKeys, running, marketStale, slotName, onAllowed }: Props & { group: AuctionGearRecommendationGroup }) {
+function SlotSuggestion({ group, locale, excluded, excludedVariantKeys, running, marketStale, marketAt, slotName, onAllowed }: Props & { group: AuctionGearRecommendationGroup }) {
   const [expanded, setExpanded] = useState(false);
   const alternativesId = useId();
   const ru = locale === "ru";
@@ -35,13 +35,14 @@ function SlotSuggestion({ group, locale, excluded, excludedVariantKeys, running,
   const money = (copper: number) => formatGold(copper, locale);
   const row = (item: AuctionGearSearchItem, best: boolean) => <div className={styles.suggestion} data-auction-option={item.optionId} data-auction-evaluation={item.evaluation} data-best-value={best || undefined}>
     <div className={styles.suggestionItem}><GearPlannerItem item={item} locale={locale} /></div>
+    {marketAt && item.currentItem && <div className={styles.replacement}><span>{t("Вместо", "Replaces")}</span><GearPlannerItem item={item.currentItem} locale={locale}/></div>}
     <dl className={styles.suggestionMetrics}>
-      <div><dt>{marketStale ? t("Прежняя цена", "Previous price") : t("Цена", "Price")}</dt><dd>{money(item.lotCostCopper)}</dd></div>
+      <div><dt>{marketStale ? t("Прежняя цена", "Previous price") : t("Цена", "Price")}</dt><dd>{money(item.lotCostCopper)}{marketAt&&<small> · <time dateTime={marketAt}>{new Date(marketAt).toLocaleString(ru?"ru-RU":"en-GB")}</time></small>}</dd></div>
       <div><dt>{t("Прирост", "Gain")}</dt><dd className={styles.confirmed}>{signed.format(item.comparison!.deltaDps)} DPS <small>({signed.format(item.comparison!.deltaPercent)}%)</small></dd></div>
       <div><dt>{t("Цена за +1 DPS", "Cost per +1 DPS")}</dt><dd>{formatGoldRate(auctionGearPricePerDps(item), locale)}</dd></div>
     </dl>
     <details className={styles.itemDetails}><summary aria-label={`${t("Сравнение и выбор для сета", "Comparison and loadout selection")}: ${item.name}, ${slotName(item.slotType)}`}>{t("Подробнее", "Details")}</summary>
-      <div className={styles.replacement}><span>{t("Вместо", "Replaces")}</span>{item.currentItem ? <GearPlannerItem item={item.currentItem} locale={locale} /> : <span>—</span>}</div>
+      {!marketAt && <div className={styles.replacement}><span>{t("Вместо", "Replaces")}</span>{item.currentItem ? <GearPlannerItem item={item.currentItem} locale={locale} /> : <span>—</span>}</div>}
       <label className={styles.include}><input type="checkbox" checked={!excludedVariantKeys.has(auctionGearVariantSelectionKey(item))} disabled={running} onChange={event => onAllowed(item.optionId, event.target.checked)} aria-label={`${t("Учитывать вариант при сборке", "Allow variant in assembly")}: ${item.name}, ${slotName(item.slotType)}`} /><span>{t("Учитывать при сборке сета", "Use in loadout assembly")}</span></label>
     </details>
     {excludedVariantKeys.has(auctionGearVariantSelectionKey(item)) || excluded.has(item.optionId) ? <p className={styles.note}>{t("Исключён из сборки", "Excluded from assembly")}</p> : null}

@@ -11,11 +11,11 @@ import { upgradeSlotName } from "./characterUpgradesCopy";
 import styles from "./auctionGearOptimizer.module.css";
 import tools from "./characterTools.module.css";
 
-type Props = { characterSlug: string; snapshotKey: string; searchId: string; result: AuctionGearResult; locale: "en" | "ru";
+type Props = { marketAt?:string; characterSlug: string; snapshotKey: string; searchId: string; result: AuctionGearResult; locale: "en" | "ru";
   stale: boolean; selectionLocked: boolean; onExcludeLot: (auctionId: number) => void };
 type Check = { rows: CheckedShoppingRow[]; remainingCopper: number | null; checkedAt: string; sourceUpdatedAt: string; commoditySourceUpdatedAt: string | null };
 
-export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, result, locale, stale, selectionLocked, onExcludeLot }: Props) {
+export function AuctionShoppingList({ marketAt, characterSlug, snapshotKey, searchId, result, locale, stale, selectionLocked, onExcludeLot }: Props) {
   const ru = locale === "ru", t = (r: string, e: string) => ru ? r : e;
   const money = (value: number | null) => value === null ? t("Неизвестна", "Unknown") : formatGold(value, locale);
   const rows = useMemo(() => buildAuctionShoppingRows(result.purchases, result.enhancement?.configuration.consumables, result.enhancement?.consumableNames), [result]);
@@ -95,9 +95,10 @@ export function AuctionShoppingList({ characterSlug, snapshotKey, searchId, resu
       const item = row.kind === "item" ? result.purchases.find(item => item.auctionId === row.auctionId) : null;
       const name = row.name || (row.kind === "gem" ? t("Камень", "Gem") : t("Чары", "Enchant"));
       const checked = check?.rows.find(current => current.key === row.key);
+      const quotedAt=checked && !purchased.has(row.key) ? row.kind==="item"?check?.sourceUpdatedAt:check?.commoditySourceUpdatedAt : row.kind==="item"?marketAt:null;
       return <li className={styles.lot} key={row.key} data-auction-shopping-row data-shopping-item-id={row.itemId} data-purchased={purchased.has(row.key) || undefined}>
         <div className={styles.lotHeader}><div className={styles.purchase}>{item ? <GearPlannerItem item={item} locale={locale} /> : <strong>{name}</strong>}</div>
-          <div className={styles.price}><strong>{money(checked && !purchased.has(row.key) ? checked.currentCopper : row.quotedCopper)}</strong>{row.quantity > 1 ? <span>× {auctionFormats[locale].numeric.format(row.quantity)}</span> : null}</div></div>
+          <div className={styles.price}><strong>{money(checked && !purchased.has(row.key) ? checked.currentCopper : row.quotedCopper)}</strong>{marketAt && quotedAt && <small><time dateTime={quotedAt}>{new Date(quotedAt).toLocaleString(ru?"ru-RU":"en-GB")}</time></small>}{row.quantity > 1 ? <span>× {auctionFormats[locale].numeric.format(row.quantity)}</span> : null}</div></div>
         <div className={tools.actions}><label className={styles.include}><input type="checkbox" checked={purchased.has(row.key)} aria-label={`${t("Куплено", "Purchased")}: ${name}`} disabled={!loaded} onChange={event => toggle(row.key, event.target.checked)} /><span>{t("Куплено", "Purchased")}</span></label>
           {row.name ? <button type="button" className={tools.quiet} onClick={() => void copyName(row.name)} aria-label={`${t("Скопировать название", "Copy name")}: ${name}`}>{t("Скопировать название", "Copy name")}</button> : null}
           {item ? <button type="button" className={tools.quiet} disabled={selectionLocked} onClick={() => onExcludeLot(item.auctionId)} aria-label={`${t("Исключить лот из сборки", "Exclude lot from loadout")}: ${name}`}>{t("Исключить лот", "Exclude lot")}</button> : null}</div>

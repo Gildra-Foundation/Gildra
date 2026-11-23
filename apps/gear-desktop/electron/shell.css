@@ -85,3 +85,7 @@ body,.desktop{font-family:'Gear Inter','Segoe UI',sans-serif;--font-ui:'Gear Int
 }
 
 .gear-profiles{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}.gear-profiles input,.hud-key select{background:#172939;color:inherit;border:1px solid var(--rim);border-radius:6px;padding:5px 8px}.hud .game-toggle,.hud .hud-pin{width:auto;flex:none}.hud .hud-pin{margin-left:auto}.hud-key{display:flex;gap:8px;align-items:center;font-size:12px}.hud-pinned{align-items:flex-start;justify-content:center;padding:4px 12px}.hud-pinned .hud-item{max-width:100%;overflow:hidden}.hud-pinned button{white-space:nowrap}
+
+.workspace [data-upgrade-slot] [data-source]{grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:6px 0}
+.workspace [data-upgrade-slot] [data-source]>button{grid-column:1 / -1}
+.workspace [data-upgrade-slot] [data-source] small{white-space:normal}

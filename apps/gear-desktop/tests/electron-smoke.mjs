@@ -139,7 +139,19 @@ try{
  await hud.getByText('GildraReleaseSmoke',{exact:true}).waitFor();
  const alwaysTop=await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().startsWith('gear://overlay')).isAlwaysOnTop());
  assert.equal(alwaysTop,true);
+ await page.evaluate(()=>{
+   const fixture=document.createElement('div');
+   fixture.dataset.upgradeSlot='HEAD';
+   const source=document.createElement('span');source.dataset.source='raid';
+   const button=document.createElement('button');button.dataset.overlayItem=JSON.stringify({item:{itemId:7,name:'Fixture Helm',slotType:'HEAD',iconUrl:'/brand.ico'}});
+   button.textContent='Fixture Helm';source.append(button);fixture.append(source);
+   document.querySelector('[data-tool-panel="upgrades"]').append(fixture);
+ });
+ await hud.getByRole('button',{name:'Закрепить предмет'}).first().click();
  await hud.getByRole('button',{name:'Редактирую'}).click();
+ await hud.locator('.hud-pinned').waitFor();
+ assert.ok(await hud.evaluate(()=>innerHeight<=65));
+
  await page.getByRole('button',{name:'Играю'}).click();
  await hud.getByRole('button',{name:'Редактирую'}).waitFor();
  await hud.locator('.hud-key select').selectOption('Ctrl+Alt+H');

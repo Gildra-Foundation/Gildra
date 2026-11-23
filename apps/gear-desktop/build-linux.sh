@@ -18,12 +18,13 @@ if ! (cd "$engine" && git apply --reverse --check "${patches[@]}") 2>/dev/null; 
   (cd "$engine" && git apply --check "${patches[@]}" && git apply "${patches[@]}")
 fi
 # libc++ requires vector to be explicitly included by the pinned source tree.
-make -C "$engine/engine" -j"${JOBS:-4}" release OS=WINDOWS PATHSEP=/ CXX="$compiler" SC_NO_NETWORKING=1 \
+# Keep unchanged native executables byte-identical across UI-only releases.
+SOURCE_DATE_EPOCH=$(git -C "$engine" show -s --format=%ct HEAD 2>/dev/null || echo 0) LINK_FLAGS="-Wl,--no-insert-timestamp" make -C "$engine/engine" -j"${JOBS:-4}" release OS=WINDOWS PATHSEP=/ CXX="$compiler" SC_NO_NETWORKING=1 \
     'OPTS=-O1 -include vector -DSC_GIT_REV=\"18428cd\" -DSC_GIT_BRANCH=\"HEAD\"'
 cp "$engine/engine/simc.exe" "$node_win/node.exe" "$out/runtime/"
 "$(dirname "$compiler")/llvm-strip" "$out/runtime/simc.exe"
 cp -R "$engine/profiles/MID2/." "$out/runtime/profiles/"
-(cd "$repo/backend" && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o "$out/runtime/gear-engine.exe" ./cmd/gear-desktop-engine)
+(cd "$repo/backend" && CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -buildvcs=false -trimpath -ldflags="-s -w" -o "$out/runtime/gear-engine.exe" ./cmd/gear-desktop-engine)
 (cd "$desktop/runtime" && npm ci --workspaces=false --no-audit --no-fund && node build.mjs "$out/runtime/planner.mjs")
 echo "2ba6223afa9121f42831fefe92c434334907540165294fc56697449d12e7cfe9  $ELECTRON_ZIP" | sha256sum -c -
 unzip -qo "$ELECTRON_ZIP" -d "$out"
