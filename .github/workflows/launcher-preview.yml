@@ -1,64 +1,16 @@
-name: Capture released Windows launcher
+name: Verify released desktop update
 on:
   push:
     branches: [desktop/launcher-preview-18]
 permissions:
   contents: read
 jobs:
-  capture:
+  update:
     runs-on: windows-latest
     steps:
-      - name: Open release 20 and capture its window
-        shell: pwsh
-        run: |
-          Add-Type -AssemblyName System.Drawing
-          Add-Type -AssemblyName UIAutomationClient
-          Add-Type -AssemblyName UIAutomationTypes
-          Add-Type @'
-          using System;
-          using System.Runtime.InteropServices;
-          public static class NativeWindow {
-            [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
-            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out Rect rect);
-            [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
-            public struct Rect { public int Left, Top, Right, Bottom; }
-          }
-          '@
-          [NativeWindow]::SetProcessDPIAware() | Out-Null
-          $dir = "$env:RUNNER_TEMP/preview"
-          $base = 'https://github.com/Gildra-Foundation/Gildra/releases/download/gear-desktop-build-20'
-          foreach ($name in @('Gildra-Gear-Launcher','Gildra-Gear-Windows-x64')) {
-            Invoke-WebRequest "$base/$name.zip" -OutFile "$env:RUNNER_TEMP/$name.zip"
-            Expand-Archive "$env:RUNNER_TEMP/$name.zip" -DestinationPath $dir -Force
-          }
-          $process = Start-Process "$dir/Gildra Gear Launcher.exe" -PassThru
-          try {
-            for ($i=0; $i -lt 60; $i++) {
-              Start-Sleep -Seconds 1
-              $process.Refresh()
-              $h = $process.MainWindowHandle
-              if ($h -eq 0) { continue }
-              $element = [Windows.Automation.AutomationElement]::FromHandle($h)
-              $nodes = $element.FindAll([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.Condition]::TrueCondition)
-              $names = $nodes | ForEach-Object { $_.Current.Name }
-              if ($names -contains 'У вас актуальная версия.' -or ($names -join ' ') -match 'Доступна сборка') { break }
-            }
-            Write-Host ($names -join ' | ')
-            $rect = New-Object NativeWindow+Rect
-            if (![NativeWindow]::GetWindowRect($h,[ref]$rect)) { throw 'Window has no bounds' }
-            $bitmap = [Drawing.Bitmap]::new($rect.Right-$rect.Left,$rect.Bottom-$rect.Top)
-            $g = [Drawing.Graphics]::FromImage($bitmap)
-            $frames = New-Item -ItemType Directory "$env:RUNNER_TEMP/frames"
-            for ($frame=0; $frame -lt 24; $frame++) {
-            $dc = $g.GetHdc()
-            try { if (![NativeWindow]::PrintWindow($h,$dc,2)) { throw 'Capture failed' } } finally { $g.ReleaseHdc($dc) }
-            $bitmap.Save(("$frames/{0:D2}.png" -f $frame),[Drawing.Imaging.ImageFormat]::Png)
-            Start-Sleep -Milliseconds 110
-            }
-            $g.Dispose()
-            $bitmap.Dispose()
-          } finally { $process.Kill() }
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          name: launcher-preview
-          path: ${{ runner.temp }}/frames/
+          sparse-checkout: verify-update.ps1
+          sparse-checkout-cone-mode: false
+      - shell: pwsh
+        run: ./verify-update.ps1 -Version 21
